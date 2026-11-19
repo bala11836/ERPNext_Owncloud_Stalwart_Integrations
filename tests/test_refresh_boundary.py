@@ -72,10 +72,30 @@ class RefreshBoundary(unittest.TestCase):
         reply = refresh.request_refresh()
         request = json.loads((refresh.STATE_ROOT / 'request.json').read_text())
         self.assertEqual(reply['request_id'], request['request_id'])
-        self.assertEqual(set(request), {'request_id', 'actor', 'requested_at'})
+        self.assertEqual(set(request), {'request_id', 'actor', 'requested_at', 'kind'})
+        self.assertEqual(request['kind'], 'data')
         with self.assertRaises(Denied):
             refresh.request_refresh()
         self.assertEqual(request, json.loads((refresh.STATE_ROOT / 'request.json').read_text()))
+
+    def test_code_refresh_is_a_fixed_kind_without_parameters(self):
+        reply = refresh.request_refresh(kind='code')
+        request = json.loads((refresh.STATE_ROOT / 'request.json').read_text())
+        self.assertEqual((reply['kind'], request['kind']), ('code', 'code'))
+        self.assertEqual(refresh.status()['kind'], 'code')
+        (refresh.STATE_ROOT / 'request.json').unlink()
+        for bad in ['main; rm -rf /', 'branch', '']:
+            with self.assertRaises(Denied):
+                refresh.request_refresh(kind=bad)
+        self.assertFalse((refresh.STATE_ROOT / 'request.json').exists())
+
+    def test_status_publishes_only_short_revisions(self):
+        (refresh.STATE_ROOT / 'status.json').write_text(json.dumps({'phase': 'succeeded', 'kind': 'code',
+            'revision': '<script>', 'last_code_refresh_at': '2026-11-19T00:00:00+00:00'}))
+        self.assertIsNone(refresh.status()['revision'])
+        (refresh.STATE_ROOT / 'status.json').write_text(json.dumps({'phase': 'succeeded', 'kind': 'code',
+            'revision': 'abc1234'}))
+        self.assertEqual(refresh.status()['revision'], 'abc1234')
 
     def test_status_excludes_private_details_and_keeps_success_time(self):
         stamp = '2026-11-15T00:00:00+00:00'

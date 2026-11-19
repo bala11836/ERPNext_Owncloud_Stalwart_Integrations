@@ -10,9 +10,9 @@ discussion that led to a decision is not repeated here.
 - **Decision:** publish the code as a new public repository,
   `ERPNext_Owncloud_Stalwart_Integrations`, under AGPL-3.0-or-later, starting
   from a clean snapshot with fresh history. Dated operations records (release
-  log, task list, migration runbooks with real addresses and service IDs) move
-  to a private operations repository; the earlier private repository is
-  archived with its full history. The company is credited by name; the
+  log, task list, migration runbooks with real addresses and service IDs) stay
+  private: the earlier private repository, keeping its full history, becomes
+  the internal operations repository and no longer holds code. The company is credited by name; the
   company logo is not published (a neutral placeholder ships, each deployment
   supplies its own). Test and production fetch the public repository.
 - **Why:** sharing what we build (owner principle 3) and letting

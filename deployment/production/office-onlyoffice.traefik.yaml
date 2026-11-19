@@ -1,0 +1,36 @@
+# P42 production route: office.example.com -> ONLYOFFICE Docs.
+# Production's Drive and editor still run the pre-repository Coolify stacks;
+# Collabora was routed by its container labels. This file provider route
+# replaces it (Collabora is stopped). Rendered at deployment by replacing
+# office.example.com with the production office host; see
+# docs/production-moves.md. The ACME and "/" launcher routes in the same
+# directory keep their own higher priorities.
+http:
+  routers:
+    office-onlyoffice:
+      rule: Host(`office.example.com`)
+      entryPoints:
+      - https
+      priority: 100
+      service: office-onlyoffice
+      tls:
+        certResolver: letsencrypt
+    office-onlyoffice-http:
+      rule: Host(`office.example.com`)
+      entryPoints:
+      - http
+      priority: 10
+      service: office-onlyoffice
+      middlewares:
+      - office-onlyoffice-https
+  middlewares:
+    office-onlyoffice-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+  services:
+    office-onlyoffice:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+        - url: http://editor-onlyoffice-production:80

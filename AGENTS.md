@@ -1,0 +1,70 @@
+# Mandatory development and release policy
+
+This policy is nonnegotiable and applies to every contributor and automation
+working on this deployment.
+
+The isolated test site is a permanent part of the system. Every development
+change must follow this order:
+
+1. Implement and commit the change in this repository, then push it to GitHub.
+2. Deploy the pushed revision to the permanent isolated test environment.
+3. Validate the change there, including affected integrations and regression
+   checks. Record the tested commit, results and any remaining limitations.
+4. Only after successful test validation, promote that same tested revision
+   and its versioned deployment definitions to production.
+
+Do not develop directly in production, deploy uncommitted changes, bypass the
+test environment, or copy undocumented runtime patches into production. If a
+test exposes a defect, fix it in the repository and repeat the sequence. This
+also applies to urgent fixes, menu/CSS changes, configuration templates,
+integration adapters and database migration code.
+
+Keep environment-specific secrets and business data outside Git. Use separate
+test credentials and the documented outbound-integration safeguards. Data
+refresh is strictly one-way from production to test; never restore test data
+into production. Retain the refresh completion timestamp on the test portal.
+
+Before production promotion, retain a rollback point and document the exact
+revision being promoted. Update the repository documentation whenever retained
+behavior or deployment procedures change. An unavailable or failing test
+environment blocks production promotion until it is restored and validation
+passes.
+
+# Project principles (owner, 17 November 2026)
+
+These are nonnegotiable and apply to this and all future projects:
+
+1. **Code → repository → test → production**, always, so every deployment is
+   reproducible from this repository (see the policy above).
+2. **Respect rights.** Check upstream licenses before copying, vendoring or
+   modifying code or artwork; keep notices and attributions; act ethically.
+3. **Share what we build or fix** wherever possible: upstream bug reports and
+   patches, official forum or tracker posts, and this repository (public
+   since 19 November 2026 under AGPL-3.0-or-later; operations records stay in
+   a private repository).
+4. **Acknowledge the open-source stack** we use, integrate or configure (see
+   the README acknowledgements).
+5. **Disclose AI assistance.** Development is assisted by AI agents; say so in
+   the README, user-facing notes and public posts. Contributors remain
+   responsible for understanding, testing and standing behind every change.
+6. **One repository, built modularly.** Integrations live in this repository as
+   self-contained modules so others can reuse a single module, rather than as
+   separate exclusive repositories.
+7. **Modularity review at the TrueNAS rebuild.** Where the repository is not yet
+   modular enough, restructure it when the permanent test site is rebuilt on
+   the TrueNAS home server (P33).
+
+# Recovery essentials (owner, 18 November 2026)
+
+Keep the recovery items listed in `docs/disaster-recovery.md` outside the
+servers (password manager plus an offline copy): the backup encryption
+password, TrueNAS admin access, the SSH keys, and the provider, registrar,
+GitHub, Tailscale, Meta and authentik logins with recovery codes. Review the
+list every three months. Backups follow the ransomware protections in the same
+document; never give production the ability to delete protected backups.
+
+# Decision log (owner, 18 November 2026)
+
+Record every adopted plan change in `docs/decisions.md` in the same change
+that implements it: what was decided and why (not the discussion), so others
+can build a similar setup from scratch.

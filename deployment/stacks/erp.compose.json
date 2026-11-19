@@ -1,0 +1,295 @@
+{
+  "services": {
+    "db": {
+      "image": "mariadb@sha256:f16d7a344413e519dff518f27bdb221388f84b0d274c97c4fb5f2cb0dc1b34fa",
+      "restart": "unless-stopped",
+      "command": [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+        "--skip-character-set-client-handshake"
+      ],
+      "environment": {
+        "MYSQL_ROOT_PASSWORD": "${CI_ERP_DB_MYSQL_ROOT_PASSWORD:?Set CI_ERP_DB_MYSQL_ROOT_PASSWORD}",
+        "MARIADB_AUTO_UPGRADE": "${CI_ERP_DB_MARIADB_AUTO_UPGRADE:?Set CI_ERP_DB_MARIADB_AUTO_UPGRADE}"
+      },
+      "volumes": [
+        "erp-db-data:/var/lib/mysql"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized"
+        ],
+        "interval": "5s",
+        "timeout": "5s",
+        "retries": 30
+      },
+      "networks": {
+        "default": {}
+      },
+      "ports": []
+    },
+    "redis-cache": {
+      "image": "redis@sha256:7033ad495c19b6bca38aea38f9130d1a3d5b647ac94f3ebe644c8c0fb804e039",
+      "restart": "unless-stopped",
+      "networks": {
+        "default": {}
+      },
+      "environment": {},
+      "ports": []
+    },
+    "redis-queue": {
+      "image": "redis@sha256:7033ad495c19b6bca38aea38f9130d1a3d5b647ac94f3ebe644c8c0fb804e039",
+      "restart": "unless-stopped",
+      "volumes": [
+        "erp-redis-queue-data:/data"
+      ],
+      "networks": {
+        "default": {}
+      },
+      "environment": {},
+      "ports": []
+    },
+    "configurator": {
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "no",
+      "entrypoint": [
+        "bash",
+        "-c"
+      ],
+      "command": [
+        "printf '%s\\n' frappe erpnext hrms india_compliance raven insights erpnext_drive_integrations payment_integration_utils razorpayx_integration india_payroll > sites/apps.txt && bench set-config -g db_host db && bench set-config -gp db_port 3306 && bench set-config -g redis_cache redis://redis-cache:6379 && bench set-config -g redis_queue redis://redis-queue:6379 && bench set-config -g redis_socketio redis://redis-queue:6379 && bench set-config -gp socketio_port 9000 && bench set-config -g webserver_host frontend && bench set-config -gp webserver_port 8080"
+      ],
+      "volumes": [
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration"
+      ],
+      "depends_on": {
+        "db": {
+          "condition": "service_healthy"
+        },
+        "redis-cache": {
+          "condition": "service_started"
+        },
+        "redis-queue": {
+          "condition": "service_started"
+        }
+      },
+      "environment": {
+        "PYTHONPATH": "${CI_ERP_CONFIGURATOR_PYTHONPATH:?Set CI_ERP_CONFIGURATOR_PYTHONPATH}"
+      },
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-configurator"
+          ]
+        }
+      },
+      "ports": []
+    },
+    "backend": {
+      "environment": {
+        "NETBIRD_AUTH_FRONTEND_DNS": "${CI_ERP_BACKEND_NETBIRD_AUTH_FRONTEND_DNS:?Set CI_ERP_BACKEND_NETBIRD_AUTH_FRONTEND_DNS}",
+        "NETBIRD_AUTH_FRONTEND_NETWORK": "${CI_ERP_BACKEND_NETBIRD_AUTH_FRONTEND_NETWORK:?Set CI_ERP_BACKEND_NETBIRD_AUTH_FRONTEND_NETWORK}",
+        "NETBIRD_AUTH_SITE": "${CI_ERP_BACKEND_NETBIRD_AUTH_SITE:?Set CI_ERP_BACKEND_NETBIRD_AUTH_SITE}",
+        "PYTHONPATH": "${CI_ERP_BACKEND_PYTHONPATH:?Set CI_ERP_BACKEND_PYTHONPATH}"
+      },
+      "command": [
+        "/home/frappe/frappe-bench/env/bin/python",
+        "/opt/cloud/backend_start.py"
+      ],
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_backend_0:/opt/cloud/backend_start.py:ro",
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration"
+      ],
+      "depends_on": {
+        "configurator": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-backend"
+          ]
+        }
+      },
+      "ports": []
+    },
+    "frontend": {
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "command": [
+        "nginx-entrypoint.sh"
+      ],
+      "environment": {
+        "BACKEND": "${CI_ERP_FRONTEND_BACKEND:?Set CI_ERP_FRONTEND_BACKEND}",
+        "SOCKETIO": "${CI_ERP_FRONTEND_SOCKETIO:?Set CI_ERP_FRONTEND_SOCKETIO}",
+        "FRAPPE_SITE_NAME_HEADER": "${CI_ERP_FRONTEND_FRAPPE_SITE_NAME_HEADER:?Set CI_ERP_FRONTEND_FRAPPE_SITE_NAME_HEADER}",
+        "NGINX_LISTEN_PORT": "${CI_ERP_FRONTEND_NGINX_LISTEN_PORT:?Set CI_ERP_FRONTEND_NGINX_LISTEN_PORT}",
+        "CLIENT_MAX_BODY_SIZE": "${CI_ERP_FRONTEND_CLIENT_MAX_BODY_SIZE:?Set CI_ERP_FRONTEND_CLIENT_MAX_BODY_SIZE}",
+        "PROXY_READ_TIMEOUT": "${CI_ERP_FRONTEND_PROXY_READ_TIMEOUT:?Set CI_ERP_FRONTEND_PROXY_READ_TIMEOUT}",
+        "PYTHONPATH": "${CI_ERP_FRONTEND_PYTHONPATH:?Set CI_ERP_FRONTEND_PYTHONPATH}"
+      },
+      "volumes": [
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_frontend_2:/templates/nginx/frappe.conf.template:ro"
+      ],
+      "depends_on": [
+        "backend",
+        "websocket"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-frontend"
+          ]
+        }
+      },
+      "ports": [
+        "127.0.0.1:${CI_ERP_FRONTEND_HOST_PORT:?Set private port}:8080"
+      ]
+    },
+    "websocket": {
+      "environment": {
+        "NODE_OPTIONS": "${CI_ERP_WEBSOCKET_NODE_OPTIONS:?Set CI_ERP_WEBSOCKET_NODE_OPTIONS}",
+        "NETBIRD_AUTH_REALTIME_BACKEND_ORIGIN": "${CI_ERP_WEBSOCKET_NETBIRD_AUTH_REALTIME_BACKEND_ORIGIN:?Set CI_ERP_WEBSOCKET_NETBIRD_AUTH_REALTIME_BACKEND_ORIGIN}",
+        "NETBIRD_AUTH_PUBLIC_HOST": "${CI_ERP_WEBSOCKET_NETBIRD_AUTH_PUBLIC_HOST:?Set CI_ERP_WEBSOCKET_NETBIRD_AUTH_PUBLIC_HOST}",
+        "PYTHONPATH": "${CI_ERP_WEBSOCKET_PYTHONPATH:?Set CI_ERP_WEBSOCKET_PYTHONPATH}"
+      },
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "command": [
+        "node",
+        "/home/frappe/frappe-bench/apps/frappe/socketio.js"
+      ],
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_websocket_0:/opt/cloud/netbird_realtime.cjs:ro",
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration"
+      ],
+      "depends_on": {
+        "configurator": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-websocket"
+          ]
+        }
+      },
+      "ports": []
+    },
+    "queue-short": {
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "command": "bench worker --queue short,default",
+      "volumes": [
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration"
+      ],
+      "depends_on": {
+        "configurator": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "environment": {
+        "PYTHONPATH": "${CI_ERP_QUEUE_SHORT_PYTHONPATH:?Set CI_ERP_QUEUE_SHORT_PYTHONPATH}"
+      },
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-queue-short"
+          ]
+        }
+      },
+      "ports": []
+    },
+    "queue-long": {
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "command": "bench worker --queue long,default,short",
+      "volumes": [
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration"
+      ],
+      "depends_on": {
+        "configurator": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "environment": {
+        "PYTHONPATH": "${CI_ERP_QUEUE_LONG_PYTHONPATH:?Set CI_ERP_QUEUE_LONG_PYTHONPATH}"
+      },
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-queue-long"
+          ]
+        }
+      },
+      "ports": []
+    },
+    "scheduler": {
+      "image": "${ERP_IMAGE:?Build the ERP image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "command": "bench schedule",
+      "volumes": [
+        "erp-sites:/home/frappe/frappe-bench/sites",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/erp_configurator_1:/var/lib/cloud-integration"
+      ],
+      "depends_on": {
+        "configurator": {
+          "condition": "service_completed_successfully"
+        }
+      },
+      "environment": {
+        "PYTHONPATH": "${CI_ERP_SCHEDULER_PYTHONPATH:?Set CI_ERP_SCHEDULER_PYTHONPATH}"
+      },
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "erp-scheduler"
+          ]
+        }
+      },
+      "ports": []
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "erp-db-data": {},
+    "erp-redis-queue-data": {},
+    "erp-sites": {}
+  }
+}

@@ -1,0 +1,52 @@
+http:
+  routers:
+    cloud-raven-token:
+      rule: Host(`erp.example.com`) && Path(`/api/method/frappe.integrations.oauth2.get_token`)
+        && Method(`POST`)
+      entryPoints:
+      - https
+      priority: 330
+      service: public-erp@file
+      middlewares:
+      - cloud-native-clean-headers
+      tls: {}
+    cloud-raven-native:
+      rule: Host(`erp.example.com`) && (PathPrefix(`/api/`) || PathPrefix(`/private/files/`)
+        || PathPrefix(`/socket.io`)) && HeaderRegexp(`Authorization`, `(?i)^Bearer
+        [A-Za-z0-9._~+/-]+=*$`)
+      entryPoints:
+      - https
+      priority: 325
+      service: public-erp@file
+      middlewares:
+      - cloud-native-clean-headers
+      - cloud-raven-native-auth
+      tls: {}
+    cloud-raven-preflight:
+      rule: Host(`erp.example.com`) && Method(`OPTIONS`) && PathPrefix(`/api/`) &&
+        (Header(`Origin`, `capacitor://localhost`) || Header(`Origin`, `https://localhost`))
+        && HeaderRegexp(`Access-Control-Request-Headers`, `(?i)(^|, *)x-raven-app(
+        *,|$)`)
+      entryPoints:
+      - https
+      priority: 335
+      service: public-erp@file
+      middlewares:
+      - cloud-native-clean-headers
+      tls: {}
+  middlewares:
+    cloud-native-clean-headers:
+      headers:
+        customRequestHeaders:
+          X-authentik-username: ''
+          X-authentik-email: ''
+          X-authentik-groups: ''
+          X-authentik-uid: ''
+          X-authentik-jwt: ''
+          X-authentik-meta-jwks: ''
+    cloud-raven-native-auth:
+      forwardAuth:
+        address: http://erp-frontend:8080/api/method/erpnext_drive_integrations.portal.mobile.check_access
+        trustForwardHeader: false
+        authRequestHeaders:
+        - Authorization

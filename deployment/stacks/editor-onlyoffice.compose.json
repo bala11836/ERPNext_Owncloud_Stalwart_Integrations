@@ -1,0 +1,53 @@
+{
+  "services": {
+    "onlyoffice": {
+      "image": "onlyoffice/documentserver@sha256:ca17889f10b11141cc6441836aebdd2835cf3e1b49681b2fd6e155c94b7850b3",
+      "entrypoint": [
+        "/bin/sh",
+        "-c",
+        "rm -f /var/run/supervisord.pid; exec /app/ds/run-document-server.sh"
+      ],
+      "restart": "unless-stopped",
+      "environment": {
+        "JWT_ENABLED": "true",
+        "JWT_SECRET": "${CI_EDITOR_ONLYOFFICE_JWT_SECRET:?Set CI_EDITOR_ONLYOFFICE_JWT_SECRET}",
+        "JWT_HEADER": "Authorization",
+        "WOPI_ENABLED": "true",
+        "GENERATE_FONTS": "false"
+      },
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/editor_onlyoffice_0:/etc/onlyoffice/documentserver/local-production-linux.json:ro",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/editor_onlyoffice_1:/var/www/onlyoffice/documentserver/web-apps/apps/api/wopi/editor-wopi.ejs:ro",
+        "editor-onlyoffice-data:/var/www/onlyoffice/Data",
+        "editor-onlyoffice-lib:/var/lib/onlyoffice",
+        "editor-onlyoffice-db:/var/lib/postgresql",
+        "editor-onlyoffice-redis:/var/lib/redis"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "editor-onlyoffice",
+            "office-onlyoffice"
+          ]
+        }
+      },
+      "mem_limit": "4g"
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "editor-onlyoffice-data": {},
+    "editor-onlyoffice-lib": {},
+    "editor-onlyoffice-db": {},
+    "editor-onlyoffice-redis": {}
+  }
+}

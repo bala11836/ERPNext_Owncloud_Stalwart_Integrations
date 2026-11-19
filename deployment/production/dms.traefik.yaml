@@ -1,0 +1,43 @@
+# P45 production route: dms.example.com -> repository-built DMS (Paperless).
+# Replaces the Coolify container labels of the pre-repository DMS service.
+# Keeps its two behaviours: compression except for event streams, and the
+# portal frame permission middleware `place-holder-dms-frame@file` (defined in
+# place-holder-frames.yaml on the same proxy). Rendered at deployment by
+# replacing dms.example.com with the production DMS host; see
+# docs/production-moves.md.
+http:
+  routers:
+    dms-repository:
+      rule: Host(`dms.example.com`)
+      entryPoints:
+      - https
+      priority: 100
+      service: dms-repository
+      middlewares:
+      - dms-repository-compress
+      - place-holder-dms-frame@file
+      tls:
+        certResolver: letsencrypt
+    dms-repository-http:
+      rule: Host(`dms.example.com`)
+      entryPoints:
+      - http
+      priority: 10
+      service: dms-repository
+      middlewares:
+      - dms-repository-https
+  middlewares:
+    dms-repository-compress:
+      compress:
+        excludedContentTypes:
+        - text/event-stream
+    dms-repository-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+  services:
+    dms-repository:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+        - url: http://dms-paperless-production:8000

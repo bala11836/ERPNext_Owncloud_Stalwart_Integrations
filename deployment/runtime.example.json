@@ -1,0 +1,6 @@
+{
+  "domain": "example.com",
+  "session_state_path": "/var/lib/cloud-integration",
+  "company_logo": "/etc/cloud-integrations/company-logo.svg",
+  "public_replacements": {}
+}

@@ -1,0 +1,28 @@
+REPLACE YOUR CLOUD PASSKEYS
+
+Your administrator has sent you a passkey recovery invitation.
+
+Your old Cloud passkeys will be deleted only after you successfully register AND verify your replacement. Incomplete recovery will leave your old keys working.
+
+Before opening the link, prepare Apple Passwords/iCloud Keychain or Bitwarden. Google Password Manager and other providers are not accepted.
+
+Bitwarden:
+* Create an account at https://vault.vaultwarden.com/ if you do not already have one, preferably using the same email address as your Cloud username.
+* Install the official phone app or browser extension: https://bitwarden.com/download/
+* Before signing in, select Self-hosted and enter https://vault.vaultwarden.com. Sign in to your account.
+* Set up biometric unlock for convenience. Your master password may still be required when signing in again.
+* On a phone, enable Bitwarden in AutoFill/password and passkey settings.
+* Avoid installing the browser extension on shared computers.
+
+Apple Passwords: Enable iCloud Passwords & Keychain syncing on your iPhone, iPad or Mac. Have your device passcode or Touch ID/Face ID ready.
+
+Replace your passkeys:
+{{ url }}
+
+Check that the page is on sso.example.com. Save your replacement passkey in Bitwarden or Apple Passwords/iCloud Keychain, then complete its verification.
+
+After recovery, use the new passkey. Old saved entries may remain visible in your password manager but will no longer work on Cloud.
+
+This link verifies your email and starts recovery. It is single-use and expires {{ expires|date:"j M Y, H:i T" }}. If you did not request recovery, contact your administrator.
+
+Replies to noreply@example.com are rejected. Contact your administrator through your usual channel.

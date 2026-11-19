@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/owncloud/ocis-konnectd",
+  "commit": "7bbffd2ae39efec35a7aa1dfbebd763474123f0d",
+  "path": "assets/identifier-registration.yaml",
+  "sha256": "39147bd6610d46e6dbb9f58236f4cba57e59c95297bdd6c21e24fb6831312592",
+  "purpose": "Official published desktop/iOS native registration constants; not private deployment credentials"
+}

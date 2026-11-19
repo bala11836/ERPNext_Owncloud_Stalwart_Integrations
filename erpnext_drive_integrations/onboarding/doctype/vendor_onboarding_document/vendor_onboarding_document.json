@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "creation": "2026-11-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "document_type",
+  "file",
+  "uploaded_by_vendor"
+ ],
+ "fields": [
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Select",
+   "label": "Document type",
+   "options": "GST certificate\nPAN card\nCancelled cheque\nUdyam certificate\nDirector check screenshot",
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "in_list_view": 1,
+   "columns": 5
+  },
+  {
+   "fieldname": "uploaded_by_vendor",
+   "fieldtype": "Check",
+   "label": "Uploaded by vendor",
+   "in_list_view": 1,
+   "columns": 2,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Onboarding",
+ "name": "Vendor Onboarding Document",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

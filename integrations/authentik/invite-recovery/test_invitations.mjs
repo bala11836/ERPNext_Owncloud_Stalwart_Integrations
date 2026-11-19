@@ -1,0 +1,140 @@
+import assert from "node:assert/strict";
+import { InvitationClient, FLOW_SLUG, RECOVERY_FLOW_SLUG, approved, invitationKind } from "./public/invitations.mjs";
+
+const baseUser = { pk: 7, name: "Test user", username: "test-user", email: "test@example.invalid",
+  type: "internal", is_active: true, groups_obj: [{ name: "Workspace Users" }], attributes: {}, last_login: null };
+const flow = { pk: "enrollment-id", slug: FLOW_SLUG, designation: "enrollment" };
+const recoveryFlow = { pk: "recovery-id", slug: RECOVERY_FLOW_SLUG, designation: "enrollment" };
+const now = Date.parse("2026-11-06T08:00:00Z");
+function fixture({ user = baseUser, devices = [], admin = true, csrf = true,
+  sendFails = false, cleanupFails = false, duplicate = false, activeInvite = false,
+  missingRecovery = false, listFails = false } = {}) {
+  const requests = [], invitations = [];
+  const client = new InvitationClient({
+    origin: () => "https://sso.example.invalid", now: () => now,
+    cookie: () => csrf ? "authentik_csrf=test-csrf" : "", uuid: () => "test-attempt",
+    fetcher: async (url, request) => {
+      const path = new URL(url).pathname.replace("/api/v3/", "");
+      const query = new URL(url).searchParams;
+      requests.push({ path, ...request, data: request.body ? JSON.parse(request.body) : undefined });
+      const reply = (data, status = 200) => ({ ok: status < 400, status, json: async () => data });
+      const page = (results) => reply({ results, pagination: { current: 1, total_pages: 1 } });
+      if (path === "core/users/me/") return reply({ user: { is_active: true, is_superuser: admin } });
+      if (path === "core/users/") return page(duplicate ? [user, { ...user, pk: 8 }] : [user]);
+      if (path === "flows/instances/") return page(query.get("slug") === FLOW_SLUG ? [flow] : missingRecovery ? [] : [recoveryFlow]);
+      if (path === "authenticators/admin/webauthn/") return listFails ? reply({}, 500)
+        : page(devices.map((d) => ({ user: { pk: user.pk }, ...d })));
+      if (path === "stages/invitation/invitations/" && request.method === "GET") {
+        return page(activeInvite ? [{ flow: devices.length ? recoveryFlow.pk : flow.pk, single_use: true,
+          expires: new Date(now + 3600000).toISOString(), fixed_data: { email: user.email } }] : invitations);
+      }
+      if (path === "stages/invitation/invitations/" && request.method === "POST") {
+        const invitation = { ...JSON.parse(request.body), pk: "new-invitation" };
+        invitations.push(invitation);
+        return reply(invitation, 201);
+      }
+      if (path.endsWith("/send_email/")) return sendFails ? reply({}, 500) : reply(null, 204);
+      if (path.endsWith("/new-invitation/") && request.method === "PATCH") return cleanupFails ? reply({}, 500) : reply({}, 200);
+      throw new Error(`Unhandled fixture request ${path}`);
+    },
+  });
+  return { client, requests, invitations };
+}
+
+export async function runTests() {
+  let passed = 0;
+  async function check(name, fn) { await fn(); passed++; }
+  const writes = (f) => f.requests.filter((r) => r.method !== "GET");
+  await check("approval excludes inactive, unapproved and service accounts", () => {
+    assert(approved(baseUser));
+    for (const patch of [{ is_active: false }, { groups_obj: [] }, { type: "service_account" }, { email: "" }])
+      assert.equal(approved({ ...baseUser, ...patch }), false);
+  });
+  await check("registered users and established accounts use recovery", () => {
+    assert.equal(invitationKind(baseUser, false), "enrollment");
+    assert.equal(invitationKind(baseUser, true), "recovery");
+    assert.equal(invitationKind({ ...baseUser, last_login: "2026-10-01" }, false), "recovery");
+    assert.equal(invitationKind({ ...baseUser, attributes: { cloud_verified_email: baseUser.email } }, false), "recovery");
+  });
+  await check("non-admin cannot enumerate users or write", async () => {
+    const f = fixture({ admin: false });
+    await assert.rejects(f.client.load(), /Only Authentik administrators/);
+    assert.equal(f.requests.length, 1); assert.equal(writes(f).length, 0);
+  });
+  await check("duplicate active email addresses cannot be invited", async () => {
+    const f = fixture({ duplicate: true });
+    assert.equal((await f.client.load()).users.length, 0);
+    await assert.rejects(f.client.send(7, 24), /no longer eligible/);
+    assert.equal(writes(f).length, 0);
+  });
+  await check("device lookup failure stops all writes", async () => {
+    const f = fixture({ listFails: true });
+    await assert.rejects(f.client.send(7, 24)); assert.equal(writes(f).length, 0);
+  });
+  await check("ineligible user is checked again before sending", async () => {
+    const f = fixture({ user: { ...baseUser, groups_obj: [] } });
+    await assert.rejects(f.client.send(7, 24), /no longer eligible/); assert.equal(writes(f).length, 0);
+  });
+  await check("arbitrary expiries and free text users cannot be submitted", async () => {
+    const f = fixture();
+    await assert.rejects(f.client.send(7, 10000), /expiry/);
+    await assert.rejects(f.client.send("someone@example.invalid", 24), /Choose a user/);
+    assert.equal(f.requests.length, 0);
+  });
+  await check("missing CSRF prevents every write", async () => {
+    const f = fixture({ csrf: false });
+    await assert.rejects(f.client.send(7, 24), /session/); assert.equal(writes(f).length, 0);
+  });
+  await check("first-time invitation fills data and mails exact approved recipient", async () => {
+    const f = fixture(); const result = await f.client.send(7, 24);
+    assert.equal(result.kind, "enrollment");
+    assert.deepEqual(f.invitations[0].fixed_data, { email: baseUser.email, user_id: 7 });
+    assert.equal(f.invitations[0].flow, flow.pk); assert.equal(f.invitations[0].single_use, true);
+    assert.equal(Date.parse(f.invitations[0].expires), now + 24 * 3600000);
+    const sent = f.requests.find((r) => r.path.endsWith("/send_email/"));
+    assert.deepEqual(sent.data.email_addresses, [baseUser.email]);
+    assert.equal(sent.data.template, "email/cloud-enrollment-invitation.html");
+    assert.equal(sent.headers["X-authentik-CSRF"], "test-csrf");
+  });
+  await check("existing keys route to separate recovery flow without deletion at send", async () => {
+    const f = fixture({ devices: [{ pk: 4 }] }); const result = await f.client.send(7, 6);
+    assert.equal(result.kind, "recovery"); assert.equal(f.invitations[0].flow, recoveryFlow.pk);
+    assert.equal(f.requests.find((r) => r.path.endsWith("/send_email/")).data.template, "email/cloud-recovery-invitation.html");
+    assert.equal(writes(f).length, 2);
+    assert(!f.requests.some((r) => r.method === "DELETE"));
+  });
+  await check("unconfigured recovery does not fall back to first-time enrollment", async () => {
+    const f = fixture({ devices: [{ pk: 4 }], missingRecovery: true });
+    await assert.rejects(f.client.send(7, 24), /recovery flow is not yet/); assert.equal(writes(f).length, 0);
+  });
+  await check("another user's key cannot turn first-time enrollment into recovery", async () => {
+    const f = fixture({ devices: [{ pk: 4, user: { pk: 99 } }] });
+    const result = await f.client.send(7, 24);
+    assert.equal(result.kind, "enrollment");
+  });
+  await check("unreadable device ownership fails closed", async () => {
+    const f = fixture({ devices: [{ pk: 4, user: null }] });
+    await assert.rejects(f.client.send(7, 24), /inventory could not be matched/);
+    assert.equal(writes(f).length, 0);
+  });
+  await check("existing live invitation blocks accidental duplicate email", async () => {
+    const f = fixture({ activeInvite: true });
+    await assert.rejects(f.client.send(7, 24), /already has a valid invitation/); assert.equal(writes(f).length, 0);
+  });
+  await check("mail submission failure expires the new invitation", async () => {
+    const f = fixture({ sendFails: true });
+    await assert.rejects(f.client.send(7, 24), /was expired/);
+    const patch = f.requests.find((r) => r.method === "PATCH");
+    assert(Date.parse(patch.data.expires) < now);
+  });
+  await check("failed cleanup cannot claim the invitation was expired", async () => {
+    const f = fixture({ sendFails: true, cleanupFails: true });
+    await assert.rejects(f.client.send(7, 24), /automatic expiry could not be verified/);
+  });
+  await check("API calls cannot send session data to another origin", async () => {
+    const f = fixture();
+    await assert.rejects(f.client.api("/api/v3/../../elsewhere"), /Unexpected API/);
+    assert.equal(f.requests.length, 0);
+  });
+  return { passed };
+}

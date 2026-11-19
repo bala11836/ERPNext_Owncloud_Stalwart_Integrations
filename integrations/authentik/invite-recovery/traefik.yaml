@@ -1,0 +1,14 @@
+http:
+  routers:
+    cloud-invitations:
+      rule: 'Host(`sso.example.com`) && (Path(`/admin-invitations`) || PathPrefix(`/admin-invitations/`))'
+      priority: 2000
+      entryPoints: [https]
+      service: cloud-invitations
+      tls:
+        certResolver: letsencrypt
+  services:
+    cloud-invitations:
+      loadBalancer:
+        servers:
+          - url: http://cloud-invitations:8080

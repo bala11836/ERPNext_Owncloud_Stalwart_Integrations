@@ -1,0 +1,16 @@
+http:
+  routers:
+    office-shared-oidc-discovery:
+      rule: Host(`sso.example.com`) && Path(`/.well-known/openid-configuration`)
+      entryPoints:
+      - https
+      priority: 1000
+      middlewares:
+      - office-shared-oidc-discovery
+      service: cloud-authentik@file
+      tls:
+        certResolver: letsencrypt
+  middlewares:
+    office-shared-oidc-discovery:
+      replacePath:
+        path: /application/o/office/.well-known/openid-configuration

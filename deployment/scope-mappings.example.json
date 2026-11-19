@@ -1,0 +1,22 @@
+[
+  {
+    "name": "cloud-verified-email-scope",
+    "scope_name": "email",
+    "expression": "email = request.user.email\nreturn {\"email\": email, \"email_verified\": bool(email) and (request.user.attributes.get(\"cloud_verified_email\") == email or request.user.attributes.get(\"google_verified_email\") == email)}"
+  },
+  {
+    "name": "Workspace approved identity",
+    "scope_name": "profile",
+    "expression": "return {\"cloud_approved\": request.user.is_active and request.user.groups.filter(name=\"Workspace Users\").exists(), \"groups\": list(request.user.groups.values_list(\"name\",flat=True))}"
+  },
+  {
+    "name": "Office mail identity mapping",
+    "scope_name": "office_mail",
+    "expression": "mailboxes = {\"alex@example.com\": \"alex@example.com\"}\nmailbox = mailboxes.get(request.user.email.lower())\nif not mailbox:\n    raise ValueError(\"No office mailbox assigned to this identity\")\nreturn {\"office_mailbox\": mailbox}"
+  },
+  {
+    "name": "Office Files group membership",
+    "scope_name": "profile",
+    "expression": "return {'office_groups': ['office'] if ak_is_group_member(request.user, name='Workspace Users') else []}"
+  }
+]

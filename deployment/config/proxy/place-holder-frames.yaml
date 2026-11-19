@@ -1,0 +1,12 @@
+http:
+  middlewares:
+    place-holder-xfo:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: ''
+    place-holder-dms-frame:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: ''
+          Content-Security-Policy: frame-ancestors 'self' https://office.example.com
+            https://erp.example.com https://test.example.com

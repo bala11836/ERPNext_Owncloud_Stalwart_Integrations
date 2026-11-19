@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "creation": "2026-11-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "field",
+  "old_value",
+  "new_value",
+  "editable_by_vendor"
+ ],
+ "fields": [
+  {
+   "fieldname": "field",
+   "fieldtype": "Select",
+   "label": "What changes",
+   "options": "Business name\nUdyam number\nAddress line 1\nAddress line 2\nCity\nState\nPIN code\nBank IFSC\nBank account no.\nAccount holder name\nPrincipal contact email\nPrincipal contact mobile",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "old_value",
+   "fieldtype": "Data",
+   "label": "Current value",
+   "in_list_view": 1,
+   "columns": 3,
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_value",
+   "fieldtype": "Data",
+   "label": "New value",
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "editable_by_vendor",
+   "fieldtype": "Check",
+   "label": "Vendor fills this",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Only for 'Amendment form'."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Onboarding",
+ "name": "KYC Amendment Change",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

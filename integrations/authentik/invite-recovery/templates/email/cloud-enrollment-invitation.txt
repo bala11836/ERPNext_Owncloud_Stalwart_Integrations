@@ -1,0 +1,26 @@
+SET UP YOUR CLOUD PASSKEY
+
+Your administrator has invited you to register your sign-in passkey.
+
+Before opening the link, prepare Apple Passwords/iCloud Keychain or Bitwarden. Google Password Manager and other providers are not accepted.
+
+Bitwarden:
+* Create an account at https://vault.vaultwarden.com/, preferably using the same email address as your Cloud username.
+* Install the official phone app or browser extension: https://bitwarden.com/download/
+* Before signing in, select Self-hosted and enter https://vault.vaultwarden.com. Sign in with the account you created.
+* Set up biometric unlock for convenience. Your master password may still be required when signing in again.
+* On a phone, enable Bitwarden in AutoFill/password and passkey settings.
+* Avoid installing the browser extension on shared computers.
+
+Apple Passwords: Enable iCloud Passwords & Keychain syncing on your iPhone, iPad or Mac. Have your device passcode or Touch ID/Face ID ready.
+
+Register your passkey:
+{{ url }}
+
+Check that the page is on sso.example.com. Save your new passkey in Bitwarden or Apple Passwords/iCloud Keychain and complete the prompts.
+
+This link verifies your email and starts registration. It is single-use and expires {{ expires|date:"j M Y, H:i T" }}.
+
+If neither approved provider appears, contact your administrator. Never share your master password, device PIN or passkey.
+
+Replies to noreply@example.com are rejected. Contact your administrator through your usual channel.

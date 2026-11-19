@@ -1,0 +1,12 @@
+[Unit]
+Description=One-way production data refresh into the isolated test workspace
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+# Replace these two paths with the Git checkout and root-only instance profile.
+ExecStart=/usr/bin/python3 /opt/cloud-integrations/repository/tools/test_refresh_worker.py --config /etc/cloud-integrations/test-refresh.private.json
+TimeoutStartSec=900

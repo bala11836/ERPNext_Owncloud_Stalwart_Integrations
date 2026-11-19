@@ -1,0 +1,47 @@
+{
+  "frappe": {
+    "url": "https://github.com/frappe/frappe.git",
+    "ref": "v16.56.0",
+    "commit": "49789a1711d4dde2be9c6888efe35651465f4b64"
+  },
+  "erpnext": {
+    "url": "https://github.com/frappe/erpnext.git",
+    "ref": "v16.55.0",
+    "commit": "8e10a348daaa93853de8c36dc55ec789a440c219"
+  },
+  "hrms": {
+    "url": "https://github.com/frappe/hrms.git",
+    "ref": "v16.53.2",
+    "commit": "ba5371c5057ae90c3eb6041f28866fe3d749a4f0"
+  },
+  "india_compliance": {
+    "url": "https://github.com/resilient-tech/india-compliance.git",
+    "ref": "v16.11.0",
+    "commit": "53a39caeedadb91c0a57deb203deb59f845391ed"
+  },
+  "raven": {
+    "url": "https://github.com/frappe/raven.git",
+    "ref": "v3.2.0",
+    "commit": "5a5e4c48e477831d82943ba241e20cc9fb6ce578"
+  },
+  "insights": {
+    "url": "https://github.com/frappe/insights.git",
+    "ref": "v3.15.1",
+    "commit": "c7dc954d8275756deb5ad24f7c35c3f3c2ca1a6c"
+  },
+  "payment_integration_utils": {
+    "url": "https://github.com/resilient-tech/payment_integration_utils.git",
+    "ref": "develop",
+    "commit": "71ab8ccafe06705d0b6f62eb2a3970385d8b471c"
+  },
+  "razorpayx_integration": {
+    "url": "https://github.com/resilient-tech/razorpayx-integration.git",
+    "ref": "develop",
+    "commit": "047864dc247b61c164f34e4425e10843a7dbbab1"
+  },
+  "india_payroll": {
+    "url": "https://github.com/frappe/india-payroll.git",
+    "ref": "v16.1.0",
+    "commit": "495f0202d14eb5aabc90973ee7f1cb6143e4d6c9"
+  }
+}

@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "creation": "2026-11-09 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "person_name",
+  "designation",
+  "email",
+  "mobile",
+  "is_principal",
+  "whatsapp_opt_in",
+  "opt_in_on",
+  "email_verified_on",
+  "director_check",
+  "director_note",
+  "director_checked_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "person_name",
+   "fieldtype": "Data",
+   "label": "Name",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "is_principal",
+   "fieldtype": "Check",
+   "label": "Principal contact",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "whatsapp_opt_in",
+   "fieldtype": "Check",
+   "label": "WhatsApp consent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "opt_in_on",
+   "fieldtype": "Datetime",
+   "label": "Consent given on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "email_verified_on",
+   "fieldtype": "Datetime",
+   "label": "Email verified on",
+   "in_list_view": 1,
+   "columns": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "director_check",
+   "fieldtype": "Select",
+   "label": "Director check (MCA)",
+   "options": "\nNot checked\nDirector\nNot a director",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "director_note",
+   "fieldtype": "Data",
+   "label": "Director check note (source, date)"
+  },
+  {
+   "fieldname": "director_checked_by",
+   "fieldtype": "Link",
+   "label": "Director checked by",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-09 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Onboarding",
+ "name": "Vendor Onboarding Person",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

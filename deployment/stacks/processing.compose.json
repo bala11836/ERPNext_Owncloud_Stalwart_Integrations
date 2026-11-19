@@ -1,0 +1,103 @@
+{
+  "services": {
+    "document-worker": {
+      "image": "python@sha256:9ef1a599f863231c3d91e941389bfdc4a2d6070557243d54df1a4e57015b960e",
+      "user": "10001:10001",
+      "command": [
+        "python",
+        "-u",
+        "/app/document-worker.py"
+      ],
+      "restart": "unless-stopped",
+      "read_only": true,
+      "cap_drop": [
+        "ALL"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "environment": {
+        "CONFIG_FILE": "${CI_PROCESSING_DOCUMENT_WORKER_CONFIG_FILE:?Set CI_PROCESSING_DOCUMENT_WORKER_CONFIG_FILE}",
+        "STATE_DIR": "${CI_PROCESSING_DOCUMENT_WORKER_STATE_DIR:?Set CI_PROCESSING_DOCUMENT_WORKER_STATE_DIR}"
+      },
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/processing_document_worker_0:/app/document-worker.py:ro",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/processing_document_worker_1:/run/secrets/document-worker.json:ro",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/processing_document_worker_2:/state"
+      ],
+      "tmpfs": [
+        "/tmp:size=32m,noexec,nosuid"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "processing-document-worker"
+          ]
+        }
+      },
+      "mem_limit": "256m",
+      "cpus": 0.5,
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "python",
+          "-c",
+          "import json,time; s=json.load(open('/state/health.json')); assert time.time()-s['last_cycle']<300"
+        ],
+        "interval": "60s",
+        "timeout": "5s",
+        "start_period": "90s",
+        "retries": 3
+      },
+      "ports": []
+    },
+    "tika": {
+      "image": "apache/tika@sha256:21d8052de04e491ccf66e8680ade4da6f3d453a56d59f740b4167e54167219b7",
+      "restart": "unless-stopped",
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "office-tika",
+            "processing-tika"
+          ]
+        }
+      },
+      "mem_limit": "768m",
+      "cpus": 1,
+      "ports": []
+    },
+    "gotenberg": {
+      "image": "gotenberg/gotenberg@sha256:53073e798c8ef39ea2187e44cb67bab77894ea2509100b94c4fe3b461f7b2996",
+      "restart": "unless-stopped",
+      "command": [
+        "gotenberg",
+        "--chromium-disable-javascript=true",
+        "--chromium-allow-list=file:///tmp/.*"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "office-gotenberg",
+            "processing-gotenberg"
+          ]
+        }
+      },
+      "mem_limit": "1536m",
+      "cpus": 1,
+      "ports": []
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {}
+}

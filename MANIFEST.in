@@ -1,0 +1,1 @@
+recursive-include erpnext_drive_integrations *.json *.js *.css *.html *.svg *.txt

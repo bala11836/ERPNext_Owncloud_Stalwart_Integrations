@@ -1,0 +1,21 @@
+{% extends "templates/web.html" %}
+{% block title %}Example Organization Constructions{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block meta_block %}{{ super() }}
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+{% endblock %}
+{% block page_content %}
+<style>
+	#hov-help { max-width: 640px; margin: 48px auto; padding: 0 16px; font-size: 19px; line-height: 1.55; color: #000; }
+	#hov-help h1 { font-size: 28px; font-weight: 800; margin: 0 0 16px; }
+	#hov-help .box { border: 3px solid #0b3d91; background: #e8eefb; border-radius: 10px; padding: 16px; font-weight: 600; }
+</style>
+<div id="hov-help">
+	<h1>Example Organization Constructions</h1>
+	<div class="box">ℹ This address is only for private links we send by email or WhatsApp.</div>
+	<p>Please open the link from your message.</p>
+	<p>Need help? Contact the person at Example Organization Constructions who sent you the link.</p>
+</div>
+{% endblock %}

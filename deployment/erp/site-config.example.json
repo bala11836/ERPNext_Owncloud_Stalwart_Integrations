@@ -1,0 +1,17 @@
+{
+  "host_name": "https://erp.example.com",
+  "cloud_features": {
+    "portal": true,
+    "field": true,
+    "onboarding": true
+  },
+  "cloud_sso_enforced": false,
+  "cloud_oidc_issuer": "https://sso.example.com/application/o/erp/",
+  "cloud_sso_auto_provision": false,
+  "cloud_combined_site": true,
+  "cloud_push_enabled": false,
+  "cloud_raven_mobile_enabled": false,
+  "cloud_native_mobile_clients": [],
+  "cloud_legacy_rpc_aliases": {},
+  "hov_respond_host": "respond.example.com"
+}

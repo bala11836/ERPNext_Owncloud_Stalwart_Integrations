@@ -1,0 +1,323 @@
+{% extends "templates/web.html" %}
+{% block title %}Example Organization Constructions{% endblock %}
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block meta_block %}{{ super() }}
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+{% endblock %}
+{% block page_content %}
+<style>
+	/* Sunlight-first (CLAUDE.md rule 13): black on white, large text, 48px+ targets, status = icon + text. */
+	#hov { max-width: 720px; margin: 0 auto; padding: 16px; font-size: 18px; line-height: 1.5; color: #000; background: #fff; }
+	#hov h1 { font-size: 26px; font-weight: 800; margin: 8px 0 4px; }
+	#hov h2 { font-size: 21px; font-weight: 800; margin: 24px 0 8px; border-bottom: 3px solid #000; padding-bottom: 4px; }
+	#hov label { display: block; font-weight: 700; margin: 14px 0 4px; }
+	#hov input, #hov select, #hov textarea { width: 100%; min-height: 52px; font-size: 18px; padding: 10px 12px; border: 2px solid #000; border-radius: 8px; background: #fff; color: #000; }
+	#hov input[type=checkbox], #hov input[type=radio] { width: 28px; min-height: 28px; height: 28px; vertical-align: middle; margin-right: 10px; }
+	#hov input[readonly] { background: #eee; }
+	#hov input[aria-invalid=true] { border: 4px solid #8b0000; }
+	#hov .check { display: flex; align-items: center; min-height: 52px; font-weight: 600; margin: 6px 0; }
+	#hov button { min-height: 56px; font-size: 19px; font-weight: 800; padding: 10px 20px; border-radius: 10px; border: 3px solid #0b3d91; background: #0b3d91; color: #fff; margin: 10px 8px 0 0; }
+	#hov button.secondary { background: #fff; color: #0b3d91; }
+	#hov button.danger { background: #fff; color: #8b0000; border-color: #8b0000; }
+	#hov button:disabled { opacity: .5; }
+	#hov .msg { border: 3px solid #000; border-radius: 10px; padding: 12px 14px; margin: 12px 0; font-weight: 700; }
+	#hov .ok { border-color: #0a5c2e; background: #e6f4ea; }
+	#hov .err { border-color: #8b0000; background: #fdecea; }
+	#hov .info { border-color: #0b3d91; background: #e8eefb; }
+	#hov .card { border: 2px solid #000; border-radius: 10px; padding: 12px; margin: 12px 0; }
+	#hov .row2 { display: flex; gap: 8px; } #hov .row2 > * { flex: 1; }
+	#hov .muted { color: #333; font-size: 16px; }
+	#hov table { width: 100%; border-collapse: collapse; } #hov td, #hov th { border: 2px solid #000; padding: 8px; text-align: left; vertical-align: top; }
+</style>
+<div id="hov">
+	<p class="muted">Example Organization Constructions</p>
+	<div id="hov-body">
+		<div class="msg info">ℹ This is a private link sent to you by Example Organization Constructions. It opens on <b>one device only</b>.</div>
+		<button id="hov-open">Open</button>
+	</div>
+</div>
+<script>
+(() => {
+	const parts = location.pathname.split("/").filter(Boolean);
+	const key = parts[1] || "";
+	const body = document.getElementById("hov-body");
+
+	// --- tiny DOM helper: text is always set with textContent (no HTML from data) ---
+	const el = (tag, attrs = {}, ...kids) => {
+		const n = document.createElement(tag);
+		for (const [k, v] of Object.entries(attrs)) {
+			if (k === "on") Object.entries(v).forEach(([ev, fn]) => n.addEventListener(ev, fn));
+			else if (k === "text") n.textContent = v;
+			else if (v === true) n.setAttribute(k, "");
+			else if (v !== false && v != null) n.setAttribute(k, v);
+		}
+		kids.flat().forEach((c) => c != null && n.append(c.nodeType ? c : document.createTextNode(String(c))));
+		return n;
+	};
+	const msg = (kind, text) => el("div", { class: `msg ${kind}` }, { ok: "✔ ", err: "✖ ", info: "ℹ " }[kind] + text);
+	const show = (...nodes) => body.replaceChildren(...nodes);
+
+	function serverMessage(j) {
+		try {
+			const m = JSON.parse(j._server_messages || "[]");
+			if (m.length) return JSON.parse(m[0]).message.replace(/<[^>]+>/g, " ");
+		} catch (e) {}
+		if (j.exc_type === "RateLimitExceededError" || j.exception?.includes("RateLimit")) return "Too many tries. Please wait a few minutes.";
+		return "";
+	}
+	// One request at a time: two saves of the same form at once made the server refuse one ("record has changed").
+	let queue = Promise.resolve();
+	const api = (method, args) => (queue = queue.catch(() => {}).then(() => send(method, args)));
+	async function send(method, args = {}) {
+		const r = await fetch("/api/method/" + method, {
+			method: "POST", credentials: "same-origin",
+			headers: { "Content-Type": "application/json", Accept: "application/json" },
+			body: JSON.stringify({ key, ...args }),
+		});
+		let j = {};
+		try { j = await r.json(); } catch (e) {}
+		if (!r.ok) throw new Error(serverMessage(j) || "Something went wrong. Please try again or call us.");
+		return j.message;
+	}
+	const busy = async (btn, fn) => {
+		btn.disabled = true;
+		try { await fn(); } catch (e) { alert(e.message); } finally { btn.disabled = false; }
+	};
+	const errorList = (errors) => el("div", { class: "msg err" }, "✖ Please fix:", el("ul", {}, errors.map((e) => el("li", { text: e }))));
+
+	document.getElementById("hov-open").addEventListener("click", async (ev) => {
+		ev.target.disabled = true;
+		try {
+			const spec = await api("erpnext_drive_integrations.onboarding.respond.open_link");
+			if (spec.state === "answered") return show(msg("ok", `Already answered on ${spec.answered_on}. Thank you.`));
+			const render = { vendor_form: vendorForm, document: documentForm, email_verify: emailForm,
+				confirm_changes: confirmForm, amendment_form: amendmentForm }[spec.kind];
+			render ? render(spec) : show(msg("err", "Unknown form."));
+		} catch (e) {
+			show(msg("err", e.message));
+		}
+	});
+
+	const header = (spec, title) => [el("h1", { text: title }), el("p", { class: "muted", text: `For ${spec.for || "you"} · link valid until ${spec.expires_on}` })];
+	const done = (text) => show(msg("ok", text));
+
+	// --- accept / reject a document (PO, Job Offer) ---
+	function documentForm(spec) {
+		const reason = el("textarea", { rows: 3, placeholder: "Reason (needed if you reject)" });
+		const decide = (decision) => async (ev) => busy(ev.target, async () => {
+			const r = await api("erpnext_drive_integrations.onboarding.respond.answer", { decision, reason: reason.value });
+			done(r.message);
+		});
+		show(...header(spec, spec.title),
+			spec.has_pdf ? el("p", {}, el("a", { href: `/api/method/erpnext_drive_integrations.onboarding.respond.document_pdf?key=${encodeURIComponent(key)}`, rel: "noreferrer" },
+				el("button", { class: "secondary", type: "button", text: "⬇ Download / view PDF" }))) : null,
+			el("label", { text: "Reason (only if you reject)" }), reason,
+			el("button", { on: { click: decide("Accepted") }, text: "✔ I agree / Accept" }),
+			el("button", { class: "danger", on: { click: decide("Rejected") }, text: "✖ Reject" }));
+	}
+
+	// --- email verification ---
+	function emailForm(spec) {
+		show(...header(spec, "Confirm your email"), el("p", { text: `Please confirm that ${spec.email} is your email address.` }),
+			el("button", { on: { click: (ev) => busy(ev.target, async () => done((await api("erpnext_drive_integrations.onboarding.respond.answer", { decision: "Verified" })).message)) },
+				text: "✔ Yes, this is my email" }));
+	}
+
+	// --- KYC amendment, way (a): confirm staff-prepared changes ---
+	function confirmForm(spec) {
+		const reason = el("textarea", { rows: 3, placeholder: "Reason (needed if you reject)" });
+		const decide = (decision) => async (ev) => busy(ev.target, async () =>
+			done((await api("erpnext_drive_integrations.onboarding.respond.answer", { decision, reason: reason.value })).message));
+		show(...header(spec, spec.title), el("p", { text: "Please check these changes carefully. They take effect only after our approval." }),
+			el("table", {}, el("tr", {}, el("th", { text: "What" }), el("th", { text: "Now" }), el("th", { text: "New" })),
+				spec.changes.map((c) => el("tr", {}, el("td", { text: c.field }), el("td", { text: c.old || "—" }), el("td", {}, el("b", { text: c.new || "—" }))))),
+			el("label", { text: "Reason (only if you reject)" }), reason,
+			el("button", { on: { click: decide("Confirmed") }, text: "✔ Confirm these changes" }),
+			el("button", { class: "danger", on: { click: decide("Rejected") }, text: "✖ Reject" }));
+	}
+
+	// --- KYC amendment, way (b): fill unlocked fields ---
+	function amendmentForm(spec) {
+		const inputs = {};
+		const rows = spec.rows.map((r) => {
+			inputs[r.field] = el("input", { value: r.value, readonly: !r.editable, autocomplete: "off" });
+			return el("div", { class: "card" }, el("label", { text: r.field }), el("p", { class: "muted", text: `Now: ${r.old || "—"}` }), inputs[r.field]);
+		});
+		const confirm = el("input", { autocomplete: "off", inputmode: "numeric" });
+		const errs = el("div");
+		show(...header(spec, spec.title), ...rows,
+			spec.needs_account_confirm ? el("div", { class: "card" }, el("label", { text: "Re-type the new bank account number" }), confirm) : null,
+			errs, el("button", { on: { click: (ev) => busy(ev.target, async () => {
+				const values = Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value]));
+				const r = await api("erpnext_drive_integrations.onboarding.amendment.submit_form", { values, account_confirm: confirm.value });
+				r.ok ? done(r.message) : errs.replaceChildren(errorList(r.errors));
+			}) }, text: "Submit changes" }));
+	}
+
+	// --- vendor onboarding form ---
+	function vendorForm(spec) {
+		const v = spec.values;
+		const f = {};
+		// Every box checks itself as soon as the vendor leaves it (MD 2026-11-12: automatic checks, no buttons).
+		// Same rules as the server (kyc.vendor_problems), which still decides on Submit.
+		const code = (x) => x.replace(/\s+/g, "").toUpperCase();
+		const gstinOk = (x) => /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(x);
+		const need = (label) => (x) => (x.trim() ? "" : `${label} is required.`);
+		const rules = {
+			business_name: need("Business name"),
+			gstin: (x) => { x = code(x);
+				if (f.no_gst.checked) return x ? "You ticked 'no GST registration' but also typed a GSTIN." : "";
+				return !x ? "GSTIN is required (or tick 'no GST registration')." : gstinOk(x) ? "" : "GSTIN format is wrong (15 characters, like 36ABCDE1234F1Z5)."; },
+			pan: (x) => { x = code(x); const g = code(f.gstin.value);
+				if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(x)) return "PAN format is wrong (10 characters, like ABCDE1234F).";
+				return gstinOk(g) && g.slice(2, 12) !== x ? "PAN does not match the PAN inside the GSTIN." : ""; },
+			address_line1: need("Address line 1"), city: need("City"), state: need("State"),
+			pincode: (x) => (/^[1-9][0-9]{5}$/.test(x.trim()) ? "" : "PIN code must be 6 digits."),
+			ifsc: (x) => (/^[A-Z]{4}0[A-Z0-9]{6}$/.test(code(x)) ? "" : "IFSC format is wrong (11 characters, like SBIN0001234)."),
+			bank_account_no: (x) => (/^[0-9]{9,18}$/.test(code(x)) ? "" : "Account number should be 9 to 18 digits."),
+			acc2: (x) => (code(x) === code(f.bank_account_no.value) ? "" : "The re-typed account number does not match."),
+			account_holder_name: need("Account holder name"),
+			person_name: need("Name"),
+			email: (x) => (!x.trim() || /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/.test(x.trim()) ? "" : "Email address looks wrong."),
+			mobile: (x) => (!x.trim() || /^(91|0)?[6-9][0-9]{9}$/.test(x.replace(/\D/g, "")) ? "" : "Mobile must be a 10-digit Indian mobile number."),
+		};
+		const checks = new Set();
+		const watched = (node, rule) => {
+			if (!rule) return [node];
+			const hint = el("div");
+			let touched = false;
+			const check = (force) => {
+				if (!node.isConnected) return checks.delete(check), true;
+				if (force) touched = true;
+				if (!touched) return true;
+				const problem = node.readOnly ? "" : rule(node.value);
+				node.setAttribute("aria-invalid", problem ? "true" : "false");
+				hint.replaceChildren(...(problem ? [msg("err", problem)] : []));
+				return !problem;
+			};
+			node.addEventListener("blur", () => check(true));
+			checks.add(check);
+			return [node, hint];
+		};
+		body.oninput = body.onchange = () => checks.forEach((c) => c());  // a change in one box can settle another
+		const input = (name, label, attrs = {}) => {
+			f[name] = el("input", { value: v[name] || "", autocomplete: "off", ...attrs });
+			return [el("label", { for: name, text: label }), ...watched(Object.assign(f[name], { id: name }), rules[name])];
+		};
+		const constitution = el("select", { id: "constitution" }, el("option", { value: "", text: "— choose —" }),
+			spec.constitutions.map((c) => el("option", { value: c, text: c, selected: v.constitution === c })));
+		f.constitution = constitution;
+		f.no_gst = el("input", { type: "checkbox", checked: !!v.no_gst });
+		const gstInfo = el("div");
+		const showGst = (vals) => {
+			if (!vals.gst_checked_on) return gstInfo.replaceChildren();
+			const active = vals.gst_status === "Active";
+			gstInfo.replaceChildren(msg(active ? "ok" : "err", `GST: ${vals.gst_legal_name || ""}${vals.gst_trade_name ? " (" + vals.gst_trade_name + ")" : ""} — status ${vals.gst_status || "?"}`));
+		};
+		const addrFields = ["address_line1", "address_line2", "city", "state", "pincode"];
+		const lockAddress = (locked) => addrFields.forEach((n) => f[n] && (f[n].readOnly = !!locked));
+		const bankInfo = el("p", { class: "muted", text: v.bank_name ? `Bank: ${v.bank_name}, ${v.bank_branch || ""}` : "" });
+		const confirm = el("input", { autocomplete: "off", inputmode: "numeric", id: "acc2" });
+
+		// persons
+		const people = (spec.persons.length ? spec.persons : [{ is_principal: 1 }]).map((p) => ({ ...p }));
+		const peopleBox = el("div");
+		const drawPeople = () => peopleBox.replaceChildren(...people.map((p, i) => {
+			const inp = (k, label, attrs = {}) => [el("label", { text: label }), ...watched(el("input", { value: p[k] || "", autocomplete: "off", ...attrs,
+				on: { input: (e) => (p[k] = e.target.value) } }), rules[k])];
+			return el("div", { class: "card" },
+				el("label", { class: "check" }, el("input", { type: "radio", name: "principal", checked: !!p.is_principal,
+					on: { change: () => { people.forEach((x) => (x.is_principal = 0)); p.is_principal = 1; } } }), "Principal contact (we verify this person's email)"),
+				inp("person_name", "Name"), inp("designation", "Designation"), inp("email", "Email", { type: "email", inputmode: "email" }),
+				inp("mobile", "Mobile (10 digits)", { inputmode: "tel" }),
+				el("label", { class: "check" }, el("input", { type: "checkbox", checked: !!p.whatsapp_opt_in, on: { change: (e) => (p.whatsapp_opt_in = e.target.checked ? 1 : 0) } }),
+					"I agree to receive messages from Example Organization Constructions on WhatsApp at this number"),
+				people.length > 1 ? el("button", { class: "danger", type: "button", on: { click: () => { people.splice(i, 1); if (!people.some((x) => x.is_principal)) people[0].is_principal = 1; drawPeople(); } }, text: "Remove this person" }) : null);
+		}));
+		drawPeople();
+
+		// documents
+		const docList = el("ul", {}, spec.documents.map((d) => el("li", { text: `✔ ${d.document_type}` })));
+		const docType = el("select", {}, spec.document_types.map((t) => el("option", { value: t, text: t })));
+		const docFile = el("input", { type: "file", accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" });
+
+		const collect = () => {
+			const values = {};
+			Object.entries(f).forEach(([k, n]) => (values[k] = n.type === "checkbox" ? (n.checked ? 1 : 0) : n.value));
+			return { values, persons: people };
+		};
+		const fill = (vals) => {
+			Object.entries(f).forEach(([k, n]) => { if (k in vals) n.type === "checkbox" ? (n.checked = !!vals[k]) : (n.value = vals[k] || ""); });
+			lockAddress(vals.from_gst); showGst(vals);
+		};
+		const saveDraft = () => api("erpnext_drive_integrations.onboarding.vendor.save", collect());
+		const errs = el("div");
+
+		show(...header(spec, "Vendor registration"),
+			el("p", { text: "Please fill in or check every field. We may have filled some details for you." }),
+			el("h2", { text: "1. Business" }), ...input("business_name", "Business name (as registered)"),
+			el("label", { for: "constitution", text: "Constitution" }), constitution,
+			el("label", { class: "check" }, f.no_gst, "We have no GST registration"),
+			...input("gstin", "GSTIN", { maxlength: 15, style: "text-transform:uppercase" }),
+			el("p", { class: "muted", text: "Checked automatically when all 15 characters are typed." }), gstInfo,
+			...input("pan", "PAN", { maxlength: 10, style: "text-transform:uppercase" }),
+			...input("cin", "CIN (companies only)"), ...input("udyam_number", "Udyam (MSME) number, if any"),
+			el("h2", { text: "2. Address" }), ...input("address_line1", "Address line 1"), ...input("address_line2", "Address line 2"),
+			el("div", { class: "row2" }, el("div", {}, ...input("city", "City")), el("div", {}, ...input("pincode", "PIN code", { inputmode: "numeric", maxlength: 6 }))),
+			...input("state", "State"),
+			el("h2", { text: "3. Bank" }), ...input("ifsc", "IFSC (on your cheque)", { maxlength: 11, style: "text-transform:uppercase" }),
+			el("p", { class: "muted", text: "The bank is found automatically when all 11 characters are typed." }), bankInfo,
+			...input("bank_account_no", "Account number", { inputmode: "numeric" }),
+			el("label", { for: "acc2", text: "Re-type the account number" }), ...watched(confirm, rules.acc2),
+			...input("account_holder_name", "Account holder name (as in the bank)"),
+			el("h2", { text: "4. Contact persons" }), peopleBox,
+			el("button", { class: "secondary", type: "button", on: { click: () => { people.push({}); drawPeople(); } }, text: "+ Add another person" }),
+			el("h2", { text: "5. Documents" }), el("p", { class: "muted", text: "PDF, JPG or PNG, up to 5 MB each: GST certificate, PAN card, cancelled cheque, Udyam certificate." }),
+			docList, el("label", { text: "Document type" }), docType, el("label", { text: "File" }), docFile,
+			el("button", { class: "secondary", type: "button", on: { click: (ev) => busy(ev.target, async () => {
+				const file = docFile.files[0];
+				if (!file) return alert("Choose a file first.");
+				if (file.size > 5 * 1024 * 1024) return alert("Files must be smaller than 5 MB.");
+				const data = await new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = bad; r.readAsDataURL(file); });
+				await api("erpnext_drive_integrations.onboarding.vendor.upload", { document_type: docType.value, filename: file.name, data });
+				docList.append(el("li", { text: `✔ ${docType.value}` })); docFile.value = "";
+			}) }, text: "⬆ Upload" }),
+			el("h2", { text: "6. Submit" }), errs,
+			el("button", { class: "secondary", type: "button", on: { click: (ev) => busy(ev.target, async () => { await saveDraft(); alert("Saved. You can come back to this link on this same device."); }) }, text: "Save for later" }),
+			el("button", { type: "button", on: { click: (ev) => busy(ev.target, async () => {
+				if ([...checks].map((c) => c(true)).includes(false)) {
+					errs.replaceChildren(msg("err", "Please fix the boxes marked in red above."));
+					return body.querySelector("[aria-invalid=true]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+				}
+				const r = await api("erpnext_drive_integrations.onboarding.vendor.submit", { ...collect(), account_confirm: confirm.value });
+				r.ok ? done(r.message) : (errs.replaceChildren(errorList(r.errors)), errs.scrollIntoView({ behavior: "smooth" }));
+			}) }, text: "✔ Submit" }));
+		lockAddress(v.from_gst); showGst(v);
+
+		// No manual check buttons (MD 2026-11-12): a complete GSTIN / IFSC is checked by itself, once per value.
+		const autoCheck = (field, length, checked, box, run) => {
+			let last = checked ? f[field].value.trim().toUpperCase() : "";
+			const go = async () => {
+				const value = f[field].value.trim().toUpperCase();
+				if (value.length !== length || value === last) return;
+				last = value;
+				box.replaceChildren(msg("info", "Checking…"));
+				try { await saveDraft(); await run(value); } catch (e) { box.replaceChildren(msg("err", e.message)); }
+			};
+			f[field].addEventListener("input", go);
+			go();
+		};
+		autoCheck("gstin", 15, v.gst_checked_on, gstInfo, async (gstin) => {
+			const r = await api("erpnext_drive_integrations.onboarding.vendor.lookup_gstin", { gstin });
+			r.ok ? fill(r.values) : gstInfo.replaceChildren(msg("err", r.message));
+		});
+		autoCheck("ifsc", 11, v.bank_name, bankInfo, async (ifsc) => {
+			const r = await api("erpnext_drive_integrations.onboarding.vendor.lookup_ifsc", { ifsc });
+			bankInfo.replaceChildren(r.ok ? `Bank: ${r.bank_name}, ${r.bank_branch}` : msg("err", r.message));
+		});
+	}
+})();
+</script>
+{% endblock %}

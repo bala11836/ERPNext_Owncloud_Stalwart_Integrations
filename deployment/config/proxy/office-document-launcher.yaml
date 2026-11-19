@@ -1,0 +1,18 @@
+http:
+  routers:
+    office-document-launcher:
+      rule: Host(`office.example.com`) && Path(`/`)
+      entryPoints:
+      - https
+      priority: 1000
+      service: noop@internal
+      middlewares:
+      - office-document-launcher
+      tls:
+        certResolver: letsencrypt
+  middlewares:
+    office-document-launcher:
+      redirectRegex:
+        regex: ^https://office[.]example[.]com/?$
+        replacement: https://drive.example.com/files/spaces/personal
+        permanent: false

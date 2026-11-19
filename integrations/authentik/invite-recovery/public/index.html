@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Invite user · Cloud</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./page.mjs"></script>
+</head>
+<body>
+  <header><a href="/if/user/">Cloud</a><a href="/if/admin/">Authentik administration ↗</a></header>
+  <main>
+    <p class="eyebrow">USER ENROLLMENT</p>
+    <h1>Invite user</h1>
+    <p class="intro">Send an approved user a link to register or recover their passkey.</p>
+    <section class="card" aria-label="Enrollment invitation">
+      <p id="status" role="status" aria-live="polite">Checking your administrator session…</p>
+      <form id="invite-form" hidden>
+        <label for="user">User</label>
+        <input id="user" name="user" list="users" autocomplete="off" placeholder="Search by name, username or email" required>
+        <datalist id="users"></datalist>
+        <p class="hint">Only active, approved workspace users with a unique email appear here.</p>
+        <p class="kind" id="invitation-kind" aria-live="polite"></p>
+        <label for="expiry">Invitation expires after</label>
+        <select id="expiry" name="expiry">
+          <option value="1">1 hour</option><option value="6">6 hours</option>
+          <option value="12">12 hours</option><option value="24" selected>24 hours</option>
+          <option value="48">2 days</option><option value="72">3 days</option>
+        </select>
+        <p class="hint" id="expires-at"></p>
+        <p class="delivery" id="delivery">The invitation will be sent from noreply@example.com.</p>
+        <button type="submit" id="send">Send invitation</button>
+      </form>
+      <div class="actions"><a href="/if/admin/#/flow/stages/invitations">Manage invitations</a><button type="button" id="reload" hidden>Refresh user list</button><a id="sign-in" href="/if/admin/" hidden>Sign in to Authentik</a></div>
+    </section>
+    <p class="footnote">Allowed passkey providers: Apple Passwords/iCloud Keychain or Bitwarden. Setup instructions are included in the email. The link is single-use. Recovery deletes old passkeys only after the replacement is successfully registered and verified.</p>
+  </main>
+</body>
+</html>

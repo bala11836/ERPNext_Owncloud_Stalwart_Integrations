@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Drive",
+    "client_id": "xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69",
+    "client_type": "confidential",
+    "issuer_mode": "global",
+    "redirect_uris": [
+      {
+        "url": "^http://(127[.]0[.]0[.]1|localhost)(:[0-9]{1,5})?/?$",
+        "matching_mode": "regex"
+      }
+    ],
+    "access_token_validity": "minutes=5",
+    "refresh_token_validity": "days=30"
+  },
+  {
+    "name": "Drive",
+    "client_id": "mxd5OQDk6es5LzOzRvidJNfXLUZS2oN3oUFeXPP8LpPrhx3UroJFduGEYIBOxkY1",
+    "client_type": "confidential",
+    "issuer_mode": "global",
+    "redirect_uris": [
+      {
+        "url": "oc://ios.owncloud.com",
+        "matching_mode": "strict",
+        "redirect_uri_type": "authorization"
+      }
+    ],
+    "access_token_validity": "minutes=5",
+    "refresh_token_validity": "days=30"
+  },
+  {
+    "name": "Drive",
+    "client_id": "office-web",
+    "client_type": "public",
+    "issuer_mode": "global",
+    "redirect_uris": [
+      {
+        "url": "https://drive.example.com/oidc-callback.html",
+        "matching_mode": "strict",
+        "redirect_uri_type": "authorization"
+      },
+      {
+        "url": "https://drive.example.com/oidc-silent-redirect.html",
+        "matching_mode": "strict",
+        "redirect_uri_type": "authorization"
+      }
+    ],
+    "access_token_validity": "minutes=5",
+    "refresh_token_validity": "days=30"
+  }
+]

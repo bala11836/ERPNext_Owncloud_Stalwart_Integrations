@@ -1,0 +1,44 @@
+directives:
+  child-src:
+  - '''self'''
+  connect-src:
+  - '''self'''
+  - 'blob:'
+  - https://${COMPANION_DOMAIN|companion.owncloud.test}/
+  - wss://${COMPANION_DOMAIN|companion.owncloud.test}/
+  - https://raw.githubusercontent.com/owncloud/awesome-ocis/
+  - https://sso.example.com/
+  - https://*.tile.openstreetmap.org
+  default-src:
+  - '''none'''
+  font-src:
+  - '''self'''
+  - 'data:'
+  frame-ancestors:
+  - '''self'''
+  - https://erp.example.com
+  frame-src:
+  - '''self'''
+  - 'blob:'
+  - https://embed.diagrams.net/
+  - https://office.example.com/
+  img-src:
+  - '''self'''
+  - 'data:'
+  - 'blob:'
+  - https://raw.githubusercontent.com/owncloud/awesome-ocis/
+  - https://office.example.com/
+  - https://*.tile.openstreetmap.org
+  manifest-src:
+  - '''self'''
+  media-src:
+  - '''self'''
+  object-src:
+  - '''self'''
+  - 'blob:'
+  script-src:
+  - '''self'''
+  - '''unsafe-inline'''
+  style-src:
+  - '''self'''
+  - '''unsafe-inline'''

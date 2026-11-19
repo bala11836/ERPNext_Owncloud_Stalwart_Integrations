@@ -1,0 +1,87 @@
+# P45 production routes: mail.example.com and mx.example.com -> repository-built
+# Mail (Stalwart + webmail). Replaces the container labels of the
+# pre-repository Mail service with the same effective behaviour:
+# - JMAP/DAV and client discovery go to Stalwart (public and private entry);
+# - admin and setup pages are refused publicly (localhost only), with one
+#   public exception: reading the mail policy (GET);
+# - everything else on the mail host is webmail (public and private entry);
+# - Stalwart answers the ACME HTTP challenge for mx.example.com, so its own
+#   certificate for SMTP/IMAP renews (office-acme.yml points at this service).
+# Rendered at deployment by replacing example.com with the production domain;
+# see docs/production-moves.md.
+http:
+  routers:
+    mail-jmap:
+      rule: Host(`mail.example.com`) && (PathPrefix(`/jmap`) || PathPrefix(`/dav`) || Path(`/.well-known/jmap`) || Path(`/.well-known/caldav`) || Path(`/.well-known/carddav`))
+      entryPoints:
+      - https
+      - mailprivate
+      priority: 400
+      service: mail-stalwart
+      tls:
+        certResolver: letsencrypt
+    mail-smtp-acme:
+      rule: Host(`mx.example.com`) && PathPrefix(`/.well-known/acme-challenge/`)
+      entryPoints:
+      - http
+      priority: 500
+      service: mail-stalwart
+    mail-policy-read:
+      rule: Host(`mail.example.com`) && Path(`/api/admin/policy`) && Method(`GET`)
+      entryPoints:
+      - https
+      priority: 1120
+      service: mail-webmail
+      tls: {}
+    mail-public-admin-block:
+      rule: Host(`mail.example.com`) && (PathPrefix(`/admin`) || PathPrefix(`/api/admin`) || PathPrefix(`/setup`) || PathPrefix(`/api/setup`))
+      entryPoints:
+      - https
+      priority: 1100
+      service: mail-webmail
+      middlewares:
+      - mail-public-admin-block
+      tls: {}
+    mail-public:
+      rule: Host(`mail.example.com`)
+      entryPoints:
+      - https
+      priority: 300
+      service: mail-webmail
+      tls:
+        certResolver: letsencrypt
+    mail-private:
+      rule: Host(`mail.example.com`)
+      entryPoints:
+      - mailprivate
+      priority: 300
+      service: mail-webmail
+      tls:
+        certResolver: letsencrypt
+    mail-http:
+      rule: Host(`mail.example.com`)
+      entryPoints:
+      - http
+      priority: 10
+      service: mail-webmail
+      middlewares:
+      - mail-https
+  middlewares:
+    mail-public-admin-block:
+      ipAllowList:
+        sourceRange:
+        - 127.0.0.1/32
+    mail-https:
+      redirectScheme:
+        scheme: https
+  services:
+    mail-stalwart:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+        - url: http://mail-stalwart-production:8080
+    mail-webmail:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+        - url: http://mail-webmail-production:3000

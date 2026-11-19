@@ -1,0 +1,134 @@
+{
+  "services": {
+    "paperless": {
+      "image": "ghcr.io/paperless-ngx/paperless-ngx@sha256:d704e84f88300eb6ab001ab15720a2330ff99169cf9f94d6b8fcc44b63a84c84",
+      "restart": "unless-stopped",
+      "depends_on": {
+        "database": {
+          "condition": "service_healthy"
+        },
+        "broker": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "PAPERLESS_URL": "${CI_DMS_PAPERLESS_PAPERLESS_URL:?Set CI_DMS_PAPERLESS_PAPERLESS_URL}",
+        "PAPERLESS_ALLOWED_HOSTS": "${CI_DMS_PAPERLESS_PAPERLESS_ALLOWED_HOSTS:?Set CI_DMS_PAPERLESS_PAPERLESS_ALLOWED_HOSTS}",
+        "PAPERLESS_REDIS": "${CI_DMS_PAPERLESS_PAPERLESS_REDIS:?Set CI_DMS_PAPERLESS_PAPERLESS_REDIS}",
+        "PAPERLESS_DBHOST": "${CI_DMS_PAPERLESS_PAPERLESS_DBHOST:?Set CI_DMS_PAPERLESS_PAPERLESS_DBHOST}",
+        "PAPERLESS_DBNAME": "${CI_DMS_PAPERLESS_PAPERLESS_DBNAME:?Set CI_DMS_PAPERLESS_PAPERLESS_DBNAME}",
+        "PAPERLESS_DBUSER": "${CI_DMS_PAPERLESS_PAPERLESS_DBUSER:?Set CI_DMS_PAPERLESS_PAPERLESS_DBUSER}",
+        "PAPERLESS_TIME_ZONE": "${CI_DMS_PAPERLESS_PAPERLESS_TIME_ZONE:?Set CI_DMS_PAPERLESS_PAPERLESS_TIME_ZONE}",
+        "PAPERLESS_OCR_LANGUAGE": "${CI_DMS_PAPERLESS_PAPERLESS_OCR_LANGUAGE:?Set CI_DMS_PAPERLESS_PAPERLESS_OCR_LANGUAGE}",
+        "PAPERLESS_TASK_WORKERS": "${CI_DMS_PAPERLESS_PAPERLESS_TASK_WORKERS:?Set CI_DMS_PAPERLESS_PAPERLESS_TASK_WORKERS}",
+        "PAPERLESS_THREADS_PER_WORKER": "${CI_DMS_PAPERLESS_PAPERLESS_THREADS_PER_WORKER:?Set CI_DMS_PAPERLESS_PAPERLESS_THREADS_PER_WORKER}",
+        "PAPERLESS_CONSUMER_POLLING": "${CI_DMS_PAPERLESS_PAPERLESS_CONSUMER_POLLING:?Set CI_DMS_PAPERLESS_PAPERLESS_CONSUMER_POLLING}",
+        "PAPERLESS_ACCOUNT_ALLOW_SIGNUPS": "${CI_DMS_PAPERLESS_PAPERLESS_ACCOUNT_ALLOW_SIGNUPS:?Set CI_DMS_PAPERLESS_PAPERLESS_ACCOUNT_ALLOW_SIGNUPS}",
+        "PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS": "${CI_DMS_PAPERLESS_PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS:?Set CI_DMS_PAPERLESS_PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS}",
+        "PAPERLESS_APPS": "${CI_DMS_PAPERLESS_PAPERLESS_APPS:?Set CI_DMS_PAPERLESS_PAPERLESS_APPS}",
+        "PYTHONPATH": "${CI_DMS_PAPERLESS_PYTHONPATH:?Set CI_DMS_PAPERLESS_PYTHONPATH}",
+        "PAPERLESS_LOGOUT_REDIRECT_URL": "${CI_DMS_PAPERLESS_PAPERLESS_LOGOUT_REDIRECT_URL:?Set CI_DMS_PAPERLESS_PAPERLESS_LOGOUT_REDIRECT_URL}",
+        "PAPERLESS_SECRET_KEY": "${CI_DMS_PAPERLESS_PAPERLESS_SECRET_KEY:?Set CI_DMS_PAPERLESS_PAPERLESS_SECRET_KEY}",
+        "PAPERLESS_DBPASS": "${CI_DMS_PAPERLESS_PAPERLESS_DBPASS:?Set CI_DMS_PAPERLESS_PAPERLESS_DBPASS}",
+        "PAPERLESS_ADMIN_USER": "${CI_DMS_PAPERLESS_PAPERLESS_ADMIN_USER:?Set CI_DMS_PAPERLESS_PAPERLESS_ADMIN_USER}",
+        "PAPERLESS_ADMIN_PASSWORD": "${CI_DMS_PAPERLESS_PAPERLESS_ADMIN_PASSWORD:?Set CI_DMS_PAPERLESS_PAPERLESS_ADMIN_PASSWORD}",
+        "PAPERLESS_ADMIN_MAIL": "${CI_DMS_PAPERLESS_PAPERLESS_ADMIN_MAIL:?Set CI_DMS_PAPERLESS_PAPERLESS_ADMIN_MAIL}",
+        "PAPERLESS_SOCIALACCOUNT_PROVIDERS": "${CI_DMS_PAPERLESS_PAPERLESS_SOCIALACCOUNT_PROVIDERS:?Set CI_DMS_PAPERLESS_PAPERLESS_SOCIALACCOUNT_PROVIDERS}",
+        "PAPERLESS_SOCIAL_AUTO_SIGNUP": "${CI_DMS_PAPERLESS_PAPERLESS_SOCIAL_AUTO_SIGNUP:?Set CI_DMS_PAPERLESS_PAPERLESS_SOCIAL_AUTO_SIGNUP}",
+        "PAPERLESS_DISABLE_REGULAR_LOGIN": "${CI_DMS_PAPERLESS_PAPERLESS_DISABLE_REGULAR_LOGIN:?Set CI_DMS_PAPERLESS_PAPERLESS_DISABLE_REGULAR_LOGIN}",
+        "PAPERLESS_REDIRECT_LOGIN_TO_SSO": "${CI_DMS_PAPERLESS_PAPERLESS_REDIRECT_LOGIN_TO_SSO:?Set CI_DMS_PAPERLESS_PAPERLESS_REDIRECT_LOGIN_TO_SSO}",
+        "PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS": "${CI_DMS_PAPERLESS_PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS:?Set CI_DMS_PAPERLESS_PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS}",
+        "PAPERLESS_TIKA_ENABLED": "${CI_DMS_PAPERLESS_PAPERLESS_TIKA_ENABLED:?Set CI_DMS_PAPERLESS_PAPERLESS_TIKA_ENABLED}",
+        "PAPERLESS_TIKA_ENDPOINT": "${CI_DMS_PAPERLESS_PAPERLESS_TIKA_ENDPOINT:?Set CI_DMS_PAPERLESS_PAPERLESS_TIKA_ENDPOINT}",
+        "PAPERLESS_TIKA_GOTENBERG_ENDPOINT": "${CI_DMS_PAPERLESS_PAPERLESS_TIKA_GOTENBERG_ENDPOINT:?Set CI_DMS_PAPERLESS_PAPERLESS_TIKA_GOTENBERG_ENDPOINT}",
+        "PAPERLESS_CONSUMER_DELETE_DUPLICATES": "${CI_DMS_PAPERLESS_PAPERLESS_CONSUMER_DELETE_DUPLICATES:?Set CI_DMS_PAPERLESS_PAPERLESS_CONSUMER_DELETE_DUPLICATES}"
+      },
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/dms_paperless_0:/usr/src/paperless/data",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/dms_paperless_1:/usr/src/paperless/media",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/dms_paperless_2:/usr/src/paperless/consume",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/dms_paperless_3:/usr/src/paperless/export",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/dms_paperless_4:/opt/cloud-extension:ro"
+      ],
+      "ports": [
+        "127.0.0.1:${CI_DMS_PAPERLESS_HOST_PORT:?Set private port}:8000"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "dms-paperless",
+            "office-paperless"
+          ]
+        }
+      },
+      "mem_limit": "3g"
+    },
+    "database": {
+      "image": "postgres@sha256:d3244e8ce3f165ee3c93d9c4a4b1d0fe48b3a89e2287b717fdcbbde92d405065",
+      "restart": "unless-stopped",
+      "volumes": [
+        "paperless-db:/var/lib/postgresql/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U paperless"
+        ],
+        "interval": "10s",
+        "timeout": "3s",
+        "retries": 10
+      },
+      "mem_limit": "768m",
+      "environment": {
+        "POSTGRES_DB": "${CI_DMS_DATABASE_POSTGRES_DB:?Set CI_DMS_DATABASE_POSTGRES_DB}",
+        "POSTGRES_USER": "${CI_DMS_DATABASE_POSTGRES_USER:?Set CI_DMS_DATABASE_POSTGRES_USER}",
+        "POSTGRES_PASSWORD": "${CI_DMS_PAPERLESS_PAPERLESS_DBPASS:?Set CI_DMS_PAPERLESS_PAPERLESS_DBPASS}"
+      },
+      "ports": [],
+      "networks": {
+        "default": {}
+      }
+    },
+    "broker": {
+      "image": "redis@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3",
+      "restart": "unless-stopped",
+      "command": [
+        "redis-server",
+        "--appendonly",
+        "yes"
+      ],
+      "volumes": [
+        "paperless-redis:/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ],
+        "interval": "10s",
+        "timeout": "3s",
+        "retries": 10
+      },
+      "mem_limit": "256m",
+      "ports": [],
+      "networks": {
+        "default": {}
+      }
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "paperless-db": {},
+    "paperless-redis": {}
+  }
+}

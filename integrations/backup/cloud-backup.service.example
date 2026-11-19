@@ -1,0 +1,10 @@
+[Unit]
+Description=Encrypted off-server backup (Restic)
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+Nice=10
+IOSchedulingClass=idle
+ExecStart=/usr/bin/python3 /opt/cloud-backup/integrations/backup/backup.py --profile /etc/cloud-backup/backup.private.json run

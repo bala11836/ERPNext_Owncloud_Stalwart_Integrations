@@ -1,0 +1,1638 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "config-0",
+      "model": "authentik_core.group",
+      "identifiers": {
+        "name": "authentik Admins"
+      },
+      "attrs": {
+        "is_superuser": true,
+        "parents": [],
+        "attributes": {}
+      }
+    },
+    {
+      "id": "config-1",
+      "model": "authentik_core.group",
+      "identifiers": {
+        "name": "authentik Agent-Users"
+      },
+      "attrs": {
+        "is_superuser": false,
+        "parents": [],
+        "attributes": {}
+      }
+    },
+    {
+      "id": "config-2",
+      "model": "authentik_core.group",
+      "identifiers": {
+        "name": "authentik Read-only"
+      },
+      "attrs": {
+        "is_superuser": false,
+        "parents": [],
+        "attributes": {}
+      }
+    },
+    {
+      "id": "config-3",
+      "model": "authentik_core.group",
+      "identifiers": {
+        "name": "Workspace Users"
+      },
+      "attrs": {
+        "is_superuser": false,
+        "parents": [],
+        "attributes": {}
+      }
+    },
+    {
+      "id": "config-20",
+      "model": "authentik_flows.flow",
+      "identifiers": {
+        "slug": "default-provider-authorization-implicit-consent"
+      },
+      "attrs": {
+        "name": "Authorize Application",
+        "title": "Redirecting to %(app)s",
+        "designation": "authorization",
+        "background": "",
+        "policy_engine_mode": "any",
+        "compatibility_mode": false,
+        "layout": "stacked",
+        "denied_action": "message_continue",
+        "authentication": "require_authenticated"
+      }
+    },
+    {
+      "id": "config-16",
+      "model": "authentik_flows.flow",
+      "identifiers": {
+        "slug": "cloud-app-logout"
+      },
+      "attrs": {
+        "name": "Workspace application logout",
+        "title": "Signing out",
+        "designation": "invalidation",
+        "background": "",
+        "policy_engine_mode": "any",
+        "compatibility_mode": false,
+        "layout": "stacked",
+        "denied_action": "message_continue",
+        "authentication": "none"
+      }
+    },
+    {
+      "id": "config-136",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "authentik default OAuth Mapping: OpenID 'email'"
+      },
+      "attrs": {
+        "managed": "goauthentik.io/providers/oauth2/scope-email",
+        "expression": "return {\n    \"email\": request.user.email,\n    \"email_verified\": False\n}",
+        "scope_name": "email",
+        "description": "Email address"
+      }
+    },
+    {
+      "id": "config-137",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "Office Files group membership"
+      },
+      "attrs": {
+        "managed": null,
+        "expression": "return {'office_groups': ['office'] if ak_is_group_member(request.user, name='Workspace Users') else []}",
+        "scope_name": "profile",
+        "description": ""
+      }
+    },
+    {
+      "id": "config-138",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "authentik default OAuth Mapping: OpenID 'profile'"
+      },
+      "attrs": {
+        "managed": "goauthentik.io/providers/oauth2/scope-profile",
+        "expression": "avatar = request.user.avatar\nreturn delete_none_values({\n    \"name\": request.user.name,\n    \"given_name\": ak_obj_attr(request.user, \"given_name\", \"name\"),\n    \"family_name\": ak_obj_attr(request.user, \"family_name\"),\n    \"preferred_username\": request.user.username,\n    \"nickname\": request.user.username,\n    \"groups\": [group.name for group in request.user.groups.all()],\n    # Only expose URL-based avatars: generated avatars are inline base64\n    # SVG data URIs, which would bloat the ID/access token for every\n    # user without a real avatar URL (OIDC expects a URL here).\n    \"picture\": avatar if avatar and not avatar.startswith(\"data:\") else None,\n})",
+        "scope_name": "profile",
+        "description": "General Profile Information"
+      }
+    },
+    {
+      "id": "config-140",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "authentik default OAuth Mapping: OpenID 'offline_access'"
+      },
+      "attrs": {
+        "managed": "goauthentik.io/providers/oauth2/scope-offline_access",
+        "expression": "# This scope grants the application a refresh token that can be used to refresh user data\n# and let the application access authentik without the users interaction\nreturn {}",
+        "scope_name": "offline_access",
+        "description": "Access to request new tokens without interaction"
+      }
+    },
+    {
+      "id": "config-144",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "authentik default OAuth Mapping: OpenID 'openid'"
+      },
+      "attrs": {
+        "managed": "goauthentik.io/providers/oauth2/scope-openid",
+        "expression": "# This scope is required by the OpenID-spec, and must as such exist in authentik.\n# The scope by itself does not grant any information\nreturn {}",
+        "scope_name": "openid",
+        "description": ""
+      }
+    },
+    {
+      "id": "config-153",
+      "model": "authentik_providers_oauth2.oauth2provider",
+      "identifiers": {
+        "name": "Provider for Office Files"
+      },
+      "attrs": {
+        "authentication_flow": null,
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-136"
+          },
+          {
+            "$ref": "config-137"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-140"
+          },
+          {
+            "$ref": "config-144"
+          }
+        ],
+        "client_type": "public",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token",
+          "password"
+        ],
+        "client_id": "office-web",
+        "client_secret": {
+          "$secret": "identity-153-client_secret"
+        },
+        "access_code_validity": "minutes=1",
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "days=30",
+        "refresh_token_threshold": "hours=1",
+        "include_claims_in_id_token": true,
+        "signing_key": {
+          "$certificate": "default"
+        },
+        "encryption_key": null,
+        "redirect_uris": [
+          {
+            "matching_mode": "strict",
+            "url": "https://drive.example.com/oidc-callback.html",
+            "redirect_uri_type": "authorization"
+          },
+          {
+            "matching_mode": "strict",
+            "url": "https://drive.example.com/oidc-silent-redirect.html",
+            "redirect_uri_type": "authorization"
+          }
+        ],
+        "logout_uri": "",
+        "logout_method": "backchannel",
+        "sub_mode": "hashed_user_id",
+        "issuer_mode": "global",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": []
+      }
+    },
+    {
+      "id": "config-4",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "office"
+      },
+      "attrs": {
+        "name": "Drive",
+        "provider": {
+          "$ref": "config-153"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "https://drive.example.com/",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "any",
+        "group": "",
+        "meta_hide": false
+      }
+    },
+    {
+      "id": "config-149",
+      "model": "authentik_providers_oauth2.oauth2provider",
+      "identifiers": {
+        "name": "Provider for Office Documents"
+      },
+      "attrs": {
+        "authentication_flow": null,
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-136"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-140"
+          },
+          {
+            "$ref": "config-144"
+          }
+        ],
+        "client_type": "confidential",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token",
+          "password"
+        ],
+        "client_id": "office-paperless",
+        "client_secret": {
+          "$secret": "identity-149-client_secret"
+        },
+        "access_code_validity": "minutes=1",
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "days=30",
+        "refresh_token_threshold": "hours=1",
+        "include_claims_in_id_token": true,
+        "signing_key": {
+          "$certificate": "default"
+        },
+        "encryption_key": null,
+        "redirect_uris": [
+          {
+            "matching_mode": "strict",
+            "url": "https://dms.example.com/accounts/oidc/authentik/login/callback/",
+            "redirect_uri_type": "authorization"
+          },
+          {
+            "matching_mode": "strict",
+            "url": "https://dms.example.com/accounts/oidc/authentik/login/callback/",
+            "redirect_uri_type": "authorization"
+          }
+        ],
+        "logout_uri": "",
+        "logout_method": "backchannel",
+        "sub_mode": "hashed_user_id",
+        "issuer_mode": "per_provider",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": []
+      }
+    },
+    {
+      "id": "config-5",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "office-dms"
+      },
+      "attrs": {
+        "name": "DMS",
+        "provider": {
+          "$ref": "config-149"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "https://dms.example.com/",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "any",
+        "group": "",
+        "meta_hide": false
+      }
+    },
+    {
+      "id": "config-134",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "Office mail identity mapping"
+      },
+      "attrs": {
+        "managed": null,
+        "expression": "mailboxes = {\"admin@example.com\": \"alex@example.com\"}\nmailbox = mailboxes.get(request.user.email.lower())\nif not mailbox:\n    raise ValueError(\"No office mailbox assigned to this identity\")\nreturn {\"office_mailbox\": mailbox}",
+        "scope_name": "office_mail",
+        "description": "Assigned office mailbox"
+      }
+    },
+    {
+      "id": "config-150",
+      "model": "authentik_providers_oauth2.oauth2provider",
+      "identifiers": {
+        "name": "Provider for Office Mail"
+      },
+      "attrs": {
+        "authentication_flow": null,
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-134"
+          },
+          {
+            "$ref": "config-136"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-140"
+          },
+          {
+            "$ref": "config-144"
+          }
+        ],
+        "client_type": "public",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token",
+          "password",
+          "authorization_code",
+          "refresh_token",
+          "password"
+        ],
+        "client_id": "office-mail",
+        "client_secret": {
+          "$secret": "identity-150-client_secret"
+        },
+        "access_code_validity": "minutes=1",
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "days=30",
+        "refresh_token_threshold": "hours=1",
+        "include_claims_in_id_token": true,
+        "signing_key": {
+          "$certificate": "default"
+        },
+        "encryption_key": null,
+        "redirect_uris": [
+          {
+            "matching_mode": "strict",
+            "url": "https://mail.example.com/en/auth/callback",
+            "redirect_uri_type": "authorization"
+          },
+          {
+            "matching_mode": "strict",
+            "url": "https://mail.example.com/en/auth/callback",
+            "redirect_uri_type": "authorization"
+          }
+        ],
+        "logout_uri": "",
+        "logout_method": "backchannel",
+        "sub_mode": "hashed_user_id",
+        "issuer_mode": "per_provider",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": []
+      }
+    },
+    {
+      "id": "config-6",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "office-mail"
+      },
+      "attrs": {
+        "name": "Mail",
+        "provider": {
+          "$ref": "config-150"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "https://mail.example.com/",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "all",
+        "group": "",
+        "meta_hide": false
+      }
+    },
+    {
+      "id": "config-151",
+      "model": "authentik_providers_oauth2.oauth2provider",
+      "identifiers": {
+        "name": "Drive Desktop"
+      },
+      "attrs": {
+        "authentication_flow": null,
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-136"
+          },
+          {
+            "$ref": "config-137"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-140"
+          },
+          {
+            "$ref": "config-144"
+          }
+        ],
+        "client_type": "confidential",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token",
+          "password",
+          "authorization_code",
+          "refresh_token",
+          "password"
+        ],
+        "client_id": "xdXOt13JKxym1B1QcEncf2XDkLAexMBFwiT9j6EfhhHFJhs2KM9jbjTmf8JBXE69",
+        "client_secret": {
+          "$secret": "identity-151-client_secret"
+        },
+        "access_code_validity": "minutes=1",
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "days=30",
+        "refresh_token_threshold": "hours=1",
+        "include_claims_in_id_token": true,
+        "signing_key": {
+          "$certificate": "default"
+        },
+        "encryption_key": null,
+        "redirect_uris": [
+          {
+            "matching_mode": "regex",
+            "url": "^http://(127[.]0[.]0[.]1|localhost)(:[0-9]{1,5})?/?$",
+            "redirect_uri_type": "authorization"
+          }
+        ],
+        "logout_uri": "",
+        "logout_method": "backchannel",
+        "sub_mode": "hashed_user_id",
+        "issuer_mode": "global",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": []
+      }
+    },
+    {
+      "id": "config-7",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "office-desktop"
+      },
+      "attrs": {
+        "name": "Drive",
+        "provider": {
+          "$ref": "config-151"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "all",
+        "group": "",
+        "meta_hide": true
+      }
+    },
+    {
+      "id": "config-152",
+      "model": "authentik_providers_oauth2.oauth2provider",
+      "identifiers": {
+        "name": "Provider for Office iOS"
+      },
+      "attrs": {
+        "authentication_flow": null,
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-136"
+          },
+          {
+            "$ref": "config-137"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-140"
+          },
+          {
+            "$ref": "config-144"
+          }
+        ],
+        "client_type": "confidential",
+        "grant_types": [
+          "authorization_code",
+          "refresh_token",
+          "password",
+          "authorization_code",
+          "refresh_token",
+          "password"
+        ],
+        "client_id": "mxd5OQDk6es5LzOzRvidJNfXLUZS2oN3oUFeXPP8LpPrhx3UroJFduGEYIBOxkY1",
+        "client_secret": {
+          "$secret": "identity-152-client_secret"
+        },
+        "access_code_validity": "minutes=1",
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "days=30",
+        "refresh_token_threshold": "hours=1",
+        "include_claims_in_id_token": true,
+        "signing_key": {
+          "$certificate": "default"
+        },
+        "encryption_key": null,
+        "redirect_uris": [
+          {
+            "matching_mode": "strict",
+            "url": "oc://ios.owncloud.com",
+            "redirect_uri_type": "authorization"
+          }
+        ],
+        "logout_uri": "",
+        "logout_method": "backchannel",
+        "sub_mode": "hashed_user_id",
+        "issuer_mode": "global",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": []
+      }
+    },
+    {
+      "id": "config-8",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "office-ios"
+      },
+      "attrs": {
+        "name": "Drive",
+        "provider": {
+          "$ref": "config-152"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "all",
+        "group": "",
+        "meta_hide": true
+      }
+    },
+    {
+      "id": "config-17",
+      "model": "authentik_flows.flow",
+      "identifiers": {
+        "slug": "cloud-passkey-login"
+      },
+      "attrs": {
+        "name": "Workspace passkey sign-in",
+        "title": "Sign in to Workspace",
+        "designation": "authentication",
+        "background": "",
+        "policy_engine_mode": "any",
+        "compatibility_mode": false,
+        "layout": "stacked",
+        "denied_action": "message_continue",
+        "authentication": "none"
+      }
+    },
+    {
+      "id": "config-133",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "cloud-verified-email-scope"
+      },
+      "attrs": {
+        "managed": null,
+        "expression": "email = request.user.email\nreturn {\"email\": email, \"email_verified\": bool(email) and (request.user.attributes.get(\"cloud_verified_email\") == email or request.user.attributes.get(\"google_verified_email\") == email)}",
+        "scope_name": "email",
+        "description": ""
+      }
+    },
+    {
+      "id": "config-146",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "Workspace approved identity"
+      },
+      "attrs": {
+        "managed": null,
+        "expression": "return {\"cloud_approved\": request.user.is_active and request.user.groups.filter(name=\"Workspace Users\").exists(), \"groups\": list(request.user.groups.values_list(\"name\",flat=True))}",
+        "scope_name": "profile",
+        "description": "Explicitly approved users; never trusts Google identity alone"
+      }
+    },
+    {
+      "id": "config-148",
+      "model": "authentik_providers_oauth2.oauth2provider",
+      "identifiers": {
+        "name": "Workspace ERPNext"
+      },
+      "attrs": {
+        "authentication_flow": {
+          "$ref": "config-17"
+        },
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-133"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-144"
+          },
+          {
+            "$ref": "config-146"
+          }
+        ],
+        "client_type": "confidential",
+        "grant_types": [
+          "authorization_code"
+        ],
+        "client_id": "erpnext",
+        "client_secret": {
+          "$secret": "identity-148-client_secret"
+        },
+        "access_code_validity": "minutes=1",
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "days=30",
+        "refresh_token_threshold": "seconds=0",
+        "include_claims_in_id_token": true,
+        "signing_key": {
+          "$certificate": "default"
+        },
+        "encryption_key": null,
+        "redirect_uris": [
+          {
+            "matching_mode": "strict",
+            "url": "https://erp.example.com/api/method/frappe.integrations.oauth2_logins.custom/authentik",
+            "redirect_uri_type": "authorization"
+          }
+        ],
+        "logout_uri": "https://erp.example.com/api/method/erpnext_drive_integrations.portal.sso.backchannel",
+        "logout_method": "backchannel",
+        "sub_mode": "hashed_user_id",
+        "issuer_mode": "per_provider",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": []
+      }
+    },
+    {
+      "id": "config-9",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "erpnext"
+      },
+      "attrs": {
+        "name": "ERPNext",
+        "provider": {
+          "$ref": "config-148"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "https://erp.example.com/",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "all",
+        "group": "",
+        "meta_hide": false
+      }
+    },
+    {
+      "id": "config-139",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "authentik default OAuth Mapping: Application Entitlements"
+      },
+      "attrs": {
+        "managed": "goauthentik.io/providers/oauth2/scope-entitlements",
+        "expression": "entitlements = [entitlement.name for entitlement in request.user.app_entitlements(provider.application)]\nreturn {\n    \"entitlements\": entitlements,\n    \"roles\": entitlements,\n}",
+        "scope_name": "entitlements",
+        "description": "Application entitlements"
+      }
+    },
+    {
+      "id": "config-145",
+      "model": "authentik_providers_oauth2.scopemapping",
+      "identifiers": {
+        "name": "authentik default OAuth Mapping: Proxy outpost"
+      },
+      "attrs": {
+        "managed": "goauthentik.io/providers/proxy/scope-proxy",
+        "expression": "# This mapping is used by the authentik proxy. It passes extra user attributes,\n# which are used for example for the HTTP-Basic Authentication mapping.\nreturn {\n    \"ak_proxy\": {\n        \"user_attributes\": request.user.group_attributes(request),\n        \"is_superuser\": request.user.is_superuser,\n    }\n}",
+        "scope_name": "ak_proxy",
+        "description": "authentik Proxy - User information"
+      }
+    },
+    {
+      "id": "config-154",
+      "model": "authentik_providers_proxy.proxyprovider",
+      "identifiers": {
+        "name": "Workspace ERPNext gateway"
+      },
+      "attrs": {
+        "authentication_flow": {
+          "$ref": "config-17"
+        },
+        "authorization_flow": {
+          "$ref": "config-20"
+        },
+        "invalidation_flow": {
+          "$ref": "config-16"
+        },
+        "property_mappings": [
+          {
+            "$ref": "config-133"
+          },
+          {
+            "$ref": "config-136"
+          },
+          {
+            "$ref": "config-138"
+          },
+          {
+            "$ref": "config-139"
+          },
+          {
+            "$ref": "config-144"
+          },
+          {
+            "$ref": "config-145"
+          },
+          {
+            "$ref": "config-146"
+          }
+        ],
+        "internal_host": "http://erp-frontend:8080",
+        "external_host": "https://erp.example.com",
+        "internal_host_ssl_validation": true,
+        "certificate": null,
+        "skip_path_regex": "",
+        "basic_auth_enabled": false,
+        "basic_auth_password_attribute": "",
+        "basic_auth_user_attribute": "",
+        "mode": "forward_single",
+        "intercept_header_auth": true,
+        "cookie_domain": "",
+        "jwt_federation_sources": [],
+        "jwt_federation_providers": [],
+        "access_token_validity": "minutes=5",
+        "refresh_token_validity": "hours=8"
+      }
+    },
+    {
+      "id": "config-11",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "erp-gateway"
+      },
+      "attrs": {
+        "name": "ERPNext",
+        "provider": {
+          "$ref": "config-154"
+        },
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "blank://blank",
+        "meta_icon": "",
+        "meta_description": "",
+        "meta_publisher": "",
+        "policy_engine_mode": "all",
+        "group": "",
+        "meta_hide": true
+      }
+    },
+    {
+      "id": "config-12",
+      "model": "authentik_core.application",
+      "identifiers": {
+        "slug": "cloud-invite-user"
+      },
+      "attrs": {
+        "name": "Invite user",
+        "provider": null,
+        "backchannel_providers": [],
+        "open_in_new_tab": false,
+        "meta_launch_url": "",
+        "meta_icon": "",
+        "meta_description": "Send first-time enrollment or passkey recovery invitations",
+        "meta_publisher": "",
+        "policy_engine_mode": "all",
+        "group": "",
+        "meta_hide": true
+      }
+    },
+    {
+      "id": "config-19",
+      "model": "authentik_flows.flow",
+      "identifiers": {
+        "slug": "default-invalidation-flow"
+      },
+      "attrs": {
+        "name": "Logout",
+        "title": "Default Invalidation Flow",
+        "designation": "invalidation",
+        "background": "",
+        "policy_engine_mode": "any",
+        "compatibility_mode": false,
+        "layout": "stacked",
+        "denied_action": "message_continue",
+        "authentication": "none"
+      }
+    },
+    {
+      "id": "config-21",
+      "model": "authentik_flows.flow",
+      "identifiers": {
+        "slug": "default-user-settings-flow"
+      },
+      "attrs": {
+        "name": "User settings",
+        "title": "Update your info",
+        "designation": "stage_configuration",
+        "background": "",
+        "policy_engine_mode": "any",
+        "compatibility_mode": false,
+        "layout": "stacked",
+        "denied_action": "message_continue",
+        "authentication": "require_authenticated"
+      }
+    },
+    {
+      "id": "config-25",
+      "model": "authentik_flows.flow",
+      "identifiers": {
+        "slug": "default-request"
+      },
+      "attrs": {
+        "name": "Request access",
+        "title": "Request access",
+        "designation": "stage_configuration",
+        "background": "",
+        "policy_engine_mode": "any",
+        "compatibility_mode": false,
+        "layout": "stacked",
+        "denied_action": "message_continue",
+        "authentication": "require_authenticated"
+      }
+    },
+    {
+      "id": "config-170",
+      "model": "authentik_stages_identification.identificationstage",
+      "identifiers": {
+        "name": "cloud-passkey-identification"
+      },
+      "attrs": {
+        "user_fields": [
+          "username",
+          "email"
+        ],
+        "password_stage": null,
+        "captcha_stage": null,
+        "case_insensitive_matching": true,
+        "show_matched_user": true,
+        "enrollment_flow": null,
+        "recovery_flow": null,
+        "passwordless_flow": null,
+        "sources": [],
+        "show_source_labels": false,
+        "pretend_user_exists": true,
+        "enable_remember_me": false,
+        "webauthn_stage": null
+      }
+    },
+    {
+      "id": "config-44",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-17"
+        },
+        "stage": {
+          "$ref": "config-170"
+        },
+        "order": 10
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-160",
+      "model": "authentik_stages_authenticator_validate.authenticatorvalidatestage",
+      "identifiers": {
+        "name": "cloud-passkey-required"
+      },
+      "attrs": {
+        "not_configured_action": "deny",
+        "device_classes": [
+          "webauthn"
+        ],
+        "configuration_stages": [],
+        "last_auth_threshold": "seconds=0",
+        "webauthn_user_verification": "required",
+        "webauthn_hints": [],
+        "webauthn_allowed_device_types": [
+          "fbfc3007-154e-4ecc-8c0b-6e020557d7bd",
+          "d548826e-79b4-db40-a3d8-11116f7e8349",
+          "dd4ec289-e01d-41c9-bb89-70fa845d4bf2"
+        ],
+        "email_otp_throttling_factor": 1,
+        "sms_otp_throttling_factor": 1,
+        "totp_otp_throttling_factor": 1,
+        "static_otp_throttling_factor": 1
+      }
+    },
+    {
+      "id": "config-45",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-17"
+        },
+        "stage": {
+          "$ref": "config-160"
+        },
+        "order": 20
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-165",
+      "model": "authentik_stages_deny.denystage",
+      "identifiers": {
+        "name": "cloud-recovery-deny"
+      },
+      "attrs": {
+        "deny_message": "This recovery cannot continue. Your old passkeys have not been replaced. Contact your administrator."
+      }
+    },
+    {
+      "id": "config-46",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-17"
+        },
+        "stage": {
+          "$ref": "config-165"
+        },
+        "order": 29
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "all",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-195",
+      "model": "authentik_stages_user_login.userloginstage",
+      "identifiers": {
+        "name": "cloud-passkey-user-login"
+      },
+      "attrs": {
+        "session_duration": "seconds=0",
+        "terminate_other_sessions": false,
+        "remember_me_offset": "seconds=0",
+        "network_binding": "no_binding",
+        "geoip_binding": "no_binding",
+        "remember_device": "days=30"
+      }
+    },
+    {
+      "id": "config-47",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-17"
+        },
+        "stage": {
+          "$ref": "config-195"
+        },
+        "order": 30
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-197",
+      "model": "authentik_stages_user_logout.userlogoutstage",
+      "identifiers": {
+        "name": "default-invalidation-logout"
+      },
+      "attrs": {}
+    },
+    {
+      "id": "config-49",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-19"
+        },
+        "stage": {
+          "$ref": "config-197"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-55",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-16"
+        },
+        "stage": {
+          "$ref": "config-197"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-190",
+      "model": "authentik_stages_redirect.redirectstage",
+      "identifiers": {
+        "name": "cloud-return-erp-login"
+      },
+      "attrs": {
+        "keep_context": false,
+        "mode": "static",
+        "target_static": "https://erp.example.com/signed-out",
+        "target_flow": null
+      }
+    },
+    {
+      "id": "config-56",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-16"
+        },
+        "stage": {
+          "$ref": "config-190"
+        },
+        "order": 10
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-182",
+      "model": "authentik_stages_prompt.prompt",
+      "identifiers": {
+        "name": "default-user-settings-field-username"
+      },
+      "attrs": {
+        "field_key": "username",
+        "label": "Username",
+        "type": "username",
+        "required": true,
+        "placeholder": "Username",
+        "initial_value": "try:\n    return user.username\nexcept:\n    return ''",
+        "order": 200,
+        "sub_text": "",
+        "placeholder_expression": false,
+        "initial_value_expression": true
+      }
+    },
+    {
+      "id": "config-183",
+      "model": "authentik_stages_prompt.prompt",
+      "identifiers": {
+        "name": "default-user-settings-field-name"
+      },
+      "attrs": {
+        "field_key": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true,
+        "placeholder": "Name",
+        "initial_value": "try:\n    return user.name\nexcept:\n    return ''",
+        "order": 201,
+        "sub_text": "",
+        "placeholder_expression": false,
+        "initial_value_expression": true
+      }
+    },
+    {
+      "id": "config-184",
+      "model": "authentik_stages_prompt.prompt",
+      "identifiers": {
+        "name": "default-user-settings-field-email"
+      },
+      "attrs": {
+        "field_key": "email",
+        "label": "Email",
+        "type": "email",
+        "required": true,
+        "placeholder": "Email",
+        "initial_value": "try:\n    return user.email\nexcept:\n    return ''",
+        "order": 202,
+        "sub_text": "",
+        "placeholder_expression": false,
+        "initial_value_expression": true
+      }
+    },
+    {
+      "id": "config-185",
+      "model": "authentik_stages_prompt.prompt",
+      "identifiers": {
+        "name": "default-user-settings-field-locale"
+      },
+      "attrs": {
+        "field_key": "attributes.settings.locale",
+        "label": "Locale",
+        "type": "ak-locale",
+        "required": true,
+        "placeholder": "Locale",
+        "initial_value": "try:\n    return user.attributes.get(\"settings\", {}).get(\"locale\", \"\")\nexcept:\n    return ''",
+        "order": 203,
+        "sub_text": "",
+        "placeholder_expression": false,
+        "initial_value_expression": true
+      }
+    },
+    {
+      "id": "config-85",
+      "model": "authentik_policies_expression.expressionpolicy",
+      "identifiers": {
+        "name": "default-user-settings-authorization"
+      },
+      "attrs": {
+        "execution_logging": false,
+        "expression": "from authentik.core.models import (\n    USER_ATTRIBUTE_CHANGE_EMAIL,\n    USER_ATTRIBUTE_CHANGE_NAME,\n    USER_ATTRIBUTE_CHANGE_USERNAME\n)\nprompt_data = request.context.get(\"prompt_data\")\n\nif not request.user.group_attributes(request.http_request).get(\n    USER_ATTRIBUTE_CHANGE_EMAIL, request.http_request.tenant.default_user_change_email\n):\n    if prompt_data.get(\"email\") != request.user.email:\n        ak_message(\"Not allowed to change email address.\")\n        return False\n\nif not request.user.group_attributes(request.http_request).get(\n    USER_ATTRIBUTE_CHANGE_NAME, request.http_request.tenant.default_user_change_name\n):\n    if prompt_data.get(\"name\") != request.user.name:\n        ak_message(\"Not allowed to change name.\")\n        return False\n\nif not request.user.group_attributes(request.http_request).get(\n    USER_ATTRIBUTE_CHANGE_USERNAME, request.http_request.tenant.default_user_change_username\n):\n    if prompt_data.get(\"username\") != request.user.username:\n        ak_message(\"Not allowed to change username.\")\n        return False\n\nreturn True"
+      }
+    },
+    {
+      "id": "config-189",
+      "model": "authentik_stages_prompt.promptstage",
+      "identifiers": {
+        "name": "default-user-settings"
+      },
+      "attrs": {
+        "fields": [
+          {
+            "$ref": "config-182"
+          },
+          {
+            "$ref": "config-183"
+          },
+          {
+            "$ref": "config-184"
+          },
+          {
+            "$ref": "config-185"
+          }
+        ],
+        "validation_policies": [
+          {
+            "$ref": "config-85"
+          }
+        ]
+      }
+    },
+    {
+      "id": "config-66",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-21"
+        },
+        "stage": {
+          "$ref": "config-189"
+        },
+        "order": 20
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-201",
+      "model": "authentik_stages_user_write.userwritestage",
+      "identifiers": {
+        "name": "default-user-settings-write"
+      },
+      "attrs": {
+        "user_creation_mode": "never_create",
+        "create_users_as_inactive": false,
+        "create_users_group": null,
+        "user_type": "external",
+        "user_path_template": ""
+      }
+    },
+    {
+      "id": "config-67",
+      "model": "authentik_flows.flowstagebinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-21"
+        },
+        "stage": {
+          "$ref": "config-201"
+        },
+        "order": 100
+      },
+      "attrs": {
+        "evaluate_on_plan": false,
+        "re_evaluate_policies": true,
+        "policy_engine_mode": "any",
+        "invalid_response_action": "retry"
+      }
+    },
+    {
+      "id": "config-74",
+      "model": "authentik_policies_expression.expressionpolicy",
+      "identifiers": {
+        "name": "cloud-public-gateway-active-user"
+      },
+      "attrs": {
+        "execution_logging": false,
+        "expression": "return bool(request.user.is_authenticated and request.user.is_active)"
+      }
+    },
+    {
+      "id": "config-78",
+      "model": "authentik_policies_expression.expressionpolicy",
+      "identifiers": {
+        "name": "cloud-passkey-approved-account"
+      },
+      "attrs": {
+        "execution_logging": false,
+        "expression": "user = request.context.get(\"pending_user\")\nreturn bool(user and user.is_active and (user.is_superuser or user.groups.filter(name__in=[\"Workspace Users\"]).exists()))"
+      }
+    },
+    {
+      "id": "config-83",
+      "model": "authentik_policies_expression.expressionpolicy",
+      "identifiers": {
+        "name": "cloud-invite-allowed_signin"
+      },
+      "attrs": {
+        "execution_logging": false,
+        "expression": "\"\"\"Embedded into namespaced native expression policies; no vendor code patch.\n\nEach guard is bound NEGATED to a Deny stage, so an exception/false result denies\nthe flow. Bind only at execution, never planning, with native flow policy caching\ndisabled. Installation checks these assumptions on the installed release.\n\"\"\"\nimport hashlib\nimport json\nfrom datetime import datetime\nfrom django.db import transaction\nfrom django.utils.timezone import now\nfrom authentik.core.models import Token, TokenIntents, User\nfrom authentik.stages.authenticator_webauthn.models import WebAuthnDevice\n\nRECOVERY_SLUG = \"cloud-passkey-recovery-invitation\"\nALLOWED_AAGUIDS = {\n    \"fbfc3007-154e-4ecc-8c0b-6e020557d7bd\",\n    \"dd4ec289-e01d-41c9-bb89-70fa845d4bf2\",\n    \"d548826e-79b4-db40-a3d8-11116f7e8349\",\n}\n\n\ndef approved_user(user):\n    return bool(user.is_active and user.type in (\"internal\", \"external\")\n                and user.ak_groups.filter(name=\"Workspace Users\").exists())\n\n\ndef invitation_identity(ctx, expected_slug=RECOVERY_SLUG):\n    invite = ctx.get(\"invitation\")\n    if not ctx.get(\"invitation_in_effect\") or not invite:\n        return None\n    if not invite.single_use or not invite.expiring or not invite.expires or invite.expires <= now():\n        return None\n    if not invite.flow_id or invite.flow.slug != expected_slug:\n        return None\n    creator = User.objects.filter(pk=invite.created_by_id, is_active=True).first()\n    if not creator or not creator.is_superuser:\n        return None\n    data = invite.fixed_data or {}\n    email = data.get(\"email\")\n    if not isinstance(email, str) or not email or email.strip() != email or not data.get(\"user_id\"):\n        return None\n    matches = User.objects.filter(email__iexact=email, is_active=True)\n    if matches.count() != 1:\n        return None\n    user = matches.first()\n    if str(user.pk) != str(data[\"user_id\"]) or user.email != email or not approved_user(user):\n        return None\n    pending = ctx.get(\"pending_user\")\n    if pending and pending.pk != user.pk:\n        return None\n    return invite, user\n\n\ndef begin_recovery(ctx):\n    identity = invitation_identity(ctx)\n    if not identity:\n        return False\n    _, user = identity\n    ctx[\"pending_user\"] = user\n    # Lock the destination to the canonical email. No prompt-supplied override.\n    ctx[\"email\"] = user.email\n    return True\n\n\ndef ledger_name(invite):\n    # Native single-use InvitationStage deletes the row and clears its pk.\n    # The admin page supplies a fresh UUID in the immutable invitation name.\n    digest = hashlib.sha256((str(invite.flow_id) + \":\" + invite.name).encode()).hexdigest()\n    return \"cloud-passkey-recovery-\" + digest\n\n\ndef verified_snapshot(ctx):\n    identity = invitation_identity(ctx)\n    if not identity:\n        return False\n    invite, user = identity\n    # The native InvitationStage validated and consumed the secret single-use\n    # link delivered to the registered email. That link is now the email proof;\n    # no second EmailStage/FlowToken is needed.\n    with transaction.atomic():\n        user = User.objects.select_for_update().get(pk=user.pk)\n        if not approved_user(user) or user.email != invite.fixed_data[\"email\"]:\n            return False\n        old = list(WebAuthnDevice.objects.select_for_update().filter(user=user).values_list(\"pk\", flat=True))\n        snapshot = {\"user_id\": user.pk, \"email\": user.email, \"flow\": RECOVERY_SLUG,\n                    \"old_keys\": [str(pk) for pk in old], \"checkpoint\": now().isoformat(),\n                    \"expires\": invite.expires.isoformat(), \"completed\": False}\n        ledger, created = Token.objects.including_expired().get_or_create(\n            identifier=ledger_name(invite), defaults={\"user\": user, \"intent\": TokenIntents.INTENT_VERIFICATION,\n                \"description\": json.dumps(snapshot), \"expires\": invite.expires, \"expiring\": True})\n        if not created:\n            saved = json.loads(ledger.description)\n            if ledger.is_expired or ledger.user_id != user.pk or saved.get(\"completed\") or saved.get(\"email\") != user.email:\n                return False\n        ctx[\"cloud_recovery_ledger\"] = ledger.identifier\n        ctx[\"cloud_recovery_email\"] = user.email\n        ctx.pop(\"auth_method_args\", None)\n        ctx.pop(\"auth_method\", None)\n    return True\n\n\ndef commit_recovery(ctx):\n    identity = invitation_identity(ctx)\n    if not identity or ctx.get(\"cloud_recovery_completed\"):\n        return False\n    invite, user = identity\n    name = ctx.get(\"cloud_recovery_ledger\")\n    if name != ledger_name(invite) or ctx.get(\"cloud_recovery_email\") != user.email:\n        return False\n    verified = ctx.get(\"auth_method_args\", {}).get(\"mfa_devices\", [])\n    candidates = [d for d in verified if isinstance(d, WebAuthnDevice) and d.user_id == user.pk]\n    if len(candidates) != 1:\n        return False\n    replacement_pk = candidates[0].pk\n    with transaction.atomic():\n        user = User.objects.select_for_update().get(pk=user.pk)\n        ledger = Token.objects.including_expired().select_for_update().filter(identifier=name, user=user).first()\n        if not ledger or ledger.is_expired or not approved_user(user) or user.email != invite.fixed_data[\"email\"]:\n            return False\n        snapshot = json.loads(ledger.description)\n        if snapshot.get(\"completed\") or snapshot.get(\"email\") != user.email or snapshot.get(\"user_id\") != user.pk:\n            return False\n        if snapshot.get(\"flow\") != RECOVERY_SLUG or datetime.fromisoformat(snapshot[\"expires\"]) <= now():\n            return False\n        old = snapshot[\"old_keys\"]\n        if str(replacement_pk) in old:\n            return False\n        replacement = WebAuthnDevice.objects.select_for_update().filter(pk=replacement_pk, user=user, confirmed=True).first()\n        checkpoint = datetime.fromisoformat(snapshot[\"checkpoint\"])\n        if not replacement or str(replacement.aaguid).lower() not in ALLOWED_AAGUIDS:\n            return False\n        if replacement.created_on < checkpoint or not replacement.last_used or replacement.last_used < checkpoint:\n            return False\n        # Select and delete only the exact pre-recovery snapshot for this user.\n        # A concurrently added key outside this snapshot is never deleted.\n        deleted, _ = WebAuthnDevice.objects.filter(user=user, pk__in=old).exclude(pk=replacement_pk).delete()\n        snapshot.update(completed=True, replacement=str(replacement.pk), completed_at=now().isoformat(), deleted=deleted)\n        ledger.description = json.dumps(snapshot)\n        ledger.save(update_fields=[\"description\"])\n        user.attributes = {**user.attributes, \"cloud_verified_email\": user.email}\n        user.save(update_fields=[\"attributes\"])\n        ctx[\"pending_user\"] = user\n        ctx[\"cloud_recovery_completed\"] = True\n    return True\n\n\ndef allowed_signin(ctx):\n    user = ctx.get(\"pending_user\")\n    if not user or not user.pk:\n        return False\n    args = ctx.get(\"auth_method_args\", {})\n    devices = list(args.get(\"mfa_devices\", []))\n    if isinstance(args.get(\"device\"), WebAuthnDevice):\n        devices.append(args[\"device\"])\n    for device in devices:\n        if isinstance(device, WebAuthnDevice):\n            current = WebAuthnDevice.objects.filter(pk=device.pk, user=user, confirmed=True).first()\n            if current and str(current.aaguid).lower() in ALLOWED_AAGUIDS:\n                return True\n    return False\n\n\ndef single_email_enrollment(ctx):\n    identity = invitation_identity(ctx, \"cloud-first-time-enrollment\")\n    if not identity:\n        return False\n    invite, user = identity\n    if WebAuthnDevice.objects.filter(user=user).exists():\n        return False\n    ctx[\"pending_user\"] = user\n    ctx[\"email\"] = user.email\n    user.attributes = {**user.attributes, \"cloud_verified_email\": user.email}\n    user.save(update_fields=[\"attributes\"])\n    return True\n\ntry:\n    plan=request.context.get('flow_plan')\n    ctx=plan.context if plan else request.context\n    return allowed_signin(ctx)\nexcept Exception:\n    return False\n"
+      }
+    },
+    {
+      "id": "config-84",
+      "model": "authentik_policies_expression.expressionpolicy",
+      "identifiers": {
+        "name": "cloud-invite-admin-only"
+      },
+      "attrs": {
+        "execution_logging": false,
+        "expression": "return False  # Moved to Directory in Authentik administration."
+      }
+    },
+    {
+      "id": "config-108",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-9"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 10
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-112",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-45"
+        },
+        "policy": {
+          "$ref": "config-78"
+        },
+        "group": null,
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-113",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-11"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 10
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-115",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-11"
+        },
+        "policy": {
+          "$ref": "config-74"
+        },
+        "group": null,
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-120",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-46"
+        },
+        "policy": {
+          "$ref": "config-83"
+        },
+        "group": null,
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": true,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": true
+      }
+    },
+    {
+      "id": "config-121",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-12"
+        },
+        "policy": {
+          "$ref": "config-84"
+        },
+        "group": null,
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-128",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-6"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-129",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-7"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-130",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-8"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-131",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-4"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-132",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-5"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-3"
+        },
+        "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-202",
+      "model": "authentik_brands.brand",
+      "identifiers": {
+        "domain": "authentik-default"
+      },
+      "attrs": {
+        "default": true,
+        "branding_title": "authentik",
+        "branding_logo": "https://erp.example.com/assets/erpnext_drive_integrations/company-logo-approved-v6.svg",
+        "branding_favicon": "https://erp.example.com/assets/erpnext_drive_integrations/company-logo-approved-v6.svg",
+        "branding_custom_css": "\n/* Company login logo */\n.pf-c-login__main-header .branding-logo { width: 180px !important; height: auto !important; max-height: 160px !important; object-fit: contain; }\n",
+        "branding_default_flow_background": "https://sso.example.com/static/dist/assets/images/flow_background.jpg",
+        "branding_map_tiles": "",
+        "flow_authentication": {
+          "$ref": "config-17"
+        },
+        "flow_user_switch": null,
+        "flow_invalidation": {
+          "$ref": "config-19"
+        },
+        "flow_recovery": null,
+        "flow_unenrollment": null,
+        "flow_user_settings": {
+          "$ref": "config-21"
+        },
+        "flow_device_code": null,
+        "flow_lockdown": null,
+        "flow_request": {
+          "$ref": "config-25"
+        },
+        "default_application": null,
+        "web_certificate": null,
+        "client_certificates": [],
+        "attributes": {}
+      }
+    }
+  ]
+}

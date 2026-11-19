@@ -1,0 +1,212 @@
+[
+  {
+    "stack": "private-dns",
+    "service": "private-dns",
+    "path": "private_dns_private_dns_0",
+    "target": "/etc/coredns/Corefile",
+    "source_kind": "file"
+  },
+  {
+    "stack": "drive",
+    "service": "ocis",
+    "path": "drive_ocis_0",
+    "target": "/etc/ocis",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "drive",
+    "service": "ocis",
+    "path": "drive_ocis_1",
+    "target": "/var/lib/ocis",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "drive",
+    "service": "collaboration",
+    "path": "drive_ocis_0",
+    "target": "/etc/ocis",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "processing",
+    "service": "document-worker",
+    "path": "processing_document_worker_0",
+    "target": "/app/document-worker.py",
+    "source_kind": "file"
+  },
+  {
+    "stack": "processing",
+    "service": "document-worker",
+    "path": "processing_document_worker_1",
+    "target": "/run/secrets/document-worker.json",
+    "source_kind": "file"
+  },
+  {
+    "stack": "processing",
+    "service": "document-worker",
+    "path": "processing_document_worker_2",
+    "target": "/state",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "configurator",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "backend",
+    "path": "erp_backend_0",
+    "target": "/opt/cloud/backend_start.py",
+    "source_kind": "file"
+  },
+  {
+    "stack": "erp",
+    "service": "backend",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "frontend",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "frontend",
+    "path": "erp_frontend_2",
+    "target": "/templates/nginx/frappe.conf.template",
+    "source_kind": "file"
+  },
+  {
+    "stack": "erp",
+    "service": "websocket",
+    "path": "erp_websocket_0",
+    "target": "/opt/cloud/netbird_realtime.cjs",
+    "source_kind": "file"
+  },
+  {
+    "stack": "erp",
+    "service": "websocket",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "queue-short",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "queue-long",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "erp",
+    "service": "scheduler",
+    "path": "erp_configurator_1",
+    "target": "/var/lib/cloud-integration",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "identity",
+    "service": "server",
+    "path": "identity_server_1",
+    "target": "/templates",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "identity",
+    "service": "worker",
+    "path": "identity_server_1",
+    "target": "/templates",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "identity-support",
+    "service": "gateway",
+    "path": "identity_support_gateway_0",
+    "target": "/etc/nginx/nginx.conf",
+    "source_kind": "file"
+  },
+  {
+    "stack": "identity-support",
+    "service": "gateway",
+    "path": "identity_support_gateway_1",
+    "target": "/cert",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "identity-support",
+    "service": "invitations",
+    "path": "identity_support_invitations_0",
+    "target": "/srv/public",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "identity-support",
+    "service": "invitations",
+    "path": "identity_support_invitations_1",
+    "target": "/etc/nginx/nginx.conf",
+    "source_kind": "file"
+  },
+  {
+    "stack": "dms",
+    "service": "paperless",
+    "path": "dms_paperless_0",
+    "target": "/usr/src/paperless/data",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "dms",
+    "service": "paperless",
+    "path": "dms_paperless_1",
+    "target": "/usr/src/paperless/media",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "dms",
+    "service": "paperless",
+    "path": "dms_paperless_2",
+    "target": "/usr/src/paperless/consume",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "dms",
+    "service": "paperless",
+    "path": "dms_paperless_3",
+    "target": "/usr/src/paperless/export",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "dms",
+    "service": "paperless",
+    "path": "dms_paperless_4",
+    "target": "/opt/cloud-extension",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "editor",
+    "service": "onlyoffice",
+    "path": "editor_onlyoffice_0",
+    "target": "/etc/onlyoffice/documentserver/local-production-linux.json",
+    "source_kind": "file"
+  },
+  {
+    "stack": "editor",
+    "service": "onlyoffice",
+    "path": "editor_onlyoffice_1",
+    "target": "/var/www/onlyoffice/documentserver/web-apps/apps/api/wopi/editor-wopi.ejs",
+    "source_kind": "file"
+  }
+]

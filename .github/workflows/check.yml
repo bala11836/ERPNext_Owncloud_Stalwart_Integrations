@@ -1,0 +1,22 @@
+name: Offline checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: pip install 'PyJWT[crypto]>=2.8,<3' 'requests>=2.32,<3' 'PyYAML==6.0.3'
+      - run: python tools/check_repository.py
+      - run: python tools/run_unit_tests.py
+      - run: python test_recovery_guard.py
+        working-directory: integrations/authentik/invite-recovery
+      - run: node --test integrations/authentik/invite-recovery/test_invitations.mjs
+      - run: find erpnext_drive_integrations/public integrations -name '*.js' -print0 | xargs -0 -n1 node --check

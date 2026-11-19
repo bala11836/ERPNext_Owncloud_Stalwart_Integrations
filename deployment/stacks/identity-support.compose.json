@@ -1,0 +1,50 @@
+{
+  "services": {
+    "gateway": {
+      "image": "nginx@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949",
+      "restart": "unless-stopped",
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_support_gateway_0:/etc/nginx/nginx.conf:ro",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_support_gateway_1:/cert:ro"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "cloud-internal-gateway",
+            "identity-support-gateway"
+          ]
+        }
+      },
+      "ports": []
+    },
+    "invitations": {
+      "image": "nginx@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236",
+      "restart": "unless-stopped",
+      "volumes": [
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_support_invitations_0:/srv/public:ro",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_support_invitations_1:/etc/nginx/nginx.conf:ro"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "cloud-invitations",
+            "identity-support-invitations"
+          ]
+        }
+      },
+      "ports": []
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {}
+}

@@ -1,0 +1,23 @@
+{
+  "doctype": "Report",
+  "name": "Mailbox Access Matrix",
+  "report_name": "Mailbox Access Matrix",
+  "module": "Cloud Integrations",
+  "is_standard": "Yes",
+  "report_type": "Script Report",
+  "ref_doctype": "Mailbox Administration",
+  "roles": [
+    {
+      "role": "System Manager"
+    },
+    {
+      "role": "Suite Admin"
+    },
+    {
+      "role": "Mailbox Administrator"
+    }
+  ],
+  "disabled": 0,
+  "add_total_row": 0,
+  "prepared_report": 0
+}

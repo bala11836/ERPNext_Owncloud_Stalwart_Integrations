@@ -1,0 +1,23 @@
+GET READY BEFORE OPENING THE LINK
+
+Use Apple Passwords/iCloud Keychain or Bitwarden Password Manager. Google Password Manager and other providers are not accepted.
+
+Bitwarden:
+* Create an account at https://vault.vaultwarden.com/, preferably using the same email address as your Cloud username.
+* Install the official phone app or browser extension: https://bitwarden.com/download/
+* Before signing in to the installed app or extension, change the server to Self-hosted and enter https://vault.vaultwarden.com. Sign in using the account you just created.
+* Set up biometric unlock for convenient unlocking. You may still need your master password when signing in again.
+* On a phone, enable Bitwarden in your device's AutoFill/password and passkey settings.
+* Avoid installing the Bitwarden browser extension on shared computers.
+
+Apple Passwords: On your iPhone, iPad or Mac, enable iCloud Passwords & Keychain syncing in your Apple Account's iCloud settings. Have your device passcode or Touch ID/Face ID ready.
+Setup: https://support.apple.com/en-us/109016
+
+REGISTER YOUR PASSKEY
+
+1. Once your password manager is ready, open the invitation link below.
+2. Confirm the page is on sso.example.com. This personal link verifies your email; no second email is required.
+3. When asked to create a passkey, save it in Bitwarden or Apple Passwords/iCloud Keychain. Chrome is fine when Bitwarden is the save location. Do not choose Google Password Manager.
+4. Confirm with your fingerprint, face or device PIN when prompted, and finish the on-screen steps. Keep access to your password manager for future sign-ins.
+
+If neither approved provider appears, stop and contact your administrator. Never share your master password, device PIN or passkey.

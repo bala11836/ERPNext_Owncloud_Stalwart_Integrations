@@ -1,0 +1,32 @@
+{
+  "services": {
+    "CoAuthoring": {
+      "autoAssembly": {
+        "enable": true,
+        "interval": "2m",
+        "step": "1m"
+      },
+      "request-filtering-agent": {
+        "allowPrivateIPAddress": true,
+        "allowMetaIPAddress": false
+      },
+      "ipfilter": {
+        "rules": [
+          {
+            "address": "office-collaboration",
+            "allowed": true
+          },
+          {
+            "address": "*",
+            "allowed": true
+          }
+        ],
+        "useforrequest": false,
+        "errorcode": 403
+      }
+    }
+  },
+  "wopi": {
+    "enable": true
+  }
+}

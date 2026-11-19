@@ -1,0 +1,10 @@
+[Unit]
+Description=Poll approved test data refresh requests
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=5s
+Unit=test-refresh-worker.service
+
+[Install]
+WantedBy=timers.target

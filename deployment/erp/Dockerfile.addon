@@ -1,0 +1,13 @@
+ARG ERP_BASE_IMAGE
+FROM ${ERP_BASE_IMAGE}
+USER root
+COPY --chown=frappe:frappe erpnext_drive_integrations /home/frappe/frappe-bench/apps/erpnext_drive_integrations/erpnext_drive_integrations
+COPY --chown=frappe:frappe pyproject.toml MANIFEST.in /home/frappe/frappe-bench/apps/erpnext_drive_integrations/
+COPY --chown=frappe:frappe integrations/insights/patch_session.py /opt/cloud-build/patch_insights_session.py
+RUN /home/frappe/frappe-bench/env/bin/pip install --no-deps -e /home/frappe/frappe-bench/apps/erpnext_drive_integrations
+RUN ln -s ../apps/erpnext_drive_integrations/erpnext_drive_integrations/public /home/frappe/frappe-bench/assets/erpnext_drive_integrations
+USER frappe
+# Same explicit Node heap as the core build: the default depends on the build
+# host's RAM, and the Insights frontend build exceeds it on an 8 GB host.
+RUN /home/frappe/frappe-bench/env/bin/python /opt/cloud-build/patch_insights_session.py /home/frappe/frappe-bench/apps/insights \
+    && cd /home/frappe/frappe-bench/apps/insights/frontend && NODE_OPTIONS=--max-old-space-size=3072 yarn build

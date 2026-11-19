@@ -1,0 +1,10 @@
+{
+  "frappe_docker": {
+    "url": "https://github.com/frappe/frappe_docker.git",
+    "commit": "0ad1a1152f93b1285104bcd0a8059e036dc5bd3d"
+  },
+  "python_image": "python@sha256:35caba83af2fe6da9a5d922f9b0156f21d1246a48278c58a08bd253303ba42e8",
+  "node_version": "24.22.1",
+  "yarn_version": "1.22.22",
+  "bench_version": "5.31.1"
+}

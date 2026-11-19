@@ -1,0 +1,25 @@
+http:
+  routers:
+    authentik-http:
+      rule: Host("sso.example.com")
+      entryPoints:
+      - http
+      middlewares:
+      - authentik-https
+      service: cloud-authentik
+    authentik-https:
+      rule: Host("sso.example.com")
+      entryPoints:
+      - https
+      service: cloud-authentik
+      tls:
+        certResolver: letsencrypt
+  middlewares:
+    authentik-https:
+      redirectScheme:
+        scheme: https
+  services:
+    cloud-authentik:
+      loadBalancer:
+        servers:
+        - url: http://cloud-authentik:9000

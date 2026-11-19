@@ -1,0 +1,18 @@
+{
+  "files_url": "https://drive.example.com",
+  "paperless_url": "http://dms-paperless:8000",
+  "paperless_public_url": "https://dms.example.com",
+  "office_space_id": "REPLACE_SHARED_SPACE_ID",
+  "office_processor": "alex@example.com",
+  "max_bytes": 41943040,
+  "users": [
+    {
+      "email": "alex@example.com",
+      "files_user_id": "REPLACE_FILES_USER_ID",
+      "files_token": "REPLACE_PRIVATE_APP_TOKEN",
+      "paperless_user_id": 1,
+      "paperless_token": "REPLACE_PRIVATE_API_TOKEN",
+      "office_group_id": 1
+    }
+  ]
+}

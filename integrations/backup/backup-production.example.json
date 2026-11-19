@@ -1,0 +1,22 @@
+{
+  "tier": "production",
+  "hostname": "production",
+  "restic_image": "restic/restic@sha256:4cf4a61ef9786f4de53e9de8c8f5c040f33830eb0a10bf3d614410ee2fcb6120",
+  "repository": "s3:http://100.64.0.20:30292/company-backups/production",
+  "password_file": "/etc/cloud-backup/restic.password",
+  "s3_credentials_file": "/etc/cloud-backup/s3-readwrite.env",
+  "staging": "/var/backups/cloud-staging",
+  "state": "/var/lib/cloud-backup",
+  "databases": [
+    {"name": "erp", "kind": "mariadb", "container": "db-ERPSERVICE"},
+    {"name": "dms", "kind": "postgres", "container": "database-DMSSERVICE"},
+    {"name": "identity", "kind": "postgres", "container": "postgresql-IDENTITYSERVICE"}
+  ],
+  "stop_and_copy": [
+    {"name": "drive", "containers": ["ocis-DRIVESERVICE", "collaboration-DRIVESERVICE"], "paths": ["/srv/files/data", "/srv/files/config"]},
+    {"name": "mail", "containers": ["stalwart-MAILSERVICE"], "paths": ["/var/lib/docker/volumes/MAIL_stalwart-data/_data", "/var/lib/docker/volumes/MAIL_stalwart-config/_data"]}
+  ],
+  "paths": ["/srv/stacks", "/data/coolify", "/var/lib/docker/volumes/erp-sites/_data", "/var/lib/docker/volumes/IDENTITY-authentik-data/_data", "/srv/invitations"],
+  "exclude": ["/srv/files/data", "/srv/stacks/dms/consume"],
+  "retention": {"daily": 7, "weekly": 4, "monthly": 6}
+}

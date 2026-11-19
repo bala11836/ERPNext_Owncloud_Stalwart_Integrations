@@ -1,0 +1,35 @@
+{
+  "doctype": "DocType",
+  "name": "Mailbox Administration",
+  "module": "Cloud Integrations",
+  "issingle": 1,
+  "custom": 0,
+  "field_order": [
+    "overview"
+  ],
+  "fields": [
+    {
+      "fieldname": "overview",
+      "fieldtype": "HTML",
+      "options": "<p>View login-to-mailbox assignments in the Mailbox Access Matrix. Mailbox access includes reading and sending.</p><p><a href=\"/desk/query-report/Mailbox%20Access%20Matrix\">Open access matrix</a></p>"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "Mailbox Administrator",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "report": 1
+    },
+    {
+      "role": "Suite Admin",
+      "read": 1,
+      "report": 1
+    }
+  ],
+  "track_changes": 0
+}

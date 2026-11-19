@@ -1,0 +1,131 @@
+{
+  "services": {
+    "postgresql": {
+      "image": "postgres@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab",
+      "restart": "unless-stopped",
+      "mem_limit": "512m",
+      "environment": {
+        "POSTGRES_DB": "${CI_IDENTITY_POSTGRESQL_POSTGRES_DB:?Set CI_IDENTITY_POSTGRESQL_POSTGRES_DB}",
+        "POSTGRES_USER": "${CI_IDENTITY_POSTGRESQL_POSTGRES_USER:?Set CI_IDENTITY_POSTGRESQL_POSTGRES_USER}",
+        "POSTGRES_PASSWORD": "${CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD:?Set CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD}"
+      },
+      "volumes": [
+        "identity-database:/var/lib/postgresql/data"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"
+        ],
+        "interval": "10s",
+        "timeout": "5s",
+        "retries": 10
+      },
+      "networks": {
+        "default": {}
+      },
+      "ports": []
+    },
+    "server": {
+      "image": "ghcr.io/goauthentik/server@sha256:602227a86455d6772e3d16b7d852713c4f864f40df5df894abd1285bb53979a5",
+      "command": "server",
+      "restart": "unless-stopped",
+      "mem_limit": "2g",
+      "shm_size": "512mb",
+      "depends_on": {
+        "postgresql": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "AUTHENTIK_POSTGRESQL__HOST": "${CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__HOST:?Set CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__HOST}",
+        "AUTHENTIK_POSTGRESQL__NAME": "${CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__NAME:?Set CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__NAME}",
+        "AUTHENTIK_POSTGRESQL__USER": "${CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__USER:?Set CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__USER}",
+        "AUTHENTIK_POSTGRESQL__PASSWORD": "${CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD:?Set CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD}",
+        "AUTHENTIK_SECRET_KEY": "${CI_IDENTITY_SERVER_AUTHENTIK_SECRET_KEY:?Set CI_IDENTITY_SERVER_AUTHENTIK_SECRET_KEY}",
+        "AUTHENTIK_ERROR_REPORTING__ENABLED": "${CI_IDENTITY_SERVER_AUTHENTIK_ERROR_REPORTING__ENABLED:?Set CI_IDENTITY_SERVER_AUTHENTIK_ERROR_REPORTING__ENABLED}",
+        "AUTHENTIK_CACHE__TIMEOUT_POLICIES": "${CI_IDENTITY_SERVER_AUTHENTIK_CACHE__TIMEOUT_POLICIES:?Set CI_IDENTITY_SERVER_AUTHENTIK_CACHE__TIMEOUT_POLICIES}",
+        "AUTHENTIK_EMAIL__HOST": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__HOST:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__HOST}",
+        "AUTHENTIK_EMAIL__PORT": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PORT:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PORT}",
+        "AUTHENTIK_EMAIL__USERNAME": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USERNAME:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USERNAME}",
+        "AUTHENTIK_EMAIL__PASSWORD": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PASSWORD:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PASSWORD}",
+        "AUTHENTIK_EMAIL__USE_TLS": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USE_TLS:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USE_TLS}",
+        "AUTHENTIK_EMAIL__USE_SSL": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USE_SSL:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USE_SSL}",
+        "AUTHENTIK_EMAIL__FROM": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__FROM:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__FROM}"
+      },
+      "volumes": [
+        "identity-authentik-data:/data",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_server_1:/templates:ro"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "cloud-authentik",
+            "identity-server",
+            "server-identity-production"
+          ]
+        }
+      },
+      "ports": [
+        "127.0.0.1:${CI_IDENTITY_SERVER_HOST_PORT:?Set private port}:9000"
+      ]
+    },
+    "worker": {
+      "image": "ghcr.io/goauthentik/server@sha256:602227a86455d6772e3d16b7d852713c4f864f40df5df894abd1285bb53979a5",
+      "command": "worker",
+      "restart": "unless-stopped",
+      "mem_limit": "1g",
+      "shm_size": "512mb",
+      "user": "root",
+      "depends_on": {
+        "postgresql": {
+          "condition": "service_healthy"
+        }
+      },
+      "environment": {
+        "AUTHENTIK_POSTGRESQL__HOST": "${CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__HOST:?Set CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__HOST}",
+        "AUTHENTIK_POSTGRESQL__NAME": "${CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__NAME:?Set CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__NAME}",
+        "AUTHENTIK_POSTGRESQL__USER": "${CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__USER:?Set CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__USER}",
+        "AUTHENTIK_POSTGRESQL__PASSWORD": "${CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD:?Set CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD}",
+        "AUTHENTIK_SECRET_KEY": "${CI_IDENTITY_SERVER_AUTHENTIK_SECRET_KEY:?Set CI_IDENTITY_SERVER_AUTHENTIK_SECRET_KEY}",
+        "AUTHENTIK_ERROR_REPORTING__ENABLED": "${CI_IDENTITY_WORKER_AUTHENTIK_ERROR_REPORTING__ENABLED:?Set CI_IDENTITY_WORKER_AUTHENTIK_ERROR_REPORTING__ENABLED}",
+        "AUTHENTIK_CACHE__TIMEOUT_POLICIES": "${CI_IDENTITY_WORKER_AUTHENTIK_CACHE__TIMEOUT_POLICIES:?Set CI_IDENTITY_WORKER_AUTHENTIK_CACHE__TIMEOUT_POLICIES}",
+        "AUTHENTIK_EMAIL__HOST": "${CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__HOST:?Set CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__HOST}",
+        "AUTHENTIK_EMAIL__PORT": "${CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__PORT:?Set CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__PORT}",
+        "AUTHENTIK_EMAIL__USERNAME": "${CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USERNAME:?Set CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USERNAME}",
+        "AUTHENTIK_EMAIL__PASSWORD": "${CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PASSWORD:?Set CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PASSWORD}",
+        "AUTHENTIK_EMAIL__USE_TLS": "${CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USE_TLS:?Set CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USE_TLS}",
+        "AUTHENTIK_EMAIL__USE_SSL": "${CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USE_SSL:?Set CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USE_SSL}",
+        "AUTHENTIK_EMAIL__FROM": "${CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__FROM:?Set CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__FROM}"
+      },
+      "volumes": [
+        "identity-authentik-data:/data",
+        "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_server_1:/templates:ro"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "identity-worker",
+            "worker-identity-production"
+          ]
+        }
+      },
+      "ports": []
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "identity-database": {},
+    "identity-authentik-data": {}
+  }
+}

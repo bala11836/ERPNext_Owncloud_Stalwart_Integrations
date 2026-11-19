@@ -1,0 +1,610 @@
+{
+  "CI_MAIL_STALWART_STALWART_RECOVERY_ADMIN": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_MAIL_STALWART_HOST_PORT": {
+    "kind": "setting",
+    "default": "8020"
+  },
+  "CI_MAIL_WEBMAIL_ALLOWED_FRAME_ANCESTORS": {
+    "kind": "setting",
+    "default": "https://drive.example.com https://erp.example.com https://test.example.com"
+  },
+  "CI_MAIL_WEBMAIL_NEXT_PUBLIC_PARENT_ORIGIN": {
+    "kind": "setting",
+    "default": "https://erp.example.com"
+  },
+  "CI_MAIL_WEBMAIL_APP_NAME": {
+    "kind": "setting",
+    "default": "Workspace Mail"
+  },
+  "CI_MAIL_WEBMAIL_HOSTNAME": {
+    "kind": "setting",
+    "default": "0.0.0.0"
+  },
+  "CI_MAIL_WEBMAIL_PORT": {
+    "kind": "setting",
+    "default": "3000"
+  },
+  "CI_MAIL_WEBMAIL_JMAP_SERVER_URL": {
+    "kind": "setting",
+    "default": "https://mail.example.com"
+  },
+  "CI_MAIL_WEBMAIL_OAUTH_ENABLED": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_MAIL_WEBMAIL_OAUTH_ONLY": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_MAIL_WEBMAIL_OAUTH_CLIENT_ID": {
+    "kind": "setting",
+    "default": "office-mail"
+  },
+  "CI_MAIL_WEBMAIL_OAUTH_ISSUER_URL": {
+    "kind": "setting",
+    "default": "https://sso.example.com/application/o/office-mail/"
+  },
+  "CI_MAIL_WEBMAIL_OAUTH_SCOPES": {
+    "kind": "setting",
+    "default": "openid email profile offline_access office_mail"
+  },
+  "CI_MAIL_WEBMAIL_OAUTH_END_SESSION": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_MAIL_WEBMAIL_COOKIE_SAME_SITE": {
+    "kind": "setting",
+    "default": "none"
+  },
+  "CI_MAIL_WEBMAIL_COOKIE_SECURE": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_MAIL_WEBMAIL_SESSION_SECRET": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_MAIL_WEBMAIL_STALWART_ADMIN_ACCESS": {
+    "kind": "setting",
+    "default": "off"
+  },
+  "CI_MAIL_WEBMAIL_SETTINGS_SYNC_ENABLED": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_MAIL_WEBMAIL_BULWARK_TELEMETRY": {
+    "kind": "setting",
+    "default": "off"
+  },
+  "CI_MAIL_WEBMAIL_TRUSTED_PROXY_DEPTH": {
+    "kind": "setting",
+    "default": "1"
+  },
+  "CI_MAIL_WEBMAIL_AUTO_SSO_ENABLED": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_MAIL_WEBMAIL_SOURCE_CODE_URL": {
+    "kind": "setting",
+    "default": "https://mail.example.com/cloud-customization-source.zip"
+  },
+  "CI_MAIL_WEBMAIL_HOST_PORT": {
+    "kind": "setting",
+    "default": "8030"
+  },
+  "CI_DRIVE_OCIS_OCIS_URL": {
+    "kind": "setting",
+    "default": "https://drive.example.com"
+  },
+  "CI_DRIVE_OCIS_OCIS_LOG_LEVEL": {
+    "kind": "setting",
+    "default": "info"
+  },
+  "CI_DRIVE_OCIS_OCIS_INSECURE": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DRIVE_OCIS_PROXY_TLS": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DRIVE_OCIS_PROXY_HTTP_ADDR": {
+    "kind": "setting",
+    "default": "0.0.0.0:9200"
+  },
+  "CI_DRIVE_OCIS_GATEWAY_GRPC_ADDR": {
+    "kind": "setting",
+    "default": "0.0.0.0:9142"
+  },
+  "CI_DRIVE_OCIS_MICRO_REGISTRY_ADDRESS": {
+    "kind": "setting",
+    "default": "127.0.0.1:9233"
+  },
+  "CI_DRIVE_OCIS_NATS_NATS_HOST": {
+    "kind": "setting",
+    "default": "0.0.0.0"
+  },
+  "CI_DRIVE_OCIS_NATS_NATS_PORT": {
+    "kind": "setting",
+    "default": "9233"
+  },
+  "CI_DRIVE_OCIS_IDM_CREATE_DEMO_USERS": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DRIVE_OCIS_OCIS_EXCLUDE_RUN_SERVICES": {
+    "kind": "setting",
+    "default": "idp"
+  },
+  "CI_DRIVE_OCIS_OCIS_OIDC_ISSUER": {
+    "kind": "setting",
+    "default": "https://sso.example.com/"
+  },
+  "CI_DRIVE_OCIS_PROXY_OIDC_REWRITE_WELLKNOWN": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DRIVE_OCIS_WEB_OIDC_CLIENT_ID": {
+    "kind": "setting",
+    "default": "office-web"
+  },
+  "CI_DRIVE_OCIS_WEB_UI_CONFIG_FILE": {
+    "kind": "setting",
+    "default": "/etc/ocis/web-with-picker.json"
+  },
+  "CI_DRIVE_OCIS_WEB_OIDC_SCOPE": {
+    "kind": "setting",
+    "default": "openid profile email offline_access"
+  },
+  "CI_DRIVE_OCIS_PROXY_AUTOPROVISION_ACCOUNTS": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DRIVE_OCIS_PROXY_AUTOPROVISION_CLAIM_GROUPS": {
+    "kind": "setting",
+    "default": "office_groups"
+  },
+  "CI_DRIVE_OCIS_PROXY_USER_OIDC_CLAIM": {
+    "kind": "setting",
+    "default": "preferred_username"
+  },
+  "CI_DRIVE_OCIS_PROXY_USER_CS3_CLAIM": {
+    "kind": "setting",
+    "default": "username"
+  },
+  "CI_DRIVE_OCIS_PROXY_ROLE_ASSIGNMENT_DRIVER": {
+    "kind": "setting",
+    "default": "default"
+  },
+  "CI_DRIVE_OCIS_GRAPH_ASSIGN_DEFAULT_USER_ROLE": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DRIVE_OCIS_GRAPH_USERNAME_MATCH": {
+    "kind": "setting",
+    "default": "none"
+  },
+  "CI_DRIVE_OCIS_PROXY_ENABLE_BASIC_AUTH": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DRIVE_OCIS_PROXY_ENABLE_APP_AUTH": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DRIVE_OCIS_OCIS_ADD_RUN_SERVICES": {
+    "kind": "setting",
+    "default": "auth-app"
+  },
+  "CI_DRIVE_OCIS_PROXY_CSP_CONFIG_FILE_LOCATION": {
+    "kind": "setting",
+    "default": "/etc/ocis/csp.yaml"
+  },
+  "CI_DRIVE_OCIS_FRONTEND_APP_HANDLER_SECURE_VIEW_APP_ADDR": {
+    "kind": "setting",
+    "default": "com.owncloud.api.collaboration.OnlyOffice"
+  },
+  "CI_DRIVE_OCIS_IDM_ADMIN_PASSWORD": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_DRIVE_OCIS_HOST_PORT": {
+    "kind": "setting",
+    "default": "9200"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_GRPC_ADDR": {
+    "kind": "setting",
+    "default": "0.0.0.0:9301"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_HTTP_ADDR": {
+    "kind": "setting",
+    "default": "0.0.0.0:9300"
+  },
+  "CI_DRIVE_COLLABORATION_MICRO_REGISTRY": {
+    "kind": "setting",
+    "default": "nats-js-kv"
+  },
+  "CI_DRIVE_COLLABORATION_MICRO_REGISTRY_ADDRESS": {
+    "kind": "setting",
+    "default": "office-ocis:9233"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_WOPI_SRC": {
+    "kind": "setting",
+    "default": "http://office-collaboration:9300"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_APP_NAME": {
+    "kind": "setting",
+    "default": "OnlyOffice"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_APP_PRODUCT": {
+    "kind": "setting",
+    "default": "OnlyOffice"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_APP_ADDR": {
+    "kind": "setting",
+    "default": "https://office.example.com"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_APP_ICON": {
+    "kind": "setting",
+    "default": "https://office.example.com/web-apps/apps/documenteditor/main/resources/img/favicon.ico"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_APP_INSECURE": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DRIVE_COLLABORATION_COLLABORATION_CS3API_DATAGATEWAY_INSECURE": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DRIVE_COLLABORATION_OCIS_URL": {
+    "kind": "setting",
+    "default": "https://drive.example.com"
+  },
+  "CI_PROCESSING_DOCUMENT_WORKER_CONFIG_FILE": {
+    "kind": "setting",
+    "default": "/run/secrets/document-worker.json"
+  },
+  "CI_PROCESSING_DOCUMENT_WORKER_STATE_DIR": {
+    "kind": "setting",
+    "default": "/state"
+  },
+  "CI_ERP_DB_MYSQL_ROOT_PASSWORD": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_ERP_DB_MARIADB_AUTO_UPGRADE": {
+    "kind": "setting",
+    "default": "1"
+  },
+  "CI_ERP_CONFIGURATOR_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_ERP_BACKEND_NETBIRD_AUTH_FRONTEND_DNS": {
+    "kind": "setting",
+    "default": "erp-frontend"
+  },
+  "CI_ERP_BACKEND_NETBIRD_AUTH_FRONTEND_NETWORK": {
+    "kind": "setting",
+    "default": "10.44.0.0/24"
+  },
+  "CI_ERP_BACKEND_NETBIRD_AUTH_SITE": {
+    "kind": "setting",
+    "default": "erp.internal"
+  },
+  "CI_ERP_BACKEND_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_ERP_FRONTEND_BACKEND": {
+    "kind": "setting",
+    "default": "production-auth-backend:8000"
+  },
+  "CI_ERP_FRONTEND_SOCKETIO": {
+    "kind": "setting",
+    "default": "production-auth-websocket:9000"
+  },
+  "CI_ERP_FRONTEND_FRAPPE_SITE_NAME_HEADER": {
+    "kind": "setting",
+    "default": "erp.internal"
+  },
+  "CI_ERP_FRONTEND_NGINX_LISTEN_PORT": {
+    "kind": "setting",
+    "default": "8080"
+  },
+  "CI_ERP_FRONTEND_CLIENT_MAX_BODY_SIZE": {
+    "kind": "setting",
+    "default": "50m"
+  },
+  "CI_ERP_FRONTEND_PROXY_READ_TIMEOUT": {
+    "kind": "setting",
+    "default": "120"
+  },
+  "CI_ERP_FRONTEND_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_ERP_FRONTEND_HOST_PORT": {
+    "kind": "setting",
+    "default": "8090"
+  },
+  "CI_ERP_WEBSOCKET_NODE_OPTIONS": {
+    "kind": "setting",
+    "default": "--require=/opt/cloud/netbird_realtime.cjs"
+  },
+  "CI_ERP_WEBSOCKET_NETBIRD_AUTH_REALTIME_BACKEND_ORIGIN": {
+    "kind": "setting",
+    "default": "http://production-auth-frontend:8080"
+  },
+  "CI_ERP_WEBSOCKET_NETBIRD_AUTH_PUBLIC_HOST": {
+    "kind": "setting",
+    "default": "erp.example.com"
+  },
+  "CI_ERP_WEBSOCKET_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_ERP_QUEUE_SHORT_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_ERP_QUEUE_LONG_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_ERP_SCHEDULER_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/home/frappe/frappe-bench/apps/erpnext_drive_integrations:/home/frappe/frappe-bench/apps/payment_integration_utils:/home/frappe/frappe-bench/apps/razorpayx_integration"
+  },
+  "CI_IDENTITY_POSTGRESQL_POSTGRES_DB": {
+    "kind": "setting",
+    "default": "authentik"
+  },
+  "CI_IDENTITY_POSTGRESQL_POSTGRES_USER": {
+    "kind": "setting",
+    "default": "authentik"
+  },
+  "CI_IDENTITY_POSTGRESQL_POSTGRES_PASSWORD": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__HOST": {
+    "kind": "setting",
+    "default": "postgresql"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__NAME": {
+    "kind": "setting",
+    "default": "authentik"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_POSTGRESQL__USER": {
+    "kind": "setting",
+    "default": "authentik"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_SECRET_KEY": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_ERROR_REPORTING__ENABLED": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_CACHE__TIMEOUT_POLICIES": {
+    "kind": "setting",
+    "default": "0"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__HOST": {
+    "kind": "setting",
+    "default": "mx.example.com"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PORT": {
+    "kind": "setting",
+    "default": "465"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USERNAME": {
+    "kind": "setting",
+    "default": "authentik-noreply@example.com"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__PASSWORD": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USE_TLS": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__USE_SSL": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_IDENTITY_SERVER_AUTHENTIK_EMAIL__FROM": {
+    "kind": "setting",
+    "default": "Workspace <noreply@example.com>"
+  },
+  "CI_IDENTITY_SERVER_HOST_PORT": {
+    "kind": "setting",
+    "default": "19000"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__HOST": {
+    "kind": "setting",
+    "default": "postgresql"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__NAME": {
+    "kind": "setting",
+    "default": "authentik"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_POSTGRESQL__USER": {
+    "kind": "setting",
+    "default": "authentik"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_ERROR_REPORTING__ENABLED": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_CACHE__TIMEOUT_POLICIES": {
+    "kind": "setting",
+    "default": "0"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__HOST": {
+    "kind": "setting",
+    "default": "mx.example.com"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__PORT": {
+    "kind": "setting",
+    "default": "465"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USERNAME": {
+    "kind": "setting",
+    "default": "authentik-noreply@example.com"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USE_TLS": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__USE_SSL": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_IDENTITY_WORKER_AUTHENTIK_EMAIL__FROM": {
+    "kind": "setting",
+    "default": "Workspace <noreply@example.com>"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_URL": {
+    "kind": "setting",
+    "default": "https://dms.example.com"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_ALLOWED_HOSTS": {
+    "kind": "setting",
+    "default": "dms.example.com,dms-paperless,office-paperless,localhost"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_REDIS": {
+    "kind": "setting",
+    "default": "redis://broker:6379"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_DBHOST": {
+    "kind": "setting",
+    "default": "database"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_DBNAME": {
+    "kind": "setting",
+    "default": "paperless"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_DBUSER": {
+    "kind": "setting",
+    "default": "paperless"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_TIME_ZONE": {
+    "kind": "setting",
+    "default": "Asia/Kolkata"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_OCR_LANGUAGE": {
+    "kind": "setting",
+    "default": "eng"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_TASK_WORKERS": {
+    "kind": "setting",
+    "default": "1"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_THREADS_PER_WORKER": {
+    "kind": "setting",
+    "default": "2"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_CONSUMER_POLLING": {
+    "kind": "setting",
+    "default": "30"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_ACCOUNT_ALLOW_SIGNUPS": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_APPS": {
+    "kind": "setting",
+    "default": "allauth.socialaccount.providers.openid_connect,cloud_session.apps.CloudSessionConfig"
+  },
+  "CI_DMS_PAPERLESS_PYTHONPATH": {
+    "kind": "setting",
+    "default": "/opt/cloud-extension"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_LOGOUT_REDIRECT_URL": {
+    "kind": "setting",
+    "default": "https://erp.example.com/api/method/erpnext_drive_integrations.portal.sso.finish_logout"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_SECRET_KEY": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_DBPASS": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_ADMIN_USER": {
+    "kind": "setting",
+    "default": "office-admin"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_ADMIN_PASSWORD": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_ADMIN_MAIL": {
+    "kind": "setting",
+    "default": "admin@example.com"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_SOCIALACCOUNT_PROVIDERS": {
+    "kind": "secret",
+    "generate": false
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_SOCIAL_AUTO_SIGNUP": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_DISABLE_REGULAR_LOGIN": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_REDIRECT_LOGIN_TO_SSO": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS": {
+    "kind": "setting",
+    "default": "office"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_TIKA_ENABLED": {
+    "kind": "setting",
+    "default": "true"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_TIKA_ENDPOINT": {
+    "kind": "setting",
+    "default": "http://office-tika:9998"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_TIKA_GOTENBERG_ENDPOINT": {
+    "kind": "setting",
+    "default": "http://office-gotenberg:3000"
+  },
+  "CI_DMS_PAPERLESS_PAPERLESS_CONSUMER_DELETE_DUPLICATES": {
+    "kind": "setting",
+    "default": "false"
+  },
+  "CI_DMS_PAPERLESS_HOST_PORT": {
+    "kind": "setting",
+    "default": "8010"
+  },
+  "CI_DMS_DATABASE_POSTGRES_DB": {
+    "kind": "setting",
+    "default": "paperless"
+  },
+  "CI_DMS_DATABASE_POSTGRES_USER": {
+    "kind": "setting",
+    "default": "paperless"
+  },
+  "CI_EDITOR_ONLYOFFICE_JWT_SECRET": {
+    "kind": "secret",
+    "generate": true
+  }
+}

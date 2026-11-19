@@ -1,0 +1,40 @@
+{
+  "server": "https://drive.example.com",
+  "theme": "https://drive.example.com/themes/owncloud/theme.json",
+  "openIdConnect": {
+    "metadata_url": "https://sso.example.com/.well-known/openid-configuration",
+    "authority": "https://sso.example.com/",
+    "client_id": "office-web",
+    "response_type": "code",
+    "scope": "openid profile email offline_access"
+  },
+  "apps": [
+    "files",
+    "search",
+    "text-editor",
+    "pdf-viewer",
+    "external",
+    "admin-settings",
+    "epub-reader",
+    "preview",
+    "app-store"
+  ],
+  "external_apps": [],
+  "options": {
+    "contextHelpersReadMore": true,
+    "tokenStorageLocal": true,
+    "concurrentRequests": {
+      "shares": {}
+    }
+  },
+  "scripts": [
+    {
+      "src": "/assets/apps/cloud-workspace/workspace-20261115-editor3.js",
+      "async": false
+    },
+    {
+      "src": "/assets/apps/office-mail-picker/bridge.js",
+      "async": true
+    }
+  ]
+}

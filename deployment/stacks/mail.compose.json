@@ -1,0 +1,87 @@
+{
+  "services": {
+    "stalwart": {
+      "image": "stalwartlabs/stalwart@sha256:f772aa6ef8cd8018969fa491640f1436b0270eb14e2c219b5f37f1a77020837e",
+      "init": true,
+      "restart": "unless-stopped",
+      "ports": [
+        "127.0.0.1:${CI_MAIL_STALWART_HOST_PORT:?Set private port}:8080"
+      ],
+      "volumes": [
+        "stalwart-config:/etc/stalwart",
+        "stalwart-data:/var/lib/stalwart"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "mail-stalwart",
+            "office-stalwart"
+          ]
+        }
+      },
+      "mem_limit": "2g",
+      "environment": {
+        "STALWART_RECOVERY_ADMIN": "${CI_MAIL_STALWART_STALWART_RECOVERY_ADMIN:?Set CI_MAIL_STALWART_STALWART_RECOVERY_ADMIN}"
+      }
+    },
+    "webmail": {
+      "image": "${MAIL_IMAGE:?Build the Mail image}",
+      "pull_policy": "never",
+      "restart": "unless-stopped",
+      "ports": [
+        "127.0.0.1:${CI_MAIL_WEBMAIL_HOST_PORT:?Set private port}:3000"
+      ],
+      "volumes": [
+        "webmail-data:/app/data"
+      ],
+      "networks": {
+        "default": {},
+        "workspace": {
+          "aliases": [
+            "mail-webmail",
+            "office-webmail"
+          ]
+        }
+      },
+      "mem_limit": "1g",
+      "environment": {
+        "ALLOWED_FRAME_ANCESTORS": "${CI_MAIL_WEBMAIL_ALLOWED_FRAME_ANCESTORS:?Set CI_MAIL_WEBMAIL_ALLOWED_FRAME_ANCESTORS}",
+        "NEXT_PUBLIC_PARENT_ORIGIN": "${CI_MAIL_WEBMAIL_NEXT_PUBLIC_PARENT_ORIGIN:?Set CI_MAIL_WEBMAIL_NEXT_PUBLIC_PARENT_ORIGIN}",
+        "APP_NAME": "${CI_MAIL_WEBMAIL_APP_NAME:?Set CI_MAIL_WEBMAIL_APP_NAME}",
+        "HOSTNAME": "${CI_MAIL_WEBMAIL_HOSTNAME:?Set CI_MAIL_WEBMAIL_HOSTNAME}",
+        "PORT": "${CI_MAIL_WEBMAIL_PORT:?Set CI_MAIL_WEBMAIL_PORT}",
+        "JMAP_SERVER_URL": "${CI_MAIL_WEBMAIL_JMAP_SERVER_URL:?Set CI_MAIL_WEBMAIL_JMAP_SERVER_URL}",
+        "OAUTH_ENABLED": "${CI_MAIL_WEBMAIL_OAUTH_ENABLED:?Set CI_MAIL_WEBMAIL_OAUTH_ENABLED}",
+        "OAUTH_ONLY": "${CI_MAIL_WEBMAIL_OAUTH_ONLY:?Set CI_MAIL_WEBMAIL_OAUTH_ONLY}",
+        "OAUTH_CLIENT_ID": "${CI_MAIL_WEBMAIL_OAUTH_CLIENT_ID:?Set CI_MAIL_WEBMAIL_OAUTH_CLIENT_ID}",
+        "OAUTH_ISSUER_URL": "${CI_MAIL_WEBMAIL_OAUTH_ISSUER_URL:?Set CI_MAIL_WEBMAIL_OAUTH_ISSUER_URL}",
+        "OAUTH_SCOPES": "${CI_MAIL_WEBMAIL_OAUTH_SCOPES:?Set CI_MAIL_WEBMAIL_OAUTH_SCOPES}",
+        "OAUTH_END_SESSION": "${CI_MAIL_WEBMAIL_OAUTH_END_SESSION:?Set CI_MAIL_WEBMAIL_OAUTH_END_SESSION}",
+        "COOKIE_SAME_SITE": "${CI_MAIL_WEBMAIL_COOKIE_SAME_SITE:?Set CI_MAIL_WEBMAIL_COOKIE_SAME_SITE}",
+        "COOKIE_SECURE": "${CI_MAIL_WEBMAIL_COOKIE_SECURE:?Set CI_MAIL_WEBMAIL_COOKIE_SECURE}",
+        "SESSION_SECRET": "${CI_MAIL_WEBMAIL_SESSION_SECRET:?Set CI_MAIL_WEBMAIL_SESSION_SECRET}",
+        "STALWART_ADMIN_ACCESS": "${CI_MAIL_WEBMAIL_STALWART_ADMIN_ACCESS:?Set CI_MAIL_WEBMAIL_STALWART_ADMIN_ACCESS}",
+        "SETTINGS_SYNC_ENABLED": "${CI_MAIL_WEBMAIL_SETTINGS_SYNC_ENABLED:?Set CI_MAIL_WEBMAIL_SETTINGS_SYNC_ENABLED}",
+        "BULWARK_TELEMETRY": "${CI_MAIL_WEBMAIL_BULWARK_TELEMETRY:?Set CI_MAIL_WEBMAIL_BULWARK_TELEMETRY}",
+        "TRUSTED_PROXY_DEPTH": "${CI_MAIL_WEBMAIL_TRUSTED_PROXY_DEPTH:?Set CI_MAIL_WEBMAIL_TRUSTED_PROXY_DEPTH}",
+        "AUTO_SSO_ENABLED": "${CI_MAIL_WEBMAIL_AUTO_SSO_ENABLED:?Set CI_MAIL_WEBMAIL_AUTO_SSO_ENABLED}",
+        "SOURCE_CODE_URL": "${CI_MAIL_WEBMAIL_SOURCE_CODE_URL:?Set CI_MAIL_WEBMAIL_SOURCE_CODE_URL}"
+      }
+    }
+  },
+  "networks": {
+    "workspace": {
+      "external": true,
+      "name": "${WORKSPACE_NETWORK:?Create the workspace network}"
+    },
+    "default": {
+      "internal": true
+    }
+  },
+  "volumes": {
+    "stalwart-config": {},
+    "stalwart-data": {},
+    "webmail-data": {}
+  }
+}

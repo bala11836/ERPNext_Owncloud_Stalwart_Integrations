@@ -1,0 +1,49 @@
+import frappe
+from frappe.boot import get_app_data
+from frappe.utils.oauth import get_oauth2_authorize_url
+
+no_cache = 1
+
+
+def get_context(context):
+    if frappe.session.user == 'Guest':
+        frappe.local.response['type'] = 'redirect'
+        frappe.local.response['location'] = get_oauth2_authorize_url('authentik', '/')
+        raise frappe.Redirect
+    company = frappe.defaults.get_user_default('Company') or frappe.db.get_single_value('Global Defaults', 'default_company')
+    fullname = frappe.utils.get_fullname() or frappe.session.user
+    parts = fullname.split()
+    context.entity_name = company or 'Applications'
+    context.entity_logo = '/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
+    context.user_name = fullname
+    context.user_login = frappe.session.user
+    from erpnext_drive_integrations.portal import test_refresh
+    context.test_refresh_enabled = test_refresh.enabled()
+    context.test_refresh_can_request = test_refresh.can_request()
+    if context.test_refresh_enabled:
+        from frappe.sessions import get_csrf_token
+        context.test_refresh_csrf = get_csrf_token()
+    context.user_short = ''.join(p[0] for p in (parts[:1] + parts[-1:] if len(parts) > 1 else parts[:1])).upper()
+    fallback = {'erpnext': '/desk/setup/home', 'hrms': '/desk/hr-setup', 'frappe': '/desk/build', 'onboarding': '/desk/onboarding/vendor-onboarding'}
+    apps = []
+    for app in sorted(get_app_data(), key=lambda x: x.get('sequence_id', 500)):
+        if not app.get('on_apps_screen'):
+            continue
+        name = app['app_name']
+        route = fallback.get(name) or app.get('app_route') or app.get('desk_route')
+        if not route or name in ('cloud_integration', 'place_holder', 'suite'):
+            continue
+        logo = app.get('app_logo_url') or ''
+        if isinstance(logo, list):
+            logo = logo[0] if logo else ''
+        if route.startswith('/desk/'):
+            route += ('&' if '?' in route else '?') + 'uf_entry=1'
+        apps.append({'id': name, 'name': app.get('app_title') or name, 'url': route, 'logo': logo})
+    apps.extend([
+        {'id': 'drive', 'name': 'Drive', 'url': 'https://drive.example.com/', 'logo': '/assets/erpnext_drive_integrations/app-logos/external-office.svg'},
+        {'id': 'mail', 'name': 'Mail', 'url': 'https://mail.example.com/mail/folder/inbox', 'logo': '/assets/erpnext_drive_integrations/app-logos/external-mail.svg'},
+        {'id': 'dms', 'name': 'DMS', 'url': 'https://dms.example.com/', 'logo': '/assets/erpnext_drive_integrations/app-logos/external-dms.svg'},
+    ])
+    context.portal_apps = apps
+    context.logout_url = '/api/method/erpnext_drive_integrations.portal.sso.finish_logout'
+    return context

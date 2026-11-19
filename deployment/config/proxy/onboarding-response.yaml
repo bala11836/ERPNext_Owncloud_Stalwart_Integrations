@@ -1,0 +1,58 @@
+http:
+  routers:
+    onboarding-response:
+      rule: Host(`respond.example.com`) && (PathRegexp(`^/(o|r|v)/[A-Za-z0-9_-]{20,100}$`)
+        || PathPrefix(`/assets/`) || Path(`/website_script.js`) || Path(`/favicon.ico`)
+        || Path(`/link-help`) || Path(`/apple-touch-icon.png`) || Path(`/apple-touch-icon-precomposed.png`)
+        || Path(`/api/method/erpnext_drive_integrations.onboarding.respond.open_link`) || Path(`/api/method/erpnext_drive_integrations.onboarding.respond.answer`)
+        || Path(`/api/method/erpnext_drive_integrations.onboarding.respond.document_pdf`) || Path(`/api/method/erpnext_drive_integrations.onboarding.vendor.save`)
+        || Path(`/api/method/erpnext_drive_integrations.onboarding.vendor.lookup_gstin`) || Path(`/api/method/erpnext_drive_integrations.onboarding.vendor.lookup_ifsc`)
+        || Path(`/api/method/erpnext_drive_integrations.onboarding.vendor.upload`) || Path(`/api/method/erpnext_drive_integrations.onboarding.vendor.submit`)
+        || Path(`/api/method/erpnext_drive_integrations.onboarding.amendment.submit_form`))
+      entryPoints:
+      - https
+      priority: 500
+      service: public-erp@file
+      middlewares:
+      - onboarding-response-clean
+      tls:
+        certResolver: letsencrypt
+    onboarding-response-root:
+      rule: Host(`respond.example.com`) && Path(`/`)
+      entryPoints:
+      - https
+      priority: 500
+      service: noop@internal
+      middlewares:
+      - onboarding-response-help
+      tls:
+        certResolver: letsencrypt
+    onboarding-response-http:
+      rule: Host(`respond.example.com`)
+      entryPoints:
+      - http
+      priority: 500
+      service: noop@internal
+      middlewares:
+      - onboarding-response-https
+  middlewares:
+    onboarding-response-clean:
+      headers:
+        customRequestHeaders:
+          Authorization: ''
+          X-authentik-username: ''
+          X-authentik-email: ''
+          X-authentik-groups: ''
+          X-authentik-uid: ''
+          X-authentik-jwt: ''
+          X-authentik-meta-jwks: ''
+          X-authentik-name: ''
+    onboarding-response-help:
+      redirectRegex:
+        regex: ^https://respond\.example\.com/?$
+        replacement: https://respond.example.com/link-help
+        permanent: false
+    onboarding-response-https:
+      redirectScheme:
+        scheme: https
+        permanent: true

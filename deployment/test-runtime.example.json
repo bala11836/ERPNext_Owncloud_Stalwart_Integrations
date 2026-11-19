@@ -1,0 +1,47 @@
+{
+  "instance": "company-test",
+  "tier": "test",
+  "domain": "example.com",
+  "hosts": {
+    "erp": "test.example.com",
+    "sso": "sso.example.com",
+    "drive": "test-drive.example.com",
+    "office": "test-office.example.com",
+    "mail": "test-mail.example.com",
+    "dms": "test-dms.example.com",
+    "respond": "test-respond.example.com"
+  },
+  "network": "company-test-workspace",
+  "network_subnet": "10.46.0.0/24",
+  "site": "erp.internal",
+  "existing_sso": true,
+  "ingress_prefix": "company-test",
+  "forward_auth_url": "https://sso.example.com/outpost.goauthentik.io/auth/company-test",
+  "erp_image": "company/erp-test:REPLACE_WITH_GIT_COMMIT",
+  "mail_image": "company/mail-test:REPLACE_WITH_GIT_COMMIT",
+  "commit": "REPLACE_WITH_GIT_COMMIT",
+  "editor_product": "onlyoffice",
+  "identity_results": "/etc/cloud-integrations/identity-results.private.json",
+  "company_logo": "/etc/cloud-integrations/company-logo.private.svg",
+  "administrator_email": "alex@example.com",
+  "administrator_name": "Alex",
+  "mail_domain": "example.com",
+  "mail_accounts": [
+    {"name": "noreply", "type": "Group"},
+    {"name": "alex", "type": "User", "groups": ["noreply"]}
+  ],
+  "source_instance": "production",
+  "source_files_origins": ["https://drive.example.com"],
+  "source_dms_origins": ["https://dms.example.com"],
+  "refresh_ready": false,
+  "test_oauth_clients": [{"app_name": "Example Mobile App", "redirect_uris": "exampleapp://oauth/callback", "default_redirect_uri": "exampleapp://oauth/callback"}],
+  "test_form_smtp": {"host": "mail.example.com", "address": "100.64.0.10", "port": 465, "user": "test-forms@example.com", "sender": "Test forms <test-forms@example.com>", "password_file": "/etc/cloud-integrations/test-form-smtp.password"},
+  "refresh_users": ["alex@example.com"],
+  "export_ssh": {
+    "destination": "root@production-host.example.com",
+    "key": "/etc/cloud-integrations/production-export-key",
+    "known_hosts": "/etc/cloud-integrations/production-export-known-hosts"
+  },
+  "settings": {},
+  "public_replacements": {}
+}

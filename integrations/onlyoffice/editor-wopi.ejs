@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html>
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!--
+    *
+    * (c) Copyright Ascensio System SIA 2021
+    *
+    * Licensed under the Apache License, Version 2.0 (the "License");
+    * you may not use this file except in compliance with the License.
+    * You may obtain a copy of the License at
+    *
+    *     http://www.apache.org/licenses/LICENSE-2.0
+    *
+    * Unless required by applicable law or agreed to in writing, software
+    * distributed under the License is distributed on an "AS IS" BASIS,
+    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    * See the License for the specific language governing permissions and
+    * limitations under the License.
+    *
+    -->
+    <title>ONLYOFFICE</title>
+<style type="text/css">
+html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    background: #fff;
+    color: #333;
+    font-family: Arial, Tahoma,sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    height: 100%;
+    margin: 0;
+    overflow-y: hidden;
+    padding: 0;
+    text-decoration: none;
+}
+
+.form {
+    height: 100%;
+}
+
+div {
+    margin: 0;
+    padding: 0;
+}
+
+.app-error-panel {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    background-color: #f4f4f4;
+    z-index: 10;
+}
+
+.message-block {
+    display: inline-block;
+    vertical-align: middle;
+    width: 100%;
+}
+
+.message-inner {
+    width: 550px;
+    margin: auto;
+    padding: 30px;
+    background-color: #e3e3e3;
+    text-align: center;
+}
+
+.title {
+    font-size: 24px;
+    margin: 0 0 14px;
+}
+
+.text {
+    font-size: 16px;
+}
+
+</style>
+</head>
+<body>
+    <div class="form">
+        <div id="iframeEditor">
+        </div>
+    </div>
+    <div id="keyData" style="display:none;" data-json="<%= key %>"></div>
+    <div id="fileInfoJsonData" style="display:none;" data-json="<%= JSON.stringify(fileInfo) %>"></div>
+    <div id="userAuthJsonData" style="display:none;" data-json="<%= JSON.stringify(userAuth) %>"></div>
+    <div id="queryParamsJsonData" style="display:none;" data-json="<%= JSON.stringify(queryParams) %>"></div>
+    <div id="docsApiConfigJsonData" style="display:none;" data-json="<%= JSON.stringify(docs_api_config) %>"></div>
+    <script type="text/javascript" src="../../../web-apps/apps/api/documents/api.js<%- apiQuery %>"></script>
+    <script type="text/javascript" language="javascript">
+
+        var docEditor;
+        var postMessageOrigin;
+        var lang = "en-US";
+        var startTime;
+        var documentChanged;
+        var sendNotificationTimer;
+        var sessionId;
+        var fileInfo;
+        var insertImageType;
+
+        var innerAlert = function (message) {
+            if (console && console.log)
+                console.log(message);
+        };
+
+        var commandMap = {
+            'Blur_Focus': function (data) {
+                innerAlert('Blur_Focus');
+                docEditor.blurFocus();
+            },
+            'Grab_Focus': function (data) {
+                innerAlert('Grab_Focus');
+                docEditor.grabFocus();
+            },
+            'Action_InsertGraphic': function (data) {
+                data && data.Values && docEditor.insertImage({
+                    "c": insertImageType,
+                    "images": [{ "url": data.Values.url }]
+                });
+            },
+            'Host_PostmessageReady': function (data) {
+                innerAlert('Host_PostmessageReady');
+            }
+        };
+
+        var _postMessage = function(msgId, msgData) {
+            if (window.parent && window.JSON) {
+                msgData = msgData || {};
+                msgData["ui-language"] = lang;
+                msgData["wdUserSession"] = sessionId;
+                var msg = {
+                    "MessageId": msgId,
+                    "SendTime": Date.now(),
+                    "Values": msgData
+                };
+                window.parent.postMessage(window.JSON.stringify(msg), postMessageOrigin);
+            }
+        };
+
+        var _onMessage = function(msg) {
+            if (msg.origin !== postMessageOrigin) return;
+
+            var data = msg.data;
+            if (Object.prototype.toString.apply(data) !== '[object String]' || !window.JSON) {
+                return;
+            }
+
+            var cmd, handler;
+
+            try {
+                cmd = window.JSON.parse(data)
+            } catch(e) {
+                cmd = '';
+            }
+
+            if (cmd) {
+                handler = commandMap[cmd.MessageId];
+                if (handler) {
+                    handler.call(this, cmd);
+                }
+            }
+        };
+
+        var fn = function(e) { _onMessage(e); };
+
+        if (window.attachEvent) {
+            window.attachEvent('onmessage', fn);
+        } else {
+            window.addEventListener('message', fn, false);
+        }
+
+        var onAppReady = function () {
+            //Collabora extension field "Status"
+            _postMessage('App_LoadingStatus', {
+                "DocumentLoadedTime": Date.now() - startTime,
+                "Status": "Document_Loaded"
+            });
+            innerAlert("App ready");
+        };
+
+        var sendEditNotification = function () {
+            documentChanged && _postMessage('Edit_Notification', {});
+            documentChanged = false;
+        };
+
+        var onDocumentStateChange = function (event) {
+            if (event.data) {
+                documentChanged = true;
+                if (sendNotificationTimer===undefined) {
+                    sendNotificationTimer = setInterval(sendEditNotification, 30000);
+                    sendEditNotification();
+                }
+            }
+        };
+
+        var onRequestRename = function (event) {
+            if (event.data) {
+                _postMessage('File_Rename', {
+                    "NewName": event.data
+                });
+            }
+        };
+
+        /* cloud-integrations (P42): more working space and private sheet views.
+           ONLYOFFICE Community ignores editorConfig.customization.layout, so the
+           header avatar and search button are hidden and the side strips merged
+           into one on the right, in the (same-origin) editor frame.
+           In spreadsheets each person works in their own sheet view
+           ("Private - <name>") on every sheet, reused when the file is opened
+           again, so filters and sorting do not change what others see. */
+        var cloudEditorReady = function () {
+            var tries = 0, styled = false, timer = setInterval(function () {
+                var frame = document.querySelector('iframe[name="frameEditor"]');
+                var w = frame && frame.contentWindow, doc = null;
+                try { doc = w && w.document; } catch (e) {}
+                if (++tries > 120) clearInterval(timer);
+                if (!doc || !doc.body) return;
+                if (!styled) {
+                    var css = doc.createElement('style');
+                    css.id = 'cloud-integrations-layout';
+                    /* Owner: one strip on the right. The left strip's buttons
+                       (search, comments, chat, spell check, about) move below the
+                       right strip's contextual settings buttons; their panels still
+                       open on the left, and the empty left column collapses while
+                       no panel is open. */
+                    css.textContent = '#box-right-btn-group .btn-current-user,#slot-btn-search{display:none!important}' +
+                        /* Owner: the right strip stays, in the header grey. */
+                        '#view-right-menu>.tool-menu-btns{background-color:#D9D9D9!important}' +
+                        /* Owner: the logo stays (licence: notices and attribution are
+                           retained) but no longer links to the vendor's website. */
+                        '#header-logo{pointer-events:none!important;cursor:default!important}' +
+                        /* Owner: Drive's ✕ and ⋮ sit at the top left (easier to reach on
+                           phones); the tabs start after them. */
+                        'section.box-tabs{padding-left:84px!important}' +
+                        /* Owner: ONLYOFFICE's logo takes the far right (✕'s old place).
+                           The tabs get the space first: file name and logo shrink (the
+                           logo down to its icon) before the tabs scroll; wider scroll
+                           arrows are easier to hit. */
+                        'section.box-tabs>.extra.left{order:3;flex:0 100 auto!important;min-width:34px;overflow:hidden}' +
+                        '#header-logo{padding-right:6px!important}' +
+                        'section.box-tabs>section.tabs{flex:1 1 auto!important;min-width:0}' +
+                        'section.box-tabs>.extra.right{flex:0 100 auto!important;min-width:40px;overflow:hidden}' +
+                        '#box-doc-name{flex:0 1 auto!important;min-width:0!important}#rib-doc-name{min-width:0!important}' +
+                        'section.tabs>a.scroll{min-width:28px!important;width:28px!important}' +
+                        /* Owner: the side strip opens from a hamburger at the bottom right
+                           of the status bar (like the sheet list), on desktop and phones. */
+                        /* Pinned to the bottom-right corner, under the strip's column and
+                           above it, so an open settings panel can never cover it; the zoom
+                           group keeps 40 px free for it. */
+                        '#cloud-strip-toggle{position:fixed;right:0;bottom:0;width:40px;height:var(--cloud-statusbar-h,32px);z-index:1002;' +
+                        'display:flex;align-items:center;justify-content:center;background:#F3F3F3}' +
+                        '#status-zoom-box{padding-right:40px!important}' +
+                        /* Owner: About as a small card beside the side strip, not a
+                           full-window page; its ✕ sits in the card's corner. */
+                        '#about-menu-panel{position:fixed!important;left:auto!important;top:auto!important;right:48px!important;bottom:40px!important;' +
+                        'width:min(340px,calc(100vw - 64px))!important;height:auto!important;max-height:60vh!important;overflow:auto!important;' +
+                        'background:#fff!important;border:1px solid rgba(0,0,0,.15);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);' +
+                        'padding:12px 12px 8px!important;z-index:1003!important;font-size:11px!important}' +
+                        '#about-menu-panel *{font-size:11px!important;line-height:1.45!important}' +
+                        '#about-menu-panel img,#about-menu-panel svg,#about-menu-panel .asc-about-header{max-width:150px!important;height:auto!important}' +
+                        '#about-menu-panel table{width:100%!important;margin:0!important}#about-menu-panel td{padding:2px 0!important}' +
+                        '#cloud-about-modified-wrap,#cloud-modified-notice{margin:6px 0 0!important;max-width:none!important}' +
+                        '#cloud-about-close{position:absolute;top:4px;right:4px;width:28px;height:28px;border:0;border-radius:4px;' +
+                        'background:transparent;font:16px/28px sans-serif!important;color:#262626;cursor:pointer;z-index:5}' +
+                        '#cloud-about-close:hover{background:#E0E0E0}' +
+                        /* Phones (owner): no sheet tabs, scroll arrows, zoom or save-status
+                           text in the status bar; sheets are picked from ONLYOFFICE's
+                           sheet-list button (≡), the side menu from ours at the far right. */
+                        '@media (max-width:768px){#status-action,#status-sheets-bar-box,#status-tabs-scroll,' +
+                        '#status-zoom-box>:not(#cloud-strip-toggle){display:none!important}}' +
+                        '#cloud-strip-toggle button{width:28px;height:26px;border:0;border-radius:4px;background:transparent;' +
+                        'display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}' +
+                        '#cloud-strip-toggle button:hover,body.cloud-strip-open #cloud-strip-toggle button{background:#D9D9D9}' +
+                        'body:not(.cloud-strip-open):not(.cloud-panel-open) #view-right-menu>.tool-menu-btns{visibility:hidden!important}' +
+                        'body.cloud-strip-open:not(.cloud-panel-open) #view-right-menu>.tool-menu-btns{position:fixed!important;right:0!important;left:auto!important;' +
+                        'top:var(--cloud-strip-top)!important;bottom:var(--cloud-strip-bottom)!important;height:auto!important;width:40px!important;' +
+                        'z-index:1000!important;display:block!important;visibility:visible!important;box-shadow:-2px 0 6px rgba(0,0,0,.15)}' +
+                        '#cloud-modified-notice{margin:12px auto 0;max-width:420px;font-size:11px;line-height:1.5;text-align:center;color:var(--text-secondary,#666)}';
+                    doc.head.appendChild(css); styled = true;
+                    /* ONLYOFFICE additional terms 2 and 3: a modified version must say
+                       so and credit the original developer. The notice is added to the
+                       About panel, next to the licence information, when it opens. */
+                    if (w.MutationObserver) new w.MutationObserver(function () {
+                        var info = doc.getElementById('id-about-licensor-info');
+                        if (!info || doc.getElementById('cloud-modified-notice')) return;
+                        var note = doc.createElement('p');
+                        note.id = 'cloud-modified-notice';
+                        note.textContent = 'Modified version: this installation changes the ONLYOFFICE Docs ' +
+                            'user interface (space-saving layout, side strips, private sheet views; first ' +
+                            'modified 18 November 2026). Based on the original ONLYOFFICE software developed ' +
+                            'by Ascensio System SIA, licensed under the GNU AGPL v3 with additional terms.';
+                        info.parentNode.insertBefore(note, info.nextSibling);
+                    }).observe(doc.body, { childList: true, subtree: true });
+                    /* Owner: About opened as a full-window page whose only native close is
+                       the About strip button. It stays (the licence requires the notices to
+                       be reachable), shown as a small card with a close button; Esc and the
+                       side-menu hamburger close it too. */
+                    /* Not offsetParent: the card is position:fixed, which has none. */
+                    var shown = function (el) { return !!(el && w.getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0); };
+                    var aboutOpen = function () { return shown(doc.getElementById('about-menu-panel')); };
+                    var closeAbout = function () {
+                        if (!aboutOpen()) return false;
+                        var b = doc.getElementById('left-btn-about');
+                        if (b) b.click();
+                        var a = doc.getElementById('about-menu-panel');
+                        if (shown(a)) a.style.display = 'none';
+                        return true;
+                    };
+                    if (w.MutationObserver) new w.MutationObserver(function () {
+                        var a = doc.getElementById('about-menu-panel');
+                        if (!a || doc.getElementById('cloud-about-close')) return;
+                        /* Never change the panel's visibility here: ONLYOFFICE creates it
+                           hidden when the file opens (clearing that showed About on every
+                           open, 18 Nov 2026). */
+                        var x = doc.createElement('button');
+                        x.id = 'cloud-about-close'; x.type = 'button'; x.title = 'Close'; x.setAttribute('aria-label', 'Close');
+                        x.textContent = '\u2715';
+                        x.addEventListener('click', function (e) { e.stopPropagation(); closeAbout(); });
+                        a.appendChild(x);
+                    }).observe(doc.body, { childList: true, subtree: true });
+                    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAbout(); }, true);
+                    doc.addEventListener('click', function (e) {
+                        var b = e.target.closest && e.target.closest('#left-btn-about');
+                        if (b) {
+                            var a = doc.getElementById('about-menu-panel');
+                            if (a) a.style.display = '';
+                        }
+                    }, true);
+                    /* Clicks inside the editor do not reach Drive's page; tell it
+                       so Drive closes its open file menu (no data is sent). */
+                    doc.addEventListener('pointerdown', function () {
+                        try { window.parent.postMessage({ source: 'cloud-editor-ui', type: 'pointerdown' }, '*'); } catch (e) {}
+                    }, true);
+                    var moveTries = 0, mover = setInterval(function () {
+                        var lb = doc.querySelector('#view-left-menu > .tool-menu-btns'),
+                            rb = doc.querySelector('#view-right-menu > .tool-menu-btns'),
+                            lm = doc.getElementById('left-menu');
+                        if (++moveTries > 120) clearInterval(mover);
+                        if (!lb || !rb || !lm || !lb.children.length) return;
+                        clearInterval(mover);
+                        var sep = doc.createElement('div');
+                        sep.className = 'separator horizontal';
+                        rb.appendChild(sep);
+                        while (lb.firstChild) rb.appendChild(lb.firstChild);
+                        lb.style.display = 'none';
+                        var collapse = function () {
+                            var open = [].some.call(lm.querySelectorAll('.left-panel > *'), function (e) { return e.offsetParent; });
+                            if (!open && lm.style.width !== '0px') {
+                                lm.style.width = '0px';
+                                try { w.dispatchEvent(new w.Event('resize')); } catch (e) {}
+                            }
+                        };
+                        if (w.MutationObserver) new w.MutationObserver(collapse).observe(lm, { attributes: true, attributeFilter: ['style'], subtree: true });
+                        collapse();
+                        /* Owner: the right strip takes no width. A button at the bottom
+                           right of the status bar opens it over the sheet; the button or a
+                           click on the sheet closes it. While one of its settings panels
+                           (e.g. pivot field list) is open the strip stays in place. */
+                        var rm = doc.getElementById('right-menu'), zoom = doc.getElementById('status-zoom-box');
+                        if (rm) {
+                            var box = doc.createElement('div');
+                            box.id = 'cloud-strip-toggle';
+                            box.innerHTML = '<button type="button" title="Side menu" aria-label="Side menu" aria-pressed="false">' +
+                                '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#383838" stroke-width="1" shape-rendering="crispEdges">' +
+                                '<line x1="4" y1="5.5" x2="16" y2="5.5"/><line x1="4" y1="8.5" x2="16" y2="8.5"/>' +
+                                '<line x1="4" y1="11.5" x2="16" y2="11.5"/><line x1="4" y1="14.5" x2="16" y2="14.5"/></svg></button>';
+                            var button = box.firstChild;
+                            /* Owner: a hamburger at the far right of the status bar (after
+                               zoom +), inside the zoom group (the status bar positions its
+                               parts from that group's width) but pinned by CSS. */
+                            if (zoom) { zoom.appendChild(box); try { w.dispatchEvent(new w.Event('resize')); } catch (e) {} }
+                            else (doc.getElementById('statusbar') || doc.body).appendChild(box);
+                            var stripOpen = false;
+                            var panelOpen = function () { return (parseInt(rm.style.width, 10) || 0) > 45; };
+                            var applyStrip = function () {
+                                var open = panelOpen();
+                                doc.body.classList.toggle('cloud-panel-open', open);
+                                doc.body.classList.toggle('cloud-strip-open', stripOpen);
+                                button.setAttribute('aria-pressed', stripOpen ? 'true' : 'false');
+                                if (stripOpen && !open) {
+                                    var r = rm.getBoundingClientRect();
+                                    doc.body.style.setProperty('--cloud-strip-top', r.top + 'px');
+                                    doc.body.style.setProperty('--cloud-strip-bottom', Math.max(0, w.innerHeight - r.bottom) + 'px');
+                                }
+                                if (!open && rm.style.width !== '0px') {
+                                    rm.style.width = '0px';
+                                    try { w.dispatchEvent(new w.Event('resize')); } catch (e) {}
+                                }
+                            };
+                            var sb = doc.getElementById('statusbar');
+                            if (sb) doc.body.style.setProperty('--cloud-statusbar-h', Math.round(sb.getBoundingClientRect().height || 32) + 'px');
+                            /* One tap always closes: with a settings panel open it closes the
+                               panel (via its active strip button) and the strip together. */
+                            button.addEventListener('click', function (e) {
+                                e.stopPropagation();
+                                if (closeAbout()) { stripOpen = false; applyStrip(); return; }
+                                if (panelOpen()) {
+                                    var active = doc.querySelector('#view-right-menu .tool-menu-btns .btn-category.active');
+                                    if (active) active.click();
+                                    stripOpen = false;
+                                } else {
+                                    stripOpen = !stripOpen;
+                                }
+                                applyStrip();
+                            });
+                            doc.addEventListener('pointerdown', function (e) {
+                                if (stripOpen && !e.target.closest('#cloud-strip-toggle,#right-menu,#view-right-menu')) { stripOpen = false; applyStrip(); }
+                            }, true);
+                            if (w.MutationObserver) new w.MutationObserver(applyStrip).observe(rm, { attributes: true, attributeFilter: ['style'] });
+                            w.addEventListener('resize', function () { if (stripOpen) applyStrip(); });
+                            applyStrip();
+                        }
+                    }, 500);
+                }
+                var api = null, user = null;
+                try {
+                    var main = w.SSE && w.SSE.getController && w.SSE.getController('Main');
+                    api = main && main.api; user = main && main.appOptions && main.appOptions.user;
+                } catch (e) {}
+                if (w.DE || w.PE) { clearInterval(timer); return; } /* text and slides: layout only */
+                if (!api || !user || !api.asc_getNamedSheetViews) return;
+                clearInterval(timer);
+                var name = 'Private - ' + (user.fullname || user.name || 'user');
+                var ensure = function () {
+                    try {
+                        if (api.asc_isProtectedSheet && api.asc_isProtectedSheet()) return;
+                        var views = api.asc_getNamedSheetViews() || [];
+                        var mine = views.filter(function (v) { return v.asc_getName() === name; })[0];
+                        if (mine) { if (!mine.asc_getIsActive()) api.asc_setActiveNamedSheetView(name); return; }
+                        api.asc_addNamedSheetView(null, true);
+                        var created = (api.asc_getNamedSheetViews() || []).filter(function (v) { return v.asc_getIsActive(); })[0];
+                        if (created) created.asc_setName(name);
+                    } catch (e) {}
+                };
+                /* Owner: row and column headers two shades darker than ONLYOFFICE's
+                   light grey (#F3F3F3) and the selected row/column header darker
+                   still. Private sheet views draw all header text in one colour,
+                   so the text stays near-black (white would hit every header).
+                   Same look in private views: no green "Sheet View mode" headers. */
+                var neutralHeaders = function () {
+                    try {
+                        var bg = '#D9D9D9', hover = '#C6C6C6', selected = '#A6A6A6', text = '#262626';
+                        api.asc_setSkin({
+                            'canvas-cell-title-background': bg,
+                            'canvas-cell-title-background-hover': hover,
+                            'canvas-cell-title-background-selected': selected,
+                            'canvas-cell-title-border': hover,
+                            'canvas-cell-title-border-hover': hover,
+                            'canvas-cell-title-border-selected': selected,
+                            'canvas-cell-title-text': text,
+                            'canvas-sheet-view-cell-background': bg,
+                            'canvas-sheet-view-cell-background-hover': hover,
+                            'canvas-sheet-view-cell-background-pressed': selected,
+                            'canvas-sheet-view-cell-title-label': text,
+                            'canvas-sheet-view-select-all-icon': text,
+                            /* Owner: numbers of filtered rows in blue (default green was
+                               hard to read on the grey headers). */
+                            'canvas-dark-cell-title-text-filtered': '#1F5BC6'
+                        });
+                    } catch (e) {}
+                };
+                neutralHeaders();
+                ensure();
+                api.asc_registerCallback && api.asc_registerCallback('asc_onActiveSheetChanged', function () { setTimeout(ensure, 300); });
+            }, 500);
+        };
+
+        var onRequestClose = function () {
+            if (fileInfo.ClosePostMessage)
+                _postMessage('UI_Close', {});
+            else if (fileInfo.CloseUrl)
+                window.parent.location.href = fileInfo.CloseUrl;
+        };
+
+        var onRequestEditRights = function () {
+            if (fileInfo.EditModePostMessage)
+                _postMessage('UI_Edit', {});
+            else if (fileInfo.HostEditUrl)
+                window.open(fileInfo.HostEditUrl, "_blank");
+        };
+
+        var onRequestSaveAs = function (event) {
+            //SaveAs work via PutRelativeFile server-server request
+            docEditor.serviceCommand('wopi:saveAsComplete');
+        };
+
+        var sharingRequestPending = false;
+        var onRequestSharingSettings = function (event) {
+            if (fileInfo.FileSharingPostMessage) {
+                if (sharingRequestPending) return;
+                sharingRequestPending = true;
+                setTimeout(function () { sharingRequestPending = false; }, 1000);
+                _postMessage('UI_Sharing', {});
+            } else if (fileInfo.FileSharingUrl) {
+                window.open(fileInfo.FileSharingUrl, "_blank");
+            }
+        };
+
+       var onRequestHistory = function (event) {
+            if (fileInfo.FileVersionPostMessage)
+                _postMessage('UI_FileVersions', {});
+            else if (fileInfo.FileVersionUrl)
+                window.open(fileInfo.FileVersionUrl, "_blank");
+        };
+
+        var onRequestInsertImage = function (event) {
+            insertImageType = event.data.c;
+            _postMessage('UI_InsertGraphic', {});
+        };
+
+        var onError = function (event) {
+            if (event)
+                innerAlert(event.data);
+        };
+
+        var onOutdatedVersion = function () {
+            window.location.reload();
+        };
+
+        var getWopiFileUrl = function(fileInfo, userAuth) {
+           let url;
+           if (fileInfo.FileUrl) {
+              //Requests to the FileUrl can not be signed using proof keys. The FileUrl is used exactly as provided by the host, so it does not necessarily include the access token, which is required to construct the expected proof.
+              url = fileInfo.FileUrl;
+           } else if (fileInfo.TemplateSource) {
+              url = fileInfo.TemplateSource;
+           } else if (userAuth) {
+              url = userAuth.wopiSrc + "/contents?access_token=" + userAuth.access_token;
+           }
+           return url;
+        }
+
+        var getWopiFolder = function (fileInfo, queryParams) {
+            if (fileInfo.BreadcrumbFolderName) {
+                return fileInfo.BreadcrumbFolderName;
+            }
+            //connector Nextcloud Office 8.4.5 (SupportsUpdate=undefined, UserCanWrite=true, UserCanNotWriteRelative=false)
+            if (queryParams.title) {
+                let titleParts = queryParams.title.split('/');
+                if (titleParts.length > 1 && titleParts[titleParts.length - 2]) {
+                    return titleParts[titleParts.length - 2];
+                }
+            }
+            return undefined;
+        }
+
+        var connectEditor = function () {
+            var statusCode = "<%= typeof statusCode !== 'undefined' ? statusCode : '' %>";
+            if (statusCode) {
+                handleWopiError(statusCode);
+                return;
+            }
+
+            fileInfo = JSON.parse(document.getElementById('fileInfoJsonData').getAttribute('data-json'));
+
+            var key = document.getElementById('keyData').getAttribute('data-json');
+            var documentType = "<%= documentType %>";
+            var userAuth = JSON.parse(document.getElementById('userAuthJsonData').getAttribute('data-json'));
+            var token = "<%= token %>";
+            var queryParams = JSON.parse(document.getElementById('queryParamsJsonData').getAttribute('data-json'));
+            var docs_api_config = JSON.parse(document.getElementById('docsApiConfigJsonData').getAttribute('data-json'));
+
+            if (!fileInfo.BaseFileName) {
+                showError();
+                return;
+            }
+            var type;
+            if (queryParams.embed === "1") {
+                type = "embedded"
+            } else if (queryParams.mobile === "1") {
+                type = "mobile"
+            } else {
+                type = "desktop"
+            }
+			var fileType = fileInfo.BaseFileName ? fileInfo.BaseFileName.substr(fileInfo.BaseFileName.lastIndexOf('.') + 1) : "";
+			fileType = fileInfo.FileExtension ? fileInfo.FileExtension.substr(1) : fileType;
+			fileType = fileType.toLowerCase();
+			let customizationClose = !!(fileInfo.ClosePostMessage || fileInfo.CloseUrl);
+			const canEdit = (fileInfo.UserCanOnlyComment || fileInfo.UserCanWrite || fileInfo.UserCanReview);
+			//connector Nextcloud Office 8.4.5 (SupportsUpdate=undefined, UserCanWrite=true, UserCanNotWriteRelative=false)
+			let customizationSaveAs = (fileInfo.SupportsUpdate || canEdit) && !fileInfo.UserCanNotWriteRelative;
+			let customizationFormSubmit = queryParams.formsubmit === "1";
+			let permissionsEdit = !fileInfo.ReadOnly && (!fileInfo.UserCanOnlyComment && fileInfo.UserCanWrite) && !customizationFormSubmit;
+			const permissionsReview = (fileInfo.UserCanOnlyComment || fileInfo.SupportsReviewing===false) ? false : (fileInfo.UserCanReview===false ? false : fileInfo.UserCanReview);
+			const permissionsComment = permissionsEdit || !!fileInfo.UserCanOnlyComment;
+			let permissionsFillForm = permissionsEdit || customizationFormSubmit;
+			const permissionsCopy = fileInfo.CopyPasteRestrictions!=="CurrentDocumentOnly" && fileInfo.CopyPasteRestrictions!=="BlockAll" && !fileInfo.DisableCopy;
+			sessionId = userAuth.userSessionId;
+			var config = {
+				"width": "100%",
+				"height": "100%",
+				"editorConfig": {
+					"customization": {
+						"about": true
+					},
+					"coEditing": {
+						"change": false
+					},
+				}
+			};
+			config = mergeDeep(config, docs_api_config);
+			config = mergeDeep(config, {
+				"type": type,
+				"documentType": documentType,
+				"token": token,
+				"document": {
+					"title": fileInfo.BreadcrumbDocName || fileInfo.BaseFileName,
+					"url": getWopiFileUrl(fileInfo, userAuth),
+					"fileType": fileType,
+					"key": key,
+                    "info": {
+                        "folder": getWopiFolder(fileInfo, queryParams)
+                    },
+					"permissions": {
+                        "edit": permissionsEdit,
+                        "review": permissionsReview,
+                        "comment": permissionsComment,
+                        "copy": permissionsCopy,
+                        "download": !fileInfo.DisableExport,
+                        "print": !fileInfo.DisablePrint && !fileInfo.HidePrintOption,
+                        "chat": queryParams.dchat!=="1",
+                        "fillForms": permissionsFillForm
+					}
+				},
+				"editorConfig": {
+					"mode": userAuth.mode,
+					"lang": queryParams.lang || queryParams.ui || "en-US",
+					"region": queryParams.rs,
+					"callbackUrl": JSON.stringify(userAuth),
+					"user": {
+						"id": fileInfo.UserId,
+						"name": fileInfo.IsAnonymousUser ? "" : fileInfo.UserFriendlyName
+					},
+					"customization": {
+						/* cloud-integrations (P42): maximise working space */
+						"compactHeader": true,
+						"hideRightMenu": true,
+						"layout": {
+							"header": { "user": false, "users": false, "editMode": false },
+							"leftMenu": false,
+							"rightMenu": false
+						},
+						"close": {
+							"visible": customizationClose
+						},
+                        "customer": {
+                            "name": fileInfo.BreadcrumbBrandName,
+                            "www": fileInfo.BreadcrumbBrandUrl
+                        },
+                        "submitForm": customizationFormSubmit && customizationSaveAs,
+                        /* cloud-integrations (P42, owner): always the light theme, so the
+                           agreed greys, icons and headers look the same on every device. */
+                        "uiTheme": "default-light"
+					},
+                    "coEditing": {
+                        "mode": userAuth.mode !== "view" ? "fast" : "strict"
+                    },
+                    "wopi": {
+                        "FileNameMaxLength": fileInfo.FileNameMaxLength && fileInfo.FileNameMaxLength>0 ? fileInfo.FileNameMaxLength : 250,
+                        "WOPISrc": userAuth.wopiSrc,
+                        "UserSessionId": sessionId
+                    }
+				},
+				"events": {
+                    "onAppReady": onAppReady,
+                    "onDocumentStateChange": fileInfo.EditNotificationPostMessage ? onDocumentStateChange : undefined,
+                    'onRequestEditRights': fileInfo.EditModePostMessage || fileInfo.HostEditUrl ? onRequestEditRights : undefined,
+                    'onRequestSaveAs': customizationSaveAs ? onRequestSaveAs : undefined,
+                    "onError": onError,
+                    "onOutdatedVersion": onOutdatedVersion,
+                    "onRequestClose": customizationClose ? onRequestClose : undefined,
+                    "onRequestRename": fileInfo.SupportsRename && fileInfo.UserCanRename ? onRequestRename : undefined,
+                    "onRequestSharingSettings": undefined, /* cloud-integrations: sharing stays in Drive */
+                    "onDocumentReady": cloudEditorReady,
+                    "onRequestHistory": fileInfo.FileVersionUrl || fileInfo.FileVersionPostMessage ? onRequestHistory : undefined,
+                    "onRequestInsertImage": fileInfo.EnableInsertRemoteImage ? onRequestInsertImage : undefined
+                }
+			});
+
+            postMessageOrigin = fileInfo.PostMessageOrigin || "*";
+            if (postMessageOrigin && (typeof postMessageOrigin === 'string') && postMessageOrigin.charAt(postMessageOrigin.length-1)=='/')
+                postMessageOrigin = postMessageOrigin.substring(0, postMessageOrigin.length - 1);
+            lang = config.editorConfig.lang;
+
+            startTime = Date.now();
+            docEditor = new DocsAPI.DocEditor("iframeEditor", config);
+
+            fixSize();
+        };
+
+        var fixSize = function () {
+            var wrapEl = document.getElementsByClassName("form");
+            if (wrapEl.length) {
+                wrapEl[0].style.height = screen.availHeight + "px";
+                window.scrollTo(0, -1);
+                wrapEl[0].style.height = window.innerHeight + "px";
+            }
+        };
+
+        var showError = function(msg, title) {
+            msg = msg || 'Sorry, editor could not be loaded. Please contact your administrator.';
+
+            var newDiv = document.createElement("div");
+            newDiv.className = "app-error-panel";
+            newDiv.innerHTML = '<div class="message-block">' +
+                                    '<div class="message-inner">' +
+                                        (title ? '<div class="title">' + title + '</div>' : '') +
+                                        '<div class="text">' + msg + '</div>' +
+                                    '</div>' +
+                                '</div>';
+            document.body.appendChild(newDiv);
+        };
+
+        /**
+         * Handle WOPI error status and show appropriate error message
+         * @param {number|string} statusCode - HTTP status code
+         * @returns {boolean} - Returns true if error was handled, false if no error
+         */
+        var handleWopiError = function (statusCode) {
+            if (!statusCode) {
+                return false;
+            }
+            const status = parseInt(statusCode, 10);
+            // WOPI spec-compliant error messages
+            // https://learn.microsoft.com/en-us/microsoft-365/cloud-storage-partner-program/rest/files/checkfileinfo#status-codes
+            var errorMessage;
+            switch (status) {
+                case 400:
+                    errorMessage = 'Bad Request - malformed or invalid request';
+                    break;
+                case 401:
+                    errorMessage = 'Invalid access token';
+                    break;
+                case 403:
+                    errorMessage = 'Access forbidden';
+                    break;
+                case 404:
+                    errorMessage = 'Resource not found or user unauthorized';
+                    break;
+                case 409:
+                    errorMessage = 'Conflict - lock mismatch or file version conflict';
+                    break;
+                case 412:
+                    errorMessage = 'Precondition Failed - lock token mismatch';
+                    break;
+                case 413:
+                    errorMessage = 'Payload Too Large - file size exceeds limits';
+                    break;
+                case 500:
+                    errorMessage = 'Internal server error or invalid proof keys';
+                    break;
+                case 501:
+                    errorMessage = 'Not Implemented - operation not supported';
+                    break;
+                case 507:
+                    errorMessage = 'Insufficient Storage - not enough storage space';
+                    break;
+            }
+            showError(errorMessage);
+            return true;
+        }
+
+		//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+		if (typeof Object.assign !== 'function') {
+			// Must be writable: true, enumerable: false, configurable: true
+			Object.defineProperty(Object, "assign", {
+				value: function assign(target, varArgs) { // .length of function is 2
+					'use strict';
+					if (target === null || target === undefined) {
+						throw new TypeError('Cannot convert undefined or null to object');
+					}
+
+					var to = Object(target);
+
+					for (var index = 1; index < arguments.length; index++) {
+						var nextSource = arguments[index];
+
+						if (nextSource !== null && nextSource !== undefined) {
+							for (var nextKey in nextSource) {
+								// Avoid bugs when hasOwnProperty is shadowed
+								if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+									to[nextKey] = nextSource[nextKey];
+								}
+							}
+						}
+					}
+					return to;
+				},
+				writable: true,
+				configurable: true
+			});
+		}
+		/**
+		 * Simple object check.
+		 * @param item
+		 * @returns {boolean}
+		 */
+		var isObject = function(item) {
+			return (item && typeof item === 'object' && !Array.isArray(item));
+		}
+
+		/**
+		 * Deep merge two objects.
+		 * @param target
+		 * @param source
+		 */
+		var mergeDeep = function(target, source) {
+			//https://stackoverflow.com/a/34749873
+			if (isObject(target) && isObject(source)) {
+				for (const key in source) {
+					if (isObject(source[key])) {
+						if (!target[key]) Object.assign(target, { [key]: {} });
+						mergeDeep(target[key], source[key]);
+					} else {
+						Object.assign(target, { [key]: source[key] });
+					}
+				}
+			}
+
+			return target;
+		}
+
+        if (window.addEventListener) {
+            window.addEventListener("load", connectEditor);
+            window.addEventListener("resize", fixSize);
+            window.addEventListener("orientationchange", fixSize);
+        } else if (window.attachEvent) {
+            window.attachEvent("onload", connectEditor);
+            window.attachEvent("onresize", fixSize);
+            window.attachEvent("orientationchange", fixSize);
+        }
+    </script>
+<script>/* cloud-integrations: test-site marker */(function(){try{if(window.top!==window||!/^test[.-]/.test(location.hostname)||document.getElementById('cloud-test-marker'))return;}catch(e){return;}var add=function(){if(document.getElementById('cloud-test-marker'))return;var s=document.createElement('style');s.textContent='#cloud-test-marker{position:fixed;top:0;left:0;right:0;height:3px;background:repeating-linear-gradient(135deg,#e8590c 0 12px,#f59f00 12px 24px);z-index:2147483647;pointer-events:none}#cloud-test-marker span{position:absolute;top:3px;left:50%;transform:translateX(-50%);background:#e8590c;color:#fff;font:600 10px/14px system-ui,sans-serif;letter-spacing:.08em;padding:0 8px;border-radius:0 0 4px 4px;opacity:.92}';var d=document.createElement('div');d.id='cloud-test-marker';d.setAttribute('aria-hidden','true');d.innerHTML='<span>TEST SITE</span>';document.head.appendChild(s);document.body.appendChild(d);};if(document.body)add();else document.addEventListener('DOMContentLoaded',add);})();</script>
+</body>
+</html>

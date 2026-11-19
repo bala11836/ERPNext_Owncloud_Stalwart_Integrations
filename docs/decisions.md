@@ -4,6 +4,24 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-20
+
+### The order of work: branch, test, merge, main, production
+- **Decision:** every change follows branch → test → merge → `main` →
+  production. The branch itself is deployed to the test site and validated
+  before the owner merges it; production receives that same content from
+  `main`. Unit tests are a gate before the test deployment, not a replacement.
+  Production-only files (route files, port bindings) cannot be tried on test, so
+  they get a recorded browser and protocol check right after promotion and are
+  named in the release record as not covered by test. The pull request carries
+  a required "tested commit and result" line.
+- **Why:** merging first and testing afterwards puts untested code on the
+  branch that production is built from; and a gap of exactly that kind
+  (production-only settings that the tests could not see) broke Mail inside the
+  portal once. GitHub cannot verify a test happened, so a written record is the
+  control.
+- **Where:** `AGENTS.md`, `CONTRIBUTING.md`, the pull request template.
+
 ## 2026-11-19
 
 ### Test refresh: separate code and data buttons; crippled 60-day data

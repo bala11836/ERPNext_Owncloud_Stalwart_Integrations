@@ -3,8 +3,8 @@
 Thank you for helping. This repository runs a live business system, so every
 change follows one path (see `AGENTS.md`, which is mandatory):
 
-**your fork → pull request → owner review and merge → test site → owner
-confirmation → production.**
+**your branch (in your fork) → test site → owner merges → `main` →
+production.**
 
 The code is public under AGPL-3.0-or-later (see `LICENSE`); by contributing
 you agree that your contribution is licensed the same way.
@@ -24,10 +24,14 @@ you agree that your contribution is licensed the same way.
 5. Open a **pull request** to `main`. Describe what changed, why,
    and how you tested it. Use the template.
 
-Only the owner merges. A merged change is deployed to **the test site first**
-(the maintainers' permanent test site). Production is updated only after it passes there
-**and the owner confirms**; production reads this repository with a read-only
-key and is never updated by a merge alone.
+Only the owner merges, and only **after your branch has been deployed to the
+test site and validated there** (the maintainers' permanent test site). Members
+of the maintainers' "developer" group deploy branches themselves; for everyone
+else the maintainers deploy the branch after reviewing the diff, because
+deploying runs the branch's code on the test host. Write the tested commit and
+the result in the pull request. Production is updated from `main` only after
+the owner confirms; production reads this repository with a read-only key and
+is never updated by a merge alone.
 
 ## Rules
 

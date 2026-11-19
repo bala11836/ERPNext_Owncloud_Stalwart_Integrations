@@ -213,12 +213,23 @@ def export(config):
                 run(['docker','start',*selected],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
                 run(['systemctl','stop',watchdog+'.timer'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             maintenance_seconds=round(time.time()-started,2)
-            # Production is running again: compress the dumps now.
+            # Production is running again. A crippled export (owner decision,
+            # 19 November 2026) scrambles copies in throwaway containers here,
+            # so unscrambled data never leaves production.
+            crippled=None
+            if (config.get('cripple') or {}).get('enabled') is True:
+                from cripple_snapshot import cripple
+                crippled=cripple(data,config,containers,database,business_counts)
+                counts=crippled.pop('counts')
+            elif config.get('require_cripple') is True:
+                raise RuntimeError('This exporter may only publish crippled snapshots')
+            # Compress the dumps now.
             for name in ['erp.sql','dms.sql']:compress(data/name)
             contents=tree_manifest(data)
             manifest={'format':1,'source_instance':config['source_instance'],'snapshot_id':snapshot_id,
                 'exported_at':datetime.now(timezone.utc).isoformat(),'maintenance_seconds':maintenance_seconds,
-                **contents,'counts':counts,'code_included':False,'identity_database_included':False}
+                **contents,'counts':counts,'code_included':False,'identity_database_included':False,
+                'crippled':crippled}
             (data/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
             # Production is running again before compression/network transfer.
             with tarfile.open(fileobj=sys.stdout.buffer,mode='w|gz') as archive:

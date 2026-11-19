@@ -1,10 +1,50 @@
 # Permanent test site and one-way refresh (`test-refresh`)
 
-Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, refresh button and progress, test profiles, egress policy and the verification tools used for acceptance.
+Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, refresh buttons and progress, test profiles, egress policy and the verification tools used for acceptance.
 
 ## Purpose
 
-Keeps a permanent test site that mirrors production data one way only: a restricted export on production, a root-only worker on test that validates, restores and quarantines (outbound email, webhooks, schedulers, API keys, sessions, provider credentials), a refresh button with progress, test profiles, egress policy and the verification tools used for acceptance.
+Keeps a permanent test site that mirrors production data one way only: a restricted export on production, a root-only worker on test that validates, restores and quarantines (outbound email, webhooks, schedulers, API keys, sessions, provider credentials), refresh buttons with progress, test profiles, egress policy and the verification tools used for acceptance.
+
+### Two buttons (owner decision, 19 November 2026)
+
+- **Refresh code** resets the test site to the tested release (`main`): the
+  worker fetches `main` into the test checkout and runs the host's deploy
+  command from its private profile. Use it after someone has deployed a branch
+  for testing. Test data is not touched.
+- **Refresh data** replaces test data with a **crippled** production copy.
+  It uses production resources, so it is meant for occasional use.
+
+### Crippled data
+
+Produced on production by `tools/cripple_snapshot.py` before anything leaves
+it (the exporter runs it after production has resumed, on copies only):
+
+- **Strictly the last 60 days**, ERP included: older transactions, logs and
+  attachments are dropped; old customers, suppliers, contacts, addresses and
+  employees are dropped unless a remaining transaction refers to them. Numbers
+  and balances do not add up, by design.
+- **All personal information replaced**: names, e-mail addresses, phone
+  numbers, addresses, PAN, GSTIN, Aadhaar, bank accounts and IFSC, payroll
+  amounts, free text and comments. Fakes are deterministic within one export
+  (links keep working) and derived from a key discarded afterwards, so they
+  cannot be reversed. Customer, supplier, contact, employee and user record
+  names are renamed everywhere they are referenced.
+- **Documents become placeholders** of the same type with scrambled names:
+  ERP attachments, DMS documents (originals, archive versions, thumbnails,
+  OCR text) and Drive files. Drive revisions, trash, search index, thumbnails
+  and event history are dropped.
+- **Mail is not exported**: Stalwart keeps its mail in a database that cannot
+  be scrambled offline, so test mailboxes start empty.
+- **Kept accounts**: the logins listed in `keep_accounts` (the members of the
+  authentik group **"Testers"**, which gates the test site) keep their real
+  user identity so they can sign in. Everyone else is scrambled.
+- Outbound e-mail, WhatsApp and payments stay switched off on test by the
+  existing quarantine and egress policy.
+
+Run `tools/rehearse_cripple.py --config <test worker profile> --keep <login>`
+on the test host to prove the scrambling against copies of the test site's own
+data; it prints counts of surviving identifiers per table, never values.
 
 ## Contents
 
@@ -14,6 +54,8 @@ Keeps a permanent test site that mirrors production data one way only: a restric
 - `deployment/test-refresh-worker.*`
 - `deployment/test-runtime.example.json`
 - `tools/export_snapshot.py`
+- `tools/cripple_snapshot.py`
+- `tools/rehearse_cripple.py`
 - `tools/snapshot_archive.py`
 - `tools/test_refresh_worker.py`
 - `tools/restore_test_data.py`
@@ -24,6 +66,7 @@ Keeps a permanent test site that mirrors production data one way only: a restric
 - `tools/verify_test_collaboration.py`
 - `tools/verify_test_queues.py`
 - `tools/verify_test_processing.py`
+- `tests/test_cripple_snapshot.py`
 - `tests/test_refresh_boundary.py`
 - `tests/test_refresh_status_files.py`
 - `tests/test_restore_boundaries.py`
@@ -43,8 +86,19 @@ Install `tools/export_snapshot.py` on the source host and `tools/test_refresh_wo
 
 Profiles: `deployment/test-runtime.example.json`; systemd examples `deployment/test-refresh-worker.*`. Site config on test: `cloud_test_copy`, `cloud_test_refresh_enabled`, `cloud_test_refresh_users`. Never restore test data into production.
 
+Private settings for crippled data and the code button:
+
+- production exporter profile: `"cripple": {"enabled": true, "days": 60,
+  "keep_accounts": ["<login of each member of Testers>"]}` and
+  `"require_cripple": true` (refuse any uncrippled export);
+- test worker profile: `"require_crippled": true` (restore refuses an
+  uncrippled snapshot) and `"code_refresh": {"command": [<host deploy
+  command>], "branch": "main", "timeout_seconds": 3600}`. Without
+  `code_refresh` the code button reports that it is not configured.
+
 ## Tests
 
+- `tests/test_cripple_snapshot.py`
 - `tests/test_refresh_boundary.py`
 - `tests/test_restore_boundaries.py`
 - `tests/test_snapshot_archive.py`
@@ -55,7 +109,7 @@ Run all suites offline with `python tools/run_unit_tests.py` in the matching ERP
 
 - No upstream product is bundled or adapted.
 
-Upstream licenses are as published by each project; verify them at the pinned version before redistributing (LICENSES.md). This module's own code: open-source license not yet chosen by the owner (P35).
+Upstream licenses are as published by each project; verify them at the pinned version before redistributing (LICENSES.md). This module's own code: AGPL-3.0-or-later (see `LICENSE`).
 
 ## AI-assisted development
 

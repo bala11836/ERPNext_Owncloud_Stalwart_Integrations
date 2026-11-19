@@ -40,6 +40,23 @@ def publish_status(directory,status):
         except FileNotFoundError:pass
 
 
+def refresh_code(config,log):
+    """Reset the test site's code to `main`: the tested, merged release."""
+    spec=config.get('code_refresh')
+    if not spec or not isinstance(spec.get('command'),list) or not spec['command']:
+        raise RuntimeError('Code refresh is not configured on this test host')
+    source=Path(config['source'])
+    env=dict(os.environ,GIT_TERMINAL_PROMPT='0')
+    branch=spec.get('branch','main')
+    subprocess.run(['git','-C',str(source),'fetch','--quiet','origin',branch],check=True,env=env,stdout=log,stderr=log,timeout=600)
+    subprocess.run(['git','-C',str(source),'checkout','--quiet','--detach','FETCH_HEAD'],check=True,env=env,stdout=log,stderr=log)
+    revision=subprocess.check_output(['git','-C',str(source),'rev-parse','--short','HEAD'],text=True).strip()
+    # The operator's deploy command (rebuild/render/register for this host)
+    # comes from the root-owned profile, never from the request.
+    subprocess.run(spec['command'],cwd=str(source),check=True,stdout=log,stderr=log,timeout=spec.get('timeout_seconds',3600))
+    return revision
+
+
 def private_profile(path):
     path=Path(path)
     info=path.stat()
@@ -68,12 +85,15 @@ def execute(config,retry_staged=False):
             raise ValueError('Invalid test refresh request file')
         incoming=json.loads(os.read(descriptor,4097).decode())
         request_id=str(uuid.UUID(incoming['request_id']))
+        kind=incoming.get('kind','data')
+        if kind not in {'data','code'}:raise ValueError('Unknown refresh kind')
         if request_id!=incoming['request_id'] or incoming['actor'].casefold() not in {u.casefold() for u in config['allowed_users']}:
             raise ValueError('Unapproved refresh actor or request identifier')
         receipt=state/'last-result.private.json'
         prior=json.loads(receipt.read_text()) if receipt.exists() else {}
         status={'request_id':request_id,'requested_at':incoming['requested_at'],'started_at':now(),
-                'last_successful_at':prior.get('last_successful_at')}
+                'last_successful_at':prior.get('last_successful_at'),'kind':kind,
+                'last_code_refresh_at':prior.get('last_code_refresh_at'),'revision':prior.get('revision')}
         def publish(phase):
             status['phase']=phase
             # Official ERP images use uid 1000 with primary gid 0. This file
@@ -85,6 +105,14 @@ def execute(config,retry_staged=False):
             if not retry_staged and attempt.exists() and time.time()-attempt.stat().st_mtime<config.get('minimum_interval_seconds',300):
                 raise RuntimeError('Test refresh cooldown is active')
             attempt.write_text(json.dumps({'at':now()})+'\n')
+            if kind=='code':
+                publish('updating-code')
+                with (state/'last-code-refresh.private.log').open('wb') as log:revision=refresh_code(config,log)
+                status.update(finished_at=now(),last_code_refresh_at=now(),revision=revision)
+                record=dict(prior);record.update(last_code_refresh_at=status['last_code_refresh_at'],revision=revision)
+                receipt.write_text(json.dumps(record,indent=2)+'\n');receipt.chmod(0o600)
+                publish('succeeded')
+                return
             publish('restoring' if retry_staged else 'snapshotting')
             with tempfile.TemporaryDirectory(prefix='refresh-',dir=state) as temporary:
                 archive=Path(temporary)/'production-data.tgz'

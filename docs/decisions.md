@@ -26,6 +26,19 @@ discussion that led to a decision is not repeated here.
   `tools/test_refresh_worker.py`, `tools/rehearse_cripple.py`,
   [test-refresh module](modules/test-refresh.md).
 
+### Test access through one flat "Testers" group
+- **Decision:** the test site's applications admit only members of one flat
+  authentik group, "Testers", bound directly to each test application. No
+  parent/child groups. The owner adds the people who help test new changes;
+  production access (the staff group and each person's ERP rights) is
+  separate and unaffected.
+- **Why:** inherited groups made everyone a tester by default and were hard
+  to read. A flat group makes "who can open test" a single visible list, and
+  pairs with the scrambled test data (only testers keep real login accounts
+  on test).
+- **Where:** authentik application bindings (production sign-in serves both
+  sites); operations record in the private repository.
+
 ### Public repository under AGPL-3.0, operations records private (P35)
 - **Decision:** publish the code as a new public repository,
   `ERPNext_Owncloud_Stalwart_Integrations`, under AGPL-3.0-or-later, starting

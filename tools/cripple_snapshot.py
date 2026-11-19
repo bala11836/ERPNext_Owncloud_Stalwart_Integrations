@@ -696,12 +696,15 @@ PSQL = 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql -v ON_ERROR_STOP=1 -At
 
 def _feed(args, path=None, text=None):
     process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    if path is not None:
-        with open(path, 'rb') as stream:
-            shutil.copyfileobj(stream, process.stdin)
-    else:
-        process.stdin.write(text.encode())
-    process.stdin.close()
+    try:
+        if path is not None:
+            with open(path, 'rb') as stream:
+                shutil.copyfileobj(stream, process.stdin)
+        else:
+            process.stdin.write(text.encode())
+        process.stdin.close()
+    except BrokenPipeError:
+        pass  # the client stopped early; its own error message follows
     errors = process.stderr.read()
     if process.wait():
         raise RuntimeError('Temporary database command failed: ' + errors.decode(errors='replace')[-600:])

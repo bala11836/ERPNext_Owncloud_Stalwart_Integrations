@@ -27,6 +27,14 @@ TOKENS = re.compile(rb'[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]+|(?<![0-9]
 TABLE = re.compile(rb'^INSERT INTO [`"]?([^`" ]+)[`"]?|^COPY (?:public\.)?([a-z_]+)')
 
 
+def masked(token):
+    text = token.decode(errors='replace')
+    if '@' in text:
+        local, _, domain = text.partition('@')
+        return local[:1] + '***@' + domain
+    return text[:2] + '***' + text[-2:]
+
+
 def tokens_by_table(path):
     found = {}
     current = b'?'
@@ -40,7 +48,7 @@ def tokens_by_table(path):
     return found
 
 
-def drive_names(root):
+def drive_names(root, kinds=None):
     names = set()
     for file in Path(root).rglob('*.mpk'):
         if file.is_symlink():
@@ -51,6 +59,8 @@ def drive_names(root):
             continue
         if value and len(value) > 3:
             names.add(value)
+            if kinds is not None:
+                kinds.setdefault(value, set()).add((unpack(file.read_bytes()).get('user.ocis.type') or b'?').decode())
     return names
 
 
@@ -86,7 +96,8 @@ def rehearse(config, keep_accounts, days):
         (data / 'mail-data').mkdir()
         (data / 'document-enrollment.json').write_text(json.dumps({'users': []}) + '\n')
         before = {'erp': tokens_by_table(data / 'erp.sql'), 'dms': tokens_by_table(data / 'dms.sql')}
-        names_before = drive_names(data / 'drive-data')
+        kinds = {}
+        names_before = drive_names(data / 'drive-data', kinds)
         blob_layout = None
         sample = next((m for m in (data / 'drive-data/storage/users/spaces').rglob('*.mpk')
                        if not m.is_symlink() and '.REV.' not in m.name
@@ -105,15 +116,24 @@ def rehearse(config, keep_accounts, days):
         for name, path in [('erp', data / 'erp.sql'), ('dms', data / 'dms.sql')]:
             after = tokens_by_table(path)
             surviving = Counter()
+            samples = {}
             for token, tables in after.items():
                 if token in before[name] and token not in keep:
                     for table in tables:
                         surviving[table] += 1
+                        samples.setdefault(table, []).append(masked(token))
+            report[f'{name}_surviving_samples_masked'] = {t: sorted(set(v))[:4] for t, v in samples.items()}
             report[f'{name}_identifiers_before'] = len(before[name])
             report[f'{name}_identifiers_surviving_by_table'] = dict(surviving.most_common(40))
         names_after = drive_names(data / 'drive-data')
         report['drive_names_before'] = len(names_before)
         report['drive_original_names_surviving'] = len(names_before & names_after)
+        survivors = Counter()
+        for name in names_before & names_after:
+            for kind in kinds.get(name, {'?'}):
+                survivors['type ' + kind + (' (space/system name)' if name.isascii() and len(name) < 25 and b' ' not in name else '')] += 1
+        report['drive_surviving_by_type'] = dict(survivors)
+        report['drive_surviving_masked'] = sorted({masked(n) for n in names_before & names_after})[:25]
         files = [p for p in (data / 'erp-files').rglob('*') if p.is_file()]
         report['erp_files_not_placeholders'] = sum(1 for p in files if not re.fullmatch(r'file-[0-9a-f]{16}(\.[a-z0-9]+)?', p.name))
         return report

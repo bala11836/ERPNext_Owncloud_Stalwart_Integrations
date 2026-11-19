@@ -804,6 +804,9 @@ def dms_statements(rows, scrambler, keep_accounts, placeholders):
     for row_id, username, email in rows['users']:
         if username.casefold() in keep or (email and email.casefold() in keep):
             continue
+        # Linked SSO identities and e-mail addresses carry the real login.
+        out.append(f'DELETE FROM socialaccount_socialaccount WHERE user_id={int(row_id)}')
+        out.append(f'DELETE FROM account_emailaddress WHERE user_id={int(row_id)}')
         person = scrambler.value('person', username).split(' ')
         out.append('UPDATE auth_user SET '
                    f"username={sql_literal('user-' + scrambler.digest(username)[:10])}, "

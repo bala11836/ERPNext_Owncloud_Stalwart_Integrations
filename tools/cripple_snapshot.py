@@ -185,6 +185,18 @@ NOT_PERSONAL = {'naming_series', 'item_name', 'item_group_name', 'account_name',
                 # References remapped by the rename step, not scrubbed.
                 'attached_to_name', 'attached_to_field', 'reference_name', 'reference_docname', 'link_name',
                 'share_name', 'for_value', 'against_voucher', 'voucher_no', 'parent', 'docname', 'ref_docname'}
+# Catch-all sweep over every text column: anything that still looks like an e-mail
+# address, GSTIN or PAN (and is not one of this run's fakes) is replaced. Framework
+# metadata tables are skipped; so are key and link columns, to keep references intact.
+TEXTUAL = {'varchar', 'tinytext', 'text', 'mediumtext', 'longtext', 'json'}
+SWEEP_SKIP_TABLES = {'DocType', 'DocField', 'DocPerm', 'Custom DocPerm', 'Patch Log', 'Installed Application',
+                     'Module Def', 'Translation', 'Singles'}
+SWEEP_SKIP_COLUMNS = {'name', 'parent', 'parenttype', 'parentfield', 'owner', 'modified_by', 'creation', 'modified',
+                      'docstatus', 'idx', 'user', 'email', 'email_id', 'for_user', 'allow', 'for_value'}
+SWEEP = [(r"[A-Za-z0-9._%+-]+@(?!example\.invalid)[A-Za-z0-9-]+\.[A-Za-z0-9.-]*[A-Za-z]", '@',
+          'redacted@example.invalid'),
+         (r'(?-i)\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b', None, '99ZZZZZ9999Z1ZZ'),
+         (r'(?-i)\b[A-Z]{5}[0-9]{4}[A-Z]\b', None, 'ZZZZZ9999Z')]
 SYSTEM_COLUMNS = ['_assign', '_liked_by', '_comments', '_seen', '_user_tags']
 
 
@@ -391,6 +403,29 @@ def erp_plan(meta, cutoff, keep_accounts, key):
         if present(doctype):
             statements.append(f'UPDATE {table(doctype)} t JOIN `_cripple_map` m ON m.dt={sql_literal(doctype)} '
                               'AND m.old=t.name SET t.name=m.new')
+    # 6b. Records named after a user's login (settings, preferences) follow the user rename.
+    for name, cols in sorted(columns.items()):
+        if name.startswith('tab') and 'name' in cols and 'parent' not in cols and name[3:] not in mapped \
+                and name not in {'tabSingles'}:
+            statements.append(f'UPDATE {quote(name)} t JOIN `_cripple_map` m ON m.dt=\'User\' AND m.old=t.name '
+                              'SET t.name=m.new')
+    # 6c. Catch-all sweep (see SWEEP above).
+    skip_columns = set()
+    for doctype, fieldname, options in links:
+        skip_columns.add(('tab' + doctype, fieldname))
+    for doctype, fieldname, doctype_column in dynamic:
+        skip_columns.add(('tab' + doctype, fieldname))
+    types = meta.get('types', {})
+    for (table_name, column), data_type in sorted(types.items()):
+        if (not table_name.startswith('tab') or table_name[3:] in SWEEP_SKIP_TABLES or data_type not in TEXTUAL
+                or column in SWEEP_SKIP_COLUMNS or (table_name, column) in skip_columns
+                or (table_name.startswith('tab_') or table_name.startswith('__'))):
+            continue
+        expression = quote(column)
+        for pattern, probe, replacement in SWEEP:
+            expression = f'REGEXP_REPLACE({expression},{sql_literal(pattern)},{sql_literal(replacement)})'
+        statements.append(f'UPDATE {quote(table_name)} SET {quote(column)}={expression} WHERE {quote(column)} IS NOT NULL '
+                          f"AND {quote(column)} REGEXP '@|[A-Za-z]{{5}}[0-9]{{4}}[A-Za-z]'")
     # 7. File URLs carry original file names: map them to scrambled names.
     statements.append('DROP TABLE IF EXISTS `_cripple_files`')
     statements.append('CREATE TABLE `_cripple_files` (k CHAR(64) NOT NULL PRIMARY KEY, old TEXT NOT NULL, '
@@ -752,8 +787,11 @@ def read_erp_meta(container, database):
     unique = {(row[0], row[1]) for row in mysql_rows(container, database,
               'SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='
               f"{sql_literal(database)} AND NON_UNIQUE=0 AND INDEX_NAME<>'PRIMARY'")}
+    types = {(row[0], row[1]): row[2] for row in mysql_rows(container, database,
+             'SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='
+             f'{sql_literal(database)}')}
     return {'doctypes': doctypes, 'fields': [f for f in fields if len(f) == 4], 'columns': columns,
-            'unique': unique}
+            'unique': unique, 'types': types}
 
 
 def check_parity(container, database, scrambler):

@@ -160,6 +160,25 @@ class ErpPlan(unittest.TestCase):
         slip = next(s for s in sql.split('\n') if s.startswith('UPDATE `tabSalary Slip` SET `employee_name`='))
         self.assertIn('SUBSTRING(SHA2(CONCAT(@ck,\'|\',`employee_name`),256),57,8)', slip)
 
+    def test_catch_all_sweep_covers_text_columns_but_not_keys_links_or_metadata(self):
+        data = meta()
+        data['types'] = {('tabSales Invoice', 'remarks'): 'text', ('tabSales Invoice', 'customer'): 'varchar',
+                         ('tabSales Invoice', 'name'): 'varchar', ('tabSales Invoice', 'grand_total'): 'decimal',
+                         ('tabDocType', 'description'): 'text', ('tabNotification', 'message'): 'longtext',
+                         ('tabNotification', 'owner'): 'varchar'}
+        data['columns']['tabNotification'] = {'name', 'message', 'owner'}
+        data['columns']['tabNotification Settings'] = {'name', 'x'}
+        plan = c.erp_plan(data, CUTOFF, [], 'k' * 64)
+        sweeps = [s for s in plan if 'REGEXP_REPLACE(' in s]
+        touched = sorted({s.split('`')[1] + '.' + s.split('`')[3] for s in sweeps})
+        self.assertEqual(touched, ['tabNotification.message', 'tabSales Invoice.remarks'])
+        self.assertIn('(?!example\\\\.invalid)', sweeps[0])            # this run's fakes are left alone
+        self.assertIn('redacted@example.invalid', sweeps[0])
+        self.assertIn("UPDATE `tabNotification Settings` t JOIN `_cripple_map` m ON m.dt='User' AND m.old=t.name "
+                      'SET t.name=m.new', plan)
+        self.assertLess(plan.index("UPDATE `tabNotification Settings` t JOIN `_cripple_map` m ON m.dt='User' AND m.old=t.name SET t.name=m.new"),
+                        plan.index(sweeps[0]))
+
     def test_renames_reach_every_reference(self):
         self.assertIn("UPDATE `tabSales Invoice` t JOIN `_cripple_map` m ON m.dt='Customer' AND m.old=t.`customer` "
                       'SET t.`customer`=m.new', self.plan)

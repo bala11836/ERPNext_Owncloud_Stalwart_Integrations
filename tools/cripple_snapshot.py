@@ -70,6 +70,7 @@ SPEC = {
     'city': [('lit', 'Testpur')],
     'pincode': [('lit', '999'), ('num', 0, 6, 1000, 3)],
     'token': [('lit', 'Test '), ('hex', 0, 8)],
+    'unique': [('lit', 'Test '), ('hex', 0, 20)],
     'person-doc': [('pick', 0, 4, FIRST), ('lit', ' '), ('pick', 4, 8, LAST), ('lit', ' '), ('hex', 56, 64)],
     'company-doc': [('pick', 0, 4, COMPANY), ('lit', ' '), ('pick', 4, 8, SUFFIX), ('lit', ' '), ('hex', 56, 64)],
 }
@@ -227,8 +228,11 @@ def category(fieldname, fieldtype, options=''):
     if re.search(r'supplier|customer|party|company|business|vendor|firm|lead|organi[sz]|trade|correspondent', name) \
             and 'name' in name:
         return 'company'
-    if re.search(r'name|_by$|sender|holder|father|mother|spouse|guardian|nominee|person|contact|passport|'
-                 r'licen[cs]e|vehicle|signatory|owner_name|employee', name):
+    # Only fields that hold a human's name: masters such as account, item or
+    # category names are configuration, not personal data, and stay as they are.
+    if re.search(r'(^|_)(first|middle|last|full|employee|contact|owner|holder|father|mother|spouse|guardian|'
+                 r'nominee|person|signatory|driver|candidate|applicant|salesperson|sender|passport|nick)(_|$)', name) \
+            and not name.endswith(('_type', '_category', '_group')):
         return 'person'
     return None
 
@@ -248,6 +252,7 @@ def erp_plan(meta, cutoff, keep_accounts, key):
     doctypes {name: {istable, issingle, is_submittable}}, fields [(doctype, fieldname,
     fieldtype, options)], columns {table name: set(columns)}."""
     doctypes, fields, columns = meta['doctypes'], meta['fields'], meta['columns']
+    unique = meta.get('unique', set())
     keep = sorted({account.casefold() for account in keep_accounts} | {'administrator', 'guest'})
     keep_sql = ','.join(sql_literal(account) for account in keep)
     cut = sql_literal(cutoff.strftime('%Y-%m-%d %H:%M:%S'))
@@ -326,6 +331,8 @@ def erp_plan(meta, cutoff, keep_accounts, key):
             kind = 'random-amount'
         if kind is None:
             continue
+        if ('tab' + doctype, fieldname) in unique and kind in {'person', 'company', 'address', 'city', 'pincode', 'token'}:
+            kind = {'person': 'person-doc', 'company': 'company-doc'}.get(kind, 'unique')
         column = quote(fieldname)
         where = f'WHERE {column} IS NOT NULL'
         if kind not in {'random-amount', 'date'}:
@@ -741,7 +748,12 @@ def read_erp_meta(container, database):
     for table_name, column in mysql_rows(container, database, 'SELECT TABLE_NAME, COLUMN_NAME FROM '
                                          f'information_schema.COLUMNS WHERE TABLE_SCHEMA={sql_literal(database)}'):
         columns.setdefault(table_name, set()).add(column)
-    return {'doctypes': doctypes, 'fields': [f for f in fields if len(f) == 4], 'columns': columns}
+    # Columns in a unique index need collision-proof fakes (the name pools are small).
+    unique = {(row[0], row[1]) for row in mysql_rows(container, database,
+              'SELECT TABLE_NAME, COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='
+              f"{sql_literal(database)} AND NON_UNIQUE=0 AND INDEX_NAME<>'PRIMARY'")}
+    return {'doctypes': doctypes, 'fields': [f for f in fields if len(f) == 4], 'columns': columns,
+            'unique': unique}
 
 
 def check_parity(container, database, scrambler):

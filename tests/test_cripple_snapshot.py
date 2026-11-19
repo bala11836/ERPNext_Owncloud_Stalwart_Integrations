@@ -64,6 +64,7 @@ class Classification(unittest.TestCase):
                  ('address_line1', 'Data', ''): 'address', ('city', 'Data', ''): 'city',
                  ('pincode', 'Data', ''): 'pincode', ('supplier_name', 'Data', ''): 'company',
                  ('employee_name', 'Data', ''): 'person', ('first_name', 'Data', ''): 'person',
+                 ('father_name', 'Data', ''): 'person', ('contact_name', 'Data', ''): 'person',
                  ('title', 'Data', ''): 'token', ('username', 'Data', ''): 'token',
                  ('remarks', 'Small Text', ''): 'text', ('content', 'Text Editor', ''): 'text',
                  ('recipients', 'Code', ''): 'email', ('date_of_birth', 'Date', ''): 'date',
@@ -74,6 +75,8 @@ class Classification(unittest.TestCase):
     def test_business_and_reference_fields_are_kept(self):
         for name, kind in [('item_name', 'Data'), ('naming_series', 'Select'), ('attached_to_name', 'Data'),
                            ('reference_name', 'Data'), ('grand_total', 'Currency'), ('posting_date', 'Date'),
+                           ('account_category_name', 'Data'), ('item_group_name', 'Data'), ('cost_center_name', 'Data'),
+                           ('warehouse_name', 'Data'), ('shift_type', 'Link'),
                            ('script', 'Code'), ('reference_doctype', 'Data'), ('account_name', 'Data')]:
             self.assertIsNone(c.category(name, kind), name)
 
@@ -146,6 +149,16 @@ class ErpPlan(unittest.TestCase):
             self.assertIn("LOWER(name) NOT IN ('administrator','guest','tester@example.com')", statement)
         insert = next(s for s in self.plan if s.startswith("INSERT INTO `_cripple_map` SELECT 'User'"))
         self.assertIn("NOT IN ('administrator','guest','tester@example.com')", insert)
+
+    def test_unique_columns_get_collision_proof_fakes(self):
+        data = meta()
+        data['unique'] = {('tabCustomer', 'mobile_no'), ('tabUser', 'first_name'), ('tabSalary Slip', 'employee_name'),
+                          ('tabSales Invoice', 'remarks')}
+        sql = '\n'.join(c.erp_plan(data, CUTOFF, [], 'k' * 64))
+        first = next(s for s in sql.split('\n') if s.startswith('UPDATE `tabUser` SET `first_name`='))
+        self.assertIn(",57,8)", first)             # hex suffix: unique despite the small name pool
+        slip = next(s for s in sql.split('\n') if s.startswith('UPDATE `tabSalary Slip` SET `employee_name`='))
+        self.assertIn('SUBSTRING(SHA2(CONCAT(@ck,\'|\',`employee_name`),256),57,8)', slip)
 
     def test_renames_reach_every_reference(self):
         self.assertIn("UPDATE `tabSales Invoice` t JOIN `_cripple_map` m ON m.dt='Customer' AND m.old=t.`customer` "

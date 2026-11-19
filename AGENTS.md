@@ -13,6 +13,19 @@ change must follow this order:
 4. Only after successful test validation, promote that same tested revision
    and its versioned deployment definitions to production.
 
+In branch terms the rule is: **branch → test → merge → `main` → production**.
+Work happens on a branch (a fork for outside contributors). That branch itself
+is deployed to the test site and validated there, and the tested commit is
+recorded. Only then does the owner merge it to `main`, and production receives
+that same tested content from `main`, never from a branch. The unit tests and
+repository checks are a gate before the test deployment, not a substitute for
+it. Files that exist only in production (route files, port bindings, host
+entries) cannot be exercised on the test site: for them, record a browser and
+protocol check of the affected apps immediately after promotion, and say in the
+release record that test could not cover them. GitHub cannot verify that a
+branch was tested, so the written record in the pull request is the control:
+the owner merges only when it is there.
+
 Do not develop directly in production, deploy uncommitted changes, bypass the
 test environment, or copy undocumented runtime patches into production. If a
 test exposes a defect, fix it in the repository and repeat the sequence. This

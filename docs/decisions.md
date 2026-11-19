@@ -6,6 +6,26 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-19
 
+### Test refresh: separate code and data buttons; crippled 60-day data
+- **Decision:** the test site gets two buttons. "Refresh code" resets test to
+  the tested release (`main`); "Refresh data" brings a crippled production
+  copy and is used rarely. Crippled means: strictly the last 60 days (ERP
+  included; balances need not add up), every piece of personal information
+  replaced with irreversible fakes, document contents replaced by placeholder
+  files, mail not copied (test mailboxes start empty), and outbound e-mail,
+  WhatsApp and payments off. Scrambling runs on production, on copies in
+  throwaway database containers, before anything leaves the server. Members
+  of the authentik group "Testers" keep their real logins on test.
+- **Why:** a developer may now deploy to test freely, and code they deploy can
+  read everything on test; the test copy must therefore hold no real personal
+  data (minimisation, as India's DPDP Act also expects). Test data is for
+  trying things, not for accuracy, and a smaller copy keeps refreshes
+  manageable as production grows. Mail is left out because its store cannot be
+  scrambled safely offline.
+- **Where:** `tools/cripple_snapshot.py`, `tools/export_snapshot.py`,
+  `tools/test_refresh_worker.py`, `tools/rehearse_cripple.py`,
+  [test-refresh module](modules/test-refresh.md).
+
 ### Test access through one flat "Testers" group
 - **Decision:** the test site's applications admit only members of one flat
   authentik group, "Testers", bound directly to each test application. No

@@ -58,6 +58,12 @@ def replace_tree(source,target,allowed):
     if Path(source).exists():copy_owned(source,target)
 
 
+def require_crippled_snapshot(config,manifest):
+    """Once enabled, only a scrambled N-day copy may reach this test site."""
+    if config.get('require_crippled') is True and (manifest.get('crippled') or {}).get('policy')!='crippled-v1':
+        raise ValueError('This test site accepts only crippled snapshots')
+
+
 def restore(config,archive):
     runtime=Path(config['runtime']).resolve()
     marker=json.loads((runtime/'.cloud-runtime.json').read_text())
@@ -84,6 +90,7 @@ def restore(config,archive):
     with tempfile.TemporaryDirectory(prefix='verified-',dir=state) as folder:
         data=Path(folder)/'data'
         manifest=validate_extract(archive,data,config['source_instance'],config.get('max_snapshot_bytes',100*1024**3))
+        require_crippled_snapshot(config,manifest)
         paths={
             'erp-database':mount(containers['erp_database'],'/var/lib/mysql'),
             'dms-database':mount(containers['dms_database'],'/var/lib/postgresql/data'),

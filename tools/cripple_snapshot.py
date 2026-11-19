@@ -200,6 +200,12 @@ SWEEP = [(r"[A-Za-z0-9._%+-]+@(?!example\.invalid)[A-Za-z0-9-]+\.[A-Za-z0-9.-]*[
          (r'(?-i)\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b', None, '99ZZZZZ9999Z1ZZ'),
          (r'(?-i)\b[A-Z]{5}[0-9]{4}[A-Z]\b', None, 'ZZZZZ9999Z')]
 SYSTEM_COLUMNS = ['_assign', '_liked_by', '_comments', '_seen', '_user_tags']
+# A kept account (member of the test-access group) keeps ONLY its login identity: e-mail,
+# username and name. Every other profile field is scrambled or cleared like anyone else's.
+USER_IDENTITY = {'email', 'username', 'first_name', 'middle_name', 'last_name', 'full_name'}
+# Personal or secret columns of tabUser that the generic classification does not recognise.
+USER_CLEAR = ['location', 'last_ip', 'api_key', 'reset_password_key', 'github_username', 'google_username',
+              'facebook_username', 'twitter_username', 'frappe_userid', 'office_365_username']
 
 
 def category(fieldname, fieldtype, options=''):
@@ -351,7 +357,8 @@ def erp_plan(meta, cutoff, keep_accounts, key):
         where = f'WHERE {column} IS NOT NULL'
         if kind not in {'random-amount', 'date'}:
             where += f" AND {column}<>''"
-        if doctype == 'User':
+        if doctype == 'User' and fieldname in USER_IDENTITY:
+            # Only the login identity of kept accounts stays real; all other profile fields change for everyone.
             where += f' AND LOWER(name) NOT IN ({keep_sql})'
         if kind == 'null':
             value = 'NULL'
@@ -362,6 +369,12 @@ def erp_plan(meta, cutoff, keep_accounts, key):
         else:
             value = mariadb_expression(kind, column)
         statements.append(f'UPDATE {table(doctype)} SET {column}={value} {where}')
+    for column in USER_CLEAR:
+        if has('User', column):
+            statements.append(f'UPDATE `tabUser` SET {quote(column)}=NULL WHERE {quote(column)} IS NOT NULL')
+    if present('User Social Login'):
+        # Provider user ids of accounts that are not kept; kept accounts need theirs to sign in.
+        statements.append(f'DELETE FROM `tabUser Social Login` WHERE LOWER(parent) NOT IN ({keep_sql})')
     for name, cols in sorted(columns.items()):
         if not name.startswith('tab') or name[3:] in META:
             continue

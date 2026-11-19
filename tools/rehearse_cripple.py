@@ -78,6 +78,25 @@ def column_audit(container, database, found):
             found[table_name + '.' + column] = int(count)
 
 
+def names_audit(container, database, names, found):
+    """Count rows per table.column still containing a real person's name (names of accounts that are
+    not kept). Counts only, never values."""
+    from cripple_snapshot import mysql_rows, sql_literal, quote, TEXTUAL
+    rows = mysql_rows(container, database, 'SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS '
+                      f'WHERE TABLE_SCHEMA={sql_literal(database)}')
+    if not names:
+        return
+    condition = ' OR '.join('{col} LIKE ' + sql_literal('%' + n.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%')
+                            for n in names)
+    for table_name, column, data_type in rows:
+        if data_type not in TEXTUAL or table_name.startswith('_cripple'):
+            continue
+        count = mysql_rows(container, database, f'SELECT COUNT(*) FROM {quote(table_name)} WHERE '
+                           + condition.replace('{col}', quote(column)))[0][0]
+        if count != '0':
+            found[table_name + '.' + column] = int(count)
+
+
 def rehearse(config, keep_accounts, days):
     containers = config['containers']
     backend = inspect(containers['erp_backend'])
@@ -123,11 +142,20 @@ def rehearse(config, keep_accounts, days):
             blob_layout = (space / 'blobs' / split_id(blobid)).is_file()
         counts_before = business_counts(containers, database)
         settings = {'cripple': {'enabled': True, 'days': days, 'keep_accounts': keep_accounts}}
-        columns_found = {}
-        result = cripple(data, settings, containers, database, business_counts,
-                         audit=lambda container, name: column_audit(container, name, columns_found))
+        columns_found, names_found = {}, {}
+        from cripple_snapshot import mysql_rows, sql_literal
+        keep_sql = ','.join(sql_literal(a.casefold()) for a in keep_accounts + ['administrator', 'guest'])
+        names = sorted({n for row in mysql_rows(containers['erp_database'], database,
+                        'SELECT IFNULL(full_name,\'\'), IFNULL(first_name,\'\') FROM `tabUser` '
+                        f'WHERE LOWER(name) NOT IN ({keep_sql})') for n in row if len(n) >= 5})
+
+        def audits(container, name):
+            column_audit(container, name, columns_found)
+            names_audit(container, name, names, names_found)
+        result = cripple(data, settings, containers, database, business_counts, audit=audits)
         keep = {account.casefold().encode() for account in keep_accounts}
-        report = {'columns_still_holding_real_email_domains': columns_found, 'business_counts_before': counts_before, 'business_counts_after': result.pop('counts'),
+        report = {'names_checked': len(names), 'columns_still_holding_real_names': names_found,
+                  'columns_still_holding_real_email_domains': columns_found, 'business_counts_before': counts_before, 'business_counts_after': result.pop('counts'),
                   'cripple': result, 'drive_blob_layout_confirmed': blob_layout}
         for name, path in [('erp', data / 'erp.sql'), ('dms', data / 'dms.sql')]:
             after = tokens_by_table(path)

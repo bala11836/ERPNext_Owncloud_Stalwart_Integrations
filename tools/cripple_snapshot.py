@@ -157,6 +157,8 @@ RENAME = {'Supplier': 'company-doc', 'Customer': 'company-doc', 'Lead': 'person-
           'Contact': 'person-doc', 'Address': 'company-doc', 'Bank Account': 'company-doc',
           'Employee': 'person-doc', 'Sales Partner': 'company-doc', 'Sales Person': 'person-doc',
           'Shareholder': 'person-doc', 'Driver': 'person-doc'}
+# Doctypes whose record names are the user's login: renamed with the User map.
+USER_NAMED = ['Raven User', 'Notification Settings', 'Dashboard Settings', 'Energy Point Settings']
 PARTIES = ['Supplier', 'Customer', 'Lead', 'Prospect', 'Contact', 'Address', 'Bank Account', 'Employee',
            'Sales Partner', 'Shareholder', 'Driver']
 PAYROLL = {'Salary Slip', 'Salary Detail', 'Salary Structure Assignment', 'Additional Salary', 'Salary Structure',
@@ -378,7 +380,11 @@ def erp_plan(meta, cutoff, keep_accounts, key):
     if present('User'):
         statements.append(f"INSERT INTO `_cripple_map` SELECT 'User', name, {mariadb_expression('email', 'name')} "
                           f'FROM `tabUser` WHERE LOWER(name) NOT IN ({keep_sql})')
-    mapped = set(RENAME) | {'User'}
+    for doctype in USER_NAMED:
+        if present(doctype):
+            statements.append(f"INSERT IGNORE INTO `_cripple_map` SELECT {sql_literal(doctype)}, old, new "
+                              "FROM `_cripple_map` WHERE dt='User'")
+    mapped = set(RENAME) | {'User'} | {d for d in USER_NAMED if present(d)}
     for doctype, fieldname, options in links:
         if options in mapped:
             statements.append(f'UPDATE {table(doctype)} t JOIN `_cripple_map` m ON m.dt={sql_literal(options)} '
@@ -416,6 +422,16 @@ def erp_plan(meta, cutoff, keep_accounts, key):
     for doctype, fieldname, doctype_column in dynamic:
         skip_columns.add(('tab' + doctype, fieldname))
     types = meta.get('types', {})
+    # Links, owners and parents still holding a login that has no User record (deleted
+    # users): the same deterministic fake as the rename map, so they stay consistent.
+    key_columns = set(skip_columns) | {(name, column) for name, cols in columns.items() if name.startswith('tab')
+                                       for column in ('owner', 'modified_by', 'parent') if column in cols}
+    for table_name, column in sorted(key_columns):
+        if types and types.get((table_name, column)) not in TEXTUAL:
+            continue
+        statements.append(f'UPDATE {quote(table_name)} SET {quote(column)}={mariadb_expression("email", quote(column))} '
+                          f"WHERE {quote(column)} REGEXP '^[^@ ]+@[^@ ]+$' AND {quote(column)} NOT LIKE '%@example.invalid' "
+                          f'AND LOWER({quote(column)}) NOT IN ({keep_sql})')
     for (table_name, column), data_type in sorted(types.items()):
         if (not table_name.startswith('tab') or table_name[3:] in SWEEP_SKIP_TABLES or data_type not in TEXTUAL
                 or column in SWEEP_SKIP_COLUMNS or (table_name, column) in skip_columns

@@ -139,7 +139,7 @@ class ErpPlan(unittest.TestCase):
         self.assertTrue(any(s.startswith('UPDATE `tabSalary Slip` SET `gross_pay`=ROUND(RAND()') for s in self.plan))
         self.assertIn('UPDATE `tabSales Invoice` SET `_assign`=NULL WHERE `_assign` IS NOT NULL', self.plan)
         for untouched in ['UPDATE `tabDocType` SET `description`', 'UPDATE `tabCompany` SET',
-                          'UPDATE `tabItem` SET `item_name`', 'SET `grand_total`', 'SET `attached_to_name`=CONCAT']:
+                          'UPDATE `tabItem` SET `item_name`', 'SET `grand_total`', 'SET `attached_to_name`=CONCAT(ELT(']:
             self.assertNotIn(untouched, self.sql)
 
     def test_kept_accounts_stay_real(self):
@@ -174,10 +174,31 @@ class ErpPlan(unittest.TestCase):
         self.assertEqual(touched, ['tabNotification.message', 'tabSales Invoice.remarks'])
         self.assertIn('(?!example\\\\.invalid)', sweeps[0])            # this run's fakes are left alone
         self.assertIn('redacted@example.invalid', sweeps[0])
-        self.assertIn("UPDATE `tabNotification Settings` t JOIN `_cripple_map` m ON m.dt='User' AND m.old=t.name "
-                      'SET t.name=m.new', plan)
-        self.assertLess(plan.index("UPDATE `tabNotification Settings` t JOIN `_cripple_map` m ON m.dt='User' AND m.old=t.name SET t.name=m.new"),
-                        plan.index(sweeps[0]))
+        renamed = ("UPDATE `tabNotification Settings` t JOIN `_cripple_map` m ON m.dt='Notification Settings' "
+                   'AND m.old=t.name SET t.name=m.new')
+        self.assertIn(renamed, plan)                 # a record named after a login follows the user rename
+        self.assertLess(plan.index(renamed), plan.index(sweeps[0]))
+        other = dict(data, columns=dict(data['columns'], **{'tabUser Note': {'name', 'x'}}))
+        self.assertIn("UPDATE `tabUser Note` t JOIN `_cripple_map` m ON m.dt='User' AND m.old=t.name SET t.name=m.new",
+                      c.erp_plan(other, CUTOFF, [], 'k' * 64))
+
+    def test_user_named_records_and_deleted_users_follow_the_same_fakes(self):
+        data = meta()
+        data['doctypes']['Raven User'] = {'istable': False, 'issingle': False, 'is_submittable': False}
+        data['columns']['tabRaven User'] = {'name', 'creation'}
+        data['columns']['tabRaven Channel Member'] = {'name', 'user_id', 'parent'}
+        data['fields'].append(('Raven Channel Member', 'user_id', 'Link', 'Raven User'))
+        data['types'] = {('tabRaven Channel Member', 'user_id'): 'varchar', ('tabRaven Channel Member', 'parent'): 'varchar',
+                         ('tabSales Invoice', 'owner'): 'varchar'}
+        plan = c.erp_plan(data, CUTOFF, ['tester@example.com'], 'k' * 64)
+        self.assertIn("INSERT IGNORE INTO `_cripple_map` SELECT 'Raven User', old, new FROM `_cripple_map` WHERE dt='User'",
+                      plan)
+        self.assertIn("UPDATE `tabRaven Channel Member` t JOIN `_cripple_map` m ON m.dt='Raven User' AND "
+                      'm.old=t.`user_id` SET t.`user_id`=m.new', plan)
+        fallback = [s for s in plan if s.startswith('UPDATE `tabSales Invoice` SET `owner`=CONCAT(')]
+        self.assertEqual(len(fallback), 1)
+        self.assertIn("NOT LIKE '%@example.invalid'", fallback[0])
+        self.assertIn("NOT IN ('administrator','guest','tester@example.com')", fallback[0])
 
     def test_renames_reach_every_reference(self):
         self.assertIn("UPDATE `tabSales Invoice` t JOIN `_cripple_map` m ON m.dt='Customer' AND m.old=t.`customer` "

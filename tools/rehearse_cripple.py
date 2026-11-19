@@ -64,6 +64,20 @@ def drive_names(root, kinds=None):
     return names
 
 
+def column_audit(container, database, found):
+    """Count rows still holding a real-looking e-mail address, per table.column (no values)."""
+    from cripple_snapshot import mysql_rows, sql_literal, quote, TEXTUAL
+    rows = mysql_rows(container, database, 'SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS '
+                      f'WHERE TABLE_SCHEMA={sql_literal(database)}')
+    for table_name, column, data_type in rows:
+        if data_type not in TEXTUAL or table_name.startswith('_cripple'):
+            continue
+        count = mysql_rows(container, database, f'SELECT COUNT(*) FROM {quote(table_name)} WHERE {quote(column)} REGEXP '
+                           "'[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail|unformat|sriramki)[.]'")[0][0]
+        if count != '0':
+            found[table_name + '.' + column] = int(count)
+
+
 def rehearse(config, keep_accounts, days):
     containers = config['containers']
     backend = inspect(containers['erp_backend'])
@@ -109,9 +123,11 @@ def rehearse(config, keep_accounts, days):
             blob_layout = (space / 'blobs' / split_id(blobid)).is_file()
         counts_before = business_counts(containers, database)
         settings = {'cripple': {'enabled': True, 'days': days, 'keep_accounts': keep_accounts}}
-        result = cripple(data, settings, containers, database, business_counts)
+        columns_found = {}
+        result = cripple(data, settings, containers, database, business_counts,
+                         audit=lambda container, name: column_audit(container, name, columns_found))
         keep = {account.casefold().encode() for account in keep_accounts}
-        report = {'business_counts_before': counts_before, 'business_counts_after': result.pop('counts'),
+        report = {'columns_still_holding_real_email_domains': columns_found, 'business_counts_before': counts_before, 'business_counts_after': result.pop('counts'),
                   'cripple': result, 'drive_blob_layout_confirmed': blob_layout}
         for name, path in [('erp', data / 'erp.sql'), ('dms', data / 'dms.sql')]:
             after = tokens_by_table(path)

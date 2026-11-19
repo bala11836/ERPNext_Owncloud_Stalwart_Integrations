@@ -914,7 +914,7 @@ def cripple_dms(container, data, cutoff, scrambler, keep_accounts):
 
 
 # ---------------------------------------------------------------- orchestration
-def cripple(data, config, containers, database, counts_function):
+def cripple(data, config, containers, database, counts_function, audit=None):
     """Transform the snapshot staging directory `data` in place.
 
     Production is already running again: this works only on copies. Returns
@@ -958,6 +958,8 @@ def cripple(data, config, containers, database, counts_function):
         _feed(['docker', 'exec', '-i', dms, 'sh', '-c', PSQL, 'sh'], path=data / 'dms.sql')
         dms_report = cripple_dms(dms, data, cutoff, scrambler, keep)
         counts = counts_function({'erp_database': erp, 'dms_database': dms}, database)
+        if audit is not None:
+            audit(erp, database)
         _dump(['docker', 'exec', erp, 'sh', '-c', 'export MYSQL_PWD="$MYSQL_ROOT_PASSWORD"; exec mariadb-dump -uroot '
                '--single-transaction --routines --triggers --hex-blob "$1"', 'sh', database], data / 'erp.sql')
         _dump(['docker', 'exec', dms, 'sh', '-c', 'export PGPASSWORD="$POSTGRES_PASSWORD"; exec pg_dump -U '

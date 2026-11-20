@@ -96,6 +96,8 @@ def meta():
               ('Contact', 'links', 'Table', 'Dynamic Link'), ('Contact', 'email_id', 'Data', 'Email'),
               ('Dynamic Link', 'link_doctype', 'Link', 'DocType'), ('Dynamic Link', 'link_name', 'Dynamic Link', 'link_doctype'),
               ('User', 'email', 'Data', 'Email'), ('User', 'first_name', 'Data', ''), ('User', 'user_image', 'Attach Image', ''),
+              ('User', 'full_name', 'Data', ''), ('User', 'mobile_no', 'Data', 'Phone'), ('User', 'location', 'Data', ''),
+              ('User', 'bio', 'Small Text', ''), ('User', 'birth_date', 'Date', ''), ('User', 'api_key', 'Data', ''),
               ('File', 'file_name', 'Data', ''), ('File', 'attached_to_name', 'Data', ''),
               ('DocType', 'description', 'Small Text', ''), ('Company', 'email', 'Data', 'Email'),
               ('Salary Slip', 'gross_pay', 'Currency', ''), ('Salary Slip', 'employee_name', 'Data', ''),
@@ -106,7 +108,8 @@ def meta():
                'tabCustomer': {'name', 'creation', 'customer_name', 'mobile_no', 'owner', 'modified_by'},
                'tabContact': {'name', 'creation', 'email_id'},
                'tabDynamic Link': {'name', 'parent', 'parenttype', 'link_doctype', 'link_name'},
-               'tabUser': {'name', 'email', 'first_name', 'user_image', 'creation'},
+               'tabUser': {'name', 'email', 'first_name', 'user_image', 'creation', 'full_name', 'mobile_no', 'location',
+                           'bio', 'birth_date', 'api_key', 'last_ip', 'reset_password_key'},
                'tabFile': {'name', 'creation', 'file_name', 'file_url', 'is_private', 'is_folder', 'attached_to_doctype',
                            'attached_to_name', 'content_hash'},
                'tabVersion': {'name', 'creation', 'data'}, 'tabDocType': {'name', 'description', 'modified_by'},
@@ -142,11 +145,18 @@ class ErpPlan(unittest.TestCase):
                           'UPDATE `tabItem` SET `item_name`', 'SET `grand_total`', 'SET `attached_to_name`=CONCAT(ELT(']:
             self.assertNotIn(untouched, self.sql)
 
-    def test_kept_accounts_stay_real(self):
-        user_updates = [s for s in self.plan if s.startswith('UPDATE `tabUser` SET') and '/files/file-' not in s]
-        self.assertTrue(user_updates)
-        for statement in user_updates:
-            self.assertIn("LOWER(name) NOT IN ('administrator','guest','tester@example.com')", statement)
+    def test_kept_accounts_keep_only_their_login_identity(self):
+        keep = "LOWER(name) NOT IN ('administrator','guest','tester@example.com')"
+        # Identity fields (login e-mail, name) are exempt for kept accounts ...
+        for column in ['email', 'first_name', 'full_name']:
+            statement = next(s for s in self.plan if s.startswith(f'UPDATE `tabUser` SET `{column}`='))
+            self.assertIn(keep, statement, column)
+        # ... every other personal profile field changes for everyone, kept accounts included.
+        for column in ['mobile_no', 'location', 'bio', 'birth_date']:
+            statement = next(s for s in self.plan if s.startswith(f'UPDATE `tabUser` SET `{column}`='))
+            self.assertNotIn('LOWER(name)', statement, column)
+        for column in ['api_key', 'last_ip', 'reset_password_key']:
+            self.assertIn(f'UPDATE `tabUser` SET `{column}`=NULL WHERE `{column}` IS NOT NULL', self.plan)
         insert = next(s for s in self.plan if s.startswith("INSERT INTO `_cripple_map` SELECT 'User'"))
         self.assertIn("NOT IN ('administrator','guest','tester@example.com')", insert)
 
@@ -181,6 +191,26 @@ class ErpPlan(unittest.TestCase):
         other = dict(data, columns=dict(data['columns'], **{'tabUser Note': {'name', 'x'}}))
         self.assertIn("UPDATE `tabUser Note` t JOIN `_cripple_map` m ON m.dt='User' AND m.old=t.name SET t.name=m.new",
                       c.erp_plan(other, CUTOFF, [], 'k' * 64))
+
+    def test_names_of_accounts_that_are_not_kept_are_swept_from_free_text(self):
+        data = meta()
+        data['types'] = {('tabSales Invoice', 'remarks'): 'text', ('tabSales Invoice', 'customer'): 'varchar',
+                         ('tabUser', 'bio'): 'text', ('tabDocType', 'description'): 'text'}
+        data['user_names'] = ['Disabled Person']          # a disabled System User's full name
+        plan = c.erp_plan(data, CUTOFF, ['Tester@Example.com'], 'k' * 64)
+        sweeps = [s for s in plan if 'REGEXP_REPLACE' in s and 'Disabled' in s]
+        touched = sorted({s.split('`')[1] + '.' + s.split('`')[3] for s in sweeps})
+        self.assertEqual(touched, ['tabSales Invoice.remarks', 'tabUser.bio'])   # not keys, not metadata
+        invoice = next(s for s in sweeps if '`tabSales Invoice`' in s)
+        self.assertNotIn('LOWER(name)', invoice)
+        # The fake is the same one the user's own record gets (same deterministic function of the name).
+        self.assertIn(c.mariadb_expression('person', c.sql_literal('Disabled Person')), invoice)
+        # In tabUser a kept account's own fields stay as they are, even if it shares the name.
+        user = next(s for s in sweeps if '`tabUser`' in s)
+        self.assertIn("AND LOWER(name) NOT IN ('administrator','guest','tester@example.com')", user)
+        # Single words are never swept (too common); no names means no statements.
+        self.assertFalse([s for s in c.erp_plan(dict(data, user_names=[]), CUTOFF, [], 'k' * 64)
+                          if 'Disabled' in s])
 
     def test_user_named_records_and_deleted_users_follow_the_same_fakes(self):
         data = meta()
@@ -220,6 +250,30 @@ class ErpPlan(unittest.TestCase):
                       self.plan)
         self.assertTrue(any(s.startswith('DELETE FROM `tabFile` WHERE IFNULL(is_folder,0)=0 AND creation <')
                             for s in self.plan))
+
+
+class MetaReading(unittest.TestCase):
+    def test_full_names_of_accounts_that_are_not_kept_are_read_for_the_sweep(self):
+        seen = []
+
+        def rows(container, database, query):
+            seen.append(query)
+            if 'FROM `tabUser`' in query:
+                return [['Disabled Person', 'Disabled', 'Person'], ['Cher', 'Cher', ''], ['', 'Solo', ''],
+                        ['Mail Robot', 'Mail', 'Robot'], ['a@b.example', 'A', 'B']]
+            if 'information_schema.COLUMNS WHERE' in query and 'DATA_TYPE' not in query:
+                return [['tabUser', 'name'], ['tabUser', 'full_name']]
+            return []
+        original = c.mysql_rows
+        c.mysql_rows = rows
+        try:
+            result = c.read_erp_meta('db', 'site', ['Tester@Example.com'])
+        finally:
+            c.mysql_rows = original
+        query = next(q for q in seen if 'FROM `tabUser`' in q)
+        self.assertIn("NOT IN ('tester@example.com','administrator','guest')", query)
+        # Only multi-word full names (single words are too common; e-mail shaped values are not names).
+        self.assertEqual(result['user_names'], ['Disabled Person', 'Mail Robot'])
 
 
 class Placeholders(unittest.TestCase):

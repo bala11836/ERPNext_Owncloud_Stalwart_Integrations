@@ -69,7 +69,9 @@ discussion that led to a decision is not repeated here.
   files, mail not copied (test mailboxes start empty), and outbound e-mail,
   WhatsApp and payments off. Scrambling runs on production, on copies in
   throwaway database containers, before anything leaves the server. Members
-  of the authentik group "Testers" keep their real logins on test.
+  of the authentik group "Testers" keep their login identity (e-mail,
+  username, name) and nothing else: their other profile data is scrambled too.
+  Full names of accounts that are not kept are swept from free text as well.
 - **Why:** a developer may now deploy to test freely, and code they deploy can
   read everything on test; the test copy must therefore hold no real personal
   data (minimisation, as India's DPDP Act also expects). Test data is for

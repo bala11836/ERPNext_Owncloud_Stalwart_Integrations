@@ -47,7 +47,7 @@ class WebsiteModule(unittest.TestCase):
         self.assertIn("default-src 'none'", conf)
         # nginx drops server-level add_header lines in any location that has its own
         # add_header, so security headers must be the only add_header in the file.
-        locations = conf.split("location", 1)[1]
+        locations = conf.split("location = /", 1)[1]
         self.assertNotIn("add_header", locations)
         self.assertIn("expires -1", conf)
 

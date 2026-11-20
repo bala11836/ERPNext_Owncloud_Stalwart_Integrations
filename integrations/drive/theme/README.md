@@ -10,3 +10,5 @@ favicon, still uses the upstream theme assets. The renderer copies this folder
 to Drive's web assets (`web/assets/themes/cloud/`) and points the web client
 at it; oCIS reads the web configuration at start, so a theme switch needs an
 oCIS restart (then restart the collaboration service, keeping its networks).
+
+The background image path must be root-relative (`/themes/cloud/...`): the web client sets it in a CSS variable used by a stylesheet under `/assets/`, so a relative path resolves to `/assets/themes/...`, which returns the app's HTML (the upstream photo never loaded for the same reason and only the dark base colour showed).

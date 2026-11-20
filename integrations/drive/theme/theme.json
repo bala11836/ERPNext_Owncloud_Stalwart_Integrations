@@ -48,7 +48,7 @@
           "universalAccessSignLanguage": ""
         },
         "loginPage": {
-          "backgroundImg": "themes/cloud/assets/plain.svg"
+          "backgroundImg": "/themes/cloud/assets/plain.svg"
         },
         "logo": {
           "favicon": "themes/owncloud/assets/favicon.jpg",

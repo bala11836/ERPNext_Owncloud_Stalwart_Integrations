@@ -77,7 +77,9 @@ class BrandAssets(unittest.TestCase):
     def test_drive_sign_in_page_is_white_without_the_upstream_logo(self):
         theme = json.loads((ROOT / "integrations/drive/theme/theme.json").read_text())
         web = theme["clients"]["web"]
-        self.assertEqual(web["defaults"]["loginPage"]["backgroundImg"], "themes/cloud/assets/plain.svg")
+        # Root-relative: the web client puts it in a CSS variable used by a stylesheet under
+        # /assets/, so a relative URL would resolve to /assets/themes/... (the app's HTML).
+        self.assertEqual(web["defaults"]["loginPage"]["backgroundImg"], "/themes/cloud/assets/plain.svg")
         self.assertEqual(web["defaults"]["logo"]["login"], "themes/cloud/assets/blank.svg")
         for variant in web.get("themes", []):
             self.assertNotEqual((variant.get("logo") or {}).get("login"), "themes/owncloud/assets/logo.svg")

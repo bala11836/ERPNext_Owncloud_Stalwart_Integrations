@@ -11,6 +11,10 @@ sys.path.insert(0, str(ROOT / 'tools'))
 import host_check as hc  # noqa: E402
 import render_host_checks as rh  # noqa: E402
 
+# The tool logs to the journal; tests capture the lines instead of printing them.
+LOG = []
+hc.log = LOG.append
+
 BRIDGE = 'collaboration-abc'
 STARTED = '2026-11-20T06:00:00.123456789Z'
 T0 = hc.parse_started(STARTED)
@@ -109,6 +113,7 @@ class BootCheckTests(unittest.TestCase):
         self.assertEqual(hc.boot(cfg, env), 1)
         problems = json.loads((Path(cfg['state_dir']) / 'status.json').read_text())['problems']
         self.assertIn('erp answers 502 (https://erp.example.com/)', problems)
+        self.assertTrue(any(line.startswith('BOOT CHECK FAILED: ') and 'erp answers 502' in line for line in LOG))
 
     def test_host_that_comes_up_during_the_wait_passes(self):
         cfg = config(); env = FakeEnv(); answers = iter([None, None, 200, 200, 200, 200])

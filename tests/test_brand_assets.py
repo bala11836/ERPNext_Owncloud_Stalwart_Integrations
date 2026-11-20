@@ -95,6 +95,8 @@ class BrandAssets(unittest.TestCase):
         source = (ROOT / "tools/prepare_runtime.py").read_text()
         self.assertIn("company-favicon.svg", source)
         self.assertIn("'FAVICON_URL':favicon", source)
+        # A profile may serve the favicon from elsewhere (e.g. the website's /front/ assets).
+        self.assertIn("favicon=profile.get('favicon_url') or", source)
 
 
 if __name__ == "__main__":

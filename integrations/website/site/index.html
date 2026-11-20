@@ -19,7 +19,8 @@
   .d { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw var(--du) cubic-bezier(.4,.1,.3,1) var(--dl) forwards; }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 
-  .stage { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: clamp(12px, 2.2vh, 26px); padding-bottom: 6vh; }
+  /* The stage covers the viewport but holds nothing interactive: it must not swallow clicks. */
+  .stage { pointer-events: none; position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: clamp(12px, 2.2vh, 26px); padding-bottom: 6vh; }
   .logo { width: min(440px, 62vw); height: auto; opacity: 0; animation: rise 1.6s ease-out .3s forwards; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
@@ -29,7 +30,7 @@
   @keyframes show { to { opacity: 1; } }
 
   /* plain two-line text in the logo's blue; "Employee" is condensed to the width of "Zone" */
-  .zone { position: fixed; top: clamp(16px, 2.8vh, 30px); left: clamp(18px, 3vw, 38px); color: var(--blue); text-decoration: none;
+  .zone { z-index: 3; position: fixed; top: clamp(16px, 2.8vh, 30px); left: clamp(18px, 3vw, 38px); color: var(--blue); text-decoration: none;
           font-size: clamp(12px, 1.1vw, 15px); font-weight: 700; line-height: 1.25; letter-spacing: .06em; text-transform: uppercase; opacity: 0; animation: rise 1.4s ease-out 2.5s forwards; }
   .zone span { display: block; width: fit-content; white-space: nowrap; }
   .zone #z1 { font-size: .8em; transform-origin: 0 50%; }

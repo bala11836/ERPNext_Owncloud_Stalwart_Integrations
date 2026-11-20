@@ -317,7 +317,9 @@ def prepare(source, output, profile):
             webmail['volumes'].append(str(policy_file)+':/app/data/admin/policy.json:ro')
             ver='?v='+profile['commit'] if profile.get('commit') else ''
             logo='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'+ver
-            favicon='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-favicon.svg'+ver
+            favicon=profile.get('favicon_url') or 'https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-favicon.svg'+ver
+            if not re.fullmatch(r'https://[A-Za-z0-9.-]+/[A-Za-z0-9._/?=-]*', favicon):
+                raise ValueError('favicon_url must be an https URL')
             webmail['environment'].update({'FAVICON_URL':favicon,'LOGIN_LOGO_LIGHT_URL':logo,
                 'LOGIN_LOGO_DARK_URL':logo,'APP_LOGO_LIGHT_URL':'','APP_LOGO_DARK_URL':'','APP_NAME':'Mail'})
         for name, folder in existing_mounts.items():

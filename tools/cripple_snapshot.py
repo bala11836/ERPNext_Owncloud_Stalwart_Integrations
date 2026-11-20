@@ -18,7 +18,8 @@ Numbers and balances need not add up.
 - Mail (a RocksDB store) cannot be scrambled offline, so it is not exported at
   all: test mailboxes start empty.
 - Accounts listed in `keep_accounts` (members of the authentik group "Testers")
-  keep their real login identity so they can sign in to test.
+  keep only their login identity (e-mail, username, name) so they can sign in
+  to test; the rest of their profile is scrambled like anyone else's.
 """
 import argparse
 import base64
@@ -200,6 +201,14 @@ SWEEP = [(r"[A-Za-z0-9._%+-]+@(?!example\.invalid)[A-Za-z0-9-]+\.[A-Za-z0-9.-]*[
          (r'(?-i)\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b', None, '99ZZZZZ9999Z1ZZ'),
          (r'(?-i)\b[A-Z]{5}[0-9]{4}[A-Z]\b', None, 'ZZZZZ9999Z')]
 SYSTEM_COLUMNS = ['_assign', '_liked_by', '_comments', '_seen', '_user_tags']
+NAME_SWEEP_LIMIT = 400   # distinct full names swept per export
+NAME_SWEEP_CHUNK = 25    # names per statement
+# A kept account (member of the test-access group) keeps ONLY its login identity: e-mail,
+# username and name. Every other profile field is scrambled or cleared like anyone else's.
+USER_IDENTITY = {'email', 'username', 'first_name', 'middle_name', 'last_name', 'full_name'}
+# Personal or secret columns of tabUser that the generic classification does not recognise.
+USER_CLEAR = ['location', 'last_ip', 'api_key', 'reset_password_key', 'github_username', 'google_username',
+              'facebook_username', 'twitter_username', 'frappe_userid', 'office_365_username']
 
 
 def category(fieldname, fieldtype, options=''):
@@ -351,7 +360,8 @@ def erp_plan(meta, cutoff, keep_accounts, key):
         where = f'WHERE {column} IS NOT NULL'
         if kind not in {'random-amount', 'date'}:
             where += f" AND {column}<>''"
-        if doctype == 'User':
+        if doctype == 'User' and fieldname in USER_IDENTITY:
+            # Only the login identity of kept accounts stays real; all other profile fields change for everyone.
             where += f' AND LOWER(name) NOT IN ({keep_sql})'
         if kind == 'null':
             value = 'NULL'
@@ -362,6 +372,12 @@ def erp_plan(meta, cutoff, keep_accounts, key):
         else:
             value = mariadb_expression(kind, column)
         statements.append(f'UPDATE {table(doctype)} SET {column}={value} {where}')
+    for column in USER_CLEAR:
+        if has('User', column):
+            statements.append(f'UPDATE `tabUser` SET {quote(column)}=NULL WHERE {quote(column)} IS NOT NULL')
+    if present('User Social Login'):
+        # Provider user ids of accounts that are not kept; kept accounts need theirs to sign in.
+        statements.append(f'DELETE FROM `tabUser Social Login` WHERE LOWER(parent) NOT IN ({keep_sql})')
     for name, cols in sorted(columns.items()):
         if not name.startswith('tab') or name[3:] in META:
             continue
@@ -442,6 +458,26 @@ def erp_plan(meta, cutoff, keep_accounts, key):
             expression = f'REGEXP_REPLACE({expression},{sql_literal(pattern)},{sql_literal(replacement)})'
         statements.append(f'UPDATE {quote(table_name)} SET {quote(column)}={expression} WHERE {quote(column)} IS NOT NULL '
                           f"AND {quote(column)} REGEXP '@|[A-Za-z]{{5}}[0-9]{{4}}[A-Za-z]'")
+    # 6d. Names of accounts that are not kept: wherever a full name still appears in free text
+    # (comments, messages, descriptions, other users' records) it gets the same fake the user's own
+    # record got. Kept accounts' own identity fields are left alone (they keep their real name).
+    names = sorted(set(meta.get('user_names', [])))[:NAME_SWEEP_LIMIT]
+    for start in range(0, len(names), NAME_SWEEP_CHUNK):
+        chunk = names[start:start + NAME_SWEEP_CHUNK]
+        pattern = '(?i)(' + '|'.join(re.escape(name) for name in chunk) + ')'
+        for (table_name, column), data_type in sorted(types.items()):
+            if (not table_name.startswith('tab') or table_name[3:] in SWEEP_SKIP_TABLES or data_type not in TEXTUAL
+                    or column in SWEEP_SKIP_COLUMNS or (table_name, column) in skip_columns
+                    or table_name.startswith('tab_') or table_name.startswith('__')):
+                continue
+            expression = quote(column)
+            for name in chunk:
+                fake = mariadb_expression('person', sql_literal(name))
+                expression = f'REGEXP_REPLACE({expression},{sql_literal("(?i)" + re.escape(name))},{fake})'
+            where = f'{quote(column)} IS NOT NULL AND {quote(column)} REGEXP {sql_literal(pattern)}'
+            if table_name == 'tabUser':
+                where += f' AND LOWER(name) NOT IN ({keep_sql})'
+            statements.append(f'UPDATE {quote(table_name)} SET {quote(column)}={expression} WHERE {where}')
     # 7. File URLs carry original file names: map them to scrambled names.
     statements.append('DROP TABLE IF EXISTS `_cripple_files`')
     statements.append('CREATE TABLE `_cripple_files` (k CHAR(64) NOT NULL PRIMARY KEY, old TEXT NOT NULL, '
@@ -787,7 +823,7 @@ def _dump(args, path):
         raise RuntimeError('Temporary database dump failed')
 
 
-def read_erp_meta(container, database):
+def read_erp_meta(container, database, keep=()):
     doctypes = {row[0]: {'istable': row[1] == '1', 'issingle': row[2] == '1', 'is_submittable': row[3] == '1'}
                 for row in mysql_rows(container, database,
                                       'SELECT name, istable, issingle, is_submittable FROM tabDocType')}
@@ -806,8 +842,16 @@ def read_erp_meta(container, database):
     types = {(row[0], row[1]): row[2] for row in mysql_rows(container, database,
              'SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='
              f'{sql_literal(database)}')}
+    keep_sql = ','.join(sql_literal(a.casefold()) for a in list(keep) + ['administrator', 'guest'])
+    user_names = set()
+    if 'tabUser' in columns:
+        for row in mysql_rows(container, database, 'SELECT IFNULL(full_name,\'\'), IFNULL(first_name,\'\'), '
+                              'IFNULL(last_name,\'\') FROM `tabUser` WHERE LOWER(name) NOT IN ' f'({keep_sql})'):
+            candidates = [row[0], (row[1] + ' ' + row[2]).strip()] if len(row) >= 3 else [row[0]]
+            # Full names only (two or more words): single words such as a first name are too common.
+            user_names.update(n.strip() for n in candidates if len(n.strip()) >= 6 and ' ' in n.strip() and '@' not in n)
     return {'doctypes': doctypes, 'fields': [f for f in fields if len(f) == 4], 'columns': columns,
-            'unique': unique, 'types': types}
+            'unique': unique, 'types': types, 'user_names': sorted(user_names)}
 
 
 def check_parity(container, database, scrambler):
@@ -960,7 +1004,7 @@ def cripple(data, config, containers, database, counts_function, audit=None):
               text=f'CREATE DATABASE {quote(database)} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\n')
         _feed(['docker', 'exec', '-i', erp, 'sh', '-c', MYSQL, 'sh', database], path=data / 'erp.sql')
         check_parity(erp, database, scrambler)
-        plan = erp_plan(read_erp_meta(erp, database), cutoff, keep, scrambler.key)
+        plan = erp_plan(read_erp_meta(erp, database, keep), cutoff, keep, scrambler.key)
         _feed(['docker', 'exec', '-i', erp, 'sh', '-c', MYSQL, 'sh', database], text=';\n'.join(plan) + ';\n')
         files = mysql_rows(erp, database, 'SELECT new, is_private FROM `_cripple_files`')
         _feed(['docker', 'exec', '-i', erp, 'sh', '-c', MYSQL, 'sh', database],

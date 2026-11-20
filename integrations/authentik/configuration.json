@@ -1607,7 +1607,7 @@
         "default": true,
         "branding_title": "authentik",
         "branding_logo": "https://erp.example.com/assets/erpnext_drive_integrations/company-logo-approved-v6.svg",
-        "branding_favicon": "https://erp.example.com/assets/erpnext_drive_integrations/company-logo-approved-v6.svg",
+        "branding_favicon": "https://erp.example.com/assets/erpnext_drive_integrations/company-favicon-192.png",
         "branding_custom_css": "\n/* Company login logo */\n.pf-c-login__main-header .branding-logo { width: 180px !important; height: auto !important; max-height: 160px !important; object-fit: contain; }\n",
         "branding_default_flow_background": "https://sso.example.com/static/dist/assets/images/flow_background.jpg",
         "branding_map_tiles": "",

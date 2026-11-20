@@ -377,7 +377,7 @@ def after_request(response, request):
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def start_signin():
     """A deliberate post-logout sign-in always requires fresh IdP authentication."""
-    url = get_oauth2_authorize_url("authentik", "/")
+    url = get_oauth2_authorize_url("authentik", "/place_holder")
     parts = urlsplit(url)
     query = dict(parse_qsl(parts.query))
     query.update({"prompt": "login", "max_age": "0"})

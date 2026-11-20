@@ -52,3 +52,9 @@ Upstream licenses are as published by each project; verify them at the pinned ve
 Development of this module is assisted by AI agents (Anthropic's Claude); changes follow the repository → permanent test → production workflow and are accepted by the owner (see AGENTS.md).
 
 Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the renderer) this module shows the shared TEST SITE marker, a 3px striped top line with a small tab, top window only, no layout space. Portal and Frappe apps: `session.js` (Desk, Raven, Insights) and `www/place_holder.html`.
+
+## Desk and branding
+
+The portal page is called **Desk** (title and the text beside the logo); the route stays `place_holder` because `/desk` is Frappe's own route. The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The menu's home button uses the compact favicon, the brand at the top left the full logo.
+
+The app sidebars (`public/module-header-20261115.js`) have **no "All apps" item**; the logo at the top leads back to the portal page. `tests/test_app_menu_link.py` fails if the item reappears.

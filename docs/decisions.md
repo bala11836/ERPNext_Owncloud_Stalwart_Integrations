@@ -6,6 +6,55 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-20
 
+### Company front page on www; the bare domain redirects to it
+- **Decision:** the company address (`www`) serves a small static front page
+  that is always reachable, signed in or not: an original pencil drawing of a
+  tunnel construction site drawn stroke by stroke in four batches, the logo,
+  "Launching soon..." typed letter by letter, and a plain "Employee Zone" link
+  to the staff sign-in. The bare domain redirects permanently to `www`. The
+  page is a module (`integrations/website`) with its own pinned, read-only
+  nginx container; it is tenant-neutral and gets its names, logo, favicons and
+  link from the private profile. On the test site the same page is served by the
+  test host itself at the exact front path `/` (no extra test host name); every
+  other path still reaches the portal. The portal shell moving onto `www` is a
+  later step.
+- **Why:** a public address that is always open while apps stay behind sign-in;
+  one host name fewer on test; our own drawing instead of a photo avoids a
+  licence and credit question and loads in a few kilobytes.
+- **Where:** `integrations/website/`, `deployment/stacks/website.compose.json`,
+  `deployment/production/website.traefik.yaml`, `tools/prepare_ingress.py`.
+### No "All apps" item in the app sidebars
+- **Decision:** the sidebar of ERPNext, HRMS, Onboarding, India Compliance and
+  every other module-sidebar app has no "All apps" item. The app's logo at the
+  top still leads back to the portal page (`/place_holder`, whole tab), and the
+  Edit Sidebar and Help actions and the hidden native Home item stay.
+- **Why:** the owner removed the item earlier by patching files on the server;
+  the repository build replaced those files and brought it back. A removal that
+  lives outside the repository is lost at the next build, so it is now in the
+  source (`module-header-20261115.js`), a stale copy in an already open tab is
+  removed by the script, the script version is bumped so browsers refresh, and
+  `tests/test_app_menu_link.py` fails if the item returns.
+- **Where:** `erpnext_drive_integrations/public/module-header-20261115.js`,
+  `tests/test_app_menu_link.py`.
+
+### Tenant branding is private; the portal page is called Desk
+- **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are
+  supplied through the private runtime profile (`company_logo`,
+  `company_favicon_dir`), never stored in this repository, which ships only
+  neutral placeholders. Rendered files keep their names and every reference
+  carries `?v=<release commit>` so browsers refresh them. The portal page
+  (route `place_holder`) is named **Desk** (browser title and the text beside
+  the logo) because dashboards and widgets will live there; its menu's home
+  button uses the compact favicon, the top-left brand the full logo. Frappe's
+  own desk and website favicon and logo, authentik's branding, the webmail
+  favicon and the push-notification icon use the same files.
+- **Why:** one repository serves several tenants (the product is the
+  repository, the company is the tenant); a 500 KB detailed logo is unreadable
+  and wasteful as a 16 to 44 px icon; a fixed file name needs a version
+  parameter or browsers keep the old picture.
+- **Where:** `tools/render_runtime.py`, `tools/prepare_runtime.py`,
+  `erpnext_drive_integrations/www/place_holder.*`, `tests/test_brand_assets.py`.
+
 ### The order of work: branch, test, merge, main, production
 - **Decision:** every change follows branch → test → merge → `main` →
   production. The branch itself is deployed to the test site and validated

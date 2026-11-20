@@ -20,6 +20,7 @@ Installs one Frappe app, `erpnext_drive_integrations`, that composes independent
 - `erpnext_drive_integrations/fixtures/**`
 - `erpnext_drive_integrations/public/app-logos/**`
 - `erpnext_drive_integrations/public/company-logo-*`
+- `erpnext_drive_integrations/public/company-favicon*` (neutral placeholders; the tenant supplies its own through the private profile)
 - `tests/test_hook_composition.py`
 
 ## Requirements

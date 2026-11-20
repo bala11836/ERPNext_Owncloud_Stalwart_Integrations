@@ -157,7 +157,7 @@ def prepare(source, output, profile):
         if not (build/'pyproject.toml').is_file():
             raise ValueError('Unexpected rendered source directory')
     render(source, build, {'domain':profile['domain'], 'public_replacements':replacements,
-                           'company_logo':profile.get('company_logo'),'company_favicon_dir':profile.get('company_favicon_dir'),
+                           'company_logo':profile.get('company_logo'),'company_favicon_dir':profile.get('company_favicon_dir'),'landing_url':profile.get('landing_url'),
                            'asset_version':profile.get('commit')})
     projects = profile.get('projects',['erp','drive','editor','mail','dms','processing'])
     mounts = json.loads((source/'deployment/stacks/mounts.json').read_text())

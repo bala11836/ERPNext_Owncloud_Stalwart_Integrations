@@ -30,6 +30,12 @@ def render(source, destination, config):
     if not re.fullmatch(r"[A-Za-z0-9.-]+", domain) or "." not in domain:
         raise ValueError("domain must be a DNS name")
     mappings = {"example.com": domain, "/var/lib/cloud-integration": config.get("session_state_path", "/var/lib/cloud-integration")}
+    landing = config.get("landing_url")
+    if landing:
+        # Where every logout ends (the company website); default https://www.<domain>/.
+        if not re.fullmatch(r"https://[A-Za-z0-9.-]+/", landing):
+            raise ValueError("landing_url must look like https://host/")
+        mappings["https://www.example.com/"] = landing
     for key, value in config.get("public_replacements", {}).items():
         if not isinstance(key, str) or not isinstance(value, str) or any(c in value for c in ["\n", "\r", "\x00"]):
             raise ValueError("Invalid public replacement")

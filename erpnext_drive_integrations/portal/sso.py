@@ -16,6 +16,13 @@ PENDING_COOKIE = "cloud_logout_pending"
 STATE_PATH = "/var/lib/cloud-integration/sessions.sqlite3"
 FINISH = "https://erp.example.com/api/method/erpnext_drive_integrations.portal.sso.finish_logout"
 SSO = "https://sso.example.com"
+# Every logout ends on the company website. Rendered from the private profile
+# (landing_url; default https://www.<domain>/). Apps reach it through the ERP's
+# /login?logged_out=1 handler, so this is the only place that names it.
+LANDING = "https://www.example.com/"
+# A sign-in started from the ERP must be recent, but one passkey prompt is enough:
+# authentik may reuse a login from the last FRESH_WINDOW seconds.
+FRESH_WINDOW = 600
 EVENT = "http://schemas.openid.net/event/backchannel-logout"
 
 
@@ -109,7 +116,7 @@ def callback(code, state):
     requested_at = frappe.cache.get_value(fresh_key)
     if requested_at is not None:
         frappe.cache.delete_value(fresh_key)
-        if int(claims.get("auth_time") or 0) < int(requested_at) - 5:
+        if int(claims.get("auth_time") or 0) < int(requested_at) - FRESH_WINDOW:
             raise frappe.AuthenticationError("Fresh passkey authentication is required. Start sign-in again.")
     provider = get_oauth2_providers()["authentik"]
     response = session.get(provider["api_endpoint"], params=provider.get("api_endpoint_args"), timeout=10)
@@ -216,9 +223,9 @@ def before_request():
     if path == "/signed-out":
         if frappe.session.user != "Guest":
             redirect(FINISH)
-        return
+        redirect(LANDING)
     if path == "/login" and frappe.form_dict.get("logged_out"):
-        redirect("https://erp.example.com/signed-out")
+        redirect(LANDING)
     # Only top-level bare Desk navigations go to the portal Home.
     # Native iframe navigation and deep ERP links keep their existing behavior.
     if (frappe.conf.get("cloud_combined_site") and frappe.request.method == "GET"
@@ -376,11 +383,16 @@ def after_request(response, request):
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
 def start_signin():
-    """A deliberate post-logout sign-in always requires fresh IdP authentication."""
+    """A deliberate sign-in requires a recent IdP authentication (FRESH_WINDOW).
+
+    prompt=login with max_age=0 made authentik ask for the passkey twice (a login
+    that took a second was already "too old"); max_age=FRESH_WINDOW asks once.
+    """
     url = get_oauth2_authorize_url("authentik", "/place_holder")
     parts = urlsplit(url)
     query = dict(parse_qsl(parts.query))
-    query.update({"prompt": "login", "max_age": "0"})
+    query.pop("prompt", None)
+    query.update({"max_age": str(FRESH_WINDOW)})
     state = query.get("state")
     if not state:
         raise frappe.AuthenticationError("Unable to start secure sign-in")

@@ -7,7 +7,7 @@
       "title": "ERP add-on shell",
       "summary": "The single installed Frappe app: hook composition with per-feature switches (cloud_features), bootstrap, migration, shared role fixtures and app logos.",
       "readme": "erpnext_drive_integrations/README.md",
-      "paths": ["pyproject.toml", "MANIFEST.in", "erpnext_drive_integrations/__init__.py", "erpnext_drive_integrations/hooks.py", "erpnext_drive_integrations/bootstrap.py", "erpnext_drive_integrations/migration.py", "erpnext_drive_integrations/modules.txt", "erpnext_drive_integrations/patches.txt", "erpnext_drive_integrations/README.md", "erpnext_drive_integrations/fixtures/**", "erpnext_drive_integrations/public/app-logos/**", "erpnext_drive_integrations/public/company-logo-*", "erpnext_drive_integrations/public/company-favicon*", "tests/test_hook_composition.py"],
+      "paths": ["pyproject.toml", "MANIFEST.in", "erpnext_drive_integrations/__init__.py", "erpnext_drive_integrations/hooks.py", "erpnext_drive_integrations/bootstrap.py", "erpnext_drive_integrations/migration.py", "erpnext_drive_integrations/modules.txt", "erpnext_drive_integrations/patches.txt", "erpnext_drive_integrations/README.md", "erpnext_drive_integrations/fixtures/**", "erpnext_drive_integrations/public/app-logos/**", "erpnext_drive_integrations/public/company-logo-*", "erpnext_drive_integrations/public/company-favicon*", "erpnext_drive_integrations/public/plain-background.svg", "tests/test_hook_composition.py"],
       "depends_on": [],
       "tests": ["tests/test_hook_composition.py"],
       "upstream": [
@@ -22,10 +22,10 @@
       "title": "ERP portal, SSO session and mobile",
       "summary": "Portal home, authentik SSO sign-in and global logout, shared-browser logout guard, idle proxy-session recovery (P01), native mobile login binding, web push, module header and placeholder/signed-out pages.",
       "readme": "erpnext_drive_integrations/portal/README.md",
-      "paths": ["tests/test_app_menu_link.py", "tests/test_portal_deep_link.py", "erpnext_drive_integrations/portal/*", "erpnext_drive_integrations/public/session.js", "erpnext_drive_integrations/public/push-client.js", "erpnext_drive_integrations/public/push-worker.js", "erpnext_drive_integrations/public/module-header-*.js", "erpnext_drive_integrations/www/signed_out.*", "erpnext_drive_integrations/www/place_holder.*", "erpnext_drive_integrations/www/__init__.py", "tests/portal/**"],
+      "paths": ["tests/test_app_menu_link.py", "tests/test_logout_and_signin.py", "tests/test_portal_deep_link.py", "erpnext_drive_integrations/portal/*", "erpnext_drive_integrations/public/session.js", "erpnext_drive_integrations/public/push-client.js", "erpnext_drive_integrations/public/push-worker.js", "erpnext_drive_integrations/public/module-header-*.js", "erpnext_drive_integrations/www/signed_out.*", "erpnext_drive_integrations/www/place_holder.*", "erpnext_drive_integrations/www/__init__.py", "tests/portal/**"],
       "exclude": ["erpnext_drive_integrations/portal/test_refresh.py"],
       "depends_on": ["erp-addon-shell", "authentik-identity"],
-      "tests": ["tests/test_app_menu_link.py", "tests/test_portal_deep_link.py", "tests/portal/test_mobile.py"],
+      "tests": ["tests/test_app_menu_link.py", "tests/test_logout_and_signin.py", "tests/test_portal_deep_link.py", "tests/portal/test_mobile.py"],
       "upstream": [
         {"name": "Frappe Framework", "license": "MIT", "url": "https://github.com/frappe/frappe"},
         {"name": "authentik", "license": "MIT (core)", "url": "https://github.com/goauthentik/authentik"}

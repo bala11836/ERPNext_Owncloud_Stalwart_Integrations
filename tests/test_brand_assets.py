@@ -1,4 +1,4 @@
-"""Tenant branding is supplied privately: logo and favicon set; portal page is called Desk."""
+"""Tenant branding is supplied privately: logo and favicon set; the portal page keeps its name."""
 import json
 import sys
 import tempfile
@@ -58,13 +58,15 @@ class BrandAssets(unittest.TestCase):
         if blueprint is not None:
             self.assertIn("company-favicon-192.png?v=abcdef1", json.dumps(blueprint))
 
-    def test_portal_page_is_called_desk_and_uses_the_compact_icon_for_the_menu(self):
+    def test_portal_page_keeps_its_name_and_shows_the_logo_in_the_menu(self):
         page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
         code = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
-        self.assertIn("<title>Desk</title>", page)
-        self.assertIn("context.entity_name = 'Desk'", code)
-        self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_icon | e }}"', page)
-        self.assertNotIn("Cloud</title>", page)
+        # Owner: exactly as before except the logo (company name beside it, same logo in the menu).
+        self.assertIn("<title>Cloud</title>", page)
+        self.assertIn("context.entity_name = company or 'Applications'", code)
+        self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_logo | e }}"', page)
+        self.assertNotIn("Desk</title>", page)
+        self.assertNotIn("entity_icon", page + code)
 
     def test_frappe_website_settings_carry_the_release_version(self):
         build = self.render()

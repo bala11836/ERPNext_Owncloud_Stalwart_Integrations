@@ -6,9 +6,9 @@ def configure():
         frappe.db.set_single_value("Website Settings", "home_page", "place_holder")
         frappe.db.set_single_value("Website Settings", "disable_signup", 1)
         # Tenant branding comes from the private runtime profile (company_logo, company_favicon_dir).
-        base = "/assets/erpnext_drive_integrations/"
-        frappe.db.set_single_value("Website Settings", "favicon", base + "company-favicon-32.png")
-        frappe.db.set_single_value("Website Settings", "app_logo", base + "company-logo-approved-v6.svg")
+        # Literal paths, so the renderer stamps them with the release version like every other reference.
+        frappe.db.set_single_value("Website Settings", "favicon", "/assets/erpnext_drive_integrations/company-favicon-32.png")
+        frappe.db.set_single_value("Website Settings", "app_logo", "/assets/erpnext_drive_integrations/company-logo-approved-v6.svg")
 
 def boot_session(bootinfo):
     features = frappe.conf.get("cloud_features") or {}

@@ -111,6 +111,14 @@ class WebsiteModule(unittest.TestCase):
         plain = ingress(ROOT, {"hosts": HOSTS, "ingress_prefix": "isolated"})["http"]["routers"]
         self.assertFalse([k for k in plain if k.endswith("website-front")])
 
+    def test_portal_returns_to_its_own_page_so_the_front_page_can_own_the_front_path(self):
+        page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
+        code = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
+        sso = (ROOT / "erpnext_drive_integrations/portal/sso.py").read_text()
+        self.assertIn('<a href="/place_holder" id="ph-home"', page)
+        self.assertIn("get_oauth2_authorize_url('authentik', '/place_holder')", code)
+        self.assertIn('get_oauth2_authorize_url("authentik", "/place_holder")', sso)
+
 
 if __name__ == "__main__":
     unittest.main()

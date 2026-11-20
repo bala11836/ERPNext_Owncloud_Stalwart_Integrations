@@ -8,7 +8,7 @@ no_cache = 1
 def get_context(context):
     if frappe.session.user == 'Guest':
         frappe.local.response['type'] = 'redirect'
-        frappe.local.response['location'] = get_oauth2_authorize_url('authentik', '/')
+        frappe.local.response['location'] = get_oauth2_authorize_url('authentik', '/place_holder')
         raise frappe.Redirect
     fullname = frappe.utils.get_fullname() or frappe.session.user
     parts = fullname.split()

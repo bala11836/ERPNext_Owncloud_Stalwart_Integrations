@@ -18,7 +18,8 @@ a server, no cookies and no access to business data.
   `www.example.com` and a redirect of the bare domain to it.
 - The test site serves the same page at the exact front path `/` of the test
   host (`website_front_page` in the ingress profile); every other path still
-  goes to the portal.
+  goes to the portal. For that, the portal's sign-in return address and its
+  Home button are `/place_holder` (the same page `/` showed before).
 
 ## Requirements
 Docker with the workspace network, the repository's renderer

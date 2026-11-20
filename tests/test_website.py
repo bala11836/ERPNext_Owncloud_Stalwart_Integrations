@@ -107,7 +107,7 @@ class WebsiteModule(unittest.TestCase):
         portal = next(v for k, v in http["routers"].items() if k.endswith("-erp") or k == "isolated-erp")
         self.assertEqual(front["rule"], "Host(`test.example.net`) && Path(`/`)")
         self.assertGreater(front["priority"], portal["priority"])
-        self.assertNotIn("middlewares", front)               # public page: no sign-in middleware
+        self.assertFalse(front.get("middlewares"))           # public page: no sign-in middleware
         plain = ingress(ROOT, {"hosts": HOSTS, "ingress_prefix": "isolated"})["http"]["routers"]
         self.assertFalse([k for k in plain if k.endswith("website-front")])
 

@@ -294,6 +294,13 @@ def prepare(source, output, profile):
         if profile.get('commit'):
             script['src']=url+'?v='+profile['commit']
     if config:
+        # Tenant-neutral web theme (white sign-in page, no upstream logo), served by
+        # oCIS from its web assets like the extension scripts above.
+        theme = drive_data/'web'/'assets'/'themes'/'cloud'
+        shutil.copytree(build/'integrations/drive/theme', theme, dirs_exist_ok=True)
+        if os.geteuid() == 0:
+            for item in [theme.parent, *theme.rglob('*'), theme]:
+                os.chown(item,1000,1000)
         drive_config = next(output/'mounts'/m['path'] for m in mounts if m['target']=='/etc/ocis')
         (drive_config/'web-with-picker.json').write_text(json.dumps(config,indent=2)+'\n')
 

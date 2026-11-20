@@ -74,6 +74,18 @@ class BrandAssets(unittest.TestCase):
         self.assertIn('"/assets/erpnext_drive_integrations/company-favicon-32.png?v=abcdef1"', code)
         self.assertIn('"/assets/erpnext_drive_integrations/company-logo-approved-v6.svg?v=abcdef1"', code)
 
+    def test_drive_sign_in_page_is_white_without_the_upstream_logo(self):
+        theme = json.loads((ROOT / "integrations/drive/theme/theme.json").read_text())
+        web = theme["clients"]["web"]
+        self.assertEqual(web["defaults"]["loginPage"]["backgroundImg"], "themes/cloud/assets/plain.svg")
+        self.assertEqual(web["defaults"]["logo"]["login"], "themes/cloud/assets/blank.svg")
+        for variant in web.get("themes", []):
+            self.assertNotEqual((variant.get("logo") or {}).get("login"), "themes/owncloud/assets/logo.svg")
+        self.assertIn('fill="#ffffff"', (ROOT / "integrations/drive/theme/assets/plain.svg").read_text())
+        config = json.loads((ROOT / "integrations/drive/config/web-with-picker.json").read_text())
+        self.assertEqual(config["theme"], "https://drive.example.com/themes/cloud/theme.json")
+        self.assertIn("integrations/drive/theme", (ROOT / "tools/prepare_runtime.py").read_text())
+
     def test_webmail_favicon_is_the_compact_icon(self):
         source = (ROOT / "tools/prepare_runtime.py").read_text()
         self.assertIn("company-favicon.svg", source)

@@ -6,6 +6,32 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-20
 
+### Logout ends on the website; one passkey prompt per sign-in (P56)
+- **Decision:** every logout (ERP, Drive, Mail, DMS, the portal, idle logout)
+  ends on the company website. The address is named once, `sso.LANDING`,
+  rendered from the private profile (`landing_url`, default
+  `https://www.<domain>/`; the test site uses its own front page). Apps keep
+  handing over to the ERP's `/login?logged_out=1` (or `/signed-out`, which
+  first finishes a still-valid session); the ERP forwards to the landing
+  address, and authentik's logout flow redirects there after it ends the
+  gateway session. The ERP's sign-in no longer sends `prompt=login` with
+  `max_age=0`: it sends `max_age=600` and the callback accepts an
+  authentication from the last ten minutes.
+- **Why:** with `max_age=0` a passkey login that took a second already counted
+  as too old, so authentik asked twice; ten minutes keeps the intent (a recent
+  passkey login) without the second prompt. One named landing address avoids
+  five copies drifting apart, and changing only the ERP avoids rebuilding Mail
+  or restarting Drive and DMS.
+- **Where:** `erpnext_drive_integrations/portal/sso.py`, `tools/render_runtime.py`,
+  `tests/test_logout_and_signin.py`.
+
+### The portal page keeps its name; only the logo changed
+- **Decision (owner):** the portal page stays exactly as before (title, and the
+  company name beside the logo); only the logo is new, in the top-left brand
+  and in the auto-hiding menu's home button. This reverts the "Desk" label of
+  the previous release.
+- **Where:** `erpnext_drive_integrations/www/place_holder.*`, `tests/test_brand_assets.py`.
+
 ### Company front page on www; the bare domain redirects to it
 - **Decision:** the company address (`www`) serves a small static front page
   that is always reachable, signed in or not: an original pencil drawing of a
@@ -37,7 +63,7 @@ discussion that led to a decision is not repeated here.
 - **Where:** `erpnext_drive_integrations/public/module-header-20261115.js`,
   `tests/test_app_menu_link.py`.
 
-### Tenant branding is private; the portal page is called Desk
+### Tenant branding is private
 - **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are
   supplied through the private runtime profile (`company_logo`,
   `company_favicon_dir`), never stored in this repository, which ships only

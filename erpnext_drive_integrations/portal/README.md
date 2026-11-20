@@ -53,8 +53,11 @@ Development of this module is assisted by AI agents (Anthropic's Claude); change
 
 Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the renderer) this module shows the shared TEST SITE marker, a 3px striped top line with a small tab, top window only, no layout space. Portal and Frappe apps: `session.js` (Desk, Raven, Insights) and `www/place_holder.html`.
 
-## Desk and branding
+## Branding
 
-The portal page is called **Desk** (title and the text beside the logo); the route stays `place_holder` because `/desk` is Frappe's own route. The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The menu's home button uses the compact favicon, the brand at the top left the full logo.
+The portal page keeps its name (title and the company name beside the logo). The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The same logo is used in the menu's home button.
 
-The app sidebars (`public/module-header-20261115.js`) have **no "All apps" item**; the logo at the top leads back to the portal page. `tests/test_app_menu_link.py` fails if the item reappears.
+## Logout and sign-in
+
+Every logout ends on the company website: `sso.LANDING`, rendered from the private profile's `landing_url` (default `https://www.<domain>/`). Apps hand over to the ERP's `/login?logged_out=1` or `/signed-out`. Sign-in asks for the passkey once: `max_age=600` instead of `prompt=login` with `max_age=0`; the callback accepts an authentication from the last ten minutes. `tests/test_logout_and_signin.py` pins both.
+

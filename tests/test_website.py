@@ -1,5 +1,6 @@
 """The company front page: tenant-neutral source, private branding at render time, routes."""
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -41,6 +42,12 @@ class WebsiteModule(unittest.TestCase):
         self.assertNotIn("unsplash", page.lower())          # our own drawing, no photo credit
         self.assertIn("text-transform: uppercase", page)     # EMPLOYEE / ZONE in capitals
         self.assertIn("Launching soon...", page)
+        # The full-viewport stage sits above the Employee Zone link in the DOM; it must
+        # not intercept clicks, and the link must stack above it (owner-reported defect).
+        stage = re.search(r"\.stage \{([^}]*)\}", page).group(1)
+        zone = re.search(r"\.zone \{([^}]*)\}", page).group(1)
+        self.assertIn("pointer-events: none", stage)
+        self.assertIn("z-index: 3", zone)
         self.assertNotIn("fetch(", page)                     # no server calls
         for reference in ("logo.svg", "favicon.svg", "favicon-32.png", "favicon-180.png"):
             self.assertIn("front/" + reference, page)

@@ -33,7 +33,7 @@ Take `integrations/website/`, the stack and mount entries, and the renderer's
 `brand_website` step. Use it for any tenant: only the private profile changes.
 
 ## Configuration
-Private profile keys (never in Git): `projects` includes `website`,
+Private profile keys (never in Git; for Mail, `favicon_url` may point at this page's `/front/favicon.svg`): `projects` includes `website`,
 `website_title`, `website_name` (page title and logo text), `website_zone_url`
 (a path or https URL; default the ERP host), `company_logo`,
 `company_favicon_dir` (SVG and PNG 16, 32, 48, 180, 192, 512). Without them the

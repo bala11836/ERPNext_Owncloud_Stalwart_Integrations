@@ -209,10 +209,11 @@ def prepare(source, output, profile):
                         .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone))
         placeholders = build/'erpnext_drive_integrations/public'
         logo = Path(profile['company_logo']) if profile.get('company_logo') else placeholders/'company-logo-approved-v6.svg'
-        shutil.copy2(logo, site/'logo.svg')
+        (site/'front').mkdir(exist_ok=True)
+        shutil.copy2(logo, site/'front'/'logo.svg')
         folder = Path(profile['company_favicon_dir']) if profile.get('company_favicon_dir') else None
         for name in FAVICON_FILES:
-            shutil.copy2(folder/name if folder else placeholders/('company-'+name), site/name)
+            shutil.copy2(folder/name if folder else placeholders/('company-'+name), site/'front'/name)
     def mount_path(name):
         return Path(existing_mounts[name]) if name in existing_mounts else output/'mounts'/name
     for item in mounts:

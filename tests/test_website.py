@@ -42,6 +42,9 @@ class WebsiteModule(unittest.TestCase):
         self.assertIn("text-transform: uppercase", page)     # EMPLOYEE / ZONE in capitals
         self.assertIn("Launching soon...", page)
         self.assertNotIn("fetch(", page)                     # no server calls
+        for reference in ("logo.svg", "favicon.svg", "favicon-32.png", "favicon-180.png"):
+            self.assertIn("front/" + reference, page)
+            self.assertNotIn('"' + reference + '"', page)      # never a root-level reference
         conf = (ROOT / "integrations/website/nginx-default.conf").read_text()
         self.assertIn("listen 8080", conf)
         self.assertIn("default-src 'none'", conf)
@@ -65,9 +68,9 @@ class WebsiteModule(unittest.TestCase):
         self.assertIn("<title>Acme</title>", page)
         self.assertIn('alt="Acme Ltd"', page)
         self.assertIn('href="/place_holder"', page)
-        self.assertEqual((site / "logo.svg").read_text(), "<svg id='tenant-logo'/>")
+        self.assertEqual((site / "front/logo.svg").read_text(), "<svg id='tenant-logo'/>")
         for name in FAVICON_FILES:
-            self.assertEqual((site / name).read_bytes(), b"tenant:" + name.encode())
+            self.assertEqual((site / "front" / name).read_bytes(), b"tenant:" + name.encode())
         compose = json.loads((output / "compose/website.json").read_text())["services"]["web"]
         self.assertIn("@sha256:", compose["image"])
         self.assertTrue(compose["read_only"])
@@ -80,9 +83,9 @@ class WebsiteModule(unittest.TestCase):
         page = (site / "index.html").read_text()
         self.assertIn("<title>Welcome</title>", page)
         self.assertIn('href="https://test.example.net/"', page)   # the ERP host: staff sign-in
-        self.assertTrue((site / "logo.svg").is_file())
+        self.assertTrue((site / "front/logo.svg").is_file())
         for name in FAVICON_FILES:
-            self.assertTrue((site / name).is_file(), name)
+            self.assertTrue((site / "front" / name).is_file(), name)
 
     def test_unsafe_profile_values_are_refused(self):
         for key, value in (("website_zone_url", "javascript:alert(1)"), ("website_zone_url", "//evil.example"),
@@ -110,7 +113,7 @@ class WebsiteModule(unittest.TestCase):
         front = http["routers"]["isolated-website-front"] if "isolated-website-front" in http["routers"] else \
             next(v for k, v in http["routers"].items() if k.endswith("website-front"))
         portal = next(v for k, v in http["routers"].items() if k.endswith("-erp") or k == "isolated-erp")
-        self.assertEqual(front["rule"], "Host(`test.example.net`) && Path(`/`)")
+        self.assertEqual(front["rule"], "Host(`test.example.net`) && (Path(`/`) || PathPrefix(`/front/`))")
         self.assertGreater(front["priority"], portal["priority"])
         self.assertFalse(front.get("middlewares"))           # public page: no sign-in middleware
         plain = ingress(ROOT, {"hosts": HOSTS, "ingress_prefix": "isolated"})["http"]["routers"]

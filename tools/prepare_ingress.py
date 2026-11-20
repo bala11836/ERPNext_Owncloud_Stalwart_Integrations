@@ -52,9 +52,10 @@ def prepare(source, profile):
                                                         ['100.64.0.0/10','127.0.0.1/32'])}}
     route('erp',hosts['erp'],'erp',middleware=['identity-clean','sso-auth'])
     if profile.get('website_front_page'):
-        # P47: the company front page answers the exact front path of the host;
-        # every other path keeps going to the portal and the ERP unchanged.
-        route('website-front',hosts['erp'],'website',priority=5000,path='Path(`/`)')
+        # P47: the company front page answers the exact front path of the host and
+        # its own assets under /front/; every other path keeps going to the portal
+        # and the ERP unchanged.
+        route('website-front',hosts['erp'],'website',priority=5000,path='(Path(`/`) || PathPrefix(`/front/`))')
     route('outpost',hosts['erp'],'sso',300,'PathPrefix(`/outpost.goauthentik.io/`)')
     # These app endpoints perform their own signed OIDC / CSRF / token checks.
     # Only the exact public bootstrap/static endpoints bypass the outpost.

@@ -45,6 +45,11 @@ class WebsiteModule(unittest.TestCase):
         conf = (ROOT / "integrations/website/nginx-default.conf").read_text()
         self.assertIn("listen 8080", conf)
         self.assertIn("default-src 'none'", conf)
+        # nginx drops server-level add_header lines in any location that has its own
+        # add_header, so security headers must be the only add_header in the file.
+        locations = conf.split("location", 1)[1]
+        self.assertNotIn("add_header", locations)
+        self.assertIn("expires -1", conf)
 
     def test_branding_comes_from_the_private_profile(self):
         folder = Path(tempfile.mkdtemp())

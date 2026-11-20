@@ -20,7 +20,7 @@ HOSTS = {k: ("test.example.net" if k == "erp" else "test-" + k + ".example.net")
 def profile(**extra):
     base = {"instance": "web-test", "tier": "test", "domain": "example.net", "hosts": HOSTS,
             "network": "isolated-workspace", "network_subnet": "10.44.0.0/24",
-            "erp_image": "example/erp:test", "projects": ["website"]}
+            "erp_image": "example/erp:test", "mail_image": "example/mail:test", "projects": ["website"]}
     base.update(extra)
     return base
 

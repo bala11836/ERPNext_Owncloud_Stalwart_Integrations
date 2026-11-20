@@ -56,3 +56,5 @@ Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the
 ## Desk and branding
 
 The portal page is called **Desk** (title and the text beside the logo); the route stays `place_holder` because `/desk` is Frappe's own route. The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The menu's home button uses the compact favicon, the brand at the top left the full logo.
+
+The app sidebars (`public/module-header-20261115.js`) have **no "All apps" item**; the logo at the top leads back to the portal page. `tests/test_app_menu_link.py` fails if the item reappears.

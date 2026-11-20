@@ -23,6 +23,19 @@ discussion that led to a decision is not repeated here.
   licence and credit question and loads in a few kilobytes.
 - **Where:** `integrations/website/`, `deployment/stacks/website.compose.json`,
   `deployment/production/website.traefik.yaml`, `tools/prepare_ingress.py`.
+### No "All apps" item in the app sidebars
+- **Decision:** the sidebar of ERPNext, HRMS, Onboarding, India Compliance and
+  every other module-sidebar app has no "All apps" item. The app's logo at the
+  top still leads back to the portal page (`/place_holder`, whole tab), and the
+  Edit Sidebar and Help actions and the hidden native Home item stay.
+- **Why:** the owner removed the item earlier by patching files on the server;
+  the repository build replaced those files and brought it back. A removal that
+  lives outside the repository is lost at the next build, so it is now in the
+  source (`module-header-20261115.js`), a stale copy in an already open tab is
+  removed by the script, the script version is bumped so browsers refresh, and
+  `tests/test_app_menu_link.py` fails if the item returns.
+- **Where:** `erpnext_drive_integrations/public/module-header-20261115.js`,
+  `tests/test_app_menu_link.py`.
 
 ### Tenant branding is private; the portal page is called Desk
 - **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are

@@ -66,6 +66,12 @@ class BrandAssets(unittest.TestCase):
         self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_icon | e }}"', page)
         self.assertNotIn("Cloud</title>", page)
 
+    def test_frappe_website_settings_carry_the_release_version(self):
+        build = self.render()
+        code = (build / "erpnext_drive_integrations/bootstrap.py").read_text()
+        self.assertIn('"/assets/erpnext_drive_integrations/company-favicon-32.png?v=abcdef1"', code)
+        self.assertIn('"/assets/erpnext_drive_integrations/company-logo-approved-v6.svg?v=abcdef1"', code)
+
     def test_webmail_favicon_is_the_compact_icon(self):
         source = (ROOT / "tools/prepare_runtime.py").read_text()
         self.assertIn("company-favicon.svg", source)

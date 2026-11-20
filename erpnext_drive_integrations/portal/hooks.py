@@ -36,6 +36,6 @@ app_include_js += []
 
 website_route_rules = (globals().get('website_route_rules') or []) + [{'from_route':'/','to_route':'place_holder'}]
 
-app_include_js = (globals().get('app_include_js') or []) + ['/assets/erpnext_drive_integrations/module-header-20261115.js?v=4']
+app_include_js = (globals().get('app_include_js') or []) + ['/assets/erpnext_drive_integrations/module-header-20261115.js?v=5']
 
 website_route_rules += [{'from_route':'/signed-out','to_route':'signed_out'}]

@@ -85,6 +85,9 @@ class BrandAssets(unittest.TestCase):
         config = json.loads((ROOT / "integrations/drive/config/web-with-picker.json").read_text())
         self.assertEqual(config["theme"], "https://drive.example.com/themes/cloud/theme.json")
         self.assertIn("integrations/drive/theme", (ROOT / "tools/prepare_runtime.py").read_text())
+        # oCIS overrides the config file's theme with WEB_UI_THEME_PATH, so the stack must select it too.
+        stack = json.loads((ROOT / "deployment/stacks/drive.compose.json").read_text())
+        self.assertEqual(stack["services"]["ocis"]["environment"]["WEB_UI_THEME_PATH"], "/themes/cloud/theme.json")
 
     def test_webmail_favicon_is_the_compact_icon(self):
         source = (ROOT / "tools/prepare_runtime.py").read_text()

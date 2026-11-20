@@ -70,4 +70,4 @@ Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the
 
 ## Web theme
 
-`theme/` is a tenant-neutral theme for the web client: the sign-in and callback page ("Logging you in...") is white without the upstream logo. The renderer copies it to Drive's web assets (`web/assets/themes/cloud/`) and `config/web-with-picker.json` points at it. Switching themes needs an oCIS restart, then a collaboration restart (keep its networks). Derived from ownCloud web's theme (Apache-2.0); see `theme/README.md`.
+`theme/` is a tenant-neutral theme for the web client: the sign-in and callback page ("Logging you in...") is white without the upstream logo. The renderer copies it to Drive's web assets (`web/assets/themes/cloud/`) and `config/web-with-picker.json` plus the stack's `WEB_UI_THEME_PATH` select it (oCIS overrides the file's theme with that setting). Switching themes needs an oCIS restart, then a collaboration restart (keep its networks). Derived from ownCloud web's theme (Apache-2.0); see `theme/README.md`.

@@ -1,0 +1,76 @@
+"""Tenant branding is supplied privately: logo and favicon set; portal page is called Desk."""
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+from render_runtime import FAVICON_FILES, render  # noqa: E402
+
+
+def make_favicons(folder, names=FAVICON_FILES):
+    for name in names:
+        (Path(folder) / name).write_bytes(b"favicon:" + name.encode())
+
+
+class BrandAssets(unittest.TestCase):
+    def render(self, **extra):
+        out = tempfile.mkdtemp()
+        logo = Path(out) / "logo.svg"
+        logo.write_text("<svg/>")
+        config = {"domain": "example.net", "asset_version": "abcdef1", "company_logo": str(logo)}
+        config.update(extra)
+        return render(ROOT, Path(out) / "build", config)
+
+    def test_neutral_placeholders_ship_with_the_repository(self):
+        public = ROOT / "erpnext_drive_integrations/public"
+        for name in FAVICON_FILES:
+            self.assertTrue((public / ("company-" + name)).is_file(), name)
+
+    def test_tenant_favicons_replace_the_placeholders(self):
+        folder = tempfile.mkdtemp()
+        make_favicons(folder)
+        build = self.render(company_favicon_dir=folder)
+        public = build / "erpnext_drive_integrations/public"
+        for name in FAVICON_FILES:
+            self.assertEqual((public / ("company-" + name)).read_bytes(), b"favicon:" + name.encode())
+
+    def test_incomplete_favicon_set_is_refused(self):
+        folder = tempfile.mkdtemp()
+        make_favicons(folder, FAVICON_FILES[:-1])
+        with self.assertRaises(ValueError) as caught:
+            self.render(company_favicon_dir=folder)
+        self.assertIn("favicon-512.png", str(caught.exception))
+
+    def test_logo_and_favicon_urls_carry_the_release_version(self):
+        build = self.render()
+        page = (build / "erpnext_drive_integrations/www/place_holder.html").read_text()
+        self.assertIn("/assets/erpnext_drive_integrations/company-favicon.svg?v=abcdef1", page)
+        self.assertIn("/assets/erpnext_drive_integrations/company-favicon-180.png?v=abcdef1", page)
+        code = (build / "erpnext_drive_integrations/www/place_holder.py").read_text()
+        self.assertIn("company-logo-approved-v6.svg?v=abcdef1", code)
+        push = (build / "erpnext_drive_integrations/portal/push.py").read_text()
+        self.assertIn("company-favicon-192.png?v=abcdef1", push)
+        blueprint = json.loads((build / "integrations/authentik/configuration.json").read_text()) \
+            if (build / "integrations/authentik/configuration.json").exists() else None
+        if blueprint is not None:
+            self.assertIn("company-favicon-192.png?v=abcdef1", json.dumps(blueprint))
+
+    def test_portal_page_is_called_desk_and_uses_the_compact_icon_for_the_menu(self):
+        page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
+        code = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
+        self.assertIn("<title>Desk</title>", page)
+        self.assertIn("context.entity_name = 'Desk'", code)
+        self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_icon | e }}"', page)
+        self.assertNotIn("Cloud</title>", page)
+
+    def test_webmail_favicon_is_the_compact_icon(self):
+        source = (ROOT / "tools/prepare_runtime.py").read_text()
+        self.assertIn("company-favicon.svg", source)
+        self.assertIn("'FAVICON_URL':favicon", source)
+
+
+if __name__ == "__main__":
+    unittest.main()

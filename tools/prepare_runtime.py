@@ -156,7 +156,8 @@ def prepare(source, output, profile):
         if not (build/'pyproject.toml').is_file():
             raise ValueError('Unexpected rendered source directory')
     render(source, build, {'domain':profile['domain'], 'public_replacements':replacements,
-                           'company_logo':profile.get('company_logo'),'asset_version':profile.get('commit')})
+                           'company_logo':profile.get('company_logo'),'company_favicon_dir':profile.get('company_favicon_dir'),
+                           'asset_version':profile.get('commit')})
     projects = profile.get('projects',['erp','drive','editor','mail','dms','processing'])
     mounts = json.loads((source/'deployment/stacks/mounts.json').read_text())
     copy_files = {
@@ -280,8 +281,10 @@ def prepare(source, output, profile):
             policy_file.chmod(0o644)
             webmail=compose['services']['webmail']
             webmail['volumes'].append(str(policy_file)+':/app/data/admin/policy.json:ro')
-            logo='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
-            webmail['environment'].update({'FAVICON_URL':logo,'LOGIN_LOGO_LIGHT_URL':logo,
+            ver='?v='+profile['commit'] if profile.get('commit') else ''
+            logo='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'+ver
+            favicon='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-favicon.svg'+ver
+            webmail['environment'].update({'FAVICON_URL':favicon,'LOGIN_LOGO_LIGHT_URL':logo,
                 'LOGIN_LOGO_DARK_URL':logo,'APP_LOGO_LIGHT_URL':'','APP_LOGO_DARK_URL':'','APP_NAME':'Mail'})
         for name, folder in existing_mounts.items():
             rendered = str(output/'mounts'/name) + ':'

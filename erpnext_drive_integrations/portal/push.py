@@ -195,7 +195,7 @@ def deliver_notification(name):
         _relay('send_notification.user',{'user_id':user,'title':'ERPNext notification',
             'body':'You have a new approval or notification. Open ERPNext to view it.',
             'data':json.dumps({'click_action':frappe.utils.get_url('/desk/notification-log/'+name),
-                'notification_icon':'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg','event_id':name})})
+                'notification_icon':'/assets/erpnext_drive_integrations/company-favicon-192.png','event_id':name})})
     except Exception:
         with sso.registry() as db:db.execute('UPDATE push_receipts SET status=? WHERE site=? AND event=? AND user=?',('unconfirmed',frappe.local.site,event,user))
         return

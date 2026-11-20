@@ -9,7 +9,7 @@ firebase.messaging().onBackgroundMessage(payload=>{
  const data=payload.data||{};
  return self.registration.showNotification(data.title||'ERPNext',{
   body:data.body||'Open ERPNext to view your notification.',
-  icon:'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg',
+  icon:'/assets/erpnext_drive_integrations/company-favicon-192.png',
   tag:data.event_id?'ci-'+data.event_id:undefined,data:{url:data.click_action||'/desk'}
  });
 });

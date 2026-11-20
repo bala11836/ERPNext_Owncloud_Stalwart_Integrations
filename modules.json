@@ -7,7 +7,7 @@
       "title": "ERP add-on shell",
       "summary": "The single installed Frappe app: hook composition with per-feature switches (cloud_features), bootstrap, migration, shared role fixtures and app logos.",
       "readme": "erpnext_drive_integrations/README.md",
-      "paths": ["pyproject.toml", "MANIFEST.in", "erpnext_drive_integrations/__init__.py", "erpnext_drive_integrations/hooks.py", "erpnext_drive_integrations/bootstrap.py", "erpnext_drive_integrations/migration.py", "erpnext_drive_integrations/modules.txt", "erpnext_drive_integrations/patches.txt", "erpnext_drive_integrations/README.md", "erpnext_drive_integrations/fixtures/**", "erpnext_drive_integrations/public/app-logos/**", "erpnext_drive_integrations/public/company-logo-*", "tests/test_hook_composition.py"],
+      "paths": ["pyproject.toml", "MANIFEST.in", "erpnext_drive_integrations/__init__.py", "erpnext_drive_integrations/hooks.py", "erpnext_drive_integrations/bootstrap.py", "erpnext_drive_integrations/migration.py", "erpnext_drive_integrations/modules.txt", "erpnext_drive_integrations/patches.txt", "erpnext_drive_integrations/README.md", "erpnext_drive_integrations/fixtures/**", "erpnext_drive_integrations/public/app-logos/**", "erpnext_drive_integrations/public/company-logo-*", "erpnext_drive_integrations/public/company-favicon*", "tests/test_hook_composition.py"],
       "depends_on": [],
       "tests": ["tests/test_hook_composition.py"],
       "upstream": [
@@ -140,7 +140,7 @@
       "paths": ["deployment/**", "tools/build_erp_core.py", "tools/prepare_erp_image.py", "tools/prepare_runtime.py", "tools/render_runtime.py", "tools/prepare_ingress.py", "tools/prepare_auth_bridge.py", "tools/coolify_proxy_hosts.py", "tools/prepare_test_relay.py", "tools/coolify_proxy_http3.py", "tools/test_host_aliases.py", "tools/coolify_native.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "tools/check_repository.py", "tools/run_unit_tests.py", "tools/README.md", "tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py", ".github/**"],
       "exclude": ["deployment/config/onlyoffice-local-production-linux.json", "deployment/stacks/drive.compose.json", "deployment/stacks/mail.compose.json", "deployment/stacks/dms.compose.json", "deployment/stacks/processing.compose.json", "deployment/stacks/identity.compose.json", "deployment/stacks/identity-support.compose.json", "deployment/drive-clients.example.json", "deployment/native-clients-lock.json", "deployment/scope-mappings.example.json", "deployment/test-refresh-worker.*", "deployment/test-runtime.example.json"],
       "depends_on": [],
-      "tests": ["tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py"],
+      "tests": ["tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py", "tests/test_brand_assets.py"],
       "upstream": [
         {"name": "frappe_docker (official build recipe)", "license": "MIT", "url": "https://github.com/frappe/frappe_docker"},
         {"name": "Coolify", "license": "Apache-2.0", "url": "https://github.com/coollabsio/coolify"},

@@ -10,11 +10,11 @@ def get_context(context):
         frappe.local.response['type'] = 'redirect'
         frappe.local.response['location'] = get_oauth2_authorize_url('authentik', '/')
         raise frappe.Redirect
-    company = frappe.defaults.get_user_default('Company') or frappe.db.get_single_value('Global Defaults', 'default_company')
     fullname = frappe.utils.get_fullname() or frappe.session.user
     parts = fullname.split()
-    context.entity_name = company or 'Applications'
+    context.entity_name = 'Desk'
     context.entity_logo = '/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
+    context.entity_icon = '/assets/erpnext_drive_integrations/company-favicon.svg'
     context.user_name = fullname
     context.user_login = frappe.session.user
     from erpnext_drive_integrations.portal import test_refresh

@@ -6,6 +6,24 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-20
 
+### Tenant branding is private; the portal page is called Desk
+- **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are
+  supplied through the private runtime profile (`company_logo`,
+  `company_favicon_dir`), never stored in this repository, which ships only
+  neutral placeholders. Rendered files keep their names and every reference
+  carries `?v=<release commit>` so browsers refresh them. The portal page
+  (route `place_holder`) is named **Desk** (browser title and the text beside
+  the logo) because dashboards and widgets will live there; its menu's home
+  button uses the compact favicon, the top-left brand the full logo. Frappe's
+  own desk and website favicon and logo, authentik's branding, the webmail
+  favicon and the push-notification icon use the same files.
+- **Why:** one repository serves several tenants (the product is the
+  repository, the company is the tenant); a 500 KB detailed logo is unreadable
+  and wasteful as a 16 to 44 px icon; a fixed file name needs a version
+  parameter or browsers keep the old picture.
+- **Where:** `tools/render_runtime.py`, `tools/prepare_runtime.py`,
+  `erpnext_drive_integrations/www/place_holder.*`, `tests/test_brand_assets.py`.
+
 ### The order of work: branch, test, merge, main, production
 - **Decision:** every change follows branch → test → merge → `main` →
   production. The branch itself is deployed to the test site and validated

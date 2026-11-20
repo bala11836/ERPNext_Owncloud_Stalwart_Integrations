@@ -37,8 +37,19 @@ it (the exporter runs it after production has resumed, on copies only):
 - **Mail is not exported**: Stalwart keeps its mail in a database that cannot
   be scrambled offline, so test mailboxes start empty.
 - **Kept accounts**: the logins listed in `keep_accounts` (the members of the
-  authentik group **"Testers"**, which gates the test site) keep their real
-  user identity so they can sign in. Everyone else is scrambled.
+  authentik group **"Testers"**, which gates the test site) keep **only their
+  login identity**: e-mail, username and name. Every other profile field
+  (mobile number, phone, birth date, bio, location, API keys, reset keys, last
+  IP, provider ids of other people) is scrambled or cleared like anyone
+  else's. A kept account keeps its provider id so it can sign in.
+- **Names of accounts that are not kept**: a person's full name is also
+  replaced wherever it still appears in free text (comments, messages,
+  descriptions, other records), with the same fake the person's own record
+  got. A kept account's own identity fields are never swept, so if a kept
+  account shares its name with a non-kept (for example disabled duplicate)
+  account, that name remains in the kept account only, by design. Single
+  words are never swept (too common); the rehearsal audit excludes kept
+  identity rows and technical tables.
 - Outbound e-mail, WhatsApp and payments stay switched off on test by the
   existing quarantine and egress policy.
 

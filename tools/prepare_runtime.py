@@ -6,6 +6,7 @@ artifacts and persistent data must be outside Git. Existing data is never reset.
 """
 import argparse
 import ipaddress
+import html
 import json
 import os
 from pathlib import Path
@@ -14,7 +15,7 @@ import secrets
 import shutil
 from urllib.parse import urlsplit
 
-from render_runtime import render, public_mappings
+from render_runtime import render, FAVICON_FILES, public_mappings
 
 
 def write_private(path, value):
@@ -165,10 +166,12 @@ def prepare(source, output, profile):
         '/opt/cloud/netbird_realtime.cjs': 'deployment/erp/netbird_realtime.cjs',
         '/templates/nginx/frappe.conf.template': 'deployment/erp/frappe.conf.template',
         '/app/document-worker.py': 'integrations/document-worker/document-worker.py',
+        '/etc/nginx/conf.d/default.conf': 'integrations/website/nginx-default.conf',
     }
     copy_dirs = {'/opt/cloud-extension':'integrations/dms',
                  '/templates':'integrations/authentik/invite-recovery/templates',
-                 '/srv/public':'integrations/authentik/invite-recovery/public'}
+                 '/srv/public':'integrations/authentik/invite-recovery/public',
+                 '/srv/site':'integrations/website/site'}
     persistent_targets = {'/var/lib/cloud-integration','/var/lib/ocis','/state',
         '/usr/src/paperless/data','/usr/src/paperless/media','/usr/src/paperless/consume','/usr/src/paperless/export'}
     # Office editor: ONLYOFFICE only. Collabora was retired after the P42
@@ -189,6 +192,27 @@ def prepare(source, output, profile):
             raise ValueError('existing_mounts may only name persistent data mounts: ' + name)
         if not folder.is_absolute() or len(folder.parts) < 3 or not folder.is_dir() or folder.is_symlink():
             raise ValueError('existing mount must be an existing absolute data directory: ' + name)
+    def brand_website(site):
+        """Fill the tenant-neutral front page from the private profile: names, the
+        Employee Zone link, the logo and the favicon set (neutral placeholders if
+        the profile supplies none)."""
+        def text(key, default):
+            value = profile.get(key) or default
+            if not isinstance(value, str) or len(value) > 80 or re.search(r'[\x00-\x1f<>]', value):
+                raise ValueError(key + ' must be a short plain text')
+            return html.escape(value)
+        zone = profile.get('website_zone_url') or 'https://'+hosts['erp']+'/'
+        if not isinstance(zone, str) or not (zone.startswith('/') and not zone.startswith('//') or zone.startswith('https://')) or re.search(r'[\s"<>]', zone):
+            raise ValueError('website_zone_url must be a path or an https URL')
+        page = site/'index.html'
+        page.write_text(page.read_text().replace('__SITE_TITLE__', text('website_title', 'Welcome'))
+                        .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone))
+        placeholders = build/'erpnext_drive_integrations/public'
+        logo = Path(profile['company_logo']) if profile.get('company_logo') else placeholders/'company-logo-approved-v6.svg'
+        shutil.copy2(logo, site/'logo.svg')
+        folder = Path(profile['company_favicon_dir']) if profile.get('company_favicon_dir') else None
+        for name in FAVICON_FILES:
+            shutil.copy2(folder/name if folder else placeholders/('company-'+name), site/name)
     def mount_path(name):
         return Path(existing_mounts[name]) if name in existing_mounts else output/'mounts'/name
     for item in mounts:
@@ -220,6 +244,8 @@ def prepare(source, output, profile):
             relative = copy_dirs[target]
             origin = build/relative if (build/relative).is_dir() else source/relative
             shutil.copytree(origin,path,dirs_exist_ok=True)
+            if target == '/srv/site':
+                brand_website(path)
         elif target == '/etc/ocis':
             path.mkdir(exist_ok=True,mode=0o750)
             for origin in (build/'integrations/drive/config').iterdir():

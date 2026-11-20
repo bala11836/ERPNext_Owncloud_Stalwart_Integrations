@@ -138,7 +138,7 @@
       "summary": "Pinned upstream and build locks, ERP core and add-on builds, runtime rendering, native Coolify registration, ingress, ERP initialisation, asset checks, offline checks and CI.",
       "readme": "deployment/README.md",
       "paths": ["deployment/**", "tools/build_erp_core.py", "tools/prepare_erp_image.py", "tools/prepare_runtime.py", "tools/render_runtime.py", "tools/prepare_ingress.py", "tools/prepare_auth_bridge.py", "tools/coolify_proxy_hosts.py", "tools/prepare_test_relay.py", "tools/coolify_proxy_http3.py", "tools/test_host_aliases.py", "tools/coolify_native.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "tools/check_repository.py", "tools/run_unit_tests.py", "tools/README.md", "tests/test_brand_assets.py", "tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py", ".github/**"],
-      "exclude": ["deployment/config/onlyoffice-local-production-linux.json", "deployment/stacks/drive.compose.json", "deployment/stacks/mail.compose.json", "deployment/stacks/dms.compose.json", "deployment/stacks/processing.compose.json", "deployment/stacks/identity.compose.json", "deployment/stacks/identity-support.compose.json", "deployment/drive-clients.example.json", "deployment/native-clients-lock.json", "deployment/scope-mappings.example.json", "deployment/test-refresh-worker.*", "deployment/test-runtime.example.json"],
+      "exclude": ["deployment/config/onlyoffice-local-production-linux.json", "deployment/stacks/drive.compose.json", "deployment/stacks/mail.compose.json", "deployment/stacks/dms.compose.json", "deployment/stacks/processing.compose.json", "deployment/stacks/identity.compose.json", "deployment/stacks/identity-support.compose.json", "deployment/stacks/website.compose.json", "deployment/production/website.traefik.yaml", "deployment/drive-clients.example.json", "deployment/native-clients-lock.json", "deployment/scope-mappings.example.json", "deployment/test-refresh-worker.*", "deployment/test-runtime.example.json"],
       "depends_on": [],
       "tests": ["tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py", "tests/test_brand_assets.py"],
       "upstream": [
@@ -205,6 +205,31 @@
           "name": "ONLYOFFICE Docs",
           "license": "AGPL-3.0-only with additional terms",
           "url": "https://github.com/ONLYOFFICE/DocumentServer"
+        }
+      ]
+    },
+    {
+      "id": "website",
+      "title": "Company front page",
+      "summary": "Static, tenant-neutral front page (pencil tunnel drawing, typed launch text, Employee Zone link) with a pinned read-only nginx stack, production routes for www and the bare domain, and the test front-page route.",
+      "readme": "integrations/website/README.md",
+      "paths": [
+        "integrations/website/**",
+        "deployment/stacks/website.compose.json",
+        "deployment/production/website.traefik.yaml",
+        "tests/test_website.py"
+      ],
+      "tests": [
+        "tests/test_website.py"
+      ],
+      "depends_on": [
+        "deployment"
+      ],
+      "upstream": [
+        {
+          "name": "nginx",
+          "license": "BSD-2-Clause",
+          "url": "https://nginx.org/"
         }
       ]
     }

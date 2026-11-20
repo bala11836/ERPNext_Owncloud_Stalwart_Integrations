@@ -208,5 +208,19 @@
     "path": "editor_onlyoffice_1",
     "target": "/var/www/onlyoffice/documentserver/web-apps/apps/api/wopi/editor-wopi.ejs",
     "source_kind": "file"
+  },
+  {
+    "stack": "website",
+    "service": "web",
+    "path": "website_web_0",
+    "target": "/srv/site",
+    "source_kind": "directory"
+  },
+  {
+    "stack": "website",
+    "service": "web",
+    "path": "website_web_1",
+    "target": "/etc/nginx/conf.d/default.conf",
+    "source_kind": "file"
   }
 ]

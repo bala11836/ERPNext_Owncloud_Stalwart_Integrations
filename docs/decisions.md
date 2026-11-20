@@ -6,6 +6,24 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-20
 
+### Company front page on www; the bare domain redirects to it
+- **Decision:** the company address (`www`) serves a small static front page
+  that is always reachable, signed in or not: an original pencil drawing of a
+  tunnel construction site drawn stroke by stroke in four batches, the logo,
+  "Launching soon..." typed letter by letter, and a plain "Employee Zone" link
+  to the staff sign-in. The bare domain redirects permanently to `www`. The
+  page is a module (`integrations/website`) with its own pinned, read-only
+  nginx container; it is tenant-neutral and gets its names, logo, favicons and
+  link from the private profile. On the test site the same page is served by the
+  test host itself at the exact front path `/` (no extra test host name); every
+  other path still reaches the portal. The portal shell moving onto `www` is a
+  later step.
+- **Why:** a public address that is always open while apps stay behind sign-in;
+  one host name fewer on test; our own drawing instead of a photo avoids a
+  licence and credit question and loads in a few kilobytes.
+- **Where:** `integrations/website/`, `deployment/stacks/website.compose.json`,
+  `deployment/production/website.traefik.yaml`, `tools/prepare_ingress.py`.
+
 ### Tenant branding is private; the portal page is called Desk
 - **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are
   supplied through the private runtime profile (`company_logo`,

@@ -101,6 +101,7 @@ until the owner says; the table only fixes the order to take them up.
 | Item | Note |
 |---|---|
 | **P50** native mobile app | strategic; planning only, many open decisions (look, security, notifications, build order); pilot is HR attendance |
+| **P70** mail and WhatsApp domain split (`tenant.example` production, `example.com` demo) | owner decision 21 Nov; foundation of P19 and P63, taken up together; waits for the owner |
 | **P63** demo mode for the test site (neutral UN/format brand, line-art landing page, no tenant traces; test mail and messages only to the test group) | UI on test (branch `p63-demo-ui`); rest paused by the owner: clean refreshed data, sign-in brand, test-group allow list, test/demo marker, vendor enrolment (decisions waiting in the item) |
 | **P66** test-site errors invisible (Error Log rows stay queued) | flush the deferred inserts on test; alarm |
 | **P68** check for imports of names that do not exist | static check plus "tests import the real module" |
@@ -122,7 +123,7 @@ until the owner says; the table only fixes the order to take them up.
 
 | Item | Note |
 |---|---|
-| **P19** three Google mailboxes to Stalwart | after P12 is resolved |
+| **P19** three Google mailboxes to Stalwart | after P12 is resolved; taken up with P70 and P63 |
 | **P22** AI assistant | read-only first; provider and data policy undecided |
 | **P29**, **P30**, **P48** Headscale, Technitium DNS, branch router | one chain, P48 depends on P29 and P30; nothing is broken today |
 | **P46** TrueNAS NVR | hardware and selection first |
@@ -141,7 +142,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 16 | 16 |
+| General | [pending/general.md](p-list/general.md) | 17 | 17 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 1 | 1 |
@@ -173,7 +174,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P16 | Raven attachments and Drive storage integration | [Raven and Insights](p-list/raven.md) | drive · **State:** open | open |
 | P17 | Automatic Drive links for Mail attachments over 200 KB | [Mail](p-list/mail.md) | drive · **State:** open | open |
 | P18 | Allowed Mail clients and protocol access policy | [Mail](p-list/mail.md) | none · **State:** open | open |
-| P19 | Three Google Workspace mailboxes to Stalwart | [Mail](p-list/mail.md) | none · **State:** open | open |
+| P19 | Three Google Workspace mailboxes to Stalwart | [Mail](p-list/mail.md) | general · **State:** open | open |
 | P20 | Paperless document links on ERP transactions | [DMS](p-list/dms.md) | erp · **State:** open | open |
 | P21 | Client/project correspondence register and DMS integration | [ERP](p-list/erp.md) | dms · **State:** open | open |
 | P22 | Permission-controlled ERP AI assistant | [ERP](p-list/erp.md) | none · **State:** open | open |
@@ -209,4 +210,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P67 | Test deployments: one complete step, no hand-run pieces or drifting profiles | [General](p-list/general.md) | test-site · **State:** open | open |
 | P68 | A repository check for imports of names that do not exist | [General](p-list/general.md) | none · **State:** open | open |
 | P69 | Mail retention: keep every message, users cannot delete permanently | [Mail](p-list/mail.md) | general · **State:** open | open |
+| P70 | Mail and WhatsApp domain split: `tenant.example` for production, `example.com` for the demo | [General](p-list/general.md) | mail, test-site, erp, signin · **State:** open | open |
 <!-- APP-INDEX-END -->

@@ -167,6 +167,14 @@ waiting for the owner (recommendation first):
 egress rule stays one address; the test Mail server's own outgoing mail must also go through the gateway; WhatsApp is
 not live yet (P04), so its adapter gets the same allow list and `[TEST]` prefix when built; push stays off on test.
 Branch `p63-demo-ui` (UI points) is on test awaiting the owner's browser check before its PR.
+**Domain split (owner, 21 November 2026; P70):** the demo gets its own identity: `example.com` mail and a second
+WhatsApp number; production moves to `tenant.example`. Effect on P63: (a) demo mail and messages are sent **as
+Unformat**, no longer through a production sending account (`test_form_smtp` is replaced by the demo's own account),
+which also removes the tenant from what the demo sends; (b) scope 5 (only the test group receives) **stays and matters
+more**: the refreshed data still holds real vendors' addresses and numbers, so without the allow list a demo user could
+message a real vendor as Unformat; employees enrol through an authentik group, vendors as decided above; (c) scope 6
+(test/demo marker) applies to all `example.com` mail and Unformat WhatsApp messages; (d) new questions moved to P70:
+where `example.com` mail runs, the second WhatsApp number (P04). P63, P70 and P19 are taken up together.
 
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued

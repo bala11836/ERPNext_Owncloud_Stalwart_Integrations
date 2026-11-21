@@ -44,7 +44,10 @@ Discuss portal/webmail versus native Mail clients and required JMAP/IMAP/POP/sub
 
 ### P19 — Three Google Workspace mailboxes to Stalwart
 
-**App:** mail · **Also touches:** none · **State:** open
+**App:** mail · **Also touches:** general · **State:** open
+
+**Linked (owner, 21 November 2026):** taken up together with **P70** (domain split: `tenant.example` becomes production's
+mail domain on our server) and **P63** (demo on `example.com`); still blocked by P12 (PTR).
 
 **Status:** planned migration; source identities, domain, sizes, destination mappings, tooling and cutover are not yet specified. This is separate from the earlier retired local-server no-migration decision.
 

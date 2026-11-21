@@ -220,12 +220,17 @@ def before_request():
         return
     path = frappe.request.path
     # Signed-out landing is public and must never silently resume a session.
+    # The landing page cannot be framed (frame-ancestors none). A portal frame that
+    # discovers the sign-out must show the ERP's own, frameable sign-out page; its
+    # Sign in button leaves the frame. Top-level navigations go to the landing page.
+    framed = frappe.request.headers.get("Sec-Fetch-Dest") in ("iframe", "frame")
     if path == "/signed-out":
         if frappe.session.user != "Guest":
             redirect(FINISH)
-        redirect(LANDING)
+        if not framed:
+            redirect(LANDING)
     if path == "/login" and frappe.form_dict.get("logged_out"):
-        redirect(LANDING)
+        redirect("/signed-out" if framed else LANDING)
     # Only top-level bare Desk navigations go to the portal Home.
     # Native iframe navigation and deep ERP links keep their existing behavior.
     if (frappe.conf.get("cloud_combined_site") and frappe.request.method == "GET"

@@ -46,6 +46,7 @@ Editor (this module, `editor-wopi.ejs`):
   per sheet ("Private - <name>"), reused on reopening, so filters and sorting
   do not change what others see; protected sheets are skipped; no green
   "Sheet View mode" headers.
+  Loop guard (21 Nov 2026): one creation attempt per person, sheet and visit; no second attempt while one is in flight; the fresh view is renamed once. Before, creating a view fired the sheet-changed event before the rename showed in the list, so another view was created each time (22 "Temporary View N" in one shared workbook). Tested by a headless-Chrome simulation (`tests/test_onlyoffice_private_views.py`). Stray "Temporary View N" views already in a file are removed by hand in View manager.
 - **Licence notice:** the About panel keeps ONLYOFFICE's notices and adds that
   this is a modified version based on ONLYOFFICE by Ascensio System SIA
   (additional terms 2 and 3). About is the only place these notices appear
@@ -116,3 +117,24 @@ in `deployment/config/onlyoffice-local-production-linux.json`.
 Developed with AI assistance (Claude); the owner reviews and is responsible.
 
 Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the renderer) this module shows the shared TEST SITE marker, a 3px striped top line with a small tab, top window only, no layout space. Editor: in the start page, when the office host is opened directly.
+
+## Sheet views that crash the editor (21 November 2026)
+
+ONLYOFFICE 10.0.0 (build 169) can save a sheet view with a column filter that has nothing
+inside it (`<columnFilter colId="5" id="{...}"></columnFilter>`). The editor's own
+`IU()` method ("is any filter applied") then throws `Cannot read properties of null
+(reading 'IU')` when it applies the view; the grid stays blank and the file is unusable for
+everyone who opens it. It happened to the shared SRN workbook between 15:32 and 16:16 IST on
+20 November (the first save with such a filter is in that window; none before it).
+
+- **Guard** (`SHEET-VIEW-FILTER-GUARD` block of `editor-wopi.ejs`, installed when the editor
+  app is ready): replaces `Asc.CT_NsvFilter.prototype.IU` by a null-safe copy, only when the
+  loaded build still has the unsafe form, so a fixed upstream build is left alone. Remove the
+  guard when the pinned image is upgraded to a build that no longer needs it.
+- **Repair tool** (`sheetview_sanitize.py IN.xlsx OUT.xlsx [--temporary] [--drop-all-views]`):
+  removes only empty column filters (optionally the empty "Temporary View N" shells, or every
+  view as a last resort) and keeps every other byte of the workbook; run it on a copy and upload
+  the result as a new file or a new version. `IN.xlsx` alone only reports.
+- Tests: `tests/test_onlyoffice_sheetview_filter.py` (reproduces the exact error with the
+  editor's original method in headless Chrome).
+

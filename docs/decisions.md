@@ -345,3 +345,19 @@ discussion that led to a decision is not repeated here.
   promotion and an incident went unrecorded until asked on 21 November 2026).
   **Where:** `CLAUDE.md`, P59.
 
+### Work is organised in numbered P items, related ones taken up together
+- **Decision:** every piece of planned work is a **P item**: a numbered, self-contained
+  unit with a scope, a status and its dependencies, kept in the operations repository's
+  pending list. Numbers are never changed or reused, and commits, pull requests, release
+  records and handovers refer to them (for example P58). Related items (same module,
+  same stack, same decision, or one depends on the other) are built on one branch,
+  tested together and merged as one release, while each keeps its own status. The owner
+  decides what starts and when; every group still follows branch, test, merge, `main`,
+  production.
+- **Why:** development stays modular, with each module reusable on its own, and
+  continuity between working sessions, contributors and AI agents is simple: reading
+  the item and its status is enough, with no need to replay earlier conversations.
+  Grouping related items means a stack is changed and promoted once instead of several
+  times. **Where:** `docs/pending.md` in the operations repository (priority order and
+  usage at its top), `AGENTS.md` for the release order.
+

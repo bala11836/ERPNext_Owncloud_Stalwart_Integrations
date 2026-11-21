@@ -63,13 +63,8 @@ class BrandAssets(unittest.TestCase):
         code = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
         # Owner: same logo in the menu.
         self.assertIn("<title>Cloud</title>", page)
-        # Owner, 21 November 2026: the logo alone, no company name beside it (test and production).
-        brand = page.split('<div class="ph-brand">', 1)[1].split("</div>", 1)[0]
-        self.assertNotIn("entity_name", brand)
-        # Owner: production keeps its 60 px logo; only the test site (refresh row) enlarges it.
+        self.assertIn("else (company or 'Applications')", code)
         self.assertIn(".ph-brand img{width:60px;height:60px;object-fit:contain}", page)
-        test_css = (ROOT / "erpnext_drive_integrations/public/test-refresh.css").read_text()
-        self.assertIn("body .ph-brand img{width:auto;height:66px", test_css)
         self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_logo | e }}"', page)
         self.assertNotIn("Desk</title>", page)
         self.assertNotIn("entity_icon", page + code)

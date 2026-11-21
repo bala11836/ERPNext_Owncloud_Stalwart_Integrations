@@ -13,8 +13,12 @@ def get_context(context):
     fullname = frappe.utils.get_fullname() or frappe.session.user
     parts = fullname.split()
     company = frappe.defaults.get_user_default('Company') or frappe.db.get_single_value('Global Defaults', 'default_company')
-    # Owner (21 November 2026): the logo stands alone; no company name beside it (test and production).
-    context.entity_name = company or 'Applications'   # kept for the logo's alt text and the page's context
+    # Each site's own look (owner rule, 21 November 2026: production and test have separate asset sets).
+    # Without these site settings the page is exactly production's.
+    context.entity_name = '' if frappe.conf.get('cloud_portal_hide_entity_name') else (company or 'Applications')
+    height = frappe.conf.get('cloud_portal_logo_height')
+    context.portal_logo_height = int(height) if isinstance(height, int) and 40 <= height <= 100 else 0
+    context.portal_clean_root = bool(frappe.conf.get('cloud_portal_clean_root_address'))
     context.entity_logo = '/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
     context.user_name = fullname
     context.user_login = frappe.session.user

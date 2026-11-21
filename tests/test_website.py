@@ -146,9 +146,10 @@ class WebsiteModule(unittest.TestCase):
             with self.assertRaises(ValueError, msg=key):
                 render(**{key: value})
 
-    def test_portal_shows_a_clean_address_at_the_root(self):
+    def test_portal_shows_a_clean_address_at_the_root_only_where_the_site_says_so(self):
         page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
-        self.assertIn("if(location.pathname==='/place_holder')history.replaceState(", page)
+        block = page.split("{% if portal_clean_root %}", 1)[1].split("{% endif %}", 1)[0]
+        self.assertIn("if(location.pathname==='/place_holder')history.replaceState(", block)
 
     def test_portal_returns_to_its_own_page_so_the_front_page_can_own_the_front_path(self):
         page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()

@@ -72,7 +72,7 @@ Needs: PR #3 merged and the first crippled refresh done first.
 
 ### P63 — Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces
 
-**App:** test-site · **Also touches:** portal, signin · **State:** open
+**App:** test-site · **Also touches:** portal, signin · **State:** in progress
 
 **Status:** open, owner request 21 November 2026; not started. No earlier P item covered
 this; related: P47 (landing page), P55 (brand mechanism), P51 and P54 (crippled refresh),
@@ -112,6 +112,22 @@ only without a separate sign-in host name for the demo (or accepting the shared 
 see the demo (the Testers group, or public with sample accounts) and whether the TEST SITE
 marker stays; (c) demo user accounts and passwords stay out of Git; (d) outbound
 mail and integrations stay quarantined as today.
+
+**Progress (21 November 2026): demo logo live on the test site.** Owner chose option **A, navy and orange**
+(`#1F3A5F` UN, `#E8731A` format) from five combinations (A navy/orange, B graphite/teal, C green/amber, D
+plum/coral, E black/blue; mock-ups and files in the private assets `assets/unformat-demo-brand/`). Logo: "UN" in
+heavy type, "format" below stretched to exactly the width of "UN" (SVG `textLength`, so it holds in any font);
+favicon: rounded navy tile, white "UN", orange bar. Installed through the test profile (`company_logo`,
+`company_favicon_dir`, `website_title`/`website_name` = Unformat; rollback copy of the profile in
+`<server path>`). Verified byte for byte: ERP logo and favicons, landing page logo and
+favicon; the landing page title is "Unformat" and no longer contains the tenant name. **Still showing the tenant:** the
+portal heading (the ERP Company record "<tenant company>", business data in the test copy: rename
+or mask it in the refresh's crippling step, not by hand), the sign-in page (shared authentik brand, see open question a),
+and anything inside the data (letterheads, print formats, mail). **Not yet:** the line-art landing page, re-applying
+all of this after every data refresh, publishing the neutral brand as the repository default. Lesson for P67: the test
+deploy skips the ERP image build when an image of the same commit exists, so a brand-only change needed the image tag
+removed first; browsers may also keep the old files because the version stamp is the commit.
+
 
 ### P65 — Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped)
 

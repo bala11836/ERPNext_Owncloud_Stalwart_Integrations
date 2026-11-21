@@ -144,3 +144,13 @@ login already exists).
 sign-in and security details (biometrics, session length, lost-device wipe),
 notifications, the module list and each module's layout, delivery and update
 method, build order after the pilot.
+
+**Update (21 November 2026): native sign-in on the test site.** PR #15 (module `mobile-app`, from the
+colleague's fork) was reviewed and deployed to the test site: the test gateway has production's native app
+routes, the app's OAuth client is created on test from the private profile ("ERP Mobile", public PKCE client),
+native sign-in is on for that client only. The colleague tests on a real phone. **Open (owner decision):** the first
+sign-in via the relayed test host returns to the front page because the production proxy's private entry point
+drops `X-Forwarded-Uri`; fix = trust forwarded headers on that entry point for the bridge sources only (a production
+proxy setting). His own SSH access (forced-command deploy key plus a tailnet share) follows P54.
+
+

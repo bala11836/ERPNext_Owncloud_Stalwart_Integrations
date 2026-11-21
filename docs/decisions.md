@@ -333,3 +333,15 @@ discussion that led to a decision is not repeated here.
 - **Why:** with seven or more apps a single column no longer fits short
   windows and needs scrolling. **Where:** `erpnext_drive_integrations/www/place_holder.html`,
   `tests/test_portal_menu_columns.py`, P58.
+
+### A standing session routine, written into CLAUDE.md
+- **Decision:** `CLAUDE.md` tells every session (and every contributor's AI agent) to
+  read the latest handover and the priority list in the private operations
+  repository at the start, to update that repository after every production change,
+  and to write a handover when the owner closes the session. The private repository
+  holds records and private assets only, never secrets.
+- **Why:** continuity between sessions, machines and contributors without the owner
+  re-asking, and records that never lag behind production (a stack was missed in one
+  promotion and an incident went unrecorded until asked on 21 November 2026).
+  **Where:** `CLAUDE.md`, P59.
+

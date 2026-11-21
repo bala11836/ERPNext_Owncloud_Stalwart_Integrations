@@ -189,6 +189,14 @@ profile; production sets none and keeps its page exactly (guard test; production
 the landing page. Rollback copies on test: `<server path>`. **Remaining for P63:** clean
 refreshed data (company name masking), sign-in brand, scope 5 and 6 (paused, decisions waiting above), with P70 and P19.
 
+**Final demo logo (owner, 21 November 2026, "This is final"):** "UN" in navy over "tamrof" in orange (`format` written
+right to left, letters upright; the last `f` mirrored left to right; letters of slightly different size and height,
+inside the width of "UN"). The flower twig stays separate from the logo, standing beside it as before; colours
+unchanged. Tried and not chosen: a half-turned `t`, a mirrored `a`, the twig lying flat under the word, the flower
+inside the logo, six multicolour sets (kept in `assets/unformat-demo-brand/options/colour-sets-2026-11-21/`). Installed
+on test from `<test host secrets folder>/brand-unformat-demo-2026-11-21c` (ERP image rebuilt for the same commit
+`a0cb527`); landing page and app page checked. Private asset only: no code change, PR #20 unchanged.
+
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued
 

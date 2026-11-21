@@ -131,7 +131,7 @@ removed first; browsers may also keep the old files because the version stamp is
 
 ### P65 — Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped)
 
-**App:** test-site · **Also touches:** signin, general · **State:** blocked
+**App:** test-site · **Also touches:** signin, general · **State:** in progress
 
 **Status:** owner decision needed (found 21 November 2026, mobile app on test). The test site reaches the sign-in
 service through the production proxy's private (tailnet) entry point, which does not trust forwarded headers from the
@@ -142,6 +142,15 @@ session exists. Two weeks earlier the test host had its own public address and `
 low exposure: tailnet-only entry point, fixed sources); or accept the second tap. A change of the post-sign-in
 default page would not help (it changes where you land, not the lost request). Test first where possible; a
 production-only setting gets a browser and protocol check right after promotion.
+
+**Decision (owner, 21 November 2026): option (a), as corrected in review:** trust forwarded headers on the SSO host's
+private entry point from the **test VM's exact address only** (all 359 bridge checks in the last 6 hours came from it;
+the Docker gateway `<Docker gateway address>` on the allow list carried 216 unrelated requests and is not trusted; drop it from the
+allow list too); repository first (PR #16: `tools/sso_proxy_trust.py`, `prepare_auth_bridge.py --print-forwarded-trust`),
+then production with a backup, the setting saved in Coolify, and the proxy restart at a quiet moment; production-only
+setting, so browser checks right after it is applied. Also decided: ERP Mobile shows no consent screen (test profile
+`skip_authorization`, applied on test 21 November).
+
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued
 

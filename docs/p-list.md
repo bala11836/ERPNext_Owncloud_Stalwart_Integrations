@@ -223,7 +223,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P62 | Daily upstream watch: new releases, security flaws, patches, upgrade decisions | [General](p-list/general.md) | none · **State:** open | open |
 | P63 | Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces | [Test site](p-list/test-site.md) | portal, signin · **State:** in progress | in progress |
 | P64 | Native app sign-in on production: latent auth-hook crash and a stale client list | [Mobile](p-list/mobile.md) | signin, erp · **State:** open | open |
-| P65 | Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped) | [Test site](p-list/test-site.md) | signin, general · **State:** blocked | blocked |
+| P65 | Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped) | [Test site](p-list/test-site.md) | signin, general · **State:** in progress | in progress |
 | P66 | Errors on the test site are invisible: Error Log rows stay queued | [Test site](p-list/test-site.md) | general, erp · **State:** open | open |
 | P67 | Test deployments: one complete step, no hand-run pieces or drifting profiles | [General](p-list/general.md) | test-site · **State:** open | open |
 | P68 | A repository check for imports of names that do not exist | [General](p-list/general.md) | none · **State:** open | open |

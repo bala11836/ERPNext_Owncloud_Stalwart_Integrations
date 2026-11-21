@@ -32,6 +32,7 @@ module on its own.
 | `deployment` | Pinned upstream and build locks, ERP core and add-on builds, runtime rendering, native Coolify registration, ingress, ERP initialisation, asset checks, offline checks and CI. | [deployment/README.md](deployment/README.md) |
 | `website` | Company front page: static, tenant-neutral page with an original pencil tunnel-construction drawing drawn in batches, typed launch text and an Employee Zone link; pinned read-only nginx stack, production routes for `www` and the bare domain, and the test front-page route. | [integrations/website/README.md](integrations/website/README.md) |
 | `test-refresh` | Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, refresh button and progress, test profiles, egress policy and the verification tools used for acceptance. | [docs/modules/test-refresh.md](docs/modules/test-refresh.md) |
+| `mobile-app` | Native iOS and Android app (Expo): passkey sign-in bound to the browser session, role-filtered menus, read-only lists and records, app lock, tablet split view and sunlight mode. | [mobile/README.md](mobile/README.md) |
 
 One Frappe app is installed: **erpnext_drive_integrations**. Logical navigation entries do not create extra installed apps. Features can be selected through site configuration cloud_features; disabling a feature does not delete its data.
 

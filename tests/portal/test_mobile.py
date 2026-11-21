@@ -10,7 +10,7 @@ import tempfile
 import time
 import types
 import unittest
-from unittest.mock import MagicMock
+from unittest import mock
 
 
 class Bag(dict):
@@ -59,8 +59,6 @@ frappe.get_request_header = lambda name, default='': frappe.local.headers.get(na
 
 APP = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(APP))
-combined = types.ModuleType('erpnext_drive_integrations.portal.combined')
-sys.modules['erpnext_drive_integrations.portal.combined'] = combined
 from erpnext_drive_integrations.portal import mobile, sso  # noqa: E402
 
 RAVEN, HOV, OTHER = 'raven-client', 'onboarding-client', 'other-client'
@@ -77,7 +75,6 @@ class MobileBindingTests(unittest.TestCase):
         frappe.form_dict = Bag()
         frappe.db = FakeDB()
         frappe.db.users['user-a'] = 1
-        combined.before_request = MagicMock()
         mobile.init_state()
         self.add_browser()
 
@@ -237,13 +234,16 @@ class MobileBindingTests(unittest.TestCase):
         self.store_token('at-other', OTHER)
         frappe.session = Bag(user='user-a', sid='x')
         frappe.local.headers = {'Authorization': 'Bearer at-other'}
-        mobile.validate()  # other OAuth clients: untouched, as before
-        combined.before_request.assert_not_called()
-        self.sign_in(HOV)
-        frappe.session = Bag(user='user-a', sid='x')
-        frappe.local.headers = {'Authorization': 'Bearer at-1'}
-        mobile.validate()
-        combined.before_request.assert_called_once()
+        with mock.patch.object(mobile, 'checked_token', wraps=mobile.checked_token) as checked:
+            mobile.validate()  # other OAuth clients: untouched, as before
+            checked.assert_not_called()
+            self.sign_in(HOV)
+            frappe.session = Bag(user='user-a', sid='x')
+            frappe.local.headers = {'Authorization': 'Bearer at-1'}
+            # Real module imports only: a leftover import of a removed function made every
+            # native Bearer request fail with ImportError (500) once native sign-in was on.
+            mobile.validate()
+            checked.assert_called_once()
 
 
 if __name__ == '__main__':

@@ -12,6 +12,16 @@ import subprocess
 import yaml
 
 
+def native_site_settings(clients):
+    """Native apps under test (`"native": true` with a fixed client_id) become the
+    only native clients portal/mobile.py accepts on test; bootstrap otherwise keeps
+    native sign-in off on test copies."""
+    native=[c for c in clients if c.get('native')]
+    if any(not c.get('client_id') for c in native):raise ValueError('A native test OAuth client needs a fixed client_id')
+    if not native:return {}
+    return {'cloud_raven_mobile_enabled':True,'cloud_native_mobile_clients':[str(c['client_id']) for c in native]}
+
+
 def prepare(source,runtime,receipts,profile,output):
     source,runtime,receipts,output=map(lambda p:Path(p).resolve(),[source,runtime,receipts,output])
     if profile.get('tier')!='test':raise ValueError('Only test profiles are supported')
@@ -53,6 +63,7 @@ def prepare(source,runtime,receipts,profile,output):
     if profile.get('test_oauth_clients'):
         # P38: app OAuth clients blocked on production, re-enabled on test.
         erp['test_oauth_clients']=profile['test_oauth_clients']
+        erp['site_settings'].update(native_site_settings(profile['test_oauth_clients']))
     form_smtp=profile.get('test_form_smtp')
     if form_smtp:
         # Owner-approved real form emails from the test copy (P38): a dedicated

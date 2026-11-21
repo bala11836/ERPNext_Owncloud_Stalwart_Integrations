@@ -107,10 +107,9 @@ def validate():
     # Do not change other OAuth clients. Only approved native apps get the session-bound checks.
     owner=frappe.db.get_value('OAuth Bearer Token',header[1],'client')
     if owner in clients():
+        # The retired Suite role guard was re-applied here; Suite is gone and the
+        # remaining before_request hooks are host / browser-navigation checks only.
         checked_token()
-        # Native API auth runs after before_request; reapply same-site Suite role guard.
-        from .combined import before_request
-        before_request()
 
 @frappe.whitelist(methods=['GET','POST'])
 def check_access():

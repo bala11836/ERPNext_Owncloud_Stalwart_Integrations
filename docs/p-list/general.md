@@ -389,3 +389,46 @@ identity; a second WhatsApp number is the demo's channel. Demo users send evalua
 5. **Order and rollback:** DNS changes, mailbox moves and client reconfiguration in an agreed order with a rollback
    point; nothing changes until the owner says so.
 
+### P71 — GitHub CI/CD: GitHub Actions deploys test and production; "Refresh code" button removed
+
+**App:** general · **Also touches:** test-site, erp, mail, drive, dms, signin · **State:** open
+
+**Status:** owner decision 21 November 2026 ("lets go with this github ci/cd"); plan to be agreed with the owner
+before building (standing rule: no change until the owner says go). Replaces the hand-run deploy steps; takes over
+the deploy parts of **P67** (one complete test deploy), **P54** (branch deploy button) and much of **P59** (promotion
+plan and drift check); those items are reviewed and closed or narrowed when P71 is planned.
+
+**Target flow (GitHub's standard practice):**
+1. **Pull request opened or updated** (branches of this repository only): a GitHub Actions job deploys the branch to
+   the test site and records a deployment (commit, time, result) on the pull request; merging can require it to have
+   passed, so "tested on test" is enforced by GitHub instead of a written note.
+2. **Pull request closed without merging:** a job deploys production's revision (`main`) to test, so test never keeps
+   rejected code. **Merged:** nothing to reset.
+3. **Merge to `main`:** a job promotes the **same tested build** (build once, promote that image) to production; it
+   waits in a protected GitHub "production" environment for the **owner's approval**. Rollback = approve the previous
+   version again.
+4. **Runners:** GitHub's standard self-hosted runner on the test host and on production; they connect out to GitHub, so
+   the design does not depend on where test runs (home host today, a VPS from 22 November 2026).
+
+**"Refresh code" button removal (plan):** the button's job (put test back on production's code) is taken over by
+step 2. Remove it only after the pipeline has run that reset successfully on test: (a) the pipeline's reset works and
+is visible on the pull request; (b) remove the button, its endpoint and its worker path from the portal and the test
+refresh module (keep "Refresh data", which is separate); (c) update the test-refresh module README, the runbook and
+`docs/decisions.md`; (d) tests prove the button and its endpoint are gone and "Refresh data" still works.
+
+**Design points to agree:**
+- **Public logs:** job logs of a public repository are visible to anyone, while today's deploy scripts print host
+  names, addresses, server paths and names; jobs print neutral output only, with a leak check that fails the job.
+- **Secrets stay on the servers** (AGENTS.md): runners read the servers' own secret files; nothing in GitHub secrets
+  beyond what GitHub itself needs.
+- **The GitHub account becomes a key to production:** two-factor login and recovery codes (P41), `main` protected
+  (no direct pushes), production approval by the owner (alone or with a second person: to decide), the production
+  runner limited to deploying.
+- **Fork pull requests** (outside contributors, for example the mobile app) never run on our runners automatically
+  and never see secrets; their code is deployed to test only after a maintainer brings it into a branch here or
+  approves the run.
+- **Break-glass:** a written manual deploy and rollback for when GitHub is unavailable.
+- **Production-only parts** (route files, DNS, proxy settings) keep the post-release browser and protocol check
+  unless the pipeline is taught to check them.
+- **Runner upkeep:** runners are updated like any other component (P62 watch).
+

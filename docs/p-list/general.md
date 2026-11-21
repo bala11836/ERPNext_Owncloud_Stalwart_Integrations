@@ -269,6 +269,17 @@ extra network, install the drop-in and the check unit; none restarts Docker).
 Coordination: the test VM must be free of the first crippled refresh before the
 drill.
 
+**Tested on test (21 November 2026, owner go "2": drill today on the current test host):** PR #7 brought up to date with
+`main` (`58585ab`), deployed to test, host checks installed. Editor bridge on all of oCIS's networks; five oCIS restarts
+in a row: bridge never restarted, boot check passed each time. **Reboot drill 16:53:50 UTC:** back in about half a minute;
+boot check "passed after 4 attempt(s)" 54 s after Docker started, no repair needed; Docker started after Tailscale; same 26
+containers and images; the bridge retried 6 times in the first 20 s (oCIS NATS and the editor address not yet up), then
+stable with no errors. **Learned for the production promotion:** the new shutdown grace reaches database and Redis
+containers only when they are recreated (test: ERP `db`, `redis-cache`, `redis-queue`, 11 s), so the release must recreate
+them at a quiet moment. Test record on PR #7. **Remaining:** owner opens a document in Drive on test after the reboot;
+then merge and production promotion on the owner's go; repeat the drill on the VPS after the move (P33 successor).
+
+
 ### P59 — Promotion plan and drift check: no stack left behind
 
 **App:** general · **Also touches:** none · **State:** open

@@ -39,6 +39,12 @@ reused; commits, pull requests, release records and handovers refer to them (P58
   P08 (sign-in stack and logout); P13 with P25 (users and enrollment); P12, P15 and P19
   (mail delivery, health and migration); P29, P30 and P48 (mesh, DNS, router); P50 with
   P14 (mobile app and push).
+- **Public copy (owner, 21 November 2026):** this list is published in full as `docs/p-list.md` in
+  the public repository so the team can see the roadmap. Every time this file changes, regenerate it
+  with `tools/publish_p_list.py` (private rules in `tools/publication-rules.private.json`) and open a pull
+  request. **Never skip details:** the tool replaces text inside lines only, never removes or summarises a
+  line, and writes every substitution to `docs/publication/last-report.md`; only the sensitive categories
+  in the rules are replaced; the leak scan must be clean and the report read before the pull request.
 - **Rules that stay:** the owner decides what starts and when; every group still follows
   branch, test, merge, `main`, production (`AGENTS.md`), and the release record names
   every P item it carries, the tested commit and the rollback point. When an item is

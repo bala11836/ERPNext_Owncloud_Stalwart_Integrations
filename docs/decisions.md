@@ -344,3 +344,78 @@ discussion that led to a decision is not repeated here.
   Production-only setting: it cannot be exercised on the test site; it is checked in a browser right after it is
   applied. **Where:** `tools/sso_proxy_trust.py`, `tools/prepare_auth_bridge.py`, the test rebuild runbook, P65.
 
+### A standing session routine, written into CLAUDE.md
+- **Decision:** `CLAUDE.md` tells every session (and every contributor's AI agent) to
+  read the latest handover and the priority list in the private operations
+  repository at the start, to update that repository after every production change,
+  and to write a handover when the owner closes the session. The private repository
+  holds records and private assets only, never secrets.
+- **Why:** continuity between sessions, machines and contributors without the owner
+  re-asking, and records that never lag behind production (a stack was missed in one
+  promotion and an incident went unrecorded until asked on 21 November 2026).
+  **Where:** `CLAUDE.md`, P59.
+
+### Work is organised in numbered P items, related ones taken up together
+- **Decision:** every piece of planned work is a **P item**: a numbered, self-contained
+  unit with a scope, a status and its dependencies, kept in the operations repository's
+  pending list. Numbers are never changed or reused, and commits, pull requests, release
+  records and handovers refer to them (for example P58). Related items (same module,
+  same stack, same decision, or one depends on the other) are built on one branch,
+  tested together and merged as one release, while each keeps its own status. The owner
+  decides what starts and when; every group still follows branch, test, merge, `main`,
+  production.
+- **Why:** development stays modular, with each module reusable on its own, and
+  continuity between working sessions, contributors and AI agents is simple: reading
+  the item and its status is enough, with no need to replay earlier conversations.
+  Grouping related items means a stack is changed and promoted once instead of several
+  times. **Where:** `docs/pending.md` in the operations repository (priority order and
+  usage at its top), `AGENTS.md` for the release order.
+
+### The P list is published in full, with identifiers replaced
+- **Decision:** the work list is kept in two forms: the private `docs/pending.md` in the
+  operations repository (source of truth) and the public `docs/p-list.md`, generated from
+  it. The public copy keeps every line, every reason and every priority; only the categories
+  that identify the deploying organisation or its servers are replaced by placeholders (organisation
+  name, host names, IP addresses, server paths and rollback folders, mail addresses, names of
+  people and of third parties' internal products, business file names, links to private
+  records). The generator never deletes or summarises a line, lists every substitution in a report
+  and refuses to publish while any sensitive token survives.
+- **Why:** the team and outside contributors need the roadmap and the reasons behind it to
+  work in modules and take up related items together; detail must not be lost in the
+  translation, and nothing identifying may leave the private repository. **Where:**
+  `docs/p-list.md`, `CLAUDE.md` (session routine, step 5), the private `tools/publish_p_list.py`.
+
+### The P list is organised by app
+- **Decision:** the work list is split into one list per app (ERP, portal, sign-in, Drive, editor, mail,
+  DMS, Raven and Insights, mobile, test site) plus `general` for platform and security items that belong to
+  no app; an index holds the usage rules, the priority order across all apps and by-app tables. An item has one
+  home and names the other apps it touches, with a state (open, in progress, blocked, parked, recurring,
+  done, closed). Numbers stay global. The split kept every line of every item.
+- **Why:** changes now land in every app, and one long list made it hard to see what is open for the app
+  being worked on; related items are taken up together per app, and the roadmap is easier to read for people
+  who work on one app. **Where:** `docs/p-list.md` (index) and `docs/p-list/<app>.md`; the private source is
+  `docs/pending.md` and `docs/pending/` in the operations repository.
+
+### Contributor access to the test site: own key, deploy-only, never the owner's key
+- **Decision:** a contributor who needs to install a branch on the test site gets their own SSH key (they send only
+  the public half), bound to a dedicated account whose forced command can only deploy a branch of the public
+  repository, with every deploy logged, plus access to the test host over the private network for that one port.
+  The owner's personal keys are never shared. Until that exists, a maintainer reviews the branch and installs it.
+- **Why:** a shared personal key cannot be revoked for one person, leaves no separate audit trail, and the test host
+  holds test secrets and a restricted route to the production export. **Where:** P54, P67; asked for on
+  21 November 2026 when the mobile app branch could not reach the test site.
+
+### Tests import the real module under test
+- **Decision:** unit tests may fake Frappe and external services, but not the project's own modules that the code
+  under test imports; and the repository checks resolve imports of the project's own names.
+- **Why:** a test that replaced `portal/combined.py` with a fake copy hid a leftover import of a function that does
+  not exist, so every native app request failed with HTTP 500 on the test site (21 November 2026). **Where:**
+  `tests/portal/test_mobile.py` (PR #15), P64, P68.
+
+### Only open work stays in the P list
+- **Decision:** a P item is removed from its app list as soon as the task is completed, or becomes redundant or
+  irrelevant. It leaves one line in the closed log (number, title, app, outcome, date, reason), so numbers are never
+  reused; its full text stays in the git history and the work itself in the release log and this file.
+- **Why:** the lists are what people work from; finished items made them long and hid what is still open. **Where:**
+  `docs/p-closed.md`, `docs/p-list/`, `CLAUDE.md` (session routine, step 6); the private `tools/p_close.py`.
+

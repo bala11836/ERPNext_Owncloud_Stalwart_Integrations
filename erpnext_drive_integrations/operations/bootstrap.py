@@ -83,6 +83,8 @@ def restore_test_oauth_clients(clients):
     that app name yet (an app not registered on production at all): a public
     native client (no client secret at the token endpoint, PKCE enforced by
     portal/mobile.py) with the consent screen shown, like Raven's.
+    `"skip_authorization": true` drops that screen for the deployment's own
+    first-party app (owner decision per app); it is applied on every bootstrap.
     """
     if os.environ.get('CLOUD_DEPLOYMENT_TIER')!='test' or frappe.conf.get('cloud_test_copy') is not True:
         raise RuntimeError('Test OAuth clients are restored only on a marked test copy')
@@ -93,16 +95,17 @@ def restore_test_oauth_clients(clients):
         if not spec.get('app_name') or not uris or default not in uris:
             raise ValueError('Each test OAuth client needs app_name and redirect URIs including the default')
         names=frappe.get_all('OAuth Client',filters={'app_name':spec['app_name']},pluck='name')
+        values={'redirect_uris':' '.join(uris),'default_redirect_uri':default}
+        if 'skip_authorization' in spec:values['skip_authorization']=1 if spec['skip_authorization'] is True else 0
         if not names and spec.get('client_id'):
             client_id=str(spec['client_id'])
             if not re.fullmatch(r'[a-z0-9]{8,40}',client_id):raise ValueError('client_id must be 8-40 lowercase letters or digits')
             frappe.get_doc({'doctype':'OAuth Client','app_name':spec['app_name'],'scopes':'all openid',
                 'grant_type':'Authorization Code','response_type':'Code','skip_authorization':0,
-                'token_endpoint_auth_method':'None','redirect_uris':' '.join(uris),
-                'default_redirect_uri':default}).insert(ignore_permissions=True,set_name=client_id)
+                'token_endpoint_auth_method':'None',**values}).insert(ignore_permissions=True,set_name=client_id)
             restored.append(spec['app_name'])
             continue
         for name in names:
-            frappe.db.set_value('OAuth Client',name,{'redirect_uris':' '.join(uris),'default_redirect_uri':default})
+            frappe.db.set_value('OAuth Client',name,values)
             restored.append(spec['app_name'])
     return restored

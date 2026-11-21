@@ -42,7 +42,8 @@ push notifications and store releases.
    ID to the site setting `cloud_native_mobile_clients` (with `cloud_raven_mobile_enabled`) so
    `portal/mobile.py` accepts it.
 2. While the app is under test (P38), keep it off production and list it in the private test profile's
-   `test_oauth_clients` with `"native": true`, a fixed `client_id` and the Expo Go redirect addresses
+   `test_oauth_clients` with `"native": true`, a fixed `client_id`, `"skip_authorization": true` (no
+   "allow this app" screen for your own app) and the Expo Go redirect addresses
    (see `deployment/test-runtime.example.json`). Every test bootstrap then creates the client if it is
    missing, restores its redirect addresses and makes it the only native client the test site accepts. The
    test ingress (`tools/prepare_ingress.py`) carries production's native routes (`cloud-raven-native.yaml`).

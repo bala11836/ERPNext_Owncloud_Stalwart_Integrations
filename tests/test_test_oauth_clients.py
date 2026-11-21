@@ -74,6 +74,17 @@ class TestOAuthClients(unittest.TestCase):
         self.assertNotIn('other0id1', STORE)
         self.assertEqual(STORE['c1']['redirect_uris'], 'app://cb')
 
+    def test_consent_screen_only_skipped_when_profile_says_true(self):
+        bootstrap.restore_test_oauth_clients([{'app_name': 'Mobile', 'redirect_uris': 'app://cb'}])
+        self.assertNotIn('skip_authorization', STORE['c1'])  # untouched unless named
+        bootstrap.restore_test_oauth_clients([{'app_name': 'Mobile', 'redirect_uris': 'app://cb', 'skip_authorization': True}])
+        self.assertEqual(STORE['c1']['skip_authorization'], 1)
+        bootstrap.restore_test_oauth_clients([{'app_name': 'Mobile', 'redirect_uris': 'app://cb', 'skip_authorization': 'yes'}])
+        self.assertEqual(STORE['c1']['skip_authorization'], 0)  # only a real true skips it
+        bootstrap.restore_test_oauth_clients([{'app_name': 'New App', 'client_id': 'newapp0001', 'redirect_uris': 'app://cb',
+                                               'skip_authorization': True}])
+        self.assertEqual(STORE['newapp0001']['skip_authorization'], 1)
+
     def test_client_id_is_validated(self):
         with self.assertRaises(ValueError):
             bootstrap.restore_test_oauth_clients([{'app_name': 'New', 'client_id': '../x', 'redirect_uris': 'app://cb'}])

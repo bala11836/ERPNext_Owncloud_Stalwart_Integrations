@@ -361,3 +361,17 @@ discussion that led to a decision is not repeated here.
   times. **Where:** `docs/pending.md` in the operations repository (priority order and
   usage at its top), `AGENTS.md` for the release order.
 
+### The P list is published in full, with identifiers replaced
+- **Decision:** the work list is kept in two forms: the private `docs/pending.md` in the
+  operations repository (source of truth) and the public `docs/p-list.md`, generated from
+  it. The public copy keeps every line, every reason and every priority; only the categories
+  that identify the deploying organisation or its servers are replaced by placeholders (organisation
+  name, host names, IP addresses, server paths and rollback folders, mail addresses, names of
+  people and of third parties' internal products, business file names, links to private
+  records). The generator never deletes or summarises a line, lists every substitution in a report
+  and refuses to publish while any sensitive token survives.
+- **Why:** the team and outside contributors need the roadmap and the reasons behind it to
+  work in modules and take up related items together; detail must not be lost in the
+  translation, and nothing identifying may leave the private repository. **Where:**
+  `docs/p-list.md`, `CLAUDE.md` (session routine, step 5), the private `tools/publish_p_list.py`.
+

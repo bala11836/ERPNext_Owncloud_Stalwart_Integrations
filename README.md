@@ -37,7 +37,7 @@ One Frappe app is installed: **erpnext_drive_integrations**. Logical navigation 
 
 Start with docs/source-review.md, docs/deployment.md, docs/retained.md and docs/production-moves.md. Upstream products, DNS, provider accounts and private runtime secrets are external prerequisites. Cloning supplies source and instructions; it cannot reproduce credentials or business data.
 
-The [carried-forward roadmap](docs/roadmap.md) reconciles the eight selected earlier plans with the current stack. Dated operations records (release log, task list, migration runbooks with real addresses) are kept in a private operations repository.
+The [carried-forward roadmap](docs/roadmap.md) reconciles the eight selected earlier plans with the current stack. The [P list](docs/p-list.md) is the project's full work list (every P number in commits, pull requests and READMEs): scope, status, priority order and dependencies, published from the maintainers' private list with only names, addresses, paths and similar identifiers replaced. Dated operations records (release log, migration runbooks with real addresses, handovers) are kept in a private operations repository.
 
 The [persistent test rebuild runbook](docs/test-rebuild-runbook.md) covers native
 Coolify registration, isolated app builds, shared SSO and one-way four-app refresh.

@@ -45,7 +45,7 @@ refresh worker) do not change; this index groups them by module.
 
 - `activate_test_refresh.py` — Enable the test-only button/timer after a verified production snapshot restore.
 - `export_snapshot.py` — Restricted production -> test data export. There is no restore/import path.
-- `prepare_test_profiles.py` — Derive root-private test refresh/bootstrap profiles from native receipts. `erp_site_settings` in the private profile sets the test site's own portal look (allow list: `cloud_portal_hide_entity_name`, `cloud_portal_logo_height`, `cloud_portal_clean_root_address`).
+- `prepare_test_profiles.py` — Derive root-private test refresh/bootstrap profiles from native receipts. `erp_site_settings` in the private profile sets the test site's own portal look (allow list: `cloud_portal_hide_entity_name`, `cloud_portal_logo_height`, `cloud_portal_logo_position`, `cloud_portal_clean_root_address`).
 - `rehearse_empty_test.py` — Rehearse four-app restore ONLY on a fresh test without business documents.
 - `restore_test_data.py` — Restore a verified four-app data snapshot into one explicit TEST runtime.
 - `snapshot_archive.py` — Validate data-only refresh archives before touching any test service.

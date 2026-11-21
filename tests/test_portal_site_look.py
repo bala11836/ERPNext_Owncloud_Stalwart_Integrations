@@ -9,7 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGE = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
 CODE = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
 LOOK = {"entity_name": "cloud_portal_hide_entity_name", "portal_logo_height": "cloud_portal_logo_height",
-        "portal_clean_root": "cloud_portal_clean_root_address"}
+        "portal_clean_root": "cloud_portal_clean_root_address",
+        "portal_logo_position": "cloud_portal_logo_position"}
 
 
 def production_view(page):
@@ -17,7 +18,7 @@ def production_view(page):
     optional blocks are dropped."""
     page = page.replace("{% if entity_name %}<span>{{ entity_name | e }}</span>{% endif %}",
                         "<span>{{ entity_name | e }}</span>")
-    for flag in ("portal_logo_height", "portal_clean_root"):
+    for flag in ("portal_logo_height", "portal_clean_root", "portal_logo_position"):
         page = re.sub(r"\{% if " + flag + r" %\}.*?\{% endif %\}", "", page, flags=re.S)
     return page
 
@@ -33,11 +34,13 @@ class SiteLook(unittest.TestCase):
         view = production_view(PAGE)
         self.assertIn('<img src="{{ entity_logo | e }}" alt=""></button><span>{{ entity_name | e }}</span></div>', view)
         self.assertIn(".ph-brand img{width:60px;height:60px;object-fit:contain}", view)
+        self.assertIn(".ph-brand{position:fixed;top:16px;left:18px;", view)
         self.assertNotIn("portal_logo_height", view)
         self.assertNotIn("history.replaceState(history.state,'','/'", view)
 
     def test_site_specific_parts_appear_only_inside_their_setting(self):
-        outside = re.sub(r"\{% if (portal_logo_height|portal_clean_root) %\}.*?\{% endif %\}", "", PAGE, flags=re.S)
+        outside = re.sub(r"\{% if (portal_logo_height|portal_clean_root|portal_logo_position) %\}.*?\{% endif %\}", "", PAGE, flags=re.S)
+        self.assertNotIn("portal_logo_position.top", outside)
         self.assertNotIn("{{ portal_logo_height }}", outside)
         self.assertNotIn("history.replaceState(history.state,'','/'", outside)
 
@@ -48,7 +51,7 @@ class SiteLook(unittest.TestCase):
 
     def test_test_profile_may_set_only_the_look_settings(self):
         tool = (ROOT / "tools/prepare_test_profiles.py").read_text()
-        self.assertIn("allowed={'cloud_portal_hide_entity_name','cloud_portal_logo_height','cloud_portal_clean_root_address'}", tool)
+        self.assertIn("allowed={'cloud_portal_hide_entity_name','cloud_portal_logo_height','cloud_portal_logo_position','cloud_portal_clean_root_address'}", tool)
 
 
 if __name__ == "__main__":

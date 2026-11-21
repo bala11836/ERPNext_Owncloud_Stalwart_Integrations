@@ -19,6 +19,9 @@ def get_context(context):
     height = frappe.conf.get('cloud_portal_logo_height')
     context.portal_logo_height = int(height) if isinstance(height, int) and 40 <= height <= 100 else 0
     context.portal_clean_root = bool(frappe.conf.get('cloud_portal_clean_root_address'))
+    position = frappe.conf.get('cloud_portal_logo_position') or {}
+    ok = isinstance(position, dict) and all(isinstance(position.get(k), int) and 0 <= position[k] <= 80 for k in ('top', 'left'))
+    context.portal_logo_position = {'top': position['top'], 'left': position['left']} if ok else None
     context.entity_logo = '/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
     context.user_name = fullname
     context.user_login = frappe.session.user

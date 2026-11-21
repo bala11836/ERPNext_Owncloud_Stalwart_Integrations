@@ -436,7 +436,7 @@ discussion that led to a decision is not repeated here.
 - **Decision:** each site's look (logo, favicons, names, landing page options and the portal page's look) comes from
   that site's own private settings and assets; shared code carries no site-specific look. The portal page reads its
   site-specific look from site settings (`cloud_portal_hide_entity_name`, `cloud_portal_logo_height`,
-  `cloud_portal_clean_root_address`); with none set it is exactly production's page. The test site sets them through an
+  `cloud_portal_logo_position`, `cloud_portal_clean_root_address`); with none set it is exactly production's page. The test site sets them through an
   allow list (`erp_site_settings` in its private profile); the test-only stylesheet styles only the test refresh row.
 - **Why:** owner, 21 November 2026: a change to the test site's look must never change production. A guard test
   renders the page as production sees it and checks that every site-specific part sits inside its setting.

@@ -61,7 +61,7 @@ Needs: PR #3 merged and the first crippled refresh done first.
 
 ### P63 — Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces
 
-**App:** test-site · **Also touches:** portal, signin · **State:** in progress
+**App:** test-site · **Also touches:** portal, signin, mail, erp · **State:** in progress
 
 **Status:** open, owner request 21 November 2026; not started. No earlier P item covered
 this; related: P47 (landing page), P55 (brand mechanism), P51 and P54 (crippled refresh),
@@ -71,7 +71,8 @@ trace of the tenant goes too.
 
 **Intent (owner restatement, 21 November 2026):** (i) totally clean demo data on the test site, with no trace of
 the tenant after every refresh; (ii) authentik shows its own UN/format brand when signing in to the demo; (iii) test
-mail and messages reach only the people enrolled for testing (scope 5).
+mail and messages reach only the people enrolled for testing (scope 5), each marked as test/demo (scope 6).
+**Go:** owner, 21 November 2026 (whole scope).
 
 **Scope**
 1. **Remove the tenant everywhere on the test site:** the name <tenant> and the company logo
@@ -111,6 +112,13 @@ mail and messages reach only the people enrolled for testing (scope 5).
    refresh must keep the allow list (production data never widens it) and a check must prove that a message to a
    non-enrolled address is not sent. This changes the documented outbound safeguard: record it in
    `docs/decisions.md` and the test-refresh module README when adopted.
+6. **Every outgoing message is marked as test/demo (owner, 21 November 2026):** this is an exclusive test setup,
+   so everything it sends carries a visible marker. **E-mail:** a banner at the top of the body ("This is a TEST /
+   DEMO message sent from the evaluation system. It is not a real business communication.") in both the HTML and the
+   plain-text part, a `[TEST]` (or `[DEMO]`) prefix on the subject, and a header (for example `X-Test-Message: yes`).
+   **WhatsApp, SMS and push:** a `[TEST]` prefix on the text. Applied at the last step before a message leaves (the
+   mail relay and each messaging adapter), so no sender, template or app can skip it; production never adds it.
+   A check sends one message per channel to an enrolled recipient and verifies the marker.
 
 **Open questions for planning:** (a) test and production **share one authentik**, and its brand
 is chosen by the request's host name (`sso`), so the sign-in page cannot show the demo logo for test
@@ -142,6 +150,23 @@ address (the portal also rewrites `/place_holder` to `/`); this replaces P60. Po
 logo without the company name; refresh buttons in one row beside the logo, dates under them, status line only while a
 refresh runs. One-click entry: expected to work now that the gateway returns to the requested page (P65); owner to
 confirm. **Remaining:** owner browser check, then PR and merge; company-name masking in refreshed data, sign-in brand.
+
+**Paused (owner, 21 November 2026): resume here when P63 is taken up again.** Scope 5 and 6 are not started. Decisions
+waiting for the owner (recommendation first):
+1. **Vendor enrolment** (vendors have no login): (a, recommended) a short list of vendor mail addresses and phone
+   numbers in the test site's private profile, added on the owner's word; survives every refresh and never comes from
+   production; or (b) a "test recipient" tick on the Supplier record in the test ERP, set by staff, which the refresh
+   must preserve.
+2. **How the test ERP sends mail:** today `mute_emails` and the disabled scheduler keep it silent, and the test egress
+   firewall allows only the SSO host and the test form SMTP address. (a, recommended) turn mail on but keep every other
+   scheduled job off; a small **test mail gateway** on the test site flushes the ERP mail queue every minute and is the
+   only way out: it delivers only to the test group (authentik group for employees, plus the vendor list), adds the
+   banner, the `[TEST]` subject prefix and the `X-Test-Message` header, and holds and logs everything else; or (b) run
+   the test ERP's scheduler fully, behind the same gateway (more realistic, more goes out).
+**Design notes:** the gateway sends through the existing dedicated test sending account (`test_form_smtp`), so the
+egress rule stays one address; the test Mail server's own outgoing mail must also go through the gateway; WhatsApp is
+not live yet (P04), so its adapter gets the same allow list and `[TEST]` prefix when built; push stays off on test.
+Branch `p63-demo-ui` (UI points) is on test awaiting the owner's browser check before its PR.
 
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued

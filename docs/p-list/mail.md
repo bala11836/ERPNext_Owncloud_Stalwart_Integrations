@@ -54,7 +54,7 @@ Keep email, folders/labels and sent-mail scope; exclude contacts, calendars and 
 
 **App:** mail · **Also touches:** general · **State:** open
 
-**Status:** open, owner request 21 November 2026; not started.
+**Status:** owner request and go, 21 November 2026; mechanism check done, then **paused by the owner** until P69 is taken up again (see the decision waiting at the end).
 
 Configure Stalwart so that company mail is **retained** and a user cannot remove it for good: deleting in webmail,
 phone or desktop clients must not destroy the company's copy. Plan first, then test on the test site, then production.
@@ -75,4 +75,26 @@ phone or desktop clients must not destroy the company's copy. Plan first, then t
 
 **Acceptance:** on test, a user deletes and empties trash for a message in webmail and in an IMAP client; the archive
 still holds it and the owner can retrieve it; a user cannot reach the archive; the backup contains it and restores.
+
+**Findings (21 November 2026, Stalwart docs; production runs Stalwart 1.1.0, Community):**
+- **Undelete archive is Enterprise only:** `DataRetention.archiveDeletedItemsFor` keeps deleted and expunged messages
+  for a set time and lets users (and admins with impersonation) restore them; Community cannot use it.
+- **Community controls:** permissions per role can remove permanent deletion: `imapExpunge`, `jmapEmailDestroy`,
+  `pop3Dele` (and `imapDelete`, `jmapMailboxDestroy` for deleting whole folders). Deleting would then only move mail to
+  Trash. The Trash auto-expunge (`expungeTrashAfter`, default 30 days) must then be switched off, or Trash empties
+  itself. Without an archive, an allowed expunge is final.
+- **Journal copy:** system Sieve scripts run at the SMTP stages and can `redirect` a copy to an archive address; they
+  cannot file into a mailbox. Whether this also catches mail sent from webmail (JMAP submission) is not documented:
+  to test on the test site.
+- **Plan (proposed):** (1) remove the permanent-delete permissions from the user role and switch off Trash
+  auto-expunge; (2) a journal copy of inbound and outbound mail to an archive account no user can open, if the test
+  shows it catches all paths; (3) owner decides on Enterprise only if (1)+(2) fall short. Webmail and phone clients
+  must be checked: what a user sees when "empty trash" is refused.
+
+**Paused (owner, 21 November 2026): resume here.** Decision waiting for the owner: (a, recommended) free edition,
+remove permanent deletion from the user role, switch off Trash auto-expunge, and a journal copy of all mail to a
+hidden archive account (tested on the test site first, including mail sent from webmail); (b) free edition, block
+permanent deletion only (mail of a removed mailbox or account is still lost); (c) price and terms of the Enterprise
+licence for its built-in undelete window. Sources: Stalwart docs pages on deleted items, data retention, permissions
+and system Sieve scripts.
 

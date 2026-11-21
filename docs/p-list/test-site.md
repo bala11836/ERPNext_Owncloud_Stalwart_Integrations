@@ -197,6 +197,9 @@ inside the logo, six multicolour sets (kept in `assets/unformat-demo-brand/optio
 on test from `<test host secrets folder>/brand-unformat-demo-2026-11-21c` (ERP image rebuilt for the same commit
 `a0cb527`); landing page and app page checked. Private asset only: no code change, PR #20 unchanged.
 
+**Released (21 November 2026, 16:38 UTC):** PR #20 merged (`6db2536`) and promoted; production looks exactly as before
+(no look settings; www pixel-identical). The test site keeps its demo look through its own settings and assets.
+
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued
 

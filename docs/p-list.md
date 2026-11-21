@@ -103,7 +103,7 @@ until the owner says; the table only fixes the order to take them up.
 |---|---|
 | **P50** native mobile app | strategic; planning only, many open decisions (look, security, notifications, build order); pilot is HR attendance |
 | **P70** mail and WhatsApp domain split (`tenant.example` production, `example.com` demo) | owner decision 21 Nov; foundation of P19 and P63, taken up together; waits for the owner |
-| **P63** demo mode for the test site (neutral UN/format brand, line-art landing page, no tenant traces; test mail and messages only to the test group) | UI accepted, PR #20 open; rest paused by the owner: clean refreshed data, sign-in brand, test-group allow list, test/demo marker, vendor enrolment (decisions waiting in the item) |
+| **P63** demo mode for the test site (neutral UN/format brand, line-art landing page, no tenant traces; test mail and messages only to the test group) | UI released 21 Nov (PR #20, `6db2536`); rest paused by the owner: clean refreshed data, sign-in brand, test-group allow list, test/demo marker, vendor enrolment (decisions waiting in the item) |
 | **P66** test-site errors invisible (Error Log rows stay queued) | flush the deferred inserts on test; alarm |
 | **P68** check for imports of names that do not exist | static check plus "tests import the real module" |
 | **P05**, **P06** GSTIN lookup and PAN checks | blocked on the India Compliance API secret and a PAN verification source |

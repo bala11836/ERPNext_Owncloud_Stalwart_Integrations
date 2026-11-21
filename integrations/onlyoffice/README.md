@@ -46,6 +46,7 @@ Editor (this module, `editor-wopi.ejs`):
   per sheet ("Private - <name>"), reused on reopening, so filters and sorting
   do not change what others see; protected sheets are skipped; no green
   "Sheet View mode" headers.
+  Loop guard (21 Nov 2026): one creation attempt per person, sheet and visit; no second attempt while one is in flight; the fresh view is renamed once. Before, creating a view fired the sheet-changed event before the rename showed in the list, so another view was created each time (22 "Temporary View N" in one shared workbook). Tested by a headless-Chrome simulation (`tests/test_onlyoffice_private_views.py`). Stray "Temporary View N" views already in a file are removed by hand in View manager.
 - **Licence notice:** the About panel keeps ONLYOFFICE's notices and adds that
   this is a modified version based on ONLYOFFICE by Ascensio System SIA
   (additional terms 2 and 3). About is the only place these notices appear

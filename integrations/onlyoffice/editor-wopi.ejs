@@ -432,17 +432,54 @@ div {
                 if (!api || !user || !api.asc_getNamedSheetViews) return;
                 clearInterval(timer);
                 var name = 'Private - ' + (user.fullname || user.name || 'user');
-                var ensure = function () {
-                    try {
-                        if (api.asc_isProtectedSheet && api.asc_isProtectedSheet()) return;
-                        var views = api.asc_getNamedSheetViews() || [];
-                        var mine = views.filter(function (v) { return v.asc_getName() === name; })[0];
-                        if (mine) { if (!mine.asc_getIsActive()) api.asc_setActiveNamedSheetView(name); return; }
-                        api.asc_addNamedSheetView(null, true);
-                        var created = (api.asc_getNamedSheetViews() || []).filter(function (v) { return v.asc_getIsActive(); })[0];
-                        if (created) created.asc_setName(name);
-                    } catch (e) {}
+                /* PRIVATE-VIEWS-BEGIN */
+                /* One private view per person and sheet. Creating a view fires the sheet-changed
+                   event again before the rename is visible in the list; looking up the name
+                   again then failed and created another view, in a loop (22 "Temporary View N"
+                   in one workbook). So: one creation attempt per sheet per visit, no new
+                   attempt while one is in flight, and the fresh view is renamed once. */
+                var makePrivateViewKeeper = function (api, name, w) {
+                    var busy = false, attempted = {}, pending = null;
+                    var views = function () { return api.asc_getNamedSheetViews() || []; };
+                    var sheetKey = function () {
+                        try { return String(api.asc_getActiveWorksheetIndex ? api.asc_getActiveWorksheetIndex() : 'sheet'); }
+                        catch (e) { return 'sheet'; }
+                    };
+                    var run = function () {
+                        try {
+                            if (busy) return;
+                            if (api.asc_isProtectedSheet && api.asc_isProtectedSheet()) return;
+                            var mine = views().filter(function (v) { return v.asc_getName() === name; })[0];
+                            if (mine) { if (!mine.asc_getIsActive()) api.asc_setActiveNamedSheetView(name); return; }
+                            var key = sheetKey();
+                            if (attempted[key]) return;
+                            attempted[key] = true; busy = true;
+                            api.asc_addNamedSheetView(null, true);
+                            var tries = 0, renamed = false;
+                            var timer = w.setInterval(function () {
+                                tries++;
+                                var finished = tries >= 40;
+                                try {
+                                    var list = views();
+                                    if (list.some(function (v) { return v.asc_getName() === name; })) finished = true;
+                                    else if (!renamed) {
+                                        var fresh = list.filter(function (v) { return v.asc_getIsActive() && /^Temporary View \d+$/.test(v.asc_getName()); })[0];
+                                        if (fresh) { fresh.asc_setName(name); renamed = true; }
+                                    }
+                                } catch (e) {}
+                                if (finished) { w.clearInterval(timer); busy = false; }
+                            }, 250);
+                        } catch (e) { busy = false; }
+                    };
+                    var schedule = function () {
+                        if (pending) w.clearTimeout(pending);
+                        pending = w.setTimeout(run, 300);
+                    };
+                    return { run: run, schedule: schedule };
                 };
+                /* PRIVATE-VIEWS-END */
+                var keeper = makePrivateViewKeeper(api, name, w);
+                var ensure = keeper.run;
                 /* Owner: row and column headers two shades darker than ONLYOFFICE's
                    light grey (#F3F3F3) and the selected row/column header darker
                    still. Private sheet views draw all header text in one colour,
@@ -472,7 +509,7 @@ div {
                 };
                 neutralHeaders();
                 ensure();
-                api.asc_registerCallback && api.asc_registerCallback('asc_onActiveSheetChanged', function () { setTimeout(ensure, 300); });
+                api.asc_registerCallback && api.asc_registerCallback('asc_onActiveSheetChanged', keeper.schedule);
             }, 500);
         };
 

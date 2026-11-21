@@ -10,29 +10,6 @@ Platform, infrastructure, release process, backups, network and security items t
 
 Part of the P list: back to the [index and priority order](../p-list.md). Items are numbered across the whole project; a new item goes into the list of the app it belongs to (or `general`), and `python3 tools/p_index.py` refreshes the index.
 
-### P02 — Off-server backups and restore test
-
-**App:** general · **Also touches:** none · **State:** done
-
-**Status:** done and live since 18 November 2026: nightly encrypted backups, weekly drill, full restore rehearsals (P39, P44) and tamper resistance (P40). History of the setup follows. Scheduled by the owner (18 November 2026) as step 3, before the P37 production ERP move ("backup first"), after the relay and test-site acceptance. Destination confirmed by the owner: the S3-compatible bucket on the home TrueNAS, reached over the tailnet (see test host migration (private record)).
-
-Choose the destination, approve any storage cost, configure encryption/retention, and test recovery of ERP, authentik, Drive, DMS, Mail and custom configurations.
-
-**Live 18 November 2026:** first production backup succeeded (Drive paused
-14 s, Mail 5 s) and the restore drill from the test VM passed (ERP 1,055,
-DMS 75, identity 230 tables; 54,025 files; about 41 minutes over the
-tailnet). Nightly timer on production (02:30 server time, randomized up to
-15 minutes), weekly drill on the test VM (Sunday 05:00), daily ZFS snapshot
-on TrueNAS (10:00, keep 60). Recovery time from the home NAS is bounded by
-the home upload speed; P39 measures it.
-
-**Implemented 18 November 2026:** module `integrations/backup/` (Restic 0.18.0
-by digest; online database dumps; brief stop-and-copy for Drive and Mail;
-7 daily/4 weekly/6 monthly; weekly `check`; restore drill on the test VM with
-a read-only key). To activate: RustFS bucket + read-write key (production)
-and read-only key (test VM); encryption password in the owner's password
-manager and a root-only file; `init`; first run and drill; then timers. Existing local archives/volumes are rollback material, not off-server backup protection.
-
 ### P11 — Certificate issuance and renewal acceptance
 
 **App:** general · **Also touches:** none · **State:** open
@@ -132,71 +109,6 @@ Shared 17 November 2026: findings and the workaround posted upstream
 (https://github.com/CollaboraOnline/online/issues/16276#issuecomment-6947112394),
 including that the search field only appears for lists longer than 25
 entries, with an AI-assistance credit.
-
-### P36 — Modular repository layout at the TrueNAS rebuild
-
-**App:** general · **Also touches:** none · **State:** done
-
-**Status:** module manifest and READMEs done 17 November 2026 (`modules.json`,
-13 modules, enforced by `tests/test_module_manifest.py`); the TrueNAS test site
-is rebuilt from this layout (P33). File moves were deliberately avoided so
-paths used by running servers stay stable.
-
-Before or during the P33 rebuild, review the layout so each integration
-(portal/SSO, field operations, onboarding, Drive, Collabora overlays, Mail,
-DMS, document worker, authentik, deployment tooling) is a self-contained
-module with its own README, tests, configuration example and license notes,
-reusable on its own, while staying in this single repository.
-
-### P39 — Full restore rehearsal on the old VPS (done)
-
-**App:** general · **Also touches:** none · **State:** done
-
-**Status:** requested by the owner on 18 November 2026, while the old VPS
-hosting plan lasts. Restore the latest production backup onto the idle old
-VPS, start ERP, Drive, DMS and Mail from it on private names only (outbound
-mail, jobs and integrations quarantined as on test, no public DNS), verify
-sign-in data, documents and mail, and record the recovery time. Proves the
-backups are dependable, beyond the weekly database drill.
-
-**Part 1 done 18 November 2026 (data restore, timed):** fresh production
-backup at 17:52 UTC (Drive stopped 14 s, Mail 3 s). On the old VPS (4 vCPU,
-16 GB, LXC without TUN, so Tailscale runs in userspace mode with a local HTTP
-proxy that restic uses): read-only key, latest snapshot `b9d18d4e` restored
-in **10 min 28 s** (9.26 GiB, 68,895 files, from TrueNAS over the tailnet);
-all three database dumps imported into throwaway pinned databases in **26 s**.
-Counts matched live production exactly: ERP 10 users and 14 files (no
-transactions yet), DMS 324 documents, sign-in 12 users, Drive 3,836 files.
-About 12 minutes from start to verified data. The retired old test stack was
-stopped (not deleted; list in `<server file>`).
-
-**Part 2 done 18 November 2026 (full stack from backup):** on the old VPS
-the six test-tier stacks (ERP, Drive, ONLYOFFICE, Mail, DMS, processing) were
-rendered and registered from release `e70548e`, and the backup was loaded
-through the tested refresh loader via the new `tools/backup_to_snapshot.py`.
-Loader result: counts verified, 16 generated Drive links and 23 notes
-retargeted, ONLYOFFICE registered with verified origin, document worker
-re-enrolled and healthy; quarantine applied (no outgoing ERP mail). Checked in
-the running copy: ERP 10 users, 14 files, 1 company; DMS 324 documents; Mail
-store present; Drive offers ONLYOFFICE; every service healthy.
-
-Timings: download 10 min 28 s, snapshot conversion 2 min 25 s, stack start
-about 8 min, data load 3 min: **about 24 minutes of machine time**. The ERP
-and Mail images were copied from the test host (8 min) instead of rebuilt;
-rebuilding them from the repository is not yet timed.
-
-Incident during the rehearsal: the old VPS still forwarded the test hostnames
-to the live test site (left from the P33 move), and its own stack had no local
-routes, so the first load attempt's enrollment check and the old document
-worker's polling reached the live test site: 11 read requests, all refused
-(401), nothing changed. The loader rolled the old VPS back. The forward was
-removed and local routes rendered with `tools/prepare_ingress.py`; the second
-load ran fully locally. Lesson recorded in the disaster-recovery guide.
-
-Remaining gaps (follow-ups): the sign-in service (authentik) is not a
-repository stack, so it can only be restored as a database today (P44); time
-an image rebuild from the repository. The restored copy stays on the old VPS,
-private and quarantined, until the VPS is retired.
 
 ### P40 — Backup hardening against ransomware
 
@@ -309,48 +221,6 @@ logging, filtering, licence and cost. Activity logging must follow the
 applicable law (for example India's IT Act and the Digital Personal Data
 Protection Act: notice to users, purpose, retention, access control); define
 that policy with the owner before enabling it.
-
-### P55 — Replace the old logo everywhere with the approved one
-
-**App:** general · **Also touches:** portal, signin, mail, drive, erp · **State:** done
-
-**Status:** **done 20 November 2026 (`792cef8`)**: logo, favicons (ERP, portal, authentik, webmail, push), no "All apps" (P52), landing page on www (P47). Was: open, owner request 20 November 2026 ("replace all older logos
-with this: sso, place holder, etc."). Approved logo saved in
-`assets/brand/` (private). Survey of the code (public repository, `main`):
-one shared file feeds almost everything: `company-logo-approved-v6.svg`, copied
-into the ERP's public assets at build from the private runtime profile's
-`company_logo` (`tools/render_runtime.py`). It is used by the portal
-place-holder and signed-out pages, push-notification icons, authentik's
-branding logo and favicon (they point at the ERP URL) and the webmail login
-logo and favicon (built from the same URL). So the plan is mostly to swap the
-private file and rebuild the ERP image, test first, then production (ERP
-downtime about two minutes, as in P37). To check besides: Drive's web theme,
-DMS (Paperless), Raven and the app menu for their own copies of the old
-logo; browser caching (the file name stays the same: use the existing
-`asset_version` or a `?v=` parameter so people see the new logo at once); a
-smaller file for favicons and push icons (the SVG embeds a 540 px picture,
-about 500 KB). **Favicons (owner, 20 November 2026: "change the favicons also"):** the
-approved logo is too detailed at 16-32 px, so a compact favicon was designed:
-the blue and orange squares with a light panel, a stone arch with dashed
-tunnel lines and an orange cross. Files in `assets/brand/favicons/`
-(`favicon.svg`, PNG 16, 32, 48, 180, 192, 512; `preview.png`). Replace the
-old favicon everywhere: ERP and portal (Website Settings / `app_include`
-link), authentik brand favicon (`branding_favicon`, today the old logo file),
-webmail `FAVICON_URL`, Drive (oCIS theme), DMS (Paperless), Raven, and the
-landing page; use PNG and SVG with a version parameter so browsers refresh.
-**Portal page (owner, 20 November 2026):** the portal page ("place holder")
-is renamed **Desk** because widgets and dashboards will live there later
-(P53); for now it stays as it is, with only the new logo at the top-left. In
-this repository's page the browser title becomes "Desk" and the text beside the
-logo changes from the company name to "Desk" (the logo itself already says
-<tenant>); the route stays `place_holder` because `/desk` is Frappe's own
-admin route in this version. The company icon in the auto-hiding app menu (its
-"home" button, 44 px) uses the same logo file; consider a compact version
-(arch and tools without text) for that small size. Look-and-feel mock:
-`assets/desk-mock/`. Order (owner's rule): any code change on a branch, deployed to
-test and validated, then merged, then production; for a private-file-only swap
-the test deployment is the same rebuild with the new file. Queued behind the
-crippled-refresh leak fix, so two jobs do not deploy to the test site at once.
 
 ### P57 — The platform survives restarts and reboots without an outage
 

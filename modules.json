@@ -1,20 +1,66 @@
 {
   "about": "Module manifest (owner principle 6, P36). Every tracked file outside the repository-level files and docs/ belongs to exactly one module; tests/test_module_manifest.py enforces this. Paths are glob patterns relative to the repository root. Upstream licenses are as published by each project; verify them at the pinned version before redistributing (see LICENSES.md).",
-  "repository_files": [".dockerignore", ".gitattributes", ".gitignore", "AGENTS.md", "CLAUDE.md", "LICENSE", "LICENSES.md", "README.md", "CONTRIBUTING.md", "modules.json", "docs/**"],
+  "repository_files": [
+    ".dockerignore",
+    ".gitattributes",
+    ".gitignore",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LICENSE",
+    "LICENSES.md",
+    "README.md",
+    "CONTRIBUTING.md",
+    "modules.json",
+    "docs/**"
+  ],
   "modules": [
     {
       "id": "erp-addon-shell",
       "title": "ERP add-on shell",
       "summary": "The single installed Frappe app: hook composition with per-feature switches (cloud_features), bootstrap, migration, shared role fixtures and app logos.",
       "readme": "erpnext_drive_integrations/README.md",
-      "paths": ["pyproject.toml", "MANIFEST.in", "erpnext_drive_integrations/__init__.py", "erpnext_drive_integrations/hooks.py", "erpnext_drive_integrations/bootstrap.py", "erpnext_drive_integrations/migration.py", "erpnext_drive_integrations/modules.txt", "erpnext_drive_integrations/patches.txt", "erpnext_drive_integrations/README.md", "erpnext_drive_integrations/fixtures/**", "erpnext_drive_integrations/public/app-logos/**", "erpnext_drive_integrations/public/company-logo-*", "erpnext_drive_integrations/public/company-favicon*", "tests/test_hook_composition.py"],
+      "paths": [
+        "pyproject.toml",
+        "MANIFEST.in",
+        "erpnext_drive_integrations/__init__.py",
+        "erpnext_drive_integrations/hooks.py",
+        "erpnext_drive_integrations/bootstrap.py",
+        "erpnext_drive_integrations/migration.py",
+        "erpnext_drive_integrations/modules.txt",
+        "erpnext_drive_integrations/patches.txt",
+        "erpnext_drive_integrations/README.md",
+        "erpnext_drive_integrations/fixtures/**",
+        "erpnext_drive_integrations/public/app-logos/**",
+        "erpnext_drive_integrations/public/company-logo-*",
+        "erpnext_drive_integrations/public/company-favicon*",
+        "erpnext_drive_integrations/public/plain-background.svg",
+        "tests/test_hook_composition.py"
+      ],
       "depends_on": [],
-      "tests": ["tests/test_hook_composition.py"],
+      "tests": [
+        "tests/test_hook_composition.py"
+      ],
       "upstream": [
-        {"name": "Frappe Framework", "license": "MIT", "url": "https://github.com/frappe/frappe"},
-        {"name": "ERPNext", "license": "GPL-3.0", "url": "https://github.com/frappe/erpnext"},
-        {"name": "Frappe HR", "license": "GPL-3.0", "url": "https://github.com/frappe/hrms"},
-        {"name": "Frappe Suite app logos", "license": "per upstream frappe/suite", "url": "https://github.com/frappe/suite"}
+        {
+          "name": "Frappe Framework",
+          "license": "MIT",
+          "url": "https://github.com/frappe/frappe"
+        },
+        {
+          "name": "ERPNext",
+          "license": "GPL-3.0",
+          "url": "https://github.com/frappe/erpnext"
+        },
+        {
+          "name": "Frappe HR",
+          "license": "GPL-3.0",
+          "url": "https://github.com/frappe/hrms"
+        },
+        {
+          "name": "Frappe Suite app logos",
+          "license": "per upstream frappe/suite",
+          "url": "https://github.com/frappe/suite"
+        }
       ]
     },
     {
@@ -22,13 +68,48 @@
       "title": "ERP portal, SSO session and mobile",
       "summary": "Portal home, authentik SSO sign-in and global logout, shared-browser logout guard, idle proxy-session recovery (P01), native mobile login binding, web push, module header and placeholder/signed-out pages.",
       "readme": "erpnext_drive_integrations/portal/README.md",
-      "paths": ["tests/test_app_menu_link.py", "tests/test_portal_deep_link.py", "erpnext_drive_integrations/portal/*", "erpnext_drive_integrations/public/session.js", "erpnext_drive_integrations/public/push-client.js", "erpnext_drive_integrations/public/push-worker.js", "erpnext_drive_integrations/public/module-header-*.js", "erpnext_drive_integrations/www/signed_out.*", "erpnext_drive_integrations/www/place_holder.*", "erpnext_drive_integrations/www/__init__.py", "tests/portal/**"],
-      "exclude": ["erpnext_drive_integrations/portal/test_refresh.py"],
-      "depends_on": ["erp-addon-shell", "authentik-identity"],
-      "tests": ["tests/test_app_menu_link.py", "tests/test_portal_deep_link.py", "tests/portal/test_mobile.py"],
+      "paths": [
+        "tests/test_app_menu_link.py",
+        "tests/test_logout_and_signin.py",
+        "tests/test_portal_deep_link.py",
+        "erpnext_drive_integrations/portal/*",
+        "erpnext_drive_integrations/public/session.js",
+        "erpnext_drive_integrations/public/push-client.js",
+        "erpnext_drive_integrations/public/push-worker.js",
+        "erpnext_drive_integrations/public/module-header-*.js",
+        "erpnext_drive_integrations/www/signed_out.*",
+        "erpnext_drive_integrations/www/place_holder.*",
+        "erpnext_drive_integrations/www/__init__.py",
+        "tests/portal/**",
+        "tests/test_portal_menu_columns.py",
+        "tests/test_portal_site_look.py"
+      ],
+      "exclude": [
+        "erpnext_drive_integrations/portal/test_refresh.py"
+      ],
+      "depends_on": [
+        "erp-addon-shell",
+        "authentik-identity"
+      ],
+      "tests": [
+        "tests/test_app_menu_link.py",
+        "tests/test_logout_and_signin.py",
+        "tests/test_portal_deep_link.py",
+        "tests/portal/test_mobile.py",
+        "tests/test_portal_menu_columns.py",
+        "tests/test_portal_site_look.py"
+      ],
       "upstream": [
-        {"name": "Frappe Framework", "license": "MIT", "url": "https://github.com/frappe/frappe"},
-        {"name": "authentik", "license": "MIT (core)", "url": "https://github.com/goauthentik/authentik"}
+        {
+          "name": "Frappe Framework",
+          "license": "MIT",
+          "url": "https://github.com/frappe/frappe"
+        },
+        {
+          "name": "authentik",
+          "license": "MIT (core)",
+          "url": "https://github.com/goauthentik/authentik"
+        }
       ]
     },
     {
@@ -36,12 +117,29 @@
       "title": "Field operations",
       "summary": "Field sites, assets, members, worker assignments, shift allocation, attendance and checkout, with the field team web page.",
       "readme": "erpnext_drive_integrations/field/README.md",
-      "paths": ["erpnext_drive_integrations/field/**", "erpnext_drive_integrations/cloud_field/**", "erpnext_drive_integrations/public/field/**", "erpnext_drive_integrations/www/field_team.*"],
-      "depends_on": ["erp-addon-shell"],
-      "tests": ["erpnext_drive_integrations/field/test_checkout.py"],
+      "paths": [
+        "erpnext_drive_integrations/field/**",
+        "erpnext_drive_integrations/cloud_field/**",
+        "erpnext_drive_integrations/public/field/**",
+        "erpnext_drive_integrations/www/field_team.*"
+      ],
+      "depends_on": [
+        "erp-addon-shell"
+      ],
+      "tests": [
+        "erpnext_drive_integrations/field/test_checkout.py"
+      ],
       "upstream": [
-        {"name": "ERPNext", "license": "GPL-3.0", "url": "https://github.com/frappe/erpnext"},
-        {"name": "Frappe HR", "license": "GPL-3.0", "url": "https://github.com/frappe/hrms"}
+        {
+          "name": "ERPNext",
+          "license": "GPL-3.0",
+          "url": "https://github.com/frappe/erpnext"
+        },
+        {
+          "name": "Frappe HR",
+          "license": "GPL-3.0",
+          "url": "https://github.com/frappe/hrms"
+        }
       ]
     },
     {
@@ -49,12 +147,31 @@
       "title": "Vendor onboarding and response links",
       "summary": "Vendor onboarding with KYC and amendments, single-use device-bound response links (yes/no, documents) with audit trail, WhatsApp consent capture, construction schedule page and monitoring.",
       "readme": "erpnext_drive_integrations/onboarding/README.md",
-      "paths": ["erpnext_drive_integrations/onboarding/**", "erpnext_drive_integrations/www/respond.*", "erpnext_drive_integrations/www/link-help.*", "tests/onboarding/**"],
-      "depends_on": ["erp-addon-shell"],
-      "tests": ["tests/onboarding/test_onboarding.py", "tests/onboarding/test_respond.py", "tests/onboarding/test_kyc.py"],
+      "paths": [
+        "erpnext_drive_integrations/onboarding/**",
+        "erpnext_drive_integrations/www/respond.*",
+        "erpnext_drive_integrations/www/link-help.*",
+        "tests/onboarding/**"
+      ],
+      "depends_on": [
+        "erp-addon-shell"
+      ],
+      "tests": [
+        "tests/onboarding/test_onboarding.py",
+        "tests/onboarding/test_respond.py",
+        "tests/onboarding/test_kyc.py"
+      ],
       "upstream": [
-        {"name": "ERPNext", "license": "GPL-3.0", "url": "https://github.com/frappe/erpnext"},
-        {"name": "India Compliance", "license": "GPL-3.0", "url": "https://github.com/resilient-tech/india-compliance"}
+        {
+          "name": "ERPNext",
+          "license": "GPL-3.0",
+          "url": "https://github.com/frappe/erpnext"
+        },
+        {
+          "name": "India Compliance",
+          "license": "GPL-3.0",
+          "url": "https://github.com/resilient-tech/india-compliance"
+        }
       ]
     },
     {
@@ -62,12 +179,30 @@
       "title": "Drive (ownCloud Infinite Scale) adapters",
       "summary": "Workspace adapter for the ownCloud web client (editor chrome, theme, outside-click), Mail attachment picker, Drive configuration templates and native desktop/mobile client registrations.",
       "readme": "integrations/drive/README.md",
-      "paths": ["integrations/drive/**", "deployment/stacks/drive.compose.json", "deployment/drive-clients.example.json", "deployment/native-clients-lock.json", "tools/prepare_native_drive_clients.py"],
-      "depends_on": ["authentik-identity"],
-      "tests": ["tests/test_rebuild_templates.py"],
+      "paths": [
+        "integrations/drive/**",
+        "deployment/stacks/drive.compose.json",
+        "deployment/drive-clients.example.json",
+        "deployment/native-clients-lock.json",
+        "tools/prepare_native_drive_clients.py"
+      ],
+      "depends_on": [
+        "authentik-identity"
+      ],
+      "tests": [
+        "tests/test_rebuild_templates.py"
+      ],
       "upstream": [
-        {"name": "ownCloud Infinite Scale", "license": "Apache-2.0", "url": "https://github.com/owncloud/ocis"},
-        {"name": "ownCloud Web", "license": "AGPL-3.0", "url": "https://github.com/owncloud/web"}
+        {
+          "name": "ownCloud Infinite Scale",
+          "license": "Apache-2.0",
+          "url": "https://github.com/owncloud/ocis"
+        },
+        {
+          "name": "ownCloud Web",
+          "license": "AGPL-3.0",
+          "url": "https://github.com/owncloud/web"
+        }
       ]
     },
     {
@@ -75,12 +210,30 @@
       "title": "Mail (Stalwart and Bulwark Webmail)",
       "summary": "Bulwark Webmail overlay (SSO login, Drive picker, policy), Stalwart bootstrap and SMTP sender definitions, mail build preparation, and the ERP mailbox administration DocType and access report.",
       "readme": "integrations/mail/README.md",
-      "paths": ["integrations/mail/**", "erpnext_drive_integrations/cloud_integrations/**", "deployment/stacks/mail.compose.json", "tools/prepare_mail.py"],
-      "depends_on": ["authentik-identity", "drive"],
-      "tests": ["tests/test_rebuild_templates.py"],
+      "paths": [
+        "integrations/mail/**",
+        "erpnext_drive_integrations/cloud_integrations/**",
+        "deployment/stacks/mail.compose.json",
+        "tools/prepare_mail.py"
+      ],
+      "depends_on": [
+        "authentik-identity",
+        "drive"
+      ],
+      "tests": [
+        "tests/test_rebuild_templates.py"
+      ],
       "upstream": [
-        {"name": "Bulwark Webmail", "license": "AGPL-3.0-only (see integrations/mail/LICENSE.upstream and NOTICE.upstream)", "url": "https://github.com/bulwarkmail/webmail"},
-        {"name": "Stalwart Mail Server", "license": "AGPL-3.0 (or commercial SEL)", "url": "https://github.com/stalwartlabs/stalwart"}
+        {
+          "name": "Bulwark Webmail",
+          "license": "AGPL-3.0-only (see integrations/mail/LICENSE.upstream and NOTICE.upstream)",
+          "url": "https://github.com/bulwarkmail/webmail"
+        },
+        {
+          "name": "Stalwart Mail Server",
+          "license": "AGPL-3.0 (or commercial SEL)",
+          "url": "https://github.com/stalwartlabs/stalwart"
+        }
       ]
     },
     {
@@ -88,11 +241,22 @@
       "title": "DMS (Paperless-ngx) adapters",
       "summary": "Paperless-ngx session adapter for portal SSO and the Django-shell bootstrap for approved roles and worker enrollment.",
       "readme": "integrations/dms/README.md",
-      "paths": ["integrations/dms/**", "deployment/stacks/dms.compose.json"],
-      "depends_on": ["authentik-identity"],
-      "tests": ["tests/test_rebuild_templates.py"],
+      "paths": [
+        "integrations/dms/**",
+        "deployment/stacks/dms.compose.json"
+      ],
+      "depends_on": [
+        "authentik-identity"
+      ],
+      "tests": [
+        "tests/test_rebuild_templates.py"
+      ],
       "upstream": [
-        {"name": "Paperless-ngx", "license": "GPL-3.0", "url": "https://github.com/paperless-ngx/paperless-ngx"}
+        {
+          "name": "Paperless-ngx",
+          "license": "GPL-3.0",
+          "url": "https://github.com/paperless-ngx/paperless-ngx"
+        }
       ]
     },
     {
@@ -100,12 +264,31 @@
       "title": "Drive to DMS document worker",
       "summary": "Moves new Drive uploads into Paperless with owner-preserving permissions and generated links; enrollment and link retargeting tools.",
       "readme": "integrations/document-worker/README.md",
-      "paths": ["integrations/document-worker/**", "deployment/stacks/processing.compose.json", "tools/enroll_worker.py", "tools/retarget_worker.py", "tests/test_retarget_worker.py"],
-      "depends_on": ["drive", "dms"],
-      "tests": ["tests/test_retarget_worker.py"],
+      "paths": [
+        "integrations/document-worker/**",
+        "deployment/stacks/processing.compose.json",
+        "tools/enroll_worker.py",
+        "tools/retarget_worker.py",
+        "tests/test_retarget_worker.py"
+      ],
+      "depends_on": [
+        "drive",
+        "dms"
+      ],
+      "tests": [
+        "tests/test_retarget_worker.py"
+      ],
       "upstream": [
-        {"name": "Apache Tika", "license": "Apache-2.0", "url": "https://github.com/apache/tika"},
-        {"name": "Gotenberg", "license": "MIT", "url": "https://github.com/gotenberg/gotenberg"}
+        {
+          "name": "Apache Tika",
+          "license": "Apache-2.0",
+          "url": "https://github.com/apache/tika"
+        },
+        {
+          "name": "Gotenberg",
+          "license": "MIT",
+          "url": "https://github.com/gotenberg/gotenberg"
+        }
       ]
     },
     {
@@ -113,11 +296,30 @@
       "title": "authentik identity configuration",
       "summary": "Retained authentik blueprint (providers, applications, scope mappings), test client creation, invitation recovery service and identity-support adapters.",
       "readme": "integrations/authentik/README.md",
-      "paths": ["integrations/authentik/**", "tools/restore_identity.py", "tests/test_restore_identity.py", "deployment/stacks/identity.compose.json", "deployment/stacks/identity-support.compose.json", "deployment/scope-mappings.example.json", "tools/authentik_blueprint.py", "tests/test_invitation_configuration.py"],
+      "paths": [
+        "integrations/authentik/**",
+        "tools/restore_identity.py",
+        "tests/test_restore_identity.py",
+        "deployment/stacks/identity.compose.json",
+        "deployment/stacks/identity-support.compose.json",
+        "deployment/scope-mappings.example.json",
+        "tools/authentik_blueprint.py",
+        "tests/test_invitation_configuration.py",
+        "tests/test_authentik_card_corners.py"
+      ],
       "depends_on": [],
-      "tests": ["tests/test_invitation_configuration.py", "tests/test_restore_identity.py", "integrations/authentik/invite-recovery/test_native.py"],
+      "tests": [
+        "tests/test_invitation_configuration.py",
+        "tests/test_restore_identity.py",
+        "integrations/authentik/invite-recovery/test_native.py",
+        "tests/test_authentik_card_corners.py"
+      ],
       "upstream": [
-        {"name": "authentik", "license": "MIT (core; enterprise features separately licensed)", "url": "https://github.com/goauthentik/authentik"}
+        {
+          "name": "authentik",
+          "license": "MIT (core; enterprise features separately licensed)",
+          "url": "https://github.com/goauthentik/authentik"
+        }
       ]
     },
     {
@@ -125,11 +327,21 @@
       "title": "Insights session adapter",
       "summary": "Patches the pinned Insights frontend to take identity from the native authenticated API before it is compiled.",
       "readme": "integrations/insights/README.md",
-      "paths": ["integrations/insights/**"],
-      "depends_on": ["erp-addon-shell"],
-      "tests": ["tests/test_rebuild_templates.py"],
+      "paths": [
+        "integrations/insights/**"
+      ],
+      "depends_on": [
+        "erp-addon-shell"
+      ],
+      "tests": [
+        "tests/test_rebuild_templates.py"
+      ],
       "upstream": [
-        {"name": "Frappe Insights", "license": "AGPL-3.0", "url": "https://github.com/frappe/insights"}
+        {
+          "name": "Frappe Insights",
+          "license": "AGPL-3.0",
+          "url": "https://github.com/frappe/insights"
+        }
       ]
     },
     {
@@ -137,15 +349,84 @@
       "title": "Reproducible build and deployment",
       "summary": "Pinned upstream and build locks, ERP core and add-on builds, runtime rendering, native Coolify registration, ingress, ERP initialisation, asset checks, offline checks and CI.",
       "readme": "deployment/README.md",
-      "paths": ["deployment/**", "tools/build_erp_core.py", "tools/prepare_erp_image.py", "tools/prepare_runtime.py", "tools/render_runtime.py", "tools/prepare_ingress.py", "tools/prepare_auth_bridge.py", "tools/coolify_proxy_hosts.py", "tools/prepare_test_relay.py", "tools/coolify_proxy_http3.py", "tools/test_host_aliases.py", "tools/coolify_native.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "tools/check_repository.py", "tools/run_unit_tests.py", "tools/README.md", "tests/test_brand_assets.py", "tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py", "tools/host_check.py", "tools/render_host_checks.py", "tests/test_reboot_resilience.py", "tests/test_host_checks.py", ".github/**"],
-      "exclude": ["deployment/config/onlyoffice-local-production-linux.json", "deployment/stacks/drive.compose.json", "deployment/stacks/mail.compose.json", "deployment/stacks/dms.compose.json", "deployment/stacks/processing.compose.json", "deployment/stacks/identity.compose.json", "deployment/stacks/identity-support.compose.json", "deployment/stacks/website.compose.json", "deployment/production/website.traefik.yaml", "deployment/drive-clients.example.json", "deployment/native-clients-lock.json", "deployment/scope-mappings.example.json", "deployment/test-refresh-worker.*", "deployment/test-runtime.example.json"],
+      "paths": [
+        "deployment/**",
+        "tools/build_erp_core.py",
+        "tools/prepare_erp_image.py",
+        "tools/prepare_runtime.py",
+        "tools/render_runtime.py",
+        "tools/prepare_ingress.py",
+        "tools/prepare_auth_bridge.py",
+        "tools/coolify_proxy_hosts.py",
+        "tools/prepare_test_relay.py",
+        "tools/coolify_proxy_http3.py",
+        "tools/test_host_aliases.py",
+        "tools/coolify_native.py",
+        "tools/initialize_erp.py",
+        "tools/migrate_asset_references.py",
+        "tools/verify_erp_assets.py",
+        "tools/check_repository.py",
+        "tools/run_unit_tests.py",
+        "tools/README.md",
+        "tests/test_brand_assets.py",
+        "tests/test_rebuild_templates.py",
+        "tests/test_realtime_origin.py",
+        "tests/test_module_manifest.py",
+        ".github/**",
+        "tools/sso_proxy_trust.py",
+        "tests/test_sso_proxy_trust.py",
+        "tools/host_check.py",
+        "tools/render_host_checks.py",
+        "tests/test_reboot_resilience.py",
+        "tests/test_host_checks.py"
+      ],
+      "exclude": [
+        "deployment/config/onlyoffice-local-production-linux.json",
+        "deployment/stacks/drive.compose.json",
+        "deployment/stacks/mail.compose.json",
+        "deployment/stacks/dms.compose.json",
+        "deployment/stacks/processing.compose.json",
+        "deployment/stacks/identity.compose.json",
+        "deployment/stacks/identity-support.compose.json",
+        "deployment/stacks/website.compose.json",
+        "deployment/production/website.traefik.yaml",
+        "deployment/drive-clients.example.json",
+        "deployment/native-clients-lock.json",
+        "deployment/scope-mappings.example.json",
+        "deployment/test-refresh-worker.*",
+        "deployment/test-runtime.example.json"
+      ],
       "depends_on": [],
-      "tests": ["tests/test_rebuild_templates.py", "tests/test_realtime_origin.py", "tests/test_module_manifest.py", "tests/test_brand_assets.py", "tests/test_reboot_resilience.py", "tests/test_host_checks.py"],
+      "tests": [
+        "tests/test_rebuild_templates.py",
+        "tests/test_realtime_origin.py",
+        "tests/test_module_manifest.py",
+        "tests/test_brand_assets.py",
+        "tests/test_sso_proxy_trust.py",
+        "tests/test_reboot_resilience.py",
+        "tests/test_host_checks.py"
+      ],
       "upstream": [
-        {"name": "frappe_docker (official build recipe)", "license": "MIT", "url": "https://github.com/frappe/frappe_docker"},
-        {"name": "Coolify", "license": "Apache-2.0", "url": "https://github.com/coollabsio/coolify"},
-        {"name": "Traefik", "license": "MIT", "url": "https://github.com/traefik/traefik"},
-        {"name": "nginx", "license": "BSD-2-Clause", "url": "https://nginx.org"}
+        {
+          "name": "frappe_docker (official build recipe)",
+          "license": "MIT",
+          "url": "https://github.com/frappe/frappe_docker"
+        },
+        {
+          "name": "Coolify",
+          "license": "Apache-2.0",
+          "url": "https://github.com/coollabsio/coolify"
+        },
+        {
+          "name": "Traefik",
+          "license": "MIT",
+          "url": "https://github.com/traefik/traefik"
+        },
+        {
+          "name": "nginx",
+          "license": "BSD-2-Clause",
+          "url": "https://nginx.org"
+        }
       ]
     },
     {
@@ -153,9 +434,48 @@
       "title": "Permanent test site and one-way refresh",
       "summary": "Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, refresh button and progress, test profiles, egress policy and the verification tools used for acceptance.",
       "readme": "docs/modules/test-refresh.md",
-      "paths": ["erpnext_drive_integrations/operations/**", "erpnext_drive_integrations/portal/test_refresh.py", "erpnext_drive_integrations/public/test-refresh.*", "deployment/test-refresh-worker.*", "deployment/test-runtime.example.json", "tools/export_snapshot.py", "tools/cripple_snapshot.py", "tools/rehearse_cripple.py", "tools/backup_to_snapshot.py", "tools/snapshot_archive.py", "tools/test_refresh_worker.py", "tests/test_export_snapshot.py", "tests/test_test_oauth_clients.py", "tools/restore_test_data.py", "tools/activate_test_refresh.py", "tools/prepare_test_profiles.py", "tools/rehearse_empty_test.py", "tools/test_egress.py", "tools/verify_test_collaboration.py", "tools/verify_test_queues.py", "tools/verify_test_processing.py", "tests/test_refresh_boundary.py", "tests/test_refresh_status_files.py", "tests/test_restore_boundaries.py", "tests/test_snapshot_archive.py", "tests/test_backup_to_snapshot.py", "tests/test_cripple_snapshot.py"],
-      "depends_on": ["deployment", "erp-addon-shell"],
-      "tests": ["tests/test_export_snapshot.py", "tests/test_cripple_snapshot.py", "tests/test_backup_to_snapshot.py", "tests/test_test_oauth_clients.py", "tests/test_refresh_boundary.py", "tests/test_restore_boundaries.py", "tests/test_snapshot_archive.py"],
+      "paths": [
+        "erpnext_drive_integrations/operations/**",
+        "erpnext_drive_integrations/portal/test_refresh.py",
+        "erpnext_drive_integrations/public/test-refresh.*",
+        "deployment/test-refresh-worker.*",
+        "deployment/test-runtime.example.json",
+        "tools/export_snapshot.py",
+        "tools/cripple_snapshot.py",
+        "tools/rehearse_cripple.py",
+        "tools/backup_to_snapshot.py",
+        "tools/snapshot_archive.py",
+        "tools/test_refresh_worker.py",
+        "tests/test_export_snapshot.py",
+        "tests/test_test_oauth_clients.py",
+        "tools/restore_test_data.py",
+        "tools/activate_test_refresh.py",
+        "tools/prepare_test_profiles.py",
+        "tools/rehearse_empty_test.py",
+        "tools/test_egress.py",
+        "tools/verify_test_collaboration.py",
+        "tools/verify_test_queues.py",
+        "tools/verify_test_processing.py",
+        "tests/test_refresh_boundary.py",
+        "tests/test_refresh_status_files.py",
+        "tests/test_restore_boundaries.py",
+        "tests/test_snapshot_archive.py",
+        "tests/test_backup_to_snapshot.py",
+        "tests/test_cripple_snapshot.py"
+      ],
+      "depends_on": [
+        "deployment",
+        "erp-addon-shell"
+      ],
+      "tests": [
+        "tests/test_export_snapshot.py",
+        "tests/test_cripple_snapshot.py",
+        "tests/test_backup_to_snapshot.py",
+        "tests/test_test_oauth_clients.py",
+        "tests/test_refresh_boundary.py",
+        "tests/test_restore_boundaries.py",
+        "tests/test_snapshot_archive.py"
+      ],
       "upstream": []
     },
     {
@@ -192,10 +512,14 @@
       "paths": [
         "integrations/onlyoffice/**",
         "tests/test_onlyoffice_editor.py",
-        "deployment/config/onlyoffice-local-production-linux.json"
+        "deployment/config/onlyoffice-local-production-linux.json",
+        "tests/test_onlyoffice_private_views.py",
+        "tests/test_onlyoffice_sheetview_filter.py"
       ],
       "tests": [
-        "tests/test_onlyoffice_editor.py"
+        "tests/test_onlyoffice_editor.py",
+        "tests/test_onlyoffice_private_views.py",
+        "tests/test_onlyoffice_sheetview_filter.py"
       ],
       "depends_on": [
         "deployment"
@@ -217,10 +541,12 @@
         "integrations/website/**",
         "deployment/stacks/website.compose.json",
         "deployment/production/website.traefik.yaml",
-        "tests/test_website.py"
+        "tests/test_website.py",
+        "tests/test_website_zone_feedback.py"
       ],
       "tests": [
-        "tests/test_website.py"
+        "tests/test_website.py",
+        "tests/test_website_zone_feedback.py"
       ],
       "depends_on": [
         "deployment"
@@ -230,6 +556,40 @@
           "name": "nginx",
           "license": "BSD-2-Clause",
           "url": "https://nginx.org/"
+        }
+      ]
+    },
+    {
+      "id": "mobile-app",
+      "title": "Mobile app",
+      "summary": "Native iOS and Android app (Expo): passkey sign-in bound to the browser session, role-filtered menus, read-only lists and records, app lock, tablet split view and sunlight mode.",
+      "readme": "mobile/README.md",
+      "paths": [
+        "mobile/**",
+        "tests/test_mobile_app.py"
+      ],
+      "depends_on": [
+        "portal-sso",
+        "onboarding"
+      ],
+      "tests": [
+        "tests/test_mobile_app.py"
+      ],
+      "upstream": [
+        {
+          "name": "Expo and Expo Router",
+          "license": "MIT",
+          "url": "https://github.com/expo/expo"
+        },
+        {
+          "name": "React Native",
+          "license": "MIT",
+          "url": "https://github.com/facebook/react-native"
+        },
+        {
+          "name": "React",
+          "license": "MIT",
+          "url": "https://github.com/facebook/react"
         }
       ]
     }

@@ -12,6 +12,16 @@ import subprocess
 import yaml
 
 
+def native_site_settings(clients):
+    """Native apps under test (`"native": true` with a fixed client_id) become the
+    only native clients portal/mobile.py accepts on test; bootstrap otherwise keeps
+    native sign-in off on test copies."""
+    native=[c for c in clients if c.get('native')]
+    if any(not c.get('client_id') for c in native):raise ValueError('A native test OAuth client needs a fixed client_id')
+    if not native:return {}
+    return {'cloud_raven_mobile_enabled':True,'cloud_native_mobile_clients':[str(c['client_id']) for c in native]}
+
+
 def prepare(source,runtime,receipts,profile,output):
     source,runtime,receipts,output=map(lambda p:Path(p).resolve(),[source,runtime,receipts,output])
     if profile.get('tier')!='test':raise ValueError('Only test profiles are supported')
@@ -53,6 +63,12 @@ def prepare(source,runtime,receipts,profile,output):
     if profile.get('test_oauth_clients'):
         # P38: app OAuth clients blocked on production, re-enabled on test.
         erp['test_oauth_clients']=profile['test_oauth_clients']
+        erp['site_settings'].update(native_site_settings(profile['test_oauth_clients']))
+    # The test site's own look for shared pages (owner rule: separate asset sets); allow list only.
+    look=profile.get('erp_site_settings') or {}
+    allowed={'cloud_portal_hide_entity_name','cloud_portal_logo_height','cloud_portal_logo_position','cloud_portal_clean_root_address'}
+    if set(look)-allowed:raise ValueError('erp_site_settings may only set: '+', '.join(sorted(allowed)))
+    erp['site_settings'].update(look)
     form_smtp=profile.get('test_form_smtp')
     if form_smtp:
         # Owner-approved real form emails from the test copy (P38): a dedicated

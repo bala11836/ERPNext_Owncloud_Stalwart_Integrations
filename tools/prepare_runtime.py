@@ -172,7 +172,7 @@ def prepare(source, output, profile):
         if not (build/'pyproject.toml').is_file():
             raise ValueError('Unexpected rendered source directory')
     render(source, build, {'domain':profile['domain'], 'public_replacements':replacements,
-                           'company_logo':profile.get('company_logo'),'company_favicon_dir':profile.get('company_favicon_dir'),
+                           'company_logo':profile.get('company_logo'),'company_favicon_dir':profile.get('company_favicon_dir'),'landing_url':profile.get('landing_url'),
                            'asset_version':profile.get('commit')})
     projects = profile.get('projects',['erp','drive','editor','mail','dms','processing'])
     mounts = json.loads((source/'deployment/stacks/mounts.json').read_text())
@@ -219,9 +219,27 @@ def prepare(source, output, profile):
         zone = profile.get('website_zone_url') or 'https://'+hosts['erp']+'/'
         if not isinstance(zone, str) or not (zone.startswith('/') and not zone.startswith('//') or zone.startswith('https://')) or re.search(r'[\s"<>]', zone):
             raise ValueError('website_zone_url must be a path or an https URL')
+        # P63 demo options (defaults keep the production look): tagline (empty hides it), the entry
+        # link's label and style ("text" top left, or "badge" like the TEST SITE badge), its colour, the art.
+        tagline = profile.get('website_tagline', 'Launching soon...')
+        tagline = html.escape(tagline) if tagline == '' else text('website_tagline', 'Launching soon...')
+        label = text('website_zone_label', 'Employee Zone')
+        words = html.unescape(label).split()
+        label_html = ('<span id="z1">%s</span><span id="z2">%s</span>' % tuple(html.escape(w) for w in words)
+                      if len(words) == 2 else '<span>%s</span>' % label)
+        style = profile.get('website_zone_style', 'text')
+        art = profile.get('website_art', 'pencil')
+        color = profile.get('website_zone_color', '#1F3A5F')
+        if style not in ('text', 'badge') or art not in ('pencil', 'flower'):
+            raise ValueError('website_zone_style must be text or badge; website_art pencil or flower')
+        if not re.fullmatch(r'#[0-9A-Fa-f]{6}', color):
+            raise ValueError('website_zone_color must be a #RRGGBB colour')
+        classes = 'art-' + art + (' zone-badge' if style == 'badge' else '')
         page = site/'index.html'
         page.write_text(page.read_text().replace('__SITE_TITLE__', text('website_title', 'Welcome'))
-                        .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone))
+                        .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone)
+                        .replace('__SITE_TAGLINE__', tagline).replace('__ZONE_LABEL_HTML__', label_html)
+                        .replace('__PAGE_CLASSES__', classes).replace('__PAGE_STYLE__', '--zone-bg:' + color))
         placeholders = build/'erpnext_drive_integrations/public'
         logo = Path(profile['company_logo']) if profile.get('company_logo') else placeholders/'company-logo-approved-v6.svg'
         (site/'front').mkdir(exist_ok=True)
@@ -309,6 +327,13 @@ def prepare(source, output, profile):
         if profile.get('commit'):
             script['src']=url+'?v='+profile['commit']
     if config:
+        # Tenant-neutral web theme (white sign-in page, no upstream logo), served by
+        # oCIS from its web assets like the extension scripts above.
+        theme = drive_data/'web'/'assets'/'themes'/'cloud'
+        shutil.copytree(build/'integrations/drive/theme', theme, dirs_exist_ok=True)
+        if os.geteuid() == 0:
+            for item in [theme.parent, *theme.rglob('*'), theme]:
+                os.chown(item,1000,1000)
         drive_config = next(output/'mounts'/m['path'] for m in mounts if m['target']=='/etc/ocis')
         (drive_config/'web-with-picker.json').write_text(json.dumps(config,indent=2)+'\n')
 
@@ -325,7 +350,9 @@ def prepare(source, output, profile):
             webmail['volumes'].append(str(policy_file)+':/app/data/admin/policy.json:ro')
             ver='?v='+profile['commit'] if profile.get('commit') else ''
             logo='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'+ver
-            favicon='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-favicon.svg'+ver
+            favicon=profile.get('favicon_url') or 'https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-favicon.svg'+ver
+            if not re.fullmatch(r'https://[A-Za-z0-9.-]+/[A-Za-z0-9._/?=-]*', favicon):
+                raise ValueError('favicon_url must be an https URL')
             webmail['environment'].update({'FAVICON_URL':favicon,'LOGIN_LOGO_LIGHT_URL':logo,
                 'LOGIN_LOGO_DARK_URL':logo,'APP_LOGO_LIGHT_URL':'','APP_LOGO_DARK_URL':'','APP_NAME':'Mail'})
         for name, folder in existing_mounts.items():

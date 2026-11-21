@@ -26,6 +26,32 @@ discussion that led to a decision is not repeated here.
   [procedures](production-moves.md), `tests/test_reboot_resilience.py`,
   `tests/test_host_checks.py`.
 
+### Logout ends on the website; one passkey prompt per sign-in (P56)
+- **Decision:** every logout (ERP, Drive, Mail, DMS, the portal, idle logout)
+  ends on the company website. The address is named once, `sso.LANDING`,
+  rendered from the private profile (`landing_url`, default
+  `https://www.<domain>/`; the test site uses its own front page). Apps keep
+  handing over to the ERP's `/login?logged_out=1` (or `/signed-out`, which
+  first finishes a still-valid session); the ERP forwards to the landing
+  address, and authentik's logout flow redirects there after it ends the
+  gateway session. The ERP's sign-in no longer sends `prompt=login` with
+  `max_age=0`: it sends `max_age=600` and the callback accepts an
+  authentication from the last ten minutes.
+- **Why:** with `max_age=0` a passkey login that took a second already counted
+  as too old, so authentik asked twice; ten minutes keeps the intent (a recent
+  passkey login) without the second prompt. One named landing address avoids
+  five copies drifting apart, and changing only the ERP avoids rebuilding Mail
+  or restarting Drive and DMS.
+- **Where:** `erpnext_drive_integrations/portal/sso.py`, `tools/render_runtime.py`,
+  `tests/test_logout_and_signin.py`.
+
+### The portal page keeps its name; only the logo changed
+- **Decision (owner):** the portal page stays exactly as before (title, and the
+  company name beside the logo); only the logo is new, in the top-left brand
+  and in the auto-hiding menu's home button. This reverts the "Desk" label of
+  the previous release.
+- **Where:** `erpnext_drive_integrations/www/place_holder.*`, `tests/test_brand_assets.py`.
+
 ### Company front page on www; the bare domain redirects to it
 - **Decision:** the company address (`www`) serves a small static front page
   that is always reachable, signed in or not: an original pencil drawing of a
@@ -57,7 +83,7 @@ discussion that led to a decision is not repeated here.
 - **Where:** `erpnext_drive_integrations/public/module-header-20261115.js`,
   `tests/test_app_menu_link.py`.
 
-### Tenant branding is private; the portal page is called Desk
+### Tenant branding is private
 - **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are
   supplied through the private runtime profile (`company_logo`,
   `company_favicon_dir`), never stored in this repository, which ships only
@@ -319,3 +345,121 @@ discussion that led to a decision is not repeated here.
   allowed recipient numbers.
 - **Why:** the upstream webhook accepts unsigned posts; refreshed test data
   holds real contacts. **Where:** `erpnext_drive_integrations/whatsapp/`, P04.
+
+### App menu in two columns above five apps
+- **Decision:** the portal's auto-hiding app menu switches from one to two
+  balanced vertical columns when it lists more than five apps; the home button is
+  not counted so the layout does not change when it appears.
+- **Why:** with seven or more apps a single column no longer fits short
+  windows and needs scrolling. **Where:** `erpnext_drive_integrations/www/place_holder.html`,
+  `tests/test_portal_menu_columns.py`, P58.
+
+### Forwarded headers are trusted on the SSO host's private entry point from the test VM only
+- **Decision:** the SSO host's proxy trusts forwarded headers (`X-Forwarded-Uri` and the others) on the private
+  tailnet entry point used by the test sign-in bridge, and only from the test VM's exact address. The public entry
+  points never trust them. The Docker gateway address that was also on the bridge allow list is not trusted (it carries
+  other host and container traffic), and is to be dropped from the allow list.
+- **Why:** without it the proxy dropped the requested page, so the first sign-in on the test site (and the mobile app's
+  sign-in) landed on the landing page. Trusting only the bridge's real source keeps others from setting those headers.
+  Production-only setting: it cannot be exercised on the test site; it is checked in a browser right after it is
+  applied. **Where:** `tools/sso_proxy_trust.py`, `tools/prepare_auth_bridge.py`, the test rebuild runbook, P65.
+
+### A standing session routine, written into CLAUDE.md
+- **Decision:** `CLAUDE.md` tells every session (and every contributor's AI agent) to
+  read the latest handover and the priority list in the private operations
+  repository at the start, to update that repository after every production change,
+  and to write a handover when the owner closes the session. The private repository
+  holds records and private assets only, never secrets.
+- **Why:** continuity between sessions, machines and contributors without the owner
+  re-asking, and records that never lag behind production (a stack was missed in one
+  promotion and an incident went unrecorded until asked on 21 November 2026).
+  **Where:** `CLAUDE.md`, P59.
+
+### Work is organised in numbered P items, related ones taken up together
+- **Decision:** every piece of planned work is a **P item**: a numbered, self-contained
+  unit with a scope, a status and its dependencies, kept in the operations repository's
+  pending list. Numbers are never changed or reused, and commits, pull requests, release
+  records and handovers refer to them (for example P58). Related items (same module,
+  same stack, same decision, or one depends on the other) are built on one branch,
+  tested together and merged as one release, while each keeps its own status. The owner
+  decides what starts and when; every group still follows branch, test, merge, `main`,
+  production.
+- **Why:** development stays modular, with each module reusable on its own, and
+  continuity between working sessions, contributors and AI agents is simple: reading
+  the item and its status is enough, with no need to replay earlier conversations.
+  Grouping related items means a stack is changed and promoted once instead of several
+  times. **Where:** `docs/pending.md` in the operations repository (priority order and
+  usage at its top), `AGENTS.md` for the release order.
+
+### The P list is published in full, with identifiers replaced
+- **Decision:** the work list is kept in two forms: the private `docs/pending.md` in the
+  operations repository (source of truth) and the public `docs/p-list.md`, generated from
+  it. The public copy keeps every line, every reason and every priority; only the categories
+  that identify the deploying organisation or its servers are replaced by placeholders (organisation
+  name, host names, IP addresses, server paths and rollback folders, mail addresses, names of
+  people and of third parties' internal products, business file names, links to private
+  records). The generator never deletes or summarises a line, lists every substitution in a report
+  and refuses to publish while any sensitive token survives.
+- **Why:** the team and outside contributors need the roadmap and the reasons behind it to
+  work in modules and take up related items together; detail must not be lost in the
+  translation, and nothing identifying may leave the private repository. **Where:**
+  `docs/p-list.md`, `CLAUDE.md` (session routine, step 5), the private `tools/publish_p_list.py`.
+
+### The P list is organised by app
+- **Decision:** the work list is split into one list per app (ERP, portal, sign-in, Drive, editor, mail,
+  DMS, Raven and Insights, mobile, test site) plus `general` for platform and security items that belong to
+  no app; an index holds the usage rules, the priority order across all apps and by-app tables. An item has one
+  home and names the other apps it touches, with a state (open, in progress, blocked, parked, recurring,
+  done, closed). Numbers stay global. The split kept every line of every item.
+- **Why:** changes now land in every app, and one long list made it hard to see what is open for the app
+  being worked on; related items are taken up together per app, and the roadmap is easier to read for people
+  who work on one app. **Where:** `docs/p-list.md` (index) and `docs/p-list/<app>.md`; the private source is
+  `docs/pending.md` and `docs/pending/` in the operations repository.
+
+### Contributor access to the test site: own key, deploy-only, never the owner's key
+- **Decision:** a contributor who needs to install a branch on the test site gets their own SSH key (they send only
+  the public half), bound to a dedicated account whose forced command can only deploy a branch of the public
+  repository, with every deploy logged, plus access to the test host over the private network for that one port.
+  The owner's personal keys are never shared. Until that exists, a maintainer reviews the branch and installs it.
+- **Why:** a shared personal key cannot be revoked for one person, leaves no separate audit trail, and the test host
+  holds test secrets and a restricted route to the production export. **Where:** P54, P67; asked for on
+  21 November 2026 when the mobile app branch could not reach the test site.
+
+### Tests import the real module under test
+- **Decision:** unit tests may fake Frappe and external services, but not the project's own modules that the code
+  under test imports; and the repository checks resolve imports of the project's own names.
+- **Why:** a test that replaced `portal/combined.py` with a fake copy hid a leftover import of a function that does
+  not exist, so every native app request failed with HTTP 500 on the test site (21 November 2026). **Where:**
+  `tests/portal/test_mobile.py` (PR #15), P64, P68.
+
+### Only open work stays in the P list
+- **Decision:** a P item is removed from its app list as soon as the task is completed, or becomes redundant or
+  irrelevant. It leaves one line in the closed log (number, title, app, outcome, date, reason), so numbers are never
+  reused; its full text stays in the git history and the work itself in the release log and this file.
+- **Why:** the lists are what people work from; finished items made them long and hid what is still open. **Where:**
+  `docs/p-closed.md`, `docs/p-list/`, `CLAUDE.md` (session routine, step 6); the private `tools/p_close.py`.
+
+### Demo test site: the portal at `/` once signed in, and the landing page options (P63, P60 closed)
+- **Decision:** on a host that is both landing page and portal (the test site), `/` shows the landing page only to
+  visitors without an ERP session; signed-in people get the portal at `/`, so the address bar is as clean as on a
+  production ERP host. The rename of `/place_holder` to `/ezone` (P60) is dropped as redundant. The landing page gets
+  profile options for a demo (tagline, entry label, a corner badge and its colour, a flower-and-bee drawing). On the
+  test site the portal shows the logo alone (larger, no company name) and the clean address `/`, through that site's
+  own settings (see the next entry). The test refresh buttons sit in one row beside the logo with their dates under
+  them.
+- **Why:** owner, 21 November 2026: the demo site should look like a neutral product, the entry should take one
+  click and read "Apps", and the address should not show an internal page name. The landing page options default to
+  the production look. **Where:** `tools/prepare_ingress.py`, `tools/prepare_runtime.py`,
+  `integrations/website/`, `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.*`.
+
+### Production and test have separate asset sets
+- **Decision:** each site's look (logo, favicons, names, landing page options and the portal page's look) comes from
+  that site's own private settings and assets; shared code carries no site-specific look. The portal page reads its
+  site-specific look from site settings (`cloud_portal_hide_entity_name`, `cloud_portal_logo_height`,
+  `cloud_portal_logo_position`, `cloud_portal_clean_root_address`); with none set it is exactly production's page. The test site sets them through an
+  allow list (`erp_site_settings` in its private profile); the test-only stylesheet styles only the test refresh row.
+- **Why:** owner, 21 November 2026: a change to the test site's look must never change production. A guard test
+  renders the page as production sees it and checks that every site-specific part sits inside its setting.
+  **Where:** `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.css`, `tools/prepare_test_profiles.py`,
+  `tests/test_portal_site_look.py`.
+

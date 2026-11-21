@@ -78,6 +78,8 @@
         validating: 'Checking restored data…', 'updating-code': 'Updating test code to the approved release…',
         succeeded: state.kind === 'code' ? 'Code refresh completed.' : 'Data refresh completed.',
         failed})[state.phase] || 'Checking status…';
+      // Only a running, queued or failed refresh needs a line under the buttons.
+      progress.hidden = state.phase === 'idle' || state.phase === 'succeeded';
       for (const button of buttons) button.disabled = running.has(state.phase);
       clearTimeout(polling);
       if (running.has(state.phase)) {

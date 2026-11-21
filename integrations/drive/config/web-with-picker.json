@@ -1,6 +1,6 @@
 {
   "server": "https://drive.example.com",
-  "theme": "https://drive.example.com/themes/owncloud/theme.json",
+  "theme": "https://drive.example.com/themes/cloud/theme.json",
   "openIdConnect": {
     "metadata_url": "https://sso.example.com/.well-known/openid-configuration",
     "authority": "https://sso.example.com/",

@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "ERP",
+    "slug": "erp-mobile",
+    "version": "0.1.0",
+    "scheme": "erpmobile",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/images/icon.png",
+    "ios": {
+      "bundleIdentifier": "com.example.erp",
+      "supportsTablet": true,
+      "icon": "./assets/expo.icon"
+    },
+    "android": {
+      "package": "com.example.erp",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-web-browser",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Face ID unlocks this app."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

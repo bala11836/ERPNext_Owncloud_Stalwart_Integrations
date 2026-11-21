@@ -67,6 +67,23 @@ def prepare(profile):
     return {'http':{'routers':routers,'middlewares':middlewares}}
 
 
+
+def forwarded_trust(profile):
+    """Static setting for the SSO host's proxy (P65): trust forwarded headers on the bridge's private entry point
+    from the bridge sources only. Without it the proxy drops X-Forwarded-Uri sent by the test proxy, so the sign-in
+    gateway returns to "/" (the landing page) after the passkey instead of the requested page. The public entry
+    points are never changed. Returns (entrypoint, ranges) or None when there is no private bridge."""
+    private=profile.get('auth_bridge_private')
+    if not private:return None
+    entry=private['entrypoint']
+    if not re.fullmatch('[A-Za-z0-9-]+',entry) or entry in ('http','https','web','websecure'):raise ValueError('Invalid private entry point')
+    return entry,ranges_of(private['sources'])
+
+
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--profile',required=True);p.add_argument('--output',required=True)
-    a=p.parse_args();Path(a.output).write_text(yaml.safe_dump(prepare(json.loads(Path(a.profile).read_text())),sort_keys=False))
+    p=argparse.ArgumentParser();p.add_argument('--profile',required=True);p.add_argument('--output')
+    p.add_argument('--print-forwarded-trust',action='store_true',help='print the entry point and sources for tools/sso_proxy_trust.py')
+    a=p.parse_args();profile=json.loads(Path(a.profile).read_text())
+    if a.print_forwarded_trust:
+        trust=forwarded_trust(profile);print(json.dumps({'entrypoint':trust[0],'trusted':trust[1]} if trust else {}))
+    if a.output:Path(a.output).write_text(yaml.safe_dump(prepare(profile),sort_keys=False))

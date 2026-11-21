@@ -11,9 +11,19 @@ frappe = types.ModuleType('frappe')
 frappe.conf = {}
 frappe.get_all = lambda doctype, filters=None, pluck=None: [n for n, v in STORE.items() if v['app_name'] == filters['app_name']]
 frappe.db = types.SimpleNamespace(set_value=lambda doctype, name, values: STORE[name].update(values))
+
+
+class Doc(dict):
+    def insert(self, ignore_permissions=False, set_name=None):
+        STORE[set_name] = dict(self)
+
+
+frappe.get_doc = lambda values: Doc(values)
 sys.modules['frappe'] = frappe
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'tools'))
 from erpnext_drive_integrations.operations import bootstrap  # noqa: E402
+from prepare_test_profiles import native_site_settings  # noqa: E402
 
 BLOCKED = 'urn:blocked:production-test-only-app'
 
@@ -47,6 +57,33 @@ class TestOAuthClients(unittest.TestCase):
         with self.assertRaises(ValueError):
             bootstrap.restore_test_oauth_clients([{'app_name': 'Mobile', 'redirect_uris': 'app://cb',
                                                    'default_redirect_uri': 'evil://x'}])
+
+    def test_creates_a_missing_native_client_with_its_fixed_id(self):
+        out = bootstrap.restore_test_oauth_clients([{'app_name': 'ERP Mobile', 'client_id': 'mobile0test1',
+                                                     'redirect_uris': 'exp://10.0.0.5:8081/--/oauth/callback'}])
+        self.assertEqual(out, ['ERP Mobile'])
+        made = STORE['mobile0test1']
+        self.assertEqual((made['app_name'], made['grant_type'], made['response_type']), ('ERP Mobile', 'Authorization Code', 'Code'))
+        self.assertEqual(made['token_endpoint_auth_method'], 'None')
+        self.assertEqual(made['skip_authorization'], 0)
+        self.assertEqual(made['default_redirect_uri'], 'exp://10.0.0.5:8081/--/oauth/callback')
+        self.assertEqual(STORE['c1']['redirect_uris'], BLOCKED)
+
+    def test_an_existing_client_keeps_its_id(self):
+        bootstrap.restore_test_oauth_clients([{'app_name': 'Mobile', 'client_id': 'other0id1', 'redirect_uris': 'app://cb'}])
+        self.assertNotIn('other0id1', STORE)
+        self.assertEqual(STORE['c1']['redirect_uris'], 'app://cb')
+
+    def test_client_id_is_validated(self):
+        with self.assertRaises(ValueError):
+            bootstrap.restore_test_oauth_clients([{'app_name': 'New', 'client_id': '../x', 'redirect_uris': 'app://cb'}])
+
+    def test_only_native_clients_with_fixed_ids_enable_native_sign_in(self):
+        self.assertEqual(native_site_settings([{'app_name': 'Web', 'redirect_uris': 'https://x/cb'}]), {})
+        self.assertEqual(native_site_settings([{'app_name': 'ERP Mobile', 'client_id': 'mobile0test1', 'native': True}]),
+                         {'cloud_raven_mobile_enabled': True, 'cloud_native_mobile_clients': ['mobile0test1']})
+        with self.assertRaises(ValueError):
+            native_site_settings([{'app_name': 'ERP Mobile', 'native': True}])
 
     def tearDown(self):
         os.environ.pop('CLOUD_DEPLOYMENT_TIER', None)

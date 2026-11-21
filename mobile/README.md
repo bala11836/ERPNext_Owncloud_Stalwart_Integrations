@@ -37,11 +37,15 @@ push notifications and store releases.
 
 ## Reuse
 
-1. In ERPNext, create an **OAuth Client** for the app: grant type Authorization Code, response type Code,
-   redirect URI `<APP_SCHEME>://oauth/callback`. Add its ID to the site setting
-   `cloud_native_mobile_clients` so `portal/mobile.py` accepts it.
-2. While the app is under test, keep that client blocked on production and enabled on the test site only,
-   with any Expo Go redirect addresses in the private test profile (P38).
+1. In ERPNext, create an **OAuth Client** for the app (app name `ERP Mobile`): grant type Authorization Code,
+   response type Code, token endpoint auth method None, redirect URI `<APP_SCHEME>://oauth/callback`. Add its
+   ID to the site setting `cloud_native_mobile_clients` (with `cloud_raven_mobile_enabled`) so
+   `portal/mobile.py` accepts it.
+2. While the app is under test (P38), keep it off production and list it in the private test profile's
+   `test_oauth_clients` with `"native": true`, a fixed `client_id` and the Expo Go redirect addresses
+   (see `deployment/test-runtime.example.json`). Every test bootstrap then creates the client if it is
+   missing, restores its redirect addresses and makes it the only native client the test site accepts. The
+   test ingress (`tools/prepare_ingress.py`) carries production's native routes (`cloud-raven-native.yaml`).
 3. Copy `mobile/.env.example` to `mobile/.env` and fill in your values, then:
 
 ```bash

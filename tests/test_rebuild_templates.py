@@ -293,6 +293,23 @@ class Reconstruction(unittest.TestCase):
         self.assertEqual(http['middlewares']['isolated-onboarding-response-help']['redirectRegex']['regex'],
                          r'^https://test\-respond\.example\.net/?$')
         self.assertIn('isolated-private-admin',http['routers']['isolated-office-admin']['middlewares'])
+    def test_test_ingress_has_production_native_app_routes(self):
+        hosts={name:('test.example.net' if name=='erp' else 'test-'+name+'.example.net')
+               for name in ['erp','sso','drive','office','mail','dms','respond']}
+        http=ingress(ROOT,{'hosts':hosts,'ingress_prefix':'isolated'})['http']
+        production=yaml.safe_load((ROOT/'deployment/config/proxy/cloud-raven-native.yaml').read_text())['http']
+        for name,prod in production['routers'].items():
+            test=http['routers']['isolated-'+name]
+            self.assertEqual(test['rule'],prod['rule'].replace('erp.example.com','test.example.net'))
+            self.assertEqual(test['service'],'isolated-erp')
+            # Above the outpost-protected ERP route, as on production.
+            self.assertGreater(test['priority'],http['routers']['isolated-erp']['priority'])
+        bearer=http['routers']['isolated-cloud-raven-native']
+        self.assertEqual(bearer['middlewares'],['isolated-cloud-native-clean-headers','isolated-cloud-raven-native-auth'])
+        auth=http['middlewares']['isolated-cloud-raven-native-auth']['forwardAuth']
+        self.assertTrue(auth['address'].endswith('/api/method/erpnext_drive_integrations.portal.mobile.check_access'))
+        self.assertFalse(auth['trustForwardHeader'])
+        self.assertEqual(set(http['middlewares']['isolated-cloud-native-clean-headers']['headers']['customRequestHeaders'].values()),{''})
     def test_identity_graph_is_ordered_and_contains_no_user_credentials(self):
         entries=retained(json.loads((ROOT/'integrations/authentik/configuration.json').read_text())['entries'])
         seen=set()

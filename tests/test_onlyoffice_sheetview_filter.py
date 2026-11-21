@@ -90,25 +90,35 @@ class GuardTests(unittest.TestCase):
 
     def harness(self):
         block = re.search(r"/\* SHEET-VIEW-FILTER-GUARD-BEGIN \*/(.*?)/\* SHEET-VIEW-FILTER-GUARD-END \*/", EJS, re.S).group(1)
-        return ("var iframe={contentWindow:{Asc:{CT_NsvFilter:function(){this.wB=[]}}}};"
+        return ("var Ctor=function(){this.wB=[]};var iframe={contentWindow:{Asc:{CT_NsvFilter:Ctor}}};"
                 "document.querySelector=function(){return iframe};"
-                "var P=iframe.contentWindow.Asc.CT_NsvFilter.prototype;P.IU=" + ORIGINAL_IU + ";"
+                "var real=function(){return {filter:{IU:function(){return true}}}};"
+                "var P=Ctor.prototype;P.IU=" + ORIGINAL_IU + ";"
+                # a file with one empty and one real column filter, read by either reader
+                "P.Eh=function(){this.wB.push({filter:null});this.wB.push(real())};"
+                "P.zq=function(){this.wB.push({filter:null});this.wB.push(real())};"
+                "P.clone=function(){var c=new Ctor();c.wB=this.wB.slice();return c};"
+                "P.xh=function(){return this.wB.length};P.vD=function(){return this.wB.length};"
                 + block + "cloudInstallViewFilterGuard();"
                 "setTimeout(function(){var out={};"
-                "var real={filter:{IU:function(){return true}}},none={filter:null},plain={filter:{IU:function(){return false}}};"
-                "function run(entries){var v=new iframe.contentWindow.Asc.CT_NsvFilter();v.wB=entries;try{return String(v.IU())}catch(e){return 'THROWS '+e.message}}"
-                "out.guarded=P.IU.cloudSafe===true;"
-                "out.empty=run([none]);out.empty_then_real=run([none,real]);out.real=run([real]);out.plain=run([plain]);out.nothing=run([]);"
-                "document.title=JSON.stringify(out)},1500);")
+                "function nulls(v){return v.wB.filter(function(e){return !e.filter}).length}"
+                "var a=new Ctor();a.Eh();out.eh_len=a.wB.length;out.eh_nulls=nulls(a);"
+                "var b=new Ctor();b.zq();out.zq_len=b.wB.length;out.zq_nulls=nulls(b);"
+                "var c=new Ctor();c.wB=[{filter:null},real()];out.xh_written=c.xh();out.vD_written=c.vD();"
+                "var d=new Ctor();d.wB=[{filter:null},real()];var e=d.clone();out.clone_nulls=nulls(e);"
+                "var f=new Ctor();f.wB=[{filter:null}];try{out.iu_empty=String(f.IU())}catch(x){out.iu_empty='THROWS '+x.message}"
+                "var g=new Ctor();g.wB=[real()];out.iu_real=String(g.IU());"
+                "out.guarded=P.IU.cloudSafe===true;document.title=JSON.stringify(out)},1500);")
 
-    def test_original_method_throws_and_the_guard_makes_it_safe_without_changing_real_results(self):
+    def test_the_guard_drops_empty_entries_when_a_view_is_read_written_or_copied(self):
         result = self.run_page(self.harness())
         self.assertTrue(result["guarded"])
-        self.assertEqual(result["empty"], "null")             # no crash: nothing applied
-        self.assertEqual(result["empty_then_real"], "true")   # a real filter is still reported
-        self.assertEqual(result["real"], "true")
-        self.assertEqual(result["plain"], "null")
-        self.assertEqual(result["nothing"], "null")
+        self.assertEqual((result["eh_len"], result["eh_nulls"]), (1, 0))      # read: only the real filter remains
+        self.assertEqual((result["zq_len"], result["zq_nulls"]), (1, 0))
+        self.assertEqual((result["xh_written"], result["vD_written"]), (1, 1))  # write: nothing empty is saved or sent
+        self.assertEqual(result["clone_nulls"], 0)                              # copy
+        self.assertEqual(result["iu_empty"], "null")                            # IU() itself never throws
+        self.assertEqual(result["iu_real"], "true")                             # a real filter is still reported
 
     def test_the_unguarded_original_really_throws_the_reported_error(self):
         body = ("var P={};P.IU=" + ORIGINAL_IU + ";var v={wB:[{filter:null}],IU:P.IU};var m='';"
@@ -119,10 +129,12 @@ class GuardTests(unittest.TestCase):
         body = self.harness().replace("P.IU=" + ORIGINAL_IU + ";", "P.IU=function(){return 'fixed upstream'};")
         out = self.run_page(body)
         self.assertFalse(out["guarded"])
-        self.assertEqual(out["empty"], "fixed upstream")
+        self.assertEqual(out["iu_empty"], "fixed upstream")
+        self.assertEqual(out["eh_nulls"], 1)   # untouched: nothing was wrapped
 
-    def test_guard_is_installed_when_the_app_is_ready(self):
+    def test_guard_is_installed_as_soon_as_the_editor_frame_exists_and_again_when_the_app_is_ready(self):
         self.assertRegex(EJS, r'innerAlert\("App ready"\);\s*cloudInstallViewFilterGuard\(\);')
+        self.assertRegex(EJS, r'new DocsAPI\.DocEditor\("iframeEditor", config\);\s*cloudInstallViewFilterGuard\(\);')
 
 
 if __name__ == "__main__":

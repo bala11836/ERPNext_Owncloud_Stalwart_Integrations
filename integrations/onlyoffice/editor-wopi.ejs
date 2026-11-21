@@ -193,12 +193,15 @@ div {
         /* SHEET-VIEW-FILTER-GUARD-BEGIN */
         /* ONLYOFFICE 10.0.0 (build 169): a sheet view can hold a column filter with no filter
            inside (the saved file then has <columnFilter ...></columnFilter>). The editor writes
-           and clones such entries safely, but CT_NsvFilter.IU() ("is any filter applied") calls
-           .filter.IU() on every entry and throws "Cannot read properties of null (reading 'IU')".
-           The editor then fails to apply changes and the grid stays blank; every person who
-           opens the file is affected (SRN workbook, 20-21 Nov 2026). This replaces IU() with a
-           null-safe copy, only when the loaded build still has the unsafe form. */
+           and clones such entries, but several of its methods assume every entry has a filter
+           (CT_NsvFilter.IU() throws "Cannot read properties of null (reading 'IU')", others
+           "(reading 'FH')"), the editor fails to apply changes, the grid stays blank and the
+           workbook is unusable for everyone who opens it (SRN workbook, 20-21 Nov 2026).
+           Patching single methods is whack-a-mole, so empty entries are dropped wherever a view
+           is read, written or copied, and IU() is null-safe. Applied only when the loaded build
+           still has the unsafe IU(); a fixed upstream build is left alone. */
         var cloudInstallViewFilterGuard = function () {
+            if (cloudInstallViewFilterGuard.done) return;
             var tries = 0, t = setInterval(function () {
                 try {
                     var frame = document.querySelector('iframe[name="frameEditor"]');
@@ -206,7 +209,24 @@ div {
                     var P = w && w.Asc && w.Asc.CT_NsvFilter && w.Asc.CT_NsvFilter.prototype;
                     if (P && typeof P.IU === 'function') {
                         clearInterval(t);
+                        cloudInstallViewFilterGuard.done = true;
                         if (P.IU.cloudSafe || String(P.IU).indexOf('.filter).IU()') < 0) return;
+                        var drop = function (view) {
+                            if (view && view.wB && view.wB.length) {
+                                var kept = view.wB.filter(function (entry) { return entry && entry.filter; });
+                                if (kept.length !== view.wB.length) view.wB = kept;
+                            }
+                        };
+                        ['zq', 'Eh', 'clone'].forEach(function (name) {   /* read and copy: drop afterwards */
+                            var original = P[name];
+                            if (typeof original !== 'function') return;
+                            P[name] = function () { var result = original.apply(this, arguments); drop(this); drop(result); return result; };
+                        });
+                        ['xh', 'vD'].forEach(function (name) {            /* write: drop first, so nothing empty is saved or sent */
+                            var original = P[name];
+                            if (typeof original !== 'function') return;
+                            P[name] = function () { drop(this); return original.apply(this, arguments); };
+                        });
                         var safe = function () {
                             var found = null;
                             if (this.wB && this.wB.length) {
@@ -222,8 +242,8 @@ div {
                         return;
                     }
                 } catch (e) {}
-                if (++tries > 200) clearInterval(t);
-            }, 100);
+                if (++tries > 1200) clearInterval(t);   /* about 60 s at 50 ms */
+            }, 50);
         };
         /* SHEET-VIEW-FILTER-GUARD-END */
 
@@ -770,6 +790,7 @@ div {
 
             startTime = Date.now();
             docEditor = new DocsAPI.DocEditor("iframeEditor", config);
+            cloudInstallViewFilterGuard();   /* as early as the editor frame exists: views are read while the document loads */
 
             fixSize();
         };

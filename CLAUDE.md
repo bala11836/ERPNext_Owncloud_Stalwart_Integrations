@@ -36,10 +36,12 @@ Do these without being asked:
    abruptly.
 4. **P items:** related items are taken up together, tested together and merged as one
    release; each keeps its own status (see `docs/decisions.md`).
-5. **Publish the P list:** whenever the private `docs/pending.md` changes (new item, scope,
-   status or priority), regenerate the public `docs/p-list.md` in the same session with the
-   private repository's `tools/publish_p_list.py` and open a pull request here (the owner
-   merges). **Never skip details:** the tool changes text inside lines only, never removes or
+5. **Publish the P list:** the P list is organised by app: the private `docs/pending.md` is the
+   index and each item lives in `docs/pending/<app>.md` (`general` for platform and security
+   items). Whenever any of them changes (new item, scope, state or priority), run
+   `tools/p_index.py` and then regenerate the public `docs/p-list.md` and `docs/p-list/` in the same
+   session with the private repository's `tools/publish_p_list.py`, and open a pull request here (the
+   owner merges). **Never skip details:** the tool changes text inside lines only, never removes or
    summarises a line, and lists every substitution in its report; redact only the categories
    in its private rules file (organisation name, host names, IP addresses, server paths and
    rollback folders, mail addresses, names of people and third parties' internal products,

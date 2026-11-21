@@ -375,3 +375,14 @@ discussion that led to a decision is not repeated here.
   translation, and nothing identifying may leave the private repository. **Where:**
   `docs/p-list.md`, `CLAUDE.md` (session routine, step 5), the private `tools/publish_p_list.py`.
 
+### The P list is organised by app
+- **Decision:** the work list is split into one list per app (ERP, portal, sign-in, Drive, editor, mail,
+  DMS, Raven and Insights, mobile, test site) plus `general` for platform and security items that belong to
+  no app; an index holds the usage rules, the priority order across all apps and by-app tables. An item has one
+  home and names the other apps it touches, with a state (open, in progress, blocked, parked, recurring,
+  done, closed). Numbers stay global. The split kept every line of every item.
+- **Why:** changes now land in every app, and one long list made it hard to see what is open for the app
+  being worked on; related items are taken up together per app, and the roadmap is easier to read for people
+  who work on one app. **Where:** `docs/p-list.md` (index) and `docs/p-list/<app>.md`; the private source is
+  `docs/pending.md` and `docs/pending/` in the operations repository.
+

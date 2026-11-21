@@ -81,7 +81,8 @@
         "erpnext_drive_integrations/www/place_holder.*",
         "erpnext_drive_integrations/www/__init__.py",
         "tests/portal/**",
-        "tests/test_portal_menu_columns.py"
+        "tests/test_portal_menu_columns.py",
+        "tests/test_portal_site_look.py"
       ],
       "exclude": [
         "erpnext_drive_integrations/portal/test_refresh.py"
@@ -95,7 +96,8 @@
         "tests/test_logout_and_signin.py",
         "tests/test_portal_deep_link.py",
         "tests/portal/test_mobile.py",
-        "tests/test_portal_menu_columns.py"
+        "tests/test_portal_menu_columns.py",
+        "tests/test_portal_site_look.py"
       ],
       "upstream": [
         {

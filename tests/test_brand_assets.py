@@ -61,9 +61,10 @@ class BrandAssets(unittest.TestCase):
     def test_portal_page_keeps_its_name_and_shows_the_logo_in_the_menu(self):
         page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
         code = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
-        # Owner: exactly as before except the logo (company name beside it, same logo in the menu).
+        # Owner: same logo in the menu.
         self.assertIn("<title>Cloud</title>", page)
-        self.assertIn("context.entity_name = company or 'Applications'", code)
+        self.assertIn("else (company or 'Applications')", code)
+        self.assertIn(".ph-brand img{width:60px;height:60px;object-fit:contain}", page)
         self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_logo | e }}"', page)
         self.assertNotIn("Desk</title>", page)
         self.assertNotIn("entity_icon", page + code)

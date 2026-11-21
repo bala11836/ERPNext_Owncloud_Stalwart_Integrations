@@ -419,3 +419,27 @@ discussion that led to a decision is not repeated here.
 - **Why:** the lists are what people work from; finished items made them long and hid what is still open. **Where:**
   `docs/p-closed.md`, `docs/p-list/`, `CLAUDE.md` (session routine, step 6); the private `tools/p_close.py`.
 
+### Demo test site: the portal at `/` once signed in, and the landing page options (P63, P60 closed)
+- **Decision:** on a host that is both landing page and portal (the test site), `/` shows the landing page only to
+  visitors without an ERP session; signed-in people get the portal at `/`, so the address bar is as clean as on a
+  production ERP host. The rename of `/place_holder` to `/ezone` (P60) is dropped as redundant. The landing page gets
+  profile options for a demo (tagline, entry label, a corner badge and its colour, a flower-and-bee drawing). On the
+  test site the portal shows the logo alone (larger, no company name) and the clean address `/`, through that site's
+  own settings (see the next entry). The test refresh buttons sit in one row beside the logo with their dates under
+  them.
+- **Why:** owner, 21 November 2026: the demo site should look like a neutral product, the entry should take one
+  click and read "Apps", and the address should not show an internal page name. The landing page options default to
+  the production look. **Where:** `tools/prepare_ingress.py`, `tools/prepare_runtime.py`,
+  `integrations/website/`, `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.*`.
+
+### Production and test have separate asset sets
+- **Decision:** each site's look (logo, favicons, names, landing page options and the portal page's look) comes from
+  that site's own private settings and assets; shared code carries no site-specific look. The portal page reads its
+  site-specific look from site settings (`cloud_portal_hide_entity_name`, `cloud_portal_logo_height`,
+  `cloud_portal_logo_position`, `cloud_portal_clean_root_address`); with none set it is exactly production's page. The test site sets them through an
+  allow list (`erp_site_settings` in its private profile); the test-only stylesheet styles only the test refresh row.
+- **Why:** owner, 21 November 2026: a change to the test site's look must never change production. A guard test
+  renders the page as production sees it and checks that every site-specific part sits inside its setting.
+  **Where:** `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.css`, `tools/prepare_test_profiles.py`,
+  `tests/test_portal_site_look.py`.
+

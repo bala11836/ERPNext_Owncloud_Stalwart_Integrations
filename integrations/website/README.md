@@ -18,9 +18,12 @@ a server, no cookies and no access to business data.
   `www.example.com` and a redirect of the bare domain to it.
 - The test site serves the same page at the exact front path `/` of the test
   host plus its assets under `/front/` (`website_front_page` in the ingress
-  profile); every other path still
-  goes to the portal. For that, the portal's sign-in return address and its
-  Home button are `/place_holder` (the same page `/` showed before).
+  profile), but only to visitors without an ERP session: once signed in, `/`
+  is the portal, as on a production ERP host (P63). The gateway decides by the
+  ERP's own sign-in cookie (`system_user=yes`); signing out clears it, so the
+  front page comes back. Every other path still goes to the portal. The portal's
+  sign-in return address and Home button stay `/place_holder`; the page then
+  shows the clean address `/` in the address bar.
 
 ## Requirements
 Docker with the workspace network, the repository's renderer
@@ -36,6 +39,12 @@ Take `integrations/website/`, the stack and mount entries, and the renderer's
 Private profile keys (never in Git; for Mail, `favicon_url` may point at this page's `/front/favicon.svg`): `projects` includes `website`,
 `website_title`, `website_name` (page title and logo text), `website_zone_url`
 (a path or https URL; default the ERP host), `company_logo`,
+`website_tagline` (default `Launching soon...`; empty hides it),
+`website_zone_label` (default `Employee Zone`), `website_zone_style` (`text`
+top left, default, or `badge`: a small button in the top-left corner like the
+TEST SITE badge), `website_zone_color` (`#RRGGBB`, the badge colour) and
+`website_art` (`pencil`, the default drawing, or `flower`: a flower and a bee
+drawn line by line, then coloured, after the owner's sketch),
 `company_favicon_dir` (SVG and PNG 16, 32, 48, 180, 192, 512). Without them the
 page shows neutral placeholders. On production add the network alias
 `website-web-production` through `extra_networks` and install the route file

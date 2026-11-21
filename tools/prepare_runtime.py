@@ -204,9 +204,27 @@ def prepare(source, output, profile):
         zone = profile.get('website_zone_url') or 'https://'+hosts['erp']+'/'
         if not isinstance(zone, str) or not (zone.startswith('/') and not zone.startswith('//') or zone.startswith('https://')) or re.search(r'[\s"<>]', zone):
             raise ValueError('website_zone_url must be a path or an https URL')
+        # P63 demo options (defaults keep the production look): tagline (empty hides it), the entry
+        # link's label and style ("text" top left, or "badge" like the TEST SITE badge), its colour, the art.
+        tagline = profile.get('website_tagline', 'Launching soon...')
+        tagline = html.escape(tagline) if tagline == '' else text('website_tagline', 'Launching soon...')
+        label = text('website_zone_label', 'Employee Zone')
+        words = html.unescape(label).split()
+        label_html = ('<span id="z1">%s</span><span id="z2">%s</span>' % tuple(html.escape(w) for w in words)
+                      if len(words) == 2 else '<span>%s</span>' % label)
+        style = profile.get('website_zone_style', 'text')
+        art = profile.get('website_art', 'pencil')
+        color = profile.get('website_zone_color', '#1F3A5F')
+        if style not in ('text', 'badge') or art not in ('pencil', 'flower'):
+            raise ValueError('website_zone_style must be text or badge; website_art pencil or flower')
+        if not re.fullmatch(r'#[0-9A-Fa-f]{6}', color):
+            raise ValueError('website_zone_color must be a #RRGGBB colour')
+        classes = 'art-' + art + (' zone-badge' if style == 'badge' else '')
         page = site/'index.html'
         page.write_text(page.read_text().replace('__SITE_TITLE__', text('website_title', 'Welcome'))
-                        .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone))
+                        .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone)
+                        .replace('__SITE_TAGLINE__', tagline).replace('__ZONE_LABEL_HTML__', label_html)
+                        .replace('__PAGE_CLASSES__', classes).replace('__PAGE_STYLE__', '--zone-bg:' + color))
         placeholders = build/'erpnext_drive_integrations/public'
         logo = Path(profile['company_logo']) if profile.get('company_logo') else placeholders/'company-logo-approved-v6.svg'
         (site/'front').mkdir(exist_ok=True)

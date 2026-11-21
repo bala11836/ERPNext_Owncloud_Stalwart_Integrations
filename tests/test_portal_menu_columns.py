@@ -32,6 +32,9 @@ class PortalMenuColumnTests(unittest.TestCase):
         ):
             self.assertIn(rule, PAGE, rule)
 
+    def test_home_button_has_the_first_row_alone(self):
+        self.assertIn('#ph-sidebar.ph-two-cols #ph-home{column-span:all;', PAGE)
+
     def test_menu_is_centred_vertically_on_the_landing_screen_and_in_apps(self):
         self.assertIn('#ph-sidebar{position:fixed;left:10px;top:50%;transform:translateY(-50%);', PAGE)
         self.assertIn('body.ph-active #ph-sidebar{top:50%;', PAGE)

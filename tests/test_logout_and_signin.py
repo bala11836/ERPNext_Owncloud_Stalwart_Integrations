@@ -44,8 +44,14 @@ class LogoutLanding(unittest.TestCase):
             self.assertEqual(found.group(1), HANDOVER, path)
 
     def test_logged_out_and_signed_out_go_to_the_landing_address(self):
-        self.assertIn('if path == "/login" and frappe.form_dict.get("logged_out"):\n        redirect(LANDING)', SSO)
-        self.assertIn('redirect(FINISH)\n        redirect(LANDING)', SSO)
+        self.assertIn('if path == "/login" and frappe.form_dict.get("logged_out"):\n        redirect("/signed-out" if framed else LANDING)', SSO)
+        self.assertIn('if not framed:\n            redirect(LANDING)', SSO)
+
+    def test_a_framed_signout_stays_frameable_and_sign_in_leaves_the_frame(self):
+        # The landing page refuses framing, so a portal frame must not be sent there.
+        self.assertIn('framed = frappe.request.headers.get("Sec-Fetch-Dest") in ("iframe", "frame")', SSO)
+        page = (ROOT / 'erpnext_drive_integrations/www/signed_out.html').read_text()
+        self.assertIn('href="{{ signin_url | e }}" target="_top"', page)
         self.assertNotIn('redirect("https://erp.example.com/signed-out")', SSO)
         # finish_logout still ends the gateway session (its flow then redirects to the website).
         self.assertIn('redirect("https://erp.example.com/outpost.goauthentik.io/sign_out")', SSO)

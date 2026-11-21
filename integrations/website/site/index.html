@@ -41,14 +41,32 @@
   @keyframes opening { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
   .test-banner { position: fixed; top: 0; right: 0; z-index: 9; padding: 3px 12px; background: #e8590c; color: #fff; font: 700 11px/1.5 "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; border-bottom-left-radius: 8px; }
+  /* P63 options: the entry link as a badge top left (like the TEST SITE badge), and the art to show */
+  .zone-badge .zone { top: 0; left: 0; padding: 5px 18px; background: var(--zone-bg, #1F3A5F); color: #fff;
+          font: 700 13px/1.5 "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; border-bottom-right-radius: 8px; }
+  .zone-badge .zone span { display: inline; }
+  .zone-badge .zone:hover, .zone-badge .zone:focus-visible { text-decoration: none; filter: brightness(1.25); }
+  .art-flower .art { display: none; }
+  .art-pencil .flower { display: none; }
+  /* a hand-drawn flower and a bee (after the owner's sketch): outlines drawn first, then the colours come in */
+  .flower { position: fixed; right: 7vw; top: 50%; height: min(78vh, 640px); width: auto; transform: translateY(-50%); }
+  .art-flower .stage { padding-right: 24vw; }
+  @media (max-aspect-ratio: 1/1) { .flower { right: auto; left: 50%; top: auto; bottom: 2vh; height: 44vh; transform: translateX(-50%); }
+    .art-flower .stage { place-content: start center; padding: 16vh 0 0; } }
+  .flower .o { fill: none; stroke: #1d1d1d; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+  .flower .f { opacity: 0; animation: fillin .9s ease-out var(--fl) forwards; }
+  @keyframes fillin { to { opacity: 1; } }
+  .flower .bee { opacity: 0; animation: fillin .6s ease-out 4.6s forwards, hover 3.2s ease-in-out 5.2s infinite; transform-box: fill-box; }
+  @keyframes hover { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 50% { transform: translate(14px, -10px) rotate(-4deg); } }
   @media (prefers-reduced-motion: reduce) {
+    .flower .f, .flower .bee { animation: none; opacity: 1; }
     .d { animation: none; stroke-dashoffset: 0; }
     .logo, .zone { animation: none; opacity: 1; } .soon span { animation: none; opacity: 1; }
     .zone.opening { animation: none; opacity: .6; }
   }
 </style>
 </head>
-<body>
+<body class="__PAGE_CLASSES__" style="__PAGE_STYLE__">
   <svg class="art" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <defs><filter id="pencil" x="-2%" y="-2%" width="104%" height="104%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/></filter></defs>
     <g filter="url(#pencil)">
@@ -212,15 +230,50 @@
 <line x1="1432.0" y1="876.0" x2="1320.0" y2="856.0" pathLength="1" class="d" style="--dl:18.72s;--du:0.7s;stroke-width:1.0;opacity:0.6"/>
     </g>
   </svg>
-  <a class="zone" href="__EMPLOYEE_ZONE_URL__"><span id="z1">Employee</span><span id="z2">Zone</span></a>
+  <svg class="flower" viewBox="0 0 480 720" aria-hidden="true">
+    <ellipse class="o d" pathLength="1" cx="143.3" cy="162.3" rx="100" ry="66" transform="rotate(-145 143.3 162.3)" style="fill:#fff;--dl:0.40s;--du:.8s"/>
+    <ellipse class="o d" pathLength="1" cx="336.7" cy="162.3" rx="100" ry="66" transform="rotate(-35 336.7 162.3)" style="fill:#fff;--dl:1.00s;--du:.8s"/>
+    <ellipse class="o d" pathLength="1" cx="336.7" cy="297.7" rx="100" ry="66" transform="rotate(35 336.7 297.7)" style="fill:#fff;--dl:1.60s;--du:.8s"/>
+    <ellipse class="o d" pathLength="1" cx="143.3" cy="297.7" rx="100" ry="66" transform="rotate(145 143.3 297.7)" style="fill:#fff;--dl:2.20s;--du:.8s"/>
+    <path class="o d" pathLength="1" d="M240 290 C232 400 250 520 236 650" style="--dl:3.0s;--du:.8s;stroke:#1FA34A;stroke-width:9"/>
+    <path class="f" d="M234 648 C180 622 152 552 164 500 C212 528 238 590 234 648 Z" fill="#148A72" style="--fl:4.2s"/>
+    <path class="o d" pathLength="1" d="M234 648 C180 622 152 552 164 500 C212 528 238 590 234 648 Z" style="--dl:3.5s;--du:.6s;stroke:#1FA34A;stroke-width:6"/>
+    <path class="f" d="M238 650 C296 656 352 622 372 584 C318 574 266 598 238 650 Z" fill="#148A72" style="--fl:4.4s"/>
+    <path class="o d" pathLength="1" d="M238 650 C296 656 352 622 372 584 C318 574 266 598 238 650 Z" style="--dl:3.8s;--du:.6s;stroke:#1FA34A;stroke-width:6"/>
+    <circle class="f" cx="240" cy="230" r="58" fill="#F5A000" style="--fl:2.9s"/>
+    <circle class="o d" pathLength="1" cx="240" cy="230" r="58" style="--dl:2.6s;--du:.6s"/>
+    <circle class="f" cx="216" cy="210" r="5" fill="#E2541B" style="--fl:3.40s"/>
+    <circle class="f" cx="244" cy="196" r="5" fill="#E2541B" style="--fl:3.45s"/>
+    <circle class="f" cx="268" cy="214" r="5" fill="#E2541B" style="--fl:3.50s"/>
+    <circle class="f" cx="206" cy="236" r="5" fill="#E2541B" style="--fl:3.55s"/>
+    <circle class="f" cx="232" cy="230" r="5" fill="#E2541B" style="--fl:3.60s"/>
+    <circle class="f" cx="260" cy="238" r="5" fill="#E2541B" style="--fl:3.65s"/>
+    <circle class="f" cx="278" cy="228" r="5" fill="#E2541B" style="--fl:3.70s"/>
+    <circle class="f" cx="222" cy="256" r="5" fill="#E2541B" style="--fl:3.75s"/>
+    <circle class="f" cx="248" cy="262" r="5" fill="#E2541B" style="--fl:3.80s"/>
+    <circle class="f" cx="270" cy="258" r="5" fill="#E2541B" style="--fl:3.85s"/>
+    <circle class="f" cx="236" cy="216" r="5" fill="#E2541B" style="--fl:3.90s"/>
+    <circle class="f" cx="254" cy="224" r="5" fill="#E2541B" style="--fl:3.95s"/>
+    <g class="bee">
+      <ellipse cx="70" cy="52" rx="34" ry="21" fill="#F5A000" stroke="#1d1d1d" stroke-width="4"/>
+      <path d="M58 33 L58 71 M78 32 L78 72" stroke="#1d1d1d" stroke-width="8"/>
+      <ellipse cx="62" cy="24" rx="13" ry="9" fill="#fff" stroke="#1d1d1d" stroke-width="3"/>
+      <ellipse cx="82" cy="22" rx="13" ry="9" fill="#fff" stroke="#1d1d1d" stroke-width="3"/>
+      <circle cx="104" cy="50" r="9" fill="#1d1d1d"/>
+      <path d="M107 42 C114 28 122 26 126 32 M102 41 C104 26 112 20 118 24" fill="none" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+      <path d="M36 53 L22 57" stroke="#1d1d1d" stroke-width="3" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <a class="zone" href="__EMPLOYEE_ZONE_URL__">__ZONE_LABEL_HTML__</a>
   <main class="stage">
     <img class="logo" src="front/logo.svg" alt="__SITE_NAME__">
-    <p class="soon" id="soon" aria-label="Launching soon..."></p>
+    <p class="soon" id="soon" data-text="__SITE_TAGLINE__" aria-label="__SITE_TAGLINE__"></p>
   </main>
 <script>
 (function () {
   if (/^test[.-]/.test(location.hostname)) { var b = document.createElement("div"); b.className = "test-banner"; b.textContent = "TEST SITE"; document.body.appendChild(b); }
-  var text = 'Launching soon...', el = document.getElementById('soon');
+  var el = document.getElementById('soon'), text = el.getAttribute('data-text') || '';
+  if (!text) el.hidden = true;
   var calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   el.innerHTML = Array.from(text).map(function (c, i) {
     return '<span style="animation-delay:' + (calm ? 0 : (1.6 + i * 0.13)).toFixed(2) + 's">' + (c === ' ' ? '&nbsp;' : c) + '</span>';
@@ -228,6 +281,7 @@
   // squeeze "Employee" to exactly the width of "Zone" (natural spacing for Zone)
   function match() {
     var a = document.getElementById('z1'), b = document.getElementById('z2');
+    if (!a || !b) return;   // one-word label or a badge: nothing to match
     a.style.transform = 'none';
     var wa = a.getBoundingClientRect().width, wb = b.getBoundingClientRect().width;
     if (wa > 0) a.style.transform = 'scaleX(' + (wb / wa) + ')';

@@ -55,7 +55,12 @@ def prepare(source, profile):
         # P47: the company front page answers the exact front path of the host and
         # its own assets under /front/; every other path keeps going to the portal
         # and the ERP unchanged.
-        route('website-front',hosts['erp'],'website',priority=5000,path='(Path(`/`) || PathPrefix(`/front/`))')
+        # P63: on a host that is both landing page and portal, "/" shows the landing page only to
+        # visitors without an ERP session (the ERP's own sign-in cookie system_user=yes); signed-in
+        # people get the portal at "/" with a clean address, as on a production ERP host.
+        signed_in='HeaderRegexp(`Cookie`, `(^|;[ ]*)system_user=yes`)'
+        route('website-front',hosts['erp'],'website',priority=5000,path='(Path(`/`) && !'+signed_in+')')
+        route('website-assets',hosts['erp'],'website',priority=5000,path='PathPrefix(`/front/`)')
     route('outpost',hosts['erp'],'sso',300,'PathPrefix(`/outpost.goauthentik.io/`)')
     # These app endpoints perform their own signed OIDC / CSRF / token checks.
     # Only the exact public bootstrap/static endpoints bypass the outpost.

@@ -419,3 +419,16 @@ discussion that led to a decision is not repeated here.
 - **Why:** the lists are what people work from; finished items made them long and hid what is still open. **Where:**
   `docs/p-closed.md`, `docs/p-list/`, `CLAUDE.md` (session routine, step 6); the private `tools/p_close.py`.
 
+### Demo test site: the portal at `/` once signed in, and the landing page options (P63, P60 closed)
+- **Decision:** on a host that is both landing page and portal (the test site), `/` shows the landing page only to
+  visitors without an ERP session; signed-in people get the portal at `/`, so the address bar is as clean as on a
+  production ERP host. The rename of `/place_holder` to `/ezone` (P60) is dropped as redundant. The landing page gets
+  profile options for a demo (tagline, entry label, a corner badge and its colour, a flower-and-bee drawing), and a
+  site may hide the company name beside the portal logo (`cloud_portal_hide_entity_name`, set on test through
+  `erp_site_settings`). The test refresh buttons sit in one row beside the logo with their dates under them.
+- **Why:** owner, 21 November 2026: the demo site should look like a neutral product, the entry should take one
+  click and read "Apps", and the address should not show an internal page name. Production keeps its look; every
+  option defaults to it. **Where:** `tools/prepare_ingress.py`, `tools/prepare_runtime.py`,
+  `integrations/website/`, `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.*`,
+  `tools/prepare_test_profiles.py`.
+

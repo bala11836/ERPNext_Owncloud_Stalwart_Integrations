@@ -41,7 +41,7 @@ class WebsiteModule(unittest.TestCase):
         self.assertNotIn("sriramki", page.lower())
         self.assertNotIn("unsplash", page.lower())          # our own drawing, no photo credit
         self.assertIn("text-transform: uppercase", page)     # EMPLOYEE / ZONE in capitals
-        self.assertIn("Launching soon...", page)
+        self.assertIn('data-text="__SITE_TAGLINE__"', page)     # tagline from the profile (default "Launching soon...")
         # The full-viewport stage sits above the Employee Zone link in the DOM; it must
         # not intercept clicks, and the link must stack above it (owner-reported defect).
         stage = re.search(r"\.stage \{([^}]*)\}", page).group(1)
@@ -120,11 +120,35 @@ class WebsiteModule(unittest.TestCase):
         front = http["routers"]["isolated-website-front"] if "isolated-website-front" in http["routers"] else \
             next(v for k, v in http["routers"].items() if k.endswith("website-front"))
         portal = next(v for k, v in http["routers"].items() if k.endswith("-erp") or k == "isolated-erp")
-        self.assertEqual(front["rule"], "Host(`test.example.net`) && (Path(`/`) || PathPrefix(`/front/`))")
+        # P63: "/" is the front page only without an ERP session; signed-in people get the portal there.
+        self.assertEqual(front["rule"], "Host(`test.example.net`) && (Path(`/`) && !HeaderRegexp(`Cookie`, `(^|;[ ]*)system_user=yes`))")
+        assets = next(v for k, v in http["routers"].items() if k.endswith("website-assets"))
+        self.assertEqual(assets["rule"], "Host(`test.example.net`) && PathPrefix(`/front/`)")
+        self.assertFalse(assets.get("middlewares"))
         self.assertGreater(front["priority"], portal["priority"])
         self.assertFalse(front.get("middlewares"))           # public page: no sign-in middleware
         plain = ingress(ROOT, {"hosts": HOSTS, "ingress_prefix": "isolated"})["http"]["routers"]
         self.assertFalse([k for k in plain if k.endswith("website-front")])
+
+    def test_demo_options_tagline_label_badge_and_art(self):
+        page = (render() / "mounts/website_web_0/index.html").read_text()
+        self.assertIn('data-text="Launching soon..."', page)          # production look by default
+        self.assertIn('<span id="z1">Employee</span><span id="z2">Zone</span>', page)
+        self.assertIn('class="art-pencil"', page)
+        demo = (render(website_tagline="", website_zone_label="Apps", website_zone_style="badge",
+                       website_zone_color="#1F3A5F", website_art="flower") / "mounts/website_web_0/index.html").read_text()
+        self.assertIn('data-text=""', demo)
+        self.assertIn('href="https://test.example.net/"><span>Apps</span></a>', demo)
+        self.assertIn('class="art-flower zone-badge" style="--zone-bg:#1F3A5F"', demo)
+        self.assertNotIn("__", re.sub(r"__[a-z]", "", demo.split("<body", 1)[1]))   # every placeholder filled
+        for key, value in (("website_zone_style", "big"), ("website_art", "photo"),
+                           ("website_zone_color", "red;x:1"), ("website_zone_label", "<b>")):
+            with self.assertRaises(ValueError, msg=key):
+                render(**{key: value})
+
+    def test_portal_shows_a_clean_address_at_the_root(self):
+        page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
+        self.assertIn("if(location.pathname==='/place_holder')history.replaceState(", page)
 
     def test_portal_returns_to_its_own_page_so_the_front_page_can_own_the_front_path(self):
         page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()

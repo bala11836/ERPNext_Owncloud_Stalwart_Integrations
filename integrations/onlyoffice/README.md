@@ -117,3 +117,24 @@ in `deployment/config/onlyoffice-local-production-linux.json`.
 Developed with AI assistance (Claude); the owner reviews and is responsible.
 
 Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the renderer) this module shows the shared TEST SITE marker, a 3px striped top line with a small tab, top window only, no layout space. Editor: in the start page, when the office host is opened directly.
+
+## Sheet views that crash the editor (21 November 2026)
+
+ONLYOFFICE 10.0.0 (build 169) can save a sheet view with a column filter that has nothing
+inside it (`<columnFilter colId="5" id="{...}"></columnFilter>`). The editor's own
+`IU()` method ("is any filter applied") then throws `Cannot read properties of null
+(reading 'IU')` when it applies the view; the grid stays blank and the file is unusable for
+everyone who opens it. It happened to the shared SRN workbook between 15:32 and 16:16 IST on
+20 November (the first save with such a filter is in that window; none before it).
+
+- **Guard** (`SHEET-VIEW-FILTER-GUARD` block of `editor-wopi.ejs`, installed when the editor
+  app is ready): replaces `Asc.CT_NsvFilter.prototype.IU` by a null-safe copy, only when the
+  loaded build still has the unsafe form, so a fixed upstream build is left alone. Remove the
+  guard when the pinned image is upgraded to a build that no longer needs it.
+- **Repair tool** (`sheetview_sanitize.py IN.xlsx OUT.xlsx [--temporary] [--drop-all-views]`):
+  removes only empty column filters (optionally the empty "Temporary View N" shells, or every
+  view as a last resort) and keeps every other byte of the workbook; run it on a copy and upload
+  the result as a new file or a new version. `IN.xlsx` alone only reports.
+- Tests: `tests/test_onlyoffice_sheetview_filter.py` (reproduces the exact error with the
+  editor's original method in headless Chrome).
+

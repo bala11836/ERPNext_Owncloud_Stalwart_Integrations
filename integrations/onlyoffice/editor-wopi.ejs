@@ -187,7 +187,45 @@ div {
                 "Status": "Document_Loaded"
             });
             innerAlert("App ready");
+            cloudInstallViewFilterGuard();
         };
+
+        /* SHEET-VIEW-FILTER-GUARD-BEGIN */
+        /* ONLYOFFICE 10.0.0 (build 169): a sheet view can hold a column filter with no filter
+           inside (the saved file then has <columnFilter ...></columnFilter>). The editor writes
+           and clones such entries safely, but CT_NsvFilter.IU() ("is any filter applied") calls
+           .filter.IU() on every entry and throws "Cannot read properties of null (reading 'IU')".
+           The editor then fails to apply changes and the grid stays blank; every person who
+           opens the file is affected (SRN workbook, 20-21 Nov 2026). This replaces IU() with a
+           null-safe copy, only when the loaded build still has the unsafe form. */
+        var cloudInstallViewFilterGuard = function () {
+            var tries = 0, t = setInterval(function () {
+                try {
+                    var frame = document.querySelector('iframe[name="frameEditor"]');
+                    var w = frame && frame.contentWindow;
+                    var P = w && w.Asc && w.Asc.CT_NsvFilter && w.Asc.CT_NsvFilter.prototype;
+                    if (P && typeof P.IU === 'function') {
+                        clearInterval(t);
+                        if (P.IU.cloudSafe || String(P.IU).indexOf('.filter).IU()') < 0) return;
+                        var safe = function () {
+                            var found = null;
+                            if (this.wB && this.wB.length) {
+                                for (var i = 0; i < this.wB.length; i++) {
+                                    var entry = this.wB[i];
+                                    if (entry && entry.filter && entry.filter.IU()) { found = true; break; }
+                                }
+                            }
+                            return found;
+                        };
+                        safe.cloudSafe = true;
+                        P.IU = safe;
+                        return;
+                    }
+                } catch (e) {}
+                if (++tries > 200) clearInterval(t);
+            }, 100);
+        };
+        /* SHEET-VIEW-FILTER-GUARD-END */
 
         var sendEditNotification = function () {
             documentChanged && _postMessage('Edit_Notification', {});

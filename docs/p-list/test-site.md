@@ -69,6 +69,10 @@ P35 (public sharing). The owner wants `test.example.com` usable as a **demo**. I
 already crippled (names and identities of non-kept users removed, 60 days only); now every
 trace of the tenant goes too.
 
+**Intent (owner restatement, 21 November 2026):** (i) totally clean demo data on the test site, with no trace of
+the tenant after every refresh; (ii) authentik shows its own UN/format brand when signing in to the demo; (iii) test
+mail and messages reach only the people enrolled for testing (scope 5).
+
 **Scope**
 1. **Remove the tenant everywhere on the test site:** the name <tenant> and the company logo
    from the landing page, portal (eZone), sign-in pages, favicons (ERP, portal, authentik, webmail,
@@ -88,19 +92,32 @@ trace of the tenant goes too.
    private assets as `assets/demo-landing/sample-flower-bee-owner-sketch.webp`: a flower with
    orange centre, green stem and leaves, and a small bee). Our own vector artwork, redrawn
    (rights: owner's own sketch and our own drawing), and drawn stroke by stroke like the
-   production landing page; keep the "Employee Zone" entry and the typed line.
+   production landing page. (Owner, 21 November 2026: the entry reads "Apps" as a badge top left and the typed
+   line is dropped on the demo; see the progress notes.)
 4. **Mechanism:** tenant branding already lives in the private runtime profile (`company_logo`,
    `company_favicon_dir`, website title and name, landing assets, P55), so the demo brand is
    a second set of private assets selected by the test profile; production keeps its own. The
    public repository stays tenant-neutral; the UN/format logo and demo art may be published
    as the neutral default.
 
+5. **Outbound mail and messages only to the test group (owner, 21 November 2026; replaces "mute"):** muting
+   e-mail and messages on the test site is not acceptable, because flows such as invitations, approvals, purchase
+   orders and WhatsApp replies must be tested end to end. Instead every outbound channel (ERP mail, Mail/Stalwart
+   relay, WhatsApp and other messaging, push) delivers **only to recipients enrolled in the test group** and drops or
+   holds everything else (with a log line, never a silent loss). **Employees** are enrolled through authentik (a
+   test group, for example the existing Testers group). **Vendors get no login**, so they need a separate enrolment:
+   to decide how (for example a "test recipients" list of vendor mail addresses and phone numbers kept in the private
+   test profile, or a flag on the Supplier record that a refresh keeps), who may add them, and their consent. The
+   refresh must keep the allow list (production data never widens it) and a check must prove that a message to a
+   non-enrolled address is not sent. This changes the documented outbound safeguard: record it in
+   `docs/decisions.md` and the test-refresh module README when adopted.
+
 **Open questions for planning:** (a) test and production **share one authentik**, and its brand
 is chosen by the request's host name (`sso`), so the sign-in page cannot show the demo logo for test
 only without a separate sign-in host name for the demo (or accepting the shared page); (b) who may
 see the demo (the Testers group, or public with sample accounts) and whether the TEST SITE
 marker stays; (c) demo user accounts and passwords stay out of Git; (d) outbound
-mail and integrations stay quarantined as today.
+mail and integrations: answered by scope 5 (allow list of the test group instead of quarantine); open: how vendors are enrolled.
 
 **Progress (21 November 2026): demo logo live on the test site.** Owner chose option **A, navy and orange**
 (`#1F3A5F` UN, `#E8731A` format) from five combinations (A navy/orange, B graphite/teal, C green/amber, D

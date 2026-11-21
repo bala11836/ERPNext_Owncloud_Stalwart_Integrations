@@ -49,3 +49,30 @@ Discuss portal/webmail versus native Mail clients and required JMAP/IMAP/POP/sub
 **Status:** planned migration; source identities, domain, sizes, destination mappings, tooling and cutover are not yet specified. This is separate from the earlier retired local-server no-migration decision.
 
 Keep email, folders/labels and sent-mail scope; exclude contacts, calendars and Google Drive. Inventory and map source/destination access, plan deduplication and capacity/recovery, preserve source messages and historical MIME, validate initial/catch-up copies, then separately agree mail DNS cutover and rollback. Google Workspace cancellation or other-product changes are not authorized. No mail copying or DNS changes are started. See [migration scope](../roadmap.md#5-three-google-workspace-mailboxes).
+
+### P69 — Mail retention: keep every message, users cannot delete permanently
+
+**App:** mail · **Also touches:** general · **State:** open
+
+**Status:** open, owner request 21 November 2026; not started.
+
+Configure Stalwart so that company mail is **retained** and a user cannot remove it for good: deleting in webmail,
+phone or desktop clients must not destroy the company's copy. Plan first, then test on the test site, then production.
+
+**To decide and verify:**
+1. **Mechanism:** (a) a journal or archive copy of every incoming and outgoing message delivered to an archive
+   mailbox or store that ordinary users cannot open or change (Sieve or routing rule on the server, so no client can
+   bypass it); (b) server-side protection of the users' own mailboxes (deny expunge, or keep deleted messages for a
+   retention period); (c) both. Check which of these the installed Stalwart version supports natively and which need
+   an Enterprise licence; no unsupported patches.
+2. **Retention period** per mailbox or role (for example years for business mail; Indian legal requirements for
+   accounts, tax and contract correspondence to be confirmed by the owner), and what happens after it.
+3. **Who may search or restore** archived mail (owner only, or a compliance role), with an access log; staff are told
+   that company mail is retained (privacy notice, as in P48's DPDP notice).
+4. **Storage and backups:** size estimate, the archive included in the nightly encrypted backup (P02/P40) and its
+   restore tested; the ransomware protections apply.
+5. **Scope:** all company mailboxes including the three migrated Google mailboxes (P19); shared and system senders.
+
+**Acceptance:** on test, a user deletes and empties trash for a message in webmail and in an IMAP client; the archive
+still holds it and the owner can retrieve it; a user cannot reach the archive; the backup contains it and restores.
+

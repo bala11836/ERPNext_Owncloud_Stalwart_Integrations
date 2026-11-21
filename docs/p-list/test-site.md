@@ -112,3 +112,28 @@ only without a separate sign-in host name for the demo (or accepting the shared 
 see the demo (the Testers group, or public with sample accounts) and whether the TEST SITE
 marker stays; (c) demo user accounts and passwords stay out of Git; (d) outbound
 mail and integrations stay quarantined as today.
+
+### P65 — Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped)
+
+**App:** test-site · **Also touches:** signin, general · **State:** blocked
+
+**Status:** owner decision needed (found 21 November 2026, mobile app on test). The test site reaches the sign-in
+service through the production proxy's private (tailnet) entry point, which does not trust forwarded headers from the
+test VM, so `X-Forwarded-Uri` is dropped and the sign-in gateway returns to `/` after the passkey. Since 20 November `/`
+on the test host is the landing page (P47), so the first sign-in lands there; a second tap works because the gateway
+session exists. Two weeks earlier the test host had its own public address and `/` was the portal, so nobody saw it.
+**Options:** trust forwarded headers on that entry point for the bridge sources only (production proxy setting,
+low exposure: tailnet-only entry point, fixed sources); or accept the second tap. A change of the post-sign-in
+default page would not help (it changes where you land, not the lost request). Test first where possible; a
+production-only setting gets a browser and protocol check right after promotion.
+
+### P66 — Errors on the test site are invisible: Error Log rows stay queued
+
+**App:** test-site · **Also touches:** general, erp · **State:** open
+
+**Status:** open (found 21 November 2026). Frappe writes Error Log rows by a deferred insert that the scheduler
+flushes; the business scheduler is deliberately off on the test copy, so every error stays in the Redis cache queue
+(`insert_queue_for_Error Log`, 39 records on 21 November) and the Error Log list looks empty. Diagnosis needed reading
+the queue by hand. **Fix:** flush the deferred inserts on test on a short timer (only that job, not the business
+scheduler), or a small read tool; plus an alarm on new error records (with P61's alarms). Check whether production
+flushes them (its scheduler runs).

@@ -153,6 +153,24 @@ sign-in via the relayed test host returns to the front page because the producti
 drops `X-Forwarded-Uri`; fix = trust forwarded headers on that entry point for the bridge sources only (a production
 proxy setting). His own SSH access (forced-command deploy key plus a tailnet share) follows P54. **Later the same day:** the app's 500 after sign-in was a server
 bug (`portal/mobile.py` imported a non-existent `before_request`); fixed in PR #15 (`4d28354`), installed on test,
-app requests now succeed. The same line is latent on production: promote it with PR #15 (ERP release).
+app requests now succeed. The same line is latent on production: promote it with PR #15 (ERP release). **Naming (owner, 21 November 2026):** one universal app name with no company name, **"ERP Mobile"**,
+for the app title, its sign-in record and its link scheme (`erpmobile`); on test the client id is `erpmobiletest1`.
 
+### P64 — Native app sign-in on production: latent auth-hook crash and a stale client list
 
+**App:** mobile · **Also touches:** signin, erp · **State:** open
+
+**Status:** open, found 21 November 2026 while connecting the mobile app (PR #15) to the test site.
+- **Flaw:** `portal/mobile.py` (the `auth_hooks` entry) imported `before_request` from `portal/combined.py`, a
+  function that never existed in this repository (a leftover of the retired pre-repository Suite role guard). Every
+  Bearer request from an approved native client failed with ImportError (HTTP 500) before reaching the app's API.
+  The existing test replaced `combined` with a fake module that still had the function, so it could not catch this.
+- **Fixed on test:** colleague's commit `4d28354` (PR #15) removes the call and makes the test import the real module;
+  installed on the test site 21 November 10:19 UTC; app requests succeed since (check_access and the app's bootstrap 200).
+- **Production:** the same line is live, native sign-in is on (`cloud_raven_mobile_enabled`), but the native client
+  list (`cloud_native_mobile_clients` and the legacy `unformat_native_mobile_clients`) names `psvrvmandb`, the
+  colleague's old client that was deleted from production on 20 November (P38). So nothing can trigger it today, and
+  the setting is stale. Only "Raven Mobile" exists as an OAuth client on production, and it is not in the native list.
+- **To do (normal order):** merge PR #15, ERP release with a rollback point; when the app goes to production (P50),
+  create its client and set the native list to it (drop the stale id and the legacy key); browser and phone check after
+  promotion. Decide whether Raven Mobile should be a native client.

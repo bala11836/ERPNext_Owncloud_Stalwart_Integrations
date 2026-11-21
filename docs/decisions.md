@@ -386,3 +386,19 @@ discussion that led to a decision is not repeated here.
   who work on one app. **Where:** `docs/p-list.md` (index) and `docs/p-list/<app>.md`; the private source is
   `docs/pending.md` and `docs/pending/` in the operations repository.
 
+### Contributor access to the test site: own key, deploy-only, never the owner's key
+- **Decision:** a contributor who needs to install a branch on the test site gets their own SSH key (they send only
+  the public half), bound to a dedicated account whose forced command can only deploy a branch of the public
+  repository, with every deploy logged, plus access to the test host over the private network for that one port.
+  The owner's personal keys are never shared. Until that exists, a maintainer reviews the branch and installs it.
+- **Why:** a shared personal key cannot be revoked for one person, leaves no separate audit trail, and the test host
+  holds test secrets and a restricted route to the production export. **Where:** P54, P67; asked for on
+  21 November 2026 when the mobile app branch could not reach the test site.
+
+### Tests import the real module under test
+- **Decision:** unit tests may fake Frappe and external services, but not the project's own modules that the code
+  under test imports; and the repository checks resolve imports of the project's own names.
+- **Why:** a test that replaced `portal/combined.py` with a fake copy hid a leftover import of a function that does
+  not exist, so every native app request failed with HTTP 500 on the test site (21 November 2026). **Where:**
+  `tests/portal/test_mobile.py` (PR #15), P64, P68.
+

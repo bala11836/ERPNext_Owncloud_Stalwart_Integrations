@@ -468,3 +468,26 @@ scheduled agent), reading only public sources and this repository's pins. First 
 a baseline report of everything that is behind its latest stable release; dry-run for a
 week before any message is sent; keep a short false-positive list. Related: P59 (drift
 check), P57, P61, P42.
+
+### P67 — Test deployments: one complete step, no hand-run pieces or drifting profiles
+
+**App:** general · **Also touches:** test-site · **State:** open
+
+**Status:** open (found 21 November 2026 installing PR #15). The test deploy script (also behind "Refresh code")
+renders the stacks and rebuilds images, but not the test gateway file (`prepare_ingress.py`), the test profiles
+(`prepare_test_profiles.py`) or the ERP setup (bootstrap); those were run by hand. The regenerated refresh profile
+also differs from the installed one (code-refresh settings), so the installed profile has drifted from what the
+repository produces. **Fix:** the deploy step renders and installs the gateway file and profiles and applies the ERP
+setup when their inputs changed, shows a diff, keeps a rollback copy; reconcile the refresh profile. Belongs with P54
+(branch deploy button) and P59 (drift check). Note: a "Refresh code" to `main` before PR #15 is merged would leave the
+test gateway with PR #15's routes but `main`'s code.
+
+### P68 — A repository check for imports of names that do not exist
+
+**App:** general · **Also touches:** none · **State:** open
+
+**Status:** open (lesson of P64, 21 November 2026). A lazy import inside a function (`from .combined import
+before_request`) of a name that does not exist passes every unit test that fakes the module, and fails only at run
+time. Add a static check to `tools/check_repository.py` (or CI) that resolves imports of the project's own modules
+(for example pylint's `no-name-in-module` / `import-error` for `erpnext_drive_integrations`), and the rule that tests
+import the real module under test rather than a fake copy of it.

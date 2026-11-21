@@ -81,14 +81,16 @@ until the owner says; the table only fixes the order to take them up.
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
 | 6 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
-| 7 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
-| 8 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
-| 9 | **P13** remaining users, permissions, worker enrollment | adoption: 10 of about 20 users | P25 |
-| 10 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
-| 11 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
-| 12 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
-| 13 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
-| 14 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
+| 7 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
+| 8 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
+| 9 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
+| 10 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
+| 11 | **P13** remaining users, permissions, worker enrollment | adoption: 10 of about 20 users | P25 |
+| 12 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
+| 13 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
+| 14 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
+| 15 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
+| 16 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
 
 **Tier 2: medium (planned, useful, not urgent)**
 
@@ -96,6 +98,9 @@ until the owner says; the table only fixes the order to take them up.
 |---|---|
 | **P50** native mobile app | strategic; planning only, many open decisions (look, security, notifications, build order); pilot is HR attendance |
 | **P63** demo mode for the test site (neutral UN/format brand, line-art landing page, no tenant traces) | owner request 21 Nov; needs colour options chosen; open question on the shared sign-in brand |
+| **P65** relayed test sign-in loses the requested page | owner decision: trust forwarded headers on the private entry point for the bridge sources, or accept the second tap |
+| **P66** test-site errors invisible (Error Log rows stay queued) | flush the deferred inserts on test; alarm |
+| **P68** check for imports of names that do not exist | static check plus "tests import the real module" |
 | **P05**, **P06** GSTIN lookup and PAN checks | blocked on the India Compliance API secret and a PAN verification source |
 | **P03** eKYC (Digio), **P04** WhatsApp | blocked on provider accounts; P04 also needs a Meta business number |
 | **P51** data refresh at 8 pm; **P54** branch deploy button | P54 blocked until the first crippled refresh passes its audit; P51 owner said later |
@@ -137,17 +142,17 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 18 | 14 |
+| General | [pending/general.md](p-list/general.md) | 20 | 16 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 4 | 1 |
 | ERP | [pending/erp.md](p-list/erp.md) | 12 | 11 |
 | Mail | [pending/mail.md](p-list/mail.md) | 5 | 5 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 4 | 3 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 5 | 4 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 8 | 5 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 6 | 3 |
-| Test site | [pending/test-site.md](p-list/test-site.md) | 4 | 3 |
+| Test site | [pending/test-site.md](p-list/test-site.md) | 6 | 5 |
 
 ## All P items (index)
 
@@ -217,6 +222,11 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P61 | Editor file safety: a document is never left unusable or its edits lost | [Editor](p-list/editor.md) | drive · **State:** in progress | in progress |
 | P62 | Daily upstream watch: new releases, security flaws, patches, upgrade decisions | [General](p-list/general.md) | none · **State:** open | open |
 | P63 | Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces | [Test site](p-list/test-site.md) | portal, signin · **State:** open | open |
+| P64 | Native app sign-in on production: latent auth-hook crash and a stale client list | [Mobile](p-list/mobile.md) | signin, erp · **State:** open | open |
+| P65 | Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped) | [Test site](p-list/test-site.md) | signin, general · **State:** blocked | blocked |
+| P66 | Errors on the test site are invisible: Error Log rows stay queued | [Test site](p-list/test-site.md) | general, erp · **State:** open | open |
+| P67 | Test deployments: one complete step, no hand-run pieces or drifting profiles | [General](p-list/general.md) | test-site · **State:** open | open |
+| P68 | A repository check for imports of names that do not exist | [General](p-list/general.md) | none · **State:** open | open |
 <!-- APP-INDEX-END -->
 
 ## Legacy status groups (16 November 2026 list)

@@ -333,3 +333,14 @@ discussion that led to a decision is not repeated here.
 - **Why:** with seven or more apps a single column no longer fits short
   windows and needs scrolling. **Where:** `erpnext_drive_integrations/www/place_holder.html`,
   `tests/test_portal_menu_columns.py`, P58.
+
+### Forwarded headers are trusted on the SSO host's private entry point from the test VM only
+- **Decision:** the SSO host's proxy trusts forwarded headers (`X-Forwarded-Uri` and the others) on the private
+  tailnet entry point used by the test sign-in bridge, and only from the test VM's exact address. The public entry
+  points never trust them. The Docker gateway address that was also on the bridge allow list is not trusted (it carries
+  other host and container traffic), and is to be dropped from the allow list.
+- **Why:** without it the proxy dropped the requested page, so the first sign-in on the test site (and the mobile app's
+  sign-in) landed on the landing page. Trusting only the bridge's real source keeps others from setting those headers.
+  Production-only setting: it cannot be exercised on the test site; it is checked in a browser right after it is
+  applied. **Where:** `tools/sso_proxy_trust.py`, `tools/prepare_auth_bridge.py`, the test rebuild runbook, P65.
+

@@ -151,6 +151,8 @@ routes, the app's OAuth client is created on test from the private profile ("ERP
 native sign-in is on for that client only. The colleague tests on a real phone. **Open (owner decision):** the first
 sign-in via the relayed test host returns to the front page because the production proxy's private entry point
 drops `X-Forwarded-Uri`; fix = trust forwarded headers on that entry point for the bridge sources only (a production
-proxy setting). His own SSH access (forced-command deploy key plus a tailnet share) follows P54.
+proxy setting). His own SSH access (forced-command deploy key plus a tailnet share) follows P54. **Later the same day:** the app's 500 after sign-in was a server
+bug (`portal/mobile.py` imported a non-existent `before_request`); fixed in PR #15 (`4d28354`), installed on test,
+app requests now succeed. The same line is latent on production: promote it with PR #15 (ERP release).
 
 

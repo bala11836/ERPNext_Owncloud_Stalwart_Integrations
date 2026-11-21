@@ -393,8 +393,8 @@ identity; a second WhatsApp number is the demo's channel. Demo users send evalua
 
 **App:** general · **Also touches:** test-site, erp, mail, drive, dms, signin · **State:** open
 
-**Status:** owner decision 21 November 2026 ("lets go with this github ci/cd"); plan to be agreed with the owner
-before building (standing rule: no change until the owner says go). Replaces the hand-run deploy steps; takes over
+**Status:** owner decision 21 November 2026 ("lets go with this github ci/cd"); plan **settled** the same day;
+**scheduled for later, nothing built**. Starts only when the owner says go (standing rule). Priority: rank 6 (tier 1). Replaces the hand-run deploy steps; takes over
 the deploy parts of **P67** (one complete test deploy), **P54** (branch deploy button) and much of **P59** (promotion
 plan and drift check); those items are reviewed and closed or narrowed when P71 is planned.
 
@@ -431,4 +431,31 @@ refresh module (keep "Refresh data", which is separate); (c) update the test-ref
 - **Production-only parts** (route files, DNS, proxy settings) keep the post-release browser and protocol check
   unless the pipeline is taught to check them.
 - **Runner upkeep:** runners are updated like any other component (P62 watch).
+
+**Discussion record (owner, 21 November 2026):**
+- *Why "Refresh code" at all if releases go main, test, production?* In the normal flow it adds little: after a merge,
+  test already runs what `main` has. It matters only when a branch is not merged (rejected, abandoned, or replaced by
+  another branch), when test would keep code production will never get. Decision: replace the manual button by the
+  pipeline's automatic reset on "pull request closed without merging", then remove the button.
+- *Design must not rest on assumptions about where test runs* (owner): test moves to a VPS on 22 November 2026. The
+  standard GitHub runner connects out to GitHub, so the design works on any host; a direct GitHub call (webhook) may be
+  added on a public host as an extra trigger, never the only one.
+- *Owner found the first sketch (polling and scripts of our own) a workaround with too many failure points* and asked
+  for standard practice: GitHub Actions with self-hosted runners, deployments recorded on pull requests, a protected
+  "production" environment with owner approval, build once and promote that build.
+- *What we lose:* nothing functional; trade-offs accepted with mitigations: dependence on GitHub (break-glass manual
+  procedure), the GitHub account as a key to production (two-factor, protected `main`, owner approval, limited
+  runner), **public job logs** (neutral output plus a leak check), secrets stay on the servers, slower hands-on fixes
+  in incidents (break-glass covers emergencies), production-only parts still checked after release, runner upkeep.
+- *No reason to wait for the VPS move* to start: only the test runner is host-specific (minutes to reinstall).
+
+**Agreed order of work (when the owner says go):**
+1. Pipeline for test: pull request opened or updated deploys the branch to test, deployment recorded on the PR.
+2. Reset on close: pull request closed without merging puts test back on `main`.
+3. Remove the "Refresh code" button (after step 2 has worked on test), with docs and tests.
+4. Production: merge to `main`, same tested build promoted after the owner's approval; rollback by approving the
+   previous version; break-glass procedure written.
+5. Then review P67, P54 and P59: close or narrow what P71 has taken over.
+
+**Still to confirm at the start:** who approves production (owner alone, or owner plus a second person).
 

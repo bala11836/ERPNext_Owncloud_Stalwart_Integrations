@@ -85,7 +85,7 @@ until the owner says; the table only fixes the order to take them up.
 |---|---|---|---|
 | 4 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
 | 5 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
-| 6 | **P71** GitHub CI/CD: Actions deploy test and production, owner approves production; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan first; takes over deploy parts of P67, P54, P59 |
+| 6 | **P71** GitHub CI/CD: Actions deploy test and production, owner approves production; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |
 | 7 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
 | 8 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
 | 9 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |

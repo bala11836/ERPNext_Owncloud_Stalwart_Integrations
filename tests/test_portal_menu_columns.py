@@ -19,5 +19,23 @@ class PortalMenuColumnTests(unittest.TestCase):
         self.assertIn('width:84px;display:flex;flex-direction:column', PAGE)
 
 
+    def test_existing_menu_behaviour_rules_survive(self):
+        """The auto-hide, the home button on the landing screen and the app frames
+        depend on these rules; an earlier edit of this page lost them silently."""
+        for rule in (
+            'body:not(.ph-menu-open) #ph-sidebar,body:not(.ph-menu-open) #ph-shade,[hidden]{display:none!important}',
+            'body:not(.ph-active) #ph-home{display:none}',
+            '#ph-frames{display:none;position:fixed;inset:0;background:#fff}',
+            '.ph-active #ph-frames{display:block}',
+            '.ph-frame{display:block;border:0;width:100%;height:100%}',
+            '.sr-only{position:absolute;',
+        ):
+            self.assertIn(rule, PAGE, rule)
+
+    def test_menu_is_centred_vertically_on_the_landing_screen_and_in_apps(self):
+        self.assertIn('#ph-sidebar{position:fixed;left:10px;top:50%;transform:translateY(-50%);', PAGE)
+        self.assertIn('body.ph-active #ph-sidebar{top:50%;', PAGE)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -325,3 +325,11 @@ discussion that led to a decision is not repeated here.
   allowed recipient numbers.
 - **Why:** the upstream webhook accepts unsigned posts; refreshed test data
   holds real contacts. **Where:** `erpnext_drive_integrations/whatsapp/`, P04.
+
+### App menu in two columns above five apps
+- **Decision:** the portal's auto-hiding app menu switches from one to two
+  balanced vertical columns when it lists more than five apps; the home button is
+  not counted so the layout does not change when it appears.
+- **Why:** with seven or more apps a single column no longer fits short
+  windows and needs scrolling. **Where:** `erpnext_drive_integrations/www/place_holder.html`,
+  `tests/test_portal_menu_columns.py`, P58.

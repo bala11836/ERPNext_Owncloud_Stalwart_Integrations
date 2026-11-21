@@ -36,11 +36,15 @@
   .zone #z1 { font-size: .8em; transform-origin: 0 50%; }
   .zone #z2 { font-size: 1.1em; }
   .zone:hover, .zone:focus-visible { text-decoration: underline; outline: none; }
+  /* shown at once after a click: the sign-in hops can take seconds, and a second click would cancel the first */
+  .zone.opening { text-decoration: underline; cursor: progress; animation: opening .9s ease-in-out infinite; }
+  @keyframes opening { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
   .test-banner { position: fixed; top: 0; right: 0; z-index: 9; padding: 3px 12px; background: #e8590c; color: #fff; font: 700 11px/1.5 "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; border-bottom-left-radius: 8px; }
   @media (prefers-reduced-motion: reduce) {
     .d { animation: none; stroke-dashoffset: 0; }
     .logo, .zone { animation: none; opacity: 1; } .soon span { animation: none; opacity: 1; }
+    .zone.opening { animation: none; opacity: .6; }
   }
 </style>
 </head>
@@ -228,6 +232,13 @@
     var wa = a.getBoundingClientRect().width, wb = b.getBoundingClientRect().width;
     if (wa > 0) a.style.transform = 'scaleX(' + (wb / wa) + ')';
   }
+  var zone = document.querySelector('.zone');
+  zone.addEventListener('click', function (e) {
+    if (zone.classList.contains('opening')) { e.preventDefault(); return; }
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    zone.classList.add('opening'); zone.setAttribute('aria-busy', 'true');
+  });
+  window.addEventListener('pageshow', function (ev) { if (ev.persisted) { zone.classList.remove('opening'); zone.removeAttribute('aria-busy'); } });
   match(); window.addEventListener('resize', match);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(match);
 })();

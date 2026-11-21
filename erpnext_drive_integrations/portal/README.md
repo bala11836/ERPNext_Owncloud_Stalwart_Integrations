@@ -55,7 +55,7 @@ Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the
 
 ## Branding
 
-The portal page keeps its name (title and the company name beside the logo). The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The same logo is used in the menu's home button.
+The portal page keeps its name (title and the company name beside the logo). The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The same logo is used in the menu's home button. With more than five apps the left-edge menu shows two balanced vertical columns (the home button is not counted); with five or fewer it stays one column (P58).
 
 ## Logout and sign-in
 

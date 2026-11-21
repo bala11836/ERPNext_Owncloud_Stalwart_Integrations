@@ -54,3 +54,5 @@ the tenant's own and are not stored here.
 ## AI-assisted development
 Written with AI assistance (Anthropic's Claude) and reviewed and accepted by
 the owner, like the rest of this repository.
+
+The Employee Zone link pulses at once after the first click and ignores further clicks until the page changes: the sign-in hops can take seconds (about three on the test site), and a second click used to cancel the first request.

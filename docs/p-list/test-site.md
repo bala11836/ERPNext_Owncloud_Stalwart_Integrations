@@ -117,6 +117,16 @@ all of this after every data refresh, publishing the neutral brand as the reposi
 deploy skips the ERP image build when an image of the same commit exists, so a brand-only change needed the image tag
 removed first; browsers may also keep the old files because the version stamp is the commit.
 
+**Progress (21 November 2026, branch `p63-demo-ui`, on test at `00669d0`, not merged):** owner's eight UI points. Landing
+page: new flower-and-bee drawing after the owner's sketch (outlines drawn, then coloured; bee hovers), no tagline, the
+entry reads "Apps" as a navy (`#1F3A5F`, the colour of "UN") badge top left mirroring the TEST SITE badge. Gateway: `/`
+shows the landing page only without an ERP session, so after sign-in the portal sits at `test.example.com/` with a clean
+address (the portal also rewrites `/place_holder` to `/`); this replaces P60. Portal (same page on test and production):
+logo without the company name; refresh buttons in one row beside the logo, dates under them, status line only while a
+refresh runs. One-click entry: expected to work now that the gateway returns to the requested page (P65); owner to
+confirm. **Remaining:** owner browser check, then PR and merge; company-name masking in refreshed data, sign-in brand.
+
+
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued
 
 **App:** test-site · **Also touches:** general, erp · **State:** open

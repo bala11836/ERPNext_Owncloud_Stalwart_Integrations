@@ -104,6 +104,11 @@ Never point test application URLs, queues, workers or storage at production.
    test Host context and exact test-source IP restriction, never a general
    caller-controlled authentication relay. Apply `tools/test_host_aliases.py`
    on the test host to use local trusted HTTPS without public-IP hairpinning.
+   With a private bridge, also run `tools/sso_proxy_trust.py` on the SSO host with the
+   entry point and sources printed by `prepare_auth_bridge.py --print-forwarded-trust`
+   (exact addresses, normally the test VM only), then restart the SSO proxy at a quiet
+   moment: otherwise the proxy drops `X-Forwarded-Uri` from the test proxy and the first
+   sign-in returns to the landing page instead of the requested page (P65).
 10. Start databases/cache/configurator, then run `tools/initialize_erp.py`
     with runtime, ERP receipt and site name. It refuses an existing site and
     installs the nine upstream apps plus the single consolidated addon.

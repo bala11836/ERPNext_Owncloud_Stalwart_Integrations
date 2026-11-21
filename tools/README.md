@@ -29,6 +29,7 @@ refresh worker) do not change; this index groups them by module.
 - `initialize_erp.py` — Initialize one empty ERP site using the pinned native installer.
 - `migrate_asset_references.py` — Rewrite retired addon asset prefixes in system settings, never business text.
 - `prepare_auth_bridge.py` — Render a source-IP-limited forward-auth bridge on an existing SSO host (one or more public test addresses; optional separate private-entry-point router).
+- `sso_proxy_trust.py` — On the SSO host, trust forwarded headers on the private (tailnet) entry point used by the test sign-in bridge, from exact addresses only (normally the test VM; `prepare_auth_bridge.py --print-forwarded-trust`), so the sign-in gateway returns to the requested page (P65). Writes the proxy compose file and Coolify's saved proxy configuration; never touches public entry points; the proxy restart is a separate step.
 - `prepare_test_relay.py` — Render a pass-through relay (SNI, PROXY protocol, port 80) for the six test hostnames on another Traefik host, for a test host without a public address.
 - `coolify_proxy_http3.py` — Switch HTTP/3 off on a relay host's Coolify proxy (saved configuration and compose file).
 - `coolify_proxy_hosts.py` — Persist the proxy's workspace network/aliases and optional private (tailnet) host pins in Coolify's saved proxy configuration and compose file.

@@ -77,7 +77,7 @@ until the owner says; the table only fixes the order to take them up.
 |---|---|---|---|
 | 1 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
 | 2 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 3 | **P57** survive reboots (PR #7 open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
+| 3 | **P57** survive reboots (released 21 Nov; follow-ups open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
 
 **Tier 1: high (business-critical, next)**
 

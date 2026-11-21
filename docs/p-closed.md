@@ -49,3 +49,4 @@ The following requests are complete and are **not pending upgrade/implementation
 Current production versions: **Frappe 16.56.0, ERPNext 16.55.0, HRMS 16.53.2**. The installed-app table and the retained feature details are in the [current handover](retained.md).
 
 Only the current retained requests are included here; superseded historical proposals are excluded.
+| P65 | Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped) | test-site | completed | 2026-11-21 | Forwarded headers trusted on the SSO host's private entry point from the test VM only; live 21 Nov (942d84d); test gateway returns to the requested page |

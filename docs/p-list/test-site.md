@@ -117,28 +117,6 @@ all of this after every data refresh, publishing the neutral brand as the reposi
 deploy skips the ERP image build when an image of the same commit exists, so a brand-only change needed the image tag
 removed first; browsers may also keep the old files because the version stamp is the commit.
 
-### P65 — Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped)
-
-**App:** test-site · **Also touches:** signin, general · **State:** in progress
-
-**Status:** owner decision needed (found 21 November 2026, mobile app on test). The test site reaches the sign-in
-service through the production proxy's private (tailnet) entry point, which does not trust forwarded headers from the
-test VM, so `X-Forwarded-Uri` is dropped and the sign-in gateway returns to `/` after the passkey. Since 20 November `/`
-on the test host is the landing page (P47), so the first sign-in lands there; a second tap works because the gateway
-session exists. Two weeks earlier the test host had its own public address and `/` was the portal, so nobody saw it.
-**Options:** trust forwarded headers on that entry point for the bridge sources only (production proxy setting,
-low exposure: tailnet-only entry point, fixed sources); or accept the second tap. A change of the post-sign-in
-default page would not help (it changes where you land, not the lost request). Test first where possible; a
-production-only setting gets a browser and protocol check right after promotion.
-
-**Decision (owner, 21 November 2026): option (a), as corrected in review:** trust forwarded headers on the SSO host's
-private entry point from the **test VM's exact address only** (all 359 bridge checks in the last 6 hours came from it;
-the Docker gateway `<Docker gateway address>` on the allow list carried 216 unrelated requests and is not trusted; drop it from the
-allow list too); repository first (PR #16: `tools/sso_proxy_trust.py`, `prepare_auth_bridge.py --print-forwarded-trust`),
-then production with a backup, the setting saved in Coolify, and the proxy restart at a quiet moment; production-only
-setting, so browser checks right after it is applied. Also decided: ERP Mobile shows no consent screen (test profile
-`skip_authorization`, applied on test 21 November).
-
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued
 
 **App:** test-site · **Also touches:** general, erp · **State:** open

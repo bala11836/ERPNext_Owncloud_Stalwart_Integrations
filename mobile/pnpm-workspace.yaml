@@ -1,0 +1,7 @@
+# Makes mobile/ its own pnpm project (the rest of the repository has no JavaScript packages).
+
+# pnpm 10 blocks install scripts by default (supply-chain protection). Allowlist only what is needed.
+onlyBuiltDependencies: []
+
+# Supply-chain delay: don't install package versions published less than 3 days ago (minutes).
+minimumReleaseAge: 4320

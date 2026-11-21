@@ -232,6 +232,40 @@
           "url": "https://nginx.org/"
         }
       ]
+    },
+    {
+      "id": "mobile-app",
+      "title": "Mobile app",
+      "summary": "Native iOS and Android app (Expo): passkey sign-in bound to the browser session, role-filtered menus, read-only lists and records, app lock, tablet split view and sunlight mode.",
+      "readme": "mobile/README.md",
+      "paths": [
+        "mobile/**",
+        "tests/test_mobile_app.py"
+      ],
+      "depends_on": [
+        "portal-sso",
+        "onboarding"
+      ],
+      "tests": [
+        "tests/test_mobile_app.py"
+      ],
+      "upstream": [
+        {
+          "name": "Expo and Expo Router",
+          "license": "MIT",
+          "url": "https://github.com/expo/expo"
+        },
+        {
+          "name": "React Native",
+          "license": "MIT",
+          "url": "https://github.com/facebook/react-native"
+        },
+        {
+          "name": "React",
+          "license": "MIT",
+          "url": "https://github.com/facebook/react"
+        }
+      ]
     }
   ]
 }

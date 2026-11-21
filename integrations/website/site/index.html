@@ -42,17 +42,19 @@
 
   .test-banner { position: fixed; top: 0; right: 0; z-index: 9; padding: 3px 12px; background: #e8590c; color: #fff; font: 700 11px/1.5 "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; border-bottom-left-radius: 8px; }
   /* P63 options: the entry link as a badge top left (like the TEST SITE badge), and the art to show */
-  .zone-badge .zone { top: 0; left: 0; padding: 5px 18px; background: var(--zone-bg, #1F3A5F); color: #fff;
-          font: 700 13px/1.5 "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; border-bottom-right-radius: 8px; }
+  .zone-badge .zone { top: 0; left: 0; padding: 3px 12px; background: var(--zone-bg, #1F3A5F); color: #fff;
+          font: 700 11px/1.5 "Helvetica Neue", Arial, sans-serif; letter-spacing: .08em; border-bottom-right-radius: 8px; }
   .zone-badge .zone span { display: inline; }
   .zone-badge .zone:hover, .zone-badge .zone:focus-visible { text-decoration: none; filter: brightness(1.25); }
   .art-flower .art { display: none; }
   .art-pencil .flower { display: none; }
   /* a hand-drawn flower and a bee (after the owner's sketch): outlines drawn first, then the colours come in */
-  .flower { position: fixed; right: 7vw; top: 50%; height: min(78vh, 640px); width: auto; transform: translateY(-50%); }
-  .art-flower .stage { padding-right: 24vw; }
-  @media (max-aspect-ratio: 1/1) { .flower { right: auto; left: 50%; top: auto; bottom: 2vh; height: 44vh; transform: translateX(-50%); }
-    .art-flower .stage { place-content: start center; padding: 16vh 0 0; } }
+  /* the flower sits just right of the logo; logo and flower are centred together */
+  .art-flower { --L: min(440px, 62vw); --h: min(47vh, 384px); --w: calc(var(--h) * 2 / 3); --gap: 12px; }
+  .flower { position: fixed; left: calc(50% + (var(--L) + var(--gap) - var(--w)) / 2); top: calc(47vh - var(--h) * .42); height: var(--h); width: var(--w); }
+  .art-flower .stage { padding-right: calc(var(--w) + var(--gap)); }
+  @media (max-aspect-ratio: 1/1) { .flower { left: 50%; top: auto; bottom: 6vh; height: 26vh; width: auto; transform: translateX(-50%); }
+    .art-flower .stage { place-content: start center; padding: 20vh 0 0; } }
   .flower .o { fill: none; stroke: #1d1d1d; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
   .flower .f { opacity: 0; animation: fillin .9s ease-out var(--fl) forwards; }
   @keyframes fillin { to { opacity: 1; } }

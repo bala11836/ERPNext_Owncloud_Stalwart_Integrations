@@ -6,6 +6,7 @@ artifacts and persistent data must be outside Git. Existing data is never reset.
 """
 import argparse
 import ipaddress
+import html
 import json
 import os
 from pathlib import Path
@@ -14,7 +15,7 @@ import secrets
 import shutil
 from urllib.parse import urlsplit
 
-from render_runtime import render, public_mappings
+from render_runtime import render, FAVICON_FILES, public_mappings
 
 
 def write_private(path, value):
@@ -156,7 +157,8 @@ def prepare(source, output, profile):
         if not (build/'pyproject.toml').is_file():
             raise ValueError('Unexpected rendered source directory')
     render(source, build, {'domain':profile['domain'], 'public_replacements':replacements,
-                           'company_logo':profile.get('company_logo'),'asset_version':profile.get('commit')})
+                           'company_logo':profile.get('company_logo'),'company_favicon_dir':profile.get('company_favicon_dir'),'landing_url':profile.get('landing_url'),
+                           'asset_version':profile.get('commit')})
     projects = profile.get('projects',['erp','drive','editor','mail','dms','processing'])
     mounts = json.loads((source/'deployment/stacks/mounts.json').read_text())
     copy_files = {
@@ -164,10 +166,12 @@ def prepare(source, output, profile):
         '/opt/cloud/netbird_realtime.cjs': 'deployment/erp/netbird_realtime.cjs',
         '/templates/nginx/frappe.conf.template': 'deployment/erp/frappe.conf.template',
         '/app/document-worker.py': 'integrations/document-worker/document-worker.py',
+        '/etc/nginx/conf.d/default.conf': 'integrations/website/nginx-default.conf',
     }
     copy_dirs = {'/opt/cloud-extension':'integrations/dms',
                  '/templates':'integrations/authentik/invite-recovery/templates',
-                 '/srv/public':'integrations/authentik/invite-recovery/public'}
+                 '/srv/public':'integrations/authentik/invite-recovery/public',
+                 '/srv/site':'integrations/website/site'}
     persistent_targets = {'/var/lib/cloud-integration','/var/lib/ocis','/state',
         '/usr/src/paperless/data','/usr/src/paperless/media','/usr/src/paperless/consume','/usr/src/paperless/export'}
     # Office editor: ONLYOFFICE only. Collabora was retired after the P42
@@ -188,6 +192,28 @@ def prepare(source, output, profile):
             raise ValueError('existing_mounts may only name persistent data mounts: ' + name)
         if not folder.is_absolute() or len(folder.parts) < 3 or not folder.is_dir() or folder.is_symlink():
             raise ValueError('existing mount must be an existing absolute data directory: ' + name)
+    def brand_website(site):
+        """Fill the tenant-neutral front page from the private profile: names, the
+        Employee Zone link, the logo and the favicon set (neutral placeholders if
+        the profile supplies none)."""
+        def text(key, default):
+            value = profile.get(key) or default
+            if not isinstance(value, str) or len(value) > 80 or re.search(r'[\x00-\x1f<>]', value):
+                raise ValueError(key + ' must be a short plain text')
+            return html.escape(value)
+        zone = profile.get('website_zone_url') or 'https://'+hosts['erp']+'/'
+        if not isinstance(zone, str) or not (zone.startswith('/') and not zone.startswith('//') or zone.startswith('https://')) or re.search(r'[\s"<>]', zone):
+            raise ValueError('website_zone_url must be a path or an https URL')
+        page = site/'index.html'
+        page.write_text(page.read_text().replace('__SITE_TITLE__', text('website_title', 'Welcome'))
+                        .replace('__SITE_NAME__', text('website_name', 'Company')).replace('__EMPLOYEE_ZONE_URL__', zone))
+        placeholders = build/'erpnext_drive_integrations/public'
+        logo = Path(profile['company_logo']) if profile.get('company_logo') else placeholders/'company-logo-approved-v6.svg'
+        (site/'front').mkdir(exist_ok=True)
+        shutil.copy2(logo, site/'front'/'logo.svg')
+        folder = Path(profile['company_favicon_dir']) if profile.get('company_favicon_dir') else None
+        for name in FAVICON_FILES:
+            shutil.copy2(folder/name if folder else placeholders/('company-'+name), site/'front'/name)
     def mount_path(name):
         return Path(existing_mounts[name]) if name in existing_mounts else output/'mounts'/name
     for item in mounts:
@@ -219,6 +245,8 @@ def prepare(source, output, profile):
             relative = copy_dirs[target]
             origin = build/relative if (build/relative).is_dir() else source/relative
             shutil.copytree(origin,path,dirs_exist_ok=True)
+            if target == '/srv/site':
+                brand_website(path)
         elif target == '/etc/ocis':
             path.mkdir(exist_ok=True,mode=0o750)
             for origin in (build/'integrations/drive/config').iterdir():
@@ -266,6 +294,13 @@ def prepare(source, output, profile):
         if profile.get('commit'):
             script['src']=url+'?v='+profile['commit']
     if config:
+        # Tenant-neutral web theme (white sign-in page, no upstream logo), served by
+        # oCIS from its web assets like the extension scripts above.
+        theme = drive_data/'web'/'assets'/'themes'/'cloud'
+        shutil.copytree(build/'integrations/drive/theme', theme, dirs_exist_ok=True)
+        if os.geteuid() == 0:
+            for item in [theme.parent, *theme.rglob('*'), theme]:
+                os.chown(item,1000,1000)
         drive_config = next(output/'mounts'/m['path'] for m in mounts if m['target']=='/etc/ocis')
         (drive_config/'web-with-picker.json').write_text(json.dumps(config,indent=2)+'\n')
 
@@ -280,8 +315,12 @@ def prepare(source, output, profile):
             policy_file.chmod(0o644)
             webmail=compose['services']['webmail']
             webmail['volumes'].append(str(policy_file)+':/app/data/admin/policy.json:ro')
-            logo='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
-            webmail['environment'].update({'FAVICON_URL':logo,'LOGIN_LOGO_LIGHT_URL':logo,
+            ver='?v='+profile['commit'] if profile.get('commit') else ''
+            logo='https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'+ver
+            favicon=profile.get('favicon_url') or 'https://'+hosts['erp']+'/assets/erpnext_drive_integrations/company-favicon.svg'+ver
+            if not re.fullmatch(r'https://[A-Za-z0-9.-]+/[A-Za-z0-9._/?=-]*', favicon):
+                raise ValueError('favicon_url must be an https URL')
+            webmail['environment'].update({'FAVICON_URL':favicon,'LOGIN_LOGO_LIGHT_URL':logo,
                 'LOGIN_LOGO_DARK_URL':logo,'APP_LOGO_LIGHT_URL':'','APP_LOGO_DARK_URL':'','APP_NAME':'Mail'})
         for name, folder in existing_mounts.items():
             rendered = str(output/'mounts'/name) + ':'

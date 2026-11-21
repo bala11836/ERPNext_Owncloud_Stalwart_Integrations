@@ -1,0 +1,57 @@
+# P47 production routes: the company front page on www.example.com, and the
+# bare domain redirected to it. Rendered at deployment by replacing
+# example.com with the production domain (see integrations/website/README.md).
+# The proxy issues the certificates (letsencrypt resolver) for both hosts; DNS
+# for www and the bare domain must point at the proxy first.
+http:
+  routers:
+    website-www:
+      rule: Host(`www.example.com`)
+      entryPoints:
+      - https
+      priority: 300
+      service: website
+      tls:
+        certResolver: letsencrypt
+    website-www-http:
+      rule: Host(`www.example.com`)
+      entryPoints:
+      - http
+      priority: 10
+      service: website
+      middlewares:
+      - website-https
+    website-apex:
+      rule: Host(`example.com`)
+      entryPoints:
+      - https
+      priority: 300
+      service: website
+      middlewares:
+      - website-to-www
+      tls:
+        certResolver: letsencrypt
+    website-apex-http:
+      rule: Host(`example.com`)
+      entryPoints:
+      - http
+      priority: 10
+      service: website
+      middlewares:
+      - website-to-www
+  middlewares:
+    website-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    website-to-www:
+      redirectRegex:
+        regex: ^https?://example\.com/?(.*)
+        replacement: https://www.example.com/${1}
+        permanent: true
+  services:
+    website:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+        - url: http://website-web-production:8080

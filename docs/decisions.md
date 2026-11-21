@@ -6,6 +6,81 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-20
 
+### Logout ends on the website; one passkey prompt per sign-in (P56)
+- **Decision:** every logout (ERP, Drive, Mail, DMS, the portal, idle logout)
+  ends on the company website. The address is named once, `sso.LANDING`,
+  rendered from the private profile (`landing_url`, default
+  `https://www.<domain>/`; the test site uses its own front page). Apps keep
+  handing over to the ERP's `/login?logged_out=1` (or `/signed-out`, which
+  first finishes a still-valid session); the ERP forwards to the landing
+  address, and authentik's logout flow redirects there after it ends the
+  gateway session. The ERP's sign-in no longer sends `prompt=login` with
+  `max_age=0`: it sends `max_age=600` and the callback accepts an
+  authentication from the last ten minutes.
+- **Why:** with `max_age=0` a passkey login that took a second already counted
+  as too old, so authentik asked twice; ten minutes keeps the intent (a recent
+  passkey login) without the second prompt. One named landing address avoids
+  five copies drifting apart, and changing only the ERP avoids rebuilding Mail
+  or restarting Drive and DMS.
+- **Where:** `erpnext_drive_integrations/portal/sso.py`, `tools/render_runtime.py`,
+  `tests/test_logout_and_signin.py`.
+
+### The portal page keeps its name; only the logo changed
+- **Decision (owner):** the portal page stays exactly as before (title, and the
+  company name beside the logo); only the logo is new, in the top-left brand
+  and in the auto-hiding menu's home button. This reverts the "Desk" label of
+  the previous release.
+- **Where:** `erpnext_drive_integrations/www/place_holder.*`, `tests/test_brand_assets.py`.
+
+### Company front page on www; the bare domain redirects to it
+- **Decision:** the company address (`www`) serves a small static front page
+  that is always reachable, signed in or not: an original pencil drawing of a
+  tunnel construction site drawn stroke by stroke in four batches, the logo,
+  "Launching soon..." typed letter by letter, and a plain "Employee Zone" link
+  to the staff sign-in. The bare domain redirects permanently to `www`. The
+  page is a module (`integrations/website`) with its own pinned, read-only
+  nginx container; it is tenant-neutral and gets its names, logo, favicons and
+  link from the private profile. On the test site the same page is served by the
+  test host itself at the exact front path `/` (no extra test host name); every
+  other path still reaches the portal. The portal shell moving onto `www` is a
+  later step.
+- **Why:** a public address that is always open while apps stay behind sign-in;
+  one host name fewer on test; our own drawing instead of a photo avoids a
+  licence and credit question and loads in a few kilobytes.
+- **Where:** `integrations/website/`, `deployment/stacks/website.compose.json`,
+  `deployment/production/website.traefik.yaml`, `tools/prepare_ingress.py`.
+### No "All apps" item in the app sidebars
+- **Decision:** the sidebar of ERPNext, HRMS, Onboarding, India Compliance and
+  every other module-sidebar app has no "All apps" item. The app's logo at the
+  top still leads back to the portal page (`/place_holder`, whole tab), and the
+  Edit Sidebar and Help actions and the hidden native Home item stay.
+- **Why:** the owner removed the item earlier by patching files on the server;
+  the repository build replaced those files and brought it back. A removal that
+  lives outside the repository is lost at the next build, so it is now in the
+  source (`module-header-20261115.js`), a stale copy in an already open tab is
+  removed by the script, the script version is bumped so browsers refresh, and
+  `tests/test_app_menu_link.py` fails if the item returns.
+- **Where:** `erpnext_drive_integrations/public/module-header-20261115.js`,
+  `tests/test_app_menu_link.py`.
+
+### Tenant branding is private
+- **Decision:** the company logo and a favicon set (SVG plus PNG 16 to 512) are
+  supplied through the private runtime profile (`company_logo`,
+  `company_favicon_dir`), never stored in this repository, which ships only
+  neutral placeholders. Rendered files keep their names and every reference
+  carries `?v=<release commit>` so browsers refresh them. The portal page
+  (route `place_holder`) is named **Desk** (browser title and the text beside
+  the logo) because dashboards and widgets will live there; its menu's home
+  button uses the compact favicon, the top-left brand the full logo. Frappe's
+  own desk and website favicon and logo, authentik's branding, the webmail
+  favicon and the push-notification icon use the same files.
+- **Why:** one repository serves several tenants (the product is the
+  repository, the company is the tenant); a 500 KB detailed logo is unreadable
+  and wasteful as a 16 to 44 px icon; a fixed file name needs a version
+  parameter or browsers keep the old picture.
+- **Where:** `tools/render_runtime.py`, `tools/prepare_runtime.py`,
+  `erpnext_drive_integrations/www/place_holder.*`, `tests/test_brand_assets.py`.
+
 ### The order of work: branch, test, merge, main, production
 - **Decision:** every change follows branch → test → merge → `main` →
   production. The branch itself is deployed to the test site and validated
@@ -33,7 +108,9 @@ discussion that led to a decision is not repeated here.
   files, mail not copied (test mailboxes start empty), and outbound e-mail,
   WhatsApp and payments off. Scrambling runs on production, on copies in
   throwaway database containers, before anything leaves the server. Members
-  of the authentik group "Testers" keep their real logins on test.
+  of the authentik group "Testers" keep their login identity (e-mail,
+  username, name) and nothing else: their other profile data is scrambled too.
+  Full names of accounts that are not kept are swept from free text as well.
 - **Why:** a developer may now deploy to test freely, and code they deploy can
   read everything on test; the test copy must therefore hold no real personal
   data (minimisation, as India's DPDP Act also expects). Test data is for
@@ -248,3 +325,11 @@ discussion that led to a decision is not repeated here.
   allowed recipient numbers.
 - **Why:** the upstream webhook accepts unsigned posts; refreshed test data
   holds real contacts. **Where:** `erpnext_drive_integrations/whatsapp/`, P04.
+
+### App menu in two columns above five apps
+- **Decision:** the portal's auto-hiding app menu switches from one to two
+  balanced vertical columns when it lists more than five apps; the home button is
+  not counted so the layout does not change when it appears.
+- **Why:** with seven or more apps a single column no longer fits short
+  windows and needs scrolling. **Where:** `erpnext_drive_integrations/www/place_holder.html`,
+  `tests/test_portal_menu_columns.py`, P58.

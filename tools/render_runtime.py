@@ -9,6 +9,10 @@ import pathlib
 import re
 import shutil
 
+# The tenant supplies these through the private profile (company_favicon_dir).
+FAVICON_FILES = ("favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png",
+                 "favicon-180.png", "favicon-192.png", "favicon-512.png")
+
 def public_mappings(values):
     """Include dotted-host regex forms as well as ordinary public literals."""
     result=dict(values)
@@ -26,6 +30,12 @@ def render(source, destination, config):
     if not re.fullmatch(r"[A-Za-z0-9.-]+", domain) or "." not in domain:
         raise ValueError("domain must be a DNS name")
     mappings = {"example.com": domain, "/var/lib/cloud-integration": config.get("session_state_path", "/var/lib/cloud-integration")}
+    landing = config.get("landing_url")
+    if landing:
+        # Where every logout ends (the company website); default https://www.<domain>/.
+        if not re.fullmatch(r"https://[A-Za-z0-9.-]+/", landing):
+            raise ValueError("landing_url must look like https://host/")
+        mappings["https://www.example.com/"] = landing
     for key, value in config.get("public_replacements", {}).items():
         if not isinstance(key, str) or not isinstance(value, str) or any(c in value for c in ["\n", "\r", "\x00"]):
             raise ValueError("Invalid public replacement")
@@ -52,6 +62,10 @@ def render(source, destination, config):
         if version:
             text=re.sub(r'(/assets/erpnext_drive_integrations/[A-Za-z0-9_./-]+\.(?:js|css))(?:\?v=[A-Za-z0-9_.-]+)?',
                         lambda match:match.group(1)+'?v='+version,text)
+        if version:
+            # Logo and favicon files keep their names, so a version parameter makes browsers refresh them.
+            text=re.sub(r'(/assets/erpnext_drive_integrations/(?:company-logo-approved-v6\.svg|company-favicon[A-Za-z0-9._-]*\.(?:svg|png)))(?:\?v=[A-Za-z0-9_.-]+)?',
+                        lambda match:match.group(1)+'?v='+version,text)
         if version and p.suffix in {".html", ".mjs"}:
             text=re.sub(r'(\.mjs)(?:\?v=[A-Za-z0-9_.-]+)?(?=[\"\'])',
                         lambda match:match.group(1)+'?v='+version,text)
@@ -59,6 +73,16 @@ def render(source, destination, config):
     logo = config.get("company_logo")
     if logo:
         shutil.copy2(logo, destination / "erpnext_drive_integrations/public/company-logo-approved-v6.svg")
+    favicons = config.get("company_favicon_dir")
+    if favicons:
+        folder = pathlib.Path(favicons)
+        missing = [name for name in FAVICON_FILES if not (folder / name).is_file()]
+        if missing:
+            raise ValueError("company_favicon_dir is missing: " + ", ".join(missing))
+        public = destination / "erpnext_drive_integrations/public"
+        for name in FAVICON_FILES:
+            # favicon.svg -> company-favicon.svg, favicon-32.png -> company-favicon-32.png
+            shutil.copy2(folder / name, public / ("company-" + name))
     return destination
 
 if __name__ == "__main__":

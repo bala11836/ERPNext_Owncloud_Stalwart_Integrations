@@ -52,3 +52,13 @@ Upstream licenses are as published by each project; verify them at the pinned ve
 Development of this module is assisted by AI agents (Anthropic's Claude); changes follow the repository → permanent test → production workflow and are accepted by the owner (see AGENTS.md).
 
 Test-site marker: on hostnames starting with `test.` or `test-` (enforced by the renderer) this module shows the shared TEST SITE marker, a 3px striped top line with a small tab, top window only, no layout space. Portal and Frappe apps: `session.js` (Desk, Raven, Insights) and `www/place_holder.html`.
+
+## Branding
+
+The portal page keeps its name (title and the company name beside the logo). The logo and favicons come from the tenant's private runtime profile (`company_logo`, `company_favicon_dir`); the repository ships neutral placeholders. The same logo is used in the menu's home button. With more than five apps the left-edge menu shows two balanced vertical columns (the home button is not counted); with five or fewer it stays one column (P58).
+
+## Logout and sign-in
+
+Every logout ends on the company website: `sso.LANDING`, rendered from the private profile's `landing_url` (default `https://www.<domain>/`). Apps hand over to the ERP's `/login?logged_out=1` or `/signed-out`. Sign-in asks for the passkey once: `max_age=600` instead of `prompt=login` with `max_age=0`; the callback accepts an authentication from the last ten minutes. `tests/test_logout_and_signin.py` pins both.
+
+Signed-out hand-over (P56 follow-up): `/login?logged_out=1` and `/signed-out` forward to the landing page for top-level navigations only. A request made from an iframe (`Sec-Fetch-Dest: iframe`, for example a portal app frame that discovers the sign-out) gets the ERP's own frameable sign-out page, whose Sign in button opens in the whole tab, because the landing page refuses to be framed.

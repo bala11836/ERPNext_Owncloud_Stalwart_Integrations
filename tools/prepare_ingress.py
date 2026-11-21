@@ -33,6 +33,7 @@ def prepare(source, profile):
     service('mail','http://mail-webmail:3000')
     service('jmap','http://mail-stalwart:8080')
     service('dms','http://dms-paperless:8000')
+    service('website','http://website-web:8080')
     sso_url='https://'+hosts['sso'] if profile.get('existing_sso',True) else 'http://identity-server:9000'
     service('sso',sso_url)
     # Remote SSO must expose a test-host outpost route. Preserve the browser's
@@ -50,6 +51,11 @@ def prepare(source, profile):
     middlewares['private-admin']={'ipAllowList':{'sourceRange':profile.get('admin_networks',
                                                         ['100.64.0.0/10','127.0.0.1/32'])}}
     route('erp',hosts['erp'],'erp',middleware=['identity-clean','sso-auth'])
+    if profile.get('website_front_page'):
+        # P47: the company front page answers the exact front path of the host and
+        # its own assets under /front/; every other path keeps going to the portal
+        # and the ERP unchanged.
+        route('website-front',hosts['erp'],'website',priority=5000,path='(Path(`/`) || PathPrefix(`/front/`))')
     route('outpost',hosts['erp'],'sso',300,'PathPrefix(`/outpost.goauthentik.io/`)')
     # These app endpoints perform their own signed OIDC / CSRF / token checks.
     # Only the exact public bootstrap/static endpoints bypass the outpost.
@@ -95,6 +101,18 @@ def prepare(source, profile):
         if value['service']!='noop@internal':value['service']='erp'
         routers[name]=value
     middlewares.update(response.get('middlewares',{}))
+    # Native apps (mobile-app, Raven) get exactly production's routes, read from the
+    # same files: the token POST, Bearer requests checked by portal.mobile.check_access
+    # (identity headers stripped) and the Raven preflight / client-ID discovery.
+    # Without them the outpost answers the app with the passkey page instead of JSON.
+    for name in ['cloud-raven-native.yaml','cloud-raven-mobile.yaml']:
+        native=replace(yaml.safe_load((source/'deployment/config/proxy'/name).read_text())['http'])
+        for key,value in native['routers'].items():
+            value.update({'priority':50000+value['priority'],'service':'erp',
+                'tls':{'certResolver':profile.get('cert_resolver','letsencrypt')}})
+            if profile.get('relay_target'):value['middlewares']=value.get('middlewares',[])+['alt-svc-clear']
+            routers[key]=value
+        middlewares.update(native.get('middlewares',{}))
     if not profile.get('existing_sso',True):route('sso',hosts['sso'],'sso')
     # Prefix every local reference, allowing this file alongside other projects.
     result={'http':{'routers':{},'services':{},'middlewares':{}}}

@@ -47,5 +47,9 @@ Do these without being asked:
    rollback folders, mail addresses, names of people and third parties' internal products,
    business file names, links to private records). The leak scan must be clean and the
    report must be read before the pull request is opened.
+6. **Only open work is listed:** remove a P item from its app list when the task is completed, or
+   becomes redundant or irrelevant, in the same session (`tools/p_close.py` in the private
+   repository); it leaves one line in the closed log (`docs/p-closed.md`) so numbers are never
+   reused. Then refresh the index and publish as in step 5.
 
 @AGENTS.md

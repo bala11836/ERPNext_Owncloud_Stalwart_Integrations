@@ -402,3 +402,10 @@ discussion that led to a decision is not repeated here.
   not exist, so every native app request failed with HTTP 500 on the test site (21 November 2026). **Where:**
   `tests/portal/test_mobile.py` (PR #15), P64, P68.
 
+### Only open work stays in the P list
+- **Decision:** a P item is removed from its app list as soon as the task is completed, or becomes redundant or
+  irrelevant. It leaves one line in the closed log (number, title, app, outcome, date, reason), so numbers are never
+  reused; its full text stays in the git history and the work itself in the release log and this file.
+- **Why:** the lists are what people work from; finished items made them long and hid what is still open. **Where:**
+  `docs/p-closed.md`, `docs/p-list/`, `CLAUDE.md` (session routine, step 6); the private `tools/p_close.py`.
+

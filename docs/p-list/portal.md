@@ -10,20 +10,6 @@ The portal page (eZone, formerly place_holder), its app menu, navigation, and th
 
 Part of the P list: back to the [index and priority order](../p-list.md). Items are numbered across the whole project; a new item goes into the list of the app it belongs to (or `general`), and `python3 tools/p_index.py` refreshes the index.
 
-### P01 — Idle menus and real-time connection recovery
-
-**App:** portal · **Also touches:** erp, drive, mail, dms · **State:** done
-
-**Status:** reactivated 16 November 2026 after an owner report (menus freeze after idle/sleep; reload fixes). Likely cause: the 8-hour SSO proxy session lapsing while Frappe's session stays valid. Client recovery committed in `session.js?v=20261116-idle1`; awaiting deployment and long-idle validation on permanent test. Socket.IO origin fix still open.
-
-- Correct Frappe/Raven Socket.IO “Invalid origin” failures without disabling authentication or origin checks.
-- Add bounded session validation and recovery on browser resume, network return and portal app reactivation; restore real-time connections and menu handlers as needed.
-- Clearly distinguish expired sign-in, offline/network failure and server errors. Preserve unsaved work; avoid unconditional periodic reloads.
-- Verify long inactivity, computer sleep and network interruptions across ERPNext, HR, Onboarding, India Compliance, Framework, Raven and Insights.
-- Short retained-page tests do not establish overnight reliability. The complete long-idle menu freeze's root cause is not conclusively isolated.
-
-Evidence and proposed implementation: [idle investigation](../idle-navigation.md).
-
 ### P07 — Remaining Frappe UI coverage review
 
 **App:** portal · **Also touches:** erp, raven · **State:** open
@@ -134,19 +120,6 @@ only; mobile devices are handled separately (P50, and its own portal rules).
 - Owner to supply: logo file and background image (or tell me to pick a
   licence-free one).
 
-### P52 — "All Apps" menu item keeps coming back (bake the removal into the repository)
-
-**App:** portal · **Also touches:** erp · **State:** done
-
-**Status:** open, owner request 19 November 2026; do later, not now. The
-"All Apps" item in the menu of the four apps ERPNext, HRMS, Onboarding and
-India Compliance was removed earlier but reappeared after the repositories
-were switched (the removal lived in a runtime patch, not in the repository).
-Make the removal part of the repository's own build or migration so it is
-reproducible and verified by a test and by the browser check, on test first
-and then production, and so it is never redone by hand. Check every other
-runtime patch for the same weakness.
-
 ### P53 — Desk: day-planning widgets and dashboards from all apps
 
 **App:** portal · **Also touches:** signin, mail, drive, dms · **State:** parked
@@ -191,18 +164,6 @@ Insights menus, and the editor). Design notes to settle at planning:
   signing out), for shared computers, and for audit (who signed out, when).
 - Sits with the alerts, universal search and widgets of this item; stays **parked** until
   the owner says to start.
-
-
-### P58 — Next ERP release: favicon B in the ERP image; two-column app menu
-
-**App:** portal · **Also touches:** erp · **State:** done
-
-**Status:** **done 21 November 2026, live as `3a93de8`** (favicon B in the ERP image, app menu in two columns with the home button alone in the first row, vertically centred). Was: open (20 November 2026). (1) The ERP still serves the old favicon
-from its image; the brand folder already holds favicon B (the approved logo,
-padded). (2) Owner: the auto-hiding app menu on the portal should become two
-vertical columns when it holds more than five icons (portal page CSS, in the
-ERP image). Both go into the next ERP add-on rebuild (branch, test, merge, one
-swap of about a minute).
 
 ### P60 — Portal address `/ezone` instead of `/place_holder`
 

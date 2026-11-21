@@ -209,19 +209,3 @@ the navigation/configuration to its previous state must not undo legitimate
 business transactions or later independent changes. Validate on permanent test
 before promoting the same revision to production.
 Reference: https://docs.frappe.io/framework/user/en/python-api/hooks
-
-### P37 — Move production ERP onto the repository-built deployment
-
-**App:** erp · **Also touches:** general · **State:** done
-
-**Status:** **done 18 November 2026** (release `3a92645`, about two minutes of ERP downtime); P01 is now live in production. Details and rollback point in the P37 plan (private record).
-
-Production ERP still runs the pre-repository image `erp:0.1.0-release6` with
-mounted legacy adapters (`<legacy mount: frappe-netbird-auth-deploy>`,
-`<legacy mount: unformat-payments>`, `<legacy mount: unformat-unified>`, `<legacy mount: unformat-integration>`)
-and a crash-looping `collab` service. Prepare a production private runtime
-profile, map each legacy mount to its repository equivalent or retire it,
-build the pinned core and add-on on production, save the current images to
-files (nightly image cleanup), back up the site, and switch in a planned
-maintenance window with a tested rollback. Then production runs the same
-reproducible build as test, including P01.

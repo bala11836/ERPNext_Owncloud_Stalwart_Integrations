@@ -54,6 +54,11 @@ reused; commits, pull requests, release records and handovers refer to them (P58
   request. **Never skip details:** the tool replaces text inside lines only, never removes or summarises a
   line, and writes every substitution to `docs/publication/last-report.md`; only the sensitive categories
   in the rules are replaced; the leak scan must be clean and the report read before the pull request.
+- **Only open work is listed (owner, 21 November 2026):** a P item is **removed** from its app list when the
+  task is completed, or becomes redundant or irrelevant, in the same session: `python3 tools/p_close.py --finished`
+  (every item whose State is done or closed) or `--item Pnn --outcome redundant|irrelevant|superseded --reason "..."`.
+  It leaves one line in [the closed log](p-closed.md) (number, title, app, outcome, date, reason), so numbers are never
+  reused; the full text stays in git history and the work in the release log and `docs/decisions.md`. Then publish.
 - **Rules that stay:** the owner decides what starts and when; every group still follows
   branch, test, merge, `main`, production (`AGENTS.md`), and the release record names
   every P item it carries, the tested commit and the rollback point. When an item is
@@ -71,26 +76,25 @@ until the owner says; the table only fixes the order to take them up.
 | Rank | Item | Why now | Depends on / note |
 |---|---|---|---|
 | 1 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
-| 2 | ~~PR #12 private sheet views~~ **live 21 Nov (`2c542f0`)**: sheet-view crash guard, repair tool, one-attempt keeper | done; P61 keeps the remaining safeguards | owner to open the the shared workbook files on production |
-| 3 | **P60** portal `/ezone` (**owner**, high) | owner priority; plain rename | P59 helps; production-only route files |
-| 4 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 5 | **P57** survive reboots (PR #7 open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
+| 2 | **P60** portal `/ezone` (**owner**, high) | owner priority; plain rename | P59 helps; production-only route files |
+| 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
+| 4 | **P57** survive reboots (PR #7 open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
 
 **Tier 1: high (business-critical, next)**
 
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
-| 6 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
-| 7 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
-| 8 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
-| 9 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
-| 10 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
-| 11 | **P13** remaining users, permissions, worker enrollment | adoption: 10 of about 20 users | P25 |
-| 12 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
-| 13 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
-| 14 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
-| 15 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
-| 16 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
+| 5 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
+| 6 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
+| 7 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
+| 8 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
+| 9 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
+| 10 | **P13** remaining users, permissions, worker enrollment | adoption: 10 of about 20 users | P25 |
+| 11 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
+| 12 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
+| 13 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
+| 14 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
+| 15 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
 
 **Tier 2: medium (planned, useful, not urgent)**
 
@@ -125,12 +129,8 @@ until the owner says; the table only fixes the order to take them up.
 | **P46** TrueNAS NVR | hardware and selection first |
 | **P53** Desk widgets and universal search | **parked by the owner**: do not start |
 
-**Done or closed (no action):** P02, P27 (obsolete), P33, P34 (superseded), P36, P37, P38
-(closed), P39, P42, P44, P47 (live), P52, P55, P56 (live), P58 (live `3a93de8`); P01 is
-live since P37 (owner to say if idle freezes come back).
+**Done, closed, redundant or irrelevant items** are not in the lists any more: see [the closed log](p-closed.md) (one line each; numbers are never reused).
 
-Note: two headings are numbered P56 in this file (the original request and its
-implementation); they are the same item.
 
 
 <!-- APP-INDEX-BEGIN -->
@@ -142,24 +142,22 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 20 | 16 |
+| General | [pending/general.md](p-list/general.md) | 16 | 16 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
-| Editor | [pending/editor.md](p-list/editor.md) | 4 | 1 |
-| ERP | [pending/erp.md](p-list/erp.md) | 12 | 11 |
+| Editor | [pending/editor.md](p-list/editor.md) | 1 | 1 |
+| ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
 | Mail | [pending/mail.md](p-list/mail.md) | 5 | 5 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 5 | 4 |
-| Portal (eZone) | [pending/portal.md](p-list/portal.md) | 8 | 5 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 4 | 4 |
+| Portal (eZone) | [pending/portal.md](p-list/portal.md) | 5 | 5 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
-| Sign-in | [pending/signin.md](p-list/signin.md) | 6 | 3 |
-| Test site | [pending/test-site.md](p-list/test-site.md) | 6 | 5 |
+| Sign-in | [pending/signin.md](p-list/signin.md) | 3 | 3 |
+| Test site | [pending/test-site.md](p-list/test-site.md) | 5 | 5 |
 
 ## All P items (index)
 
 | P | Title | App | Also touches | State |
 |---|---|---|---|---|
-| P01 | Idle menus and real-time connection recovery | [Portal (eZone)](p-list/portal.md) | erp, drive, mail, dms · **State:** done | done |
-| P02 | Off-server backups and restore test | [General](p-list/general.md) | none · **State:** done | done |
 | P03 | Employee eKYC India | [ERP](p-list/erp.md) | none · **State:** blocked | blocked |
 | P04 | WhatsApp onboarding and vendor/PO replies | [ERP](p-list/erp.md) | none · **State:** blocked | blocked |
 | P05 | Live GSTIN lookup and form prefill | [ERP](p-list/erp.md) | none · **State:** blocked | blocked |
@@ -184,24 +182,15 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P24 | Field attendance pilot and correction acceptance | [ERP](p-list/erp.md) | none · **State:** open | open |
 | P25 | Invitation, passkey enrollment and recovery acceptance | [Sign-in](p-list/signin.md) | none · **State:** open | open |
 | P26 | Banking and payroll provider sandbox acceptance | [ERP](p-list/erp.md) | none · **State:** blocked | blocked |
-| P27 | Collabora Calc search-based AutoFilter | [Editor](p-list/editor.md) | none · **State:** closed | closed |
 | P28 | Dual approval for ERP super-administrator access | [ERP](p-list/erp.md) | general · **State:** open | open |
 | P29 | Self-hosted mesh VPN with Headscale and Headplane | [General](p-list/general.md) | none · **State:** open | open |
 | P30 | Technitium filtered DNS for mesh devices and branch routers | [General](p-list/general.md) | none · **State:** open | open |
 | P31 | Keyboard-first navigation to nested ERP/Frappe menus | [ERP](p-list/erp.md) | portal · **State:** open | open |
 | P32 | Native-module integration and reversible add-on navigation | [ERP](p-list/erp.md) | none · **State:** open | open |
-| P33 | Move the permanent test site to a TrueNAS VM and retire the old VPS | [Test site](p-list/test-site.md) | none · **State:** done | done |
-| P34 | Automatic private sheet views in Collabora Calc | [Editor](p-list/editor.md) | none · **State:** closed | closed |
 | P35 | Public release and upstream sharing | [General](p-list/general.md) | none · **State:** in progress | in progress |
-| P36 | Modular repository layout at the TrueNAS rebuild | [General](p-list/general.md) | none · **State:** done | done |
-| P37 | Move production ERP onto the repository-built deployment | [ERP](p-list/erp.md) | general · **State:** done | done |
-| P38 | Colleague's mobile app: test-only access and safe contributions | [Mobile](p-list/mobile.md) | none · **State:** closed | closed |
-| P39 | Full restore rehearsal on the old VPS (done) | [General](p-list/general.md) | none · **State:** done | done |
 | P40 | Backup hardening against ransomware | [General](p-list/general.md) | none · **State:** in progress | in progress |
 | P41 | Owner recovery essentials (recurring) | [General](p-list/general.md) | none · **State:** recurring | recurring |
-| P42 | Replace Collabora with ONLYOFFICE | [Editor](p-list/editor.md) | drive · **State:** done | done |
 | P43 | Tablet layout and touch check (all apps) | [General](p-list/general.md) | portal, drive, editor, mail, dms · **State:** open | open |
-| P44 | Sign-in (authentik) as a repository stack | [Sign-in](p-list/signin.md) | none · **State:** done | done |
 | P45 | Production Drive, DMS, Mail and sign-in on the repository build | [General](p-list/general.md) | drive, dms, mail, signin · **State:** in progress | in progress |
 | P46 | TrueNAS as network video recorder (NVR) | [General](p-list/general.md) | none · **State:** open | open |
 | P47 | Company website as the front door of the app portal | [Portal (eZone)](p-list/portal.md) | none · **State:** in progress | in progress |
@@ -209,14 +198,9 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P49 | Bring production's sign-in pages and templates into the repository | [Sign-in](p-list/signin.md) | none · **State:** open | open |
 | P50 | Native mobile app for phones and tablets (module `mobile-app`) | [Mobile](p-list/mobile.md) | none · **State:** open | open |
 | P51 | Data refresh runs at 8 pm, not on demand | [Test site](p-list/test-site.md) | none · **State:** open | open |
-| P52 | "All Apps" menu item keeps coming back (bake the removal into the repository) | [Portal (eZone)](p-list/portal.md) | erp · **State:** done | done |
 | P53 | Desk: day-planning widgets and dashboards from all apps | [Portal (eZone)](p-list/portal.md) | signin, mail, drive, dms · **State:** parked | parked |
 | P54 | Branch deploy button for the "developer" group on the test site | [Test site](p-list/test-site.md) | none · **State:** blocked | blocked |
-| P55 | Replace the old logo everywhere with the approved one | [General](p-list/general.md) | portal, signin, mail, drive, erp · **State:** done | done |
-| P56 | Logging out of any app lands on the website | [Sign-in](p-list/signin.md) | portal · **State:** done | done |
-| P56 | Logout ends on the website; one passkey prompt; portal keeps its name | [Sign-in](p-list/signin.md) | portal · **State:** done | done |
 | P57 | The platform survives restarts and reboots without an outage | [General](p-list/general.md) | drive, mail, editor · **State:** in progress | in progress |
-| P58 | Next ERP release: favicon B in the ERP image; two-column app menu | [Portal (eZone)](p-list/portal.md) | erp · **State:** done | done |
 | P59 | Promotion plan and drift check: no stack left behind | [General](p-list/general.md) | none · **State:** open | open |
 | P60 | Portal address `/ezone` instead of `/place_holder` | [Portal (eZone)](p-list/portal.md) | none · **State:** open | open |
 | P61 | Editor file safety: a document is never left unusable or its edits lost | [Editor](p-list/editor.md) | drive · **State:** in progress | in progress |
@@ -228,21 +212,3 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P67 | Test deployments: one complete step, no hand-run pieces or drifting profiles | [General](p-list/general.md) | test-site · **State:** open | open |
 | P68 | A repository check for imports of names that do not exist | [General](p-list/general.md) | none · **State:** open | open |
 <!-- APP-INDEX-END -->
-
-## Legacy status groups (16 November 2026 list)
-
-The list used to be grouped by status instead of by app. Where each group's items went:
-
-- **Explicitly deferred:** P01, P02
-- **Implementation still due:** P03, P04, P05, P06, P07
-- **Deployed, but final acceptance still due:** P08, P09, P10, P11, P12, P13, P14, P15
-- **Carried-forward development and decisions:** P16, P17, P18, P19, P20, P21, P22, P23, P24, P25, P26
-- **Audit disposition (completed requests, no action):** P27, P28, P29, P30, P31, P32, P33, P35, P36, P34, P38, P42, P39, P45, P49, P50, P51, P52, P53, P54, P55, P56, P57, P56, P58, P59, P60, P61, P62, P63, P46, P47, P48, P44, P43, P40, P41, P37
-
-## Audit disposition
-
-The following requests are complete and are **not pending upgrade/implementation jobs**: core Frappe/ERPNext/HR upgrade; production ERP/SSO consolidation on the new controller; old application/test retirement; Onboarding migration/name/O icon; sole noreply integration sender; final portal and native Desk menu layout/alignment/dividers; Drive/Collabora address mapping; compact TXT/Markdown headers; editor button color matching and outside-click dismissal; Microsoft office-format creation choices; public authenticated Mail with private administration; webmail file-storage disablement; common user sign-in group and Drive client display names.
-
-Current production versions: **Frappe 16.56.0, ERPNext 16.55.0, HRMS 16.53.2**. The installed-app table and the retained feature details are in the [current handover](retained.md).
-
-Only the current retained requests are included here; superseded historical proposals are excluded.

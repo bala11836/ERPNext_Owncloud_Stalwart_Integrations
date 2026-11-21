@@ -10,17 +10,6 @@ The permanent test site: refresh, branch deploys and the demo.
 
 Part of the P list: back to the [index and priority order](../p-list.md). Items are numbered across the whole project; a new item goes into the list of the app it belongs to (or `general`), and `python3 tools/p_index.py` refreshes the index.
 
-### P33 — Move the permanent test site to a TrueNAS VM and retire the old VPS
-
-**App:** test-site · **Also touches:** none · **State:** done
-
-**Status:** done. Test site on TrueNAS since 17 November 2026; old VPS wiped and
-its access revoked on 19 November (migration step 9 (private record));
-owner: subscription left to lapse (treated as cancelled) and both tailnet
-nodes removed (19 November).
-
-Rebuild the test site from Git on an Ubuntu VM with its own Coolify on the home TrueNAS. Reach it publicly through a TLS-passthrough relay on the production VPS over the tailnet (home is behind CGNAT). Re-point the exporter, auth bridge and egress source-IP restrictions to the VM's tailnet address. Run full acceptance, including a button-triggered four-app refresh. Then revoke the old VPS's keys and cancel that VPS (rollback archives are discarded). Must run from a workstation on the tailnet. Full plan: test-host-migration.md (private record).
-
 ### P51 — Data refresh runs at 8 pm, not on demand
 
 **App:** test-site · **Also touches:** none · **State:** open
@@ -128,7 +117,6 @@ all of this after every data refresh, publishing the neutral brand as the reposi
 deploy skips the ERP image build when an image of the same commit exists, so a brand-only change needed the image tag
 removed first; browsers may also keep the old files because the version stamp is the commit.
 
-
 ### P65 — Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped)
 
 **App:** test-site · **Also touches:** signin, general · **State:** in progress
@@ -150,7 +138,6 @@ allow list too); repository first (PR #16: `tools/sso_proxy_trust.py`, `prepare_
 then production with a backup, the setting saved in Coolify, and the proxy restart at a quiet moment; production-only
 setting, so browser checks right after it is applied. Also decided: ERP Mobile shows no consent screen (test profile
 `skip_authorization`, applied on test 21 November).
-
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued
 

@@ -64,10 +64,6 @@ def prepare(source,runtime,receipts,profile,output):
         # P38: app OAuth clients blocked on production, re-enabled on test.
         erp['test_oauth_clients']=profile['test_oauth_clients']
         erp['site_settings'].update(native_site_settings(profile['test_oauth_clients']))
-    demo=profile.get('erp_site_settings') or {}
-    unknown=set(demo)-{'cloud_portal_hide_entity_name'}
-    if unknown:raise ValueError('erp_site_settings may only set: cloud_portal_hide_entity_name')
-    erp['site_settings'].update(demo)
     form_smtp=profile.get('test_form_smtp')
     if form_smtp:
         # Owner-approved real form emails from the test copy (P38): a dedicated

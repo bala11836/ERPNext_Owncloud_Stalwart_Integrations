@@ -61,12 +61,11 @@ class BrandAssets(unittest.TestCase):
     def test_portal_page_keeps_its_name_and_shows_the_logo_in_the_menu(self):
         page = (ROOT / "erpnext_drive_integrations/www/place_holder.html").read_text()
         code = (ROOT / "erpnext_drive_integrations/www/place_holder.py").read_text()
-        # Owner: exactly as before except the logo (company name beside it, same logo in the menu).
+        # Owner: same logo in the menu.
         self.assertIn("<title>Cloud</title>", page)
-        self.assertIn("else (company or 'Applications')", code)
-        # A demo site may hide the name (P63); the page then shows the logo alone.
-        self.assertIn("frappe.conf.get('cloud_portal_hide_entity_name')", code)
-        self.assertIn("{% if entity_name %}<span>{{ entity_name | e }}</span>{% endif %}", page)
+        # Owner, 21 November 2026: the logo alone, no company name beside it (test and production).
+        brand = page.split('<div class="ph-brand">', 1)[1].split("</div>", 1)[0]
+        self.assertNotIn("entity_name", brand)
         self.assertIn('id="ph-home" title="Home" aria-label="Home"><img src="{{ entity_logo | e }}"', page)
         self.assertNotIn("Desk</title>", page)
         self.assertNotIn("entity_icon", page + code)

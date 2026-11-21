@@ -13,8 +13,8 @@ def get_context(context):
     fullname = frappe.utils.get_fullname() or frappe.session.user
     parts = fullname.split()
     company = frappe.defaults.get_user_default('Company') or frappe.db.get_single_value('Global Defaults', 'default_company')
-    # A demo site may hide the company name beside the logo (site config, P63).
-    context.entity_name = '' if frappe.conf.get('cloud_portal_hide_entity_name') else (company or 'Applications')
+    # Owner (21 November 2026): the logo stands alone; no company name beside it (test and production).
+    context.entity_name = company or 'Applications'   # kept for the logo's alt text and the page's context
     context.entity_logo = '/assets/erpnext_drive_integrations/company-logo-approved-v6.svg'
     context.user_name = fullname
     context.user_login = frappe.session.user

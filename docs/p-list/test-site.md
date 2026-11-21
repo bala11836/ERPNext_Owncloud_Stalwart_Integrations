@@ -166,7 +166,7 @@ waiting for the owner (recommendation first):
 **Design notes:** the gateway sends through the existing dedicated test sending account (`test_form_smtp`), so the
 egress rule stays one address; the test Mail server's own outgoing mail must also go through the gateway; WhatsApp is
 not live yet (P04), so its adapter gets the same allow list and `[TEST]` prefix when built; push stays off on test.
-Branch `p63-demo-ui` (UI points) is on test awaiting the owner's browser check before its PR.
+Branch `p63-demo-ui` (UI points): see the progress note of 21 November evening below.
 **Domain split (owner, 21 November 2026; P70):** the demo gets its own identity: `example.com` mail and a second
 WhatsApp number; production moves to `tenant.example`. Effect on P63: (a) demo mail and messages are sent **as
 Unformat**, no longer through a production sending account (`test_form_smtp` is replaced by the demo's own account),
@@ -175,6 +175,19 @@ more**: the refreshed data still holds real vendors' addresses and numbers, so w
 message a real vendor as Unformat; employees enrol through an authentik group, vendors as decided above; (c) scope 6
 (test/demo marker) applies to all `example.com` mail and Unformat WhatsApp messages; (d) new questions moved to P70:
 where `example.com` mail runs, the second WhatsApp number (P04). P63, P70 and P19 are taken up together.
+
+**Progress (21 November 2026, evening): UI accepted by the owner, PR #20 open (tested at `a0cb527`).** Second round of owner
+feedback done on test: Apps badge exactly the TEST SITE badge's size; flower and bee at 60%, beside the logo (logo and
+flower centred together; below the logo on phones); demo logo redrawn ("format" inside the width of "UN", its letters of
+slightly different size and height, tight margins; private assets `assets/unformat-demo-brand/logo.svg`, previous kept in
+`options/`; on test from `<test host secrets folder>/brand-unformat-demo-2026-11-21b`); portal logo 50 px, 8 px lower and
+12 px to the right, refresh row moved right. **Owner rule: production and test have separate asset sets.** The portal's
+site-specific look now comes from site settings (`cloud_portal_hide_entity_name`, `cloud_portal_logo_height`,
+`cloud_portal_logo_position`, `cloud_portal_clean_root_address`), set on test through `erp_site_settings` in the private
+profile; production sets none and keeps its page exactly (guard test; production landing page pixel-identical to
+`main`). Owner: "its perfect". **Owner decision on (i)/(ii):** keep as it is: signed in, `/` opens the apps; signed out,
+the landing page. Rollback copies on test: `<server path>`. **Remaining for P63:** clean
+refreshed data (company name masking), sign-in brand, scope 5 and 6 (paused, decisions waiting above), with P70 and P19.
 
 
 ### P66 — Errors on the test site are invisible: Error Log rows stay queued

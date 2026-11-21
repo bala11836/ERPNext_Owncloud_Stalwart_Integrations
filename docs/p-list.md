@@ -76,16 +76,16 @@ until the owner says; the table only fixes the order to take them up.
 | Rank | Item | Why now | Depends on / note |
 |---|---|---|---|
 | 1 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
-| 2 | **P60** portal `/ezone` (**owner**, high) | owner priority; plain rename | P59 helps; production-only route files |
-| 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 4 | **P57** survive reboots (PR #7 open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
+| 2 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
+| 3 | **P57** survive reboots (PR #7 open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
 
 **Tier 1: high (business-critical, next)**
 
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
-| 5 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
-| 6 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
+| 4 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
+| 5 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
+| 6 | **P71** GitHub CI/CD: Actions deploy test and production, owner approves production; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |
 | 7 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
 | 8 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
 | 9 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
@@ -93,16 +93,17 @@ until the owner says; the table only fixes the order to take them up.
 | 11 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
 | 12 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
 | 13 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
-| 14 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
-| 15 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
+| 14 | **P69** mail retention: keep every message, users cannot delete permanently (owner request) | data loss and compliance: today a user can delete company mail for good | paused by the owner; mechanism checked, one decision waiting in the item; with P02/P40 backups and P19 |
+| 15 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
+| 16 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
 
 **Tier 2: medium (planned, useful, not urgent)**
 
 | Item | Note |
 |---|---|
 | **P50** native mobile app | strategic; planning only, many open decisions (look, security, notifications, build order); pilot is HR attendance |
-| **P63** demo mode for the test site (neutral UN/format brand, line-art landing page, no tenant traces) | owner request 21 Nov; needs colour options chosen; open question on the shared sign-in brand |
-| **P65** relayed test sign-in loses the requested page | owner decision: trust forwarded headers on the private entry point for the bridge sources, or accept the second tap |
+| **P70** mail and WhatsApp domain split (`tenant.example` production, `example.com` demo) | owner decision 21 Nov; foundation of P19 and P63, taken up together; waits for the owner |
+| **P63** demo mode for the test site (neutral UN/format brand, line-art landing page, no tenant traces; test mail and messages only to the test group) | UI released 21 Nov (PR #20, `6db2536`); rest paused by the owner: clean refreshed data, sign-in brand, test-group allow list, test/demo marker, vendor enrolment (decisions waiting in the item) |
 | **P66** test-site errors invisible (Error Log rows stay queued) | flush the deferred inserts on test; alarm |
 | **P68** check for imports of names that do not exist | static check plus "tests import the real module" |
 | **P05**, **P06** GSTIN lookup and PAN checks | blocked on the India Compliance API secret and a PAN verification source |
@@ -123,7 +124,7 @@ until the owner says; the table only fixes the order to take them up.
 
 | Item | Note |
 |---|---|
-| **P19** three Google mailboxes to Stalwart | after P12 is resolved |
+| **P19** three Google mailboxes to Stalwart | after P12 is resolved; taken up with P70 and P63 |
 | **P22** AI assistant | read-only first; provider and data policy undecided |
 | **P29**, **P30**, **P48** Headscale, Technitium DNS, branch router | one chain, P48 depends on P29 and P30; nothing is broken today |
 | **P46** TrueNAS NVR | hardware and selection first |
@@ -142,17 +143,17 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 16 | 16 |
+| General | [pending/general.md](p-list/general.md) | 18 | 18 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 1 | 1 |
 | ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
-| Mail | [pending/mail.md](p-list/mail.md) | 5 | 5 |
+| Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
 | Mobile | [pending/mobile.md](p-list/mobile.md) | 4 | 4 |
-| Portal (eZone) | [pending/portal.md](p-list/portal.md) | 5 | 5 |
+| Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 3 | 3 |
-| Test site | [pending/test-site.md](p-list/test-site.md) | 5 | 5 |
+| Test site | [pending/test-site.md](p-list/test-site.md) | 4 | 4 |
 
 ## All P items (index)
 
@@ -174,7 +175,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P16 | Raven attachments and Drive storage integration | [Raven and Insights](p-list/raven.md) | drive · **State:** open | open |
 | P17 | Automatic Drive links for Mail attachments over 200 KB | [Mail](p-list/mail.md) | drive · **State:** open | open |
 | P18 | Allowed Mail clients and protocol access policy | [Mail](p-list/mail.md) | none · **State:** open | open |
-| P19 | Three Google Workspace mailboxes to Stalwart | [Mail](p-list/mail.md) | none · **State:** open | open |
+| P19 | Three Google Workspace mailboxes to Stalwart | [Mail](p-list/mail.md) | general · **State:** open | open |
 | P20 | Paperless document links on ERP transactions | [DMS](p-list/dms.md) | erp · **State:** open | open |
 | P21 | Client/project correspondence register and DMS integration | [ERP](p-list/erp.md) | dms · **State:** open | open |
 | P22 | Permission-controlled ERP AI assistant | [ERP](p-list/erp.md) | none · **State:** open | open |
@@ -202,13 +203,14 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P54 | Branch deploy button for the "developer" group on the test site | [Test site](p-list/test-site.md) | none · **State:** blocked | blocked |
 | P57 | The platform survives restarts and reboots without an outage | [General](p-list/general.md) | drive, mail, editor · **State:** in progress | in progress |
 | P59 | Promotion plan and drift check: no stack left behind | [General](p-list/general.md) | none · **State:** open | open |
-| P60 | Portal address `/ezone` instead of `/place_holder` | [Portal (eZone)](p-list/portal.md) | none · **State:** open | open |
 | P61 | Editor file safety: a document is never left unusable or its edits lost | [Editor](p-list/editor.md) | drive · **State:** in progress | in progress |
 | P62 | Daily upstream watch: new releases, security flaws, patches, upgrade decisions | [General](p-list/general.md) | none · **State:** open | open |
-| P63 | Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces | [Test site](p-list/test-site.md) | portal, signin · **State:** in progress | in progress |
-| P64 | Native app sign-in on production: latent auth-hook crash and a stale client list | [Mobile](p-list/mobile.md) | signin, erp · **State:** open | open |
-| P65 | Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped) | [Test site](p-list/test-site.md) | signin, general · **State:** in progress | in progress |
+| P63 | Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces | [Test site](p-list/test-site.md) | portal, signin, mail, erp · **State:** in progress | in progress |
+| P64 | Native app sign-in on production: latent auth-hook crash and a stale client list | [Mobile](p-list/mobile.md) | signin, erp · **State:** in progress | in progress |
 | P66 | Errors on the test site are invisible: Error Log rows stay queued | [Test site](p-list/test-site.md) | general, erp · **State:** open | open |
 | P67 | Test deployments: one complete step, no hand-run pieces or drifting profiles | [General](p-list/general.md) | test-site · **State:** open | open |
 | P68 | A repository check for imports of names that do not exist | [General](p-list/general.md) | none · **State:** open | open |
+| P69 | Mail retention: keep every message, users cannot delete permanently | [Mail](p-list/mail.md) | general · **State:** open | open |
+| P70 | Mail and WhatsApp domain split: `tenant.example` for production, `example.com` for the demo | [General](p-list/general.md) | mail, test-site, erp, signin · **State:** open | open |
+| P71 | GitHub CI/CD: GitHub Actions deploys test and production; "Refresh code" button removed | [General](p-list/general.md) | test-site, erp, mail, drive, dms, signin · **State:** open | open |
 <!-- APP-INDEX-END -->

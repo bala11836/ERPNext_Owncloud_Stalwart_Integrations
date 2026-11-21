@@ -361,3 +361,101 @@ before_request`) of a name that does not exist passes every unit test that fakes
 time. Add a static check to `tools/check_repository.py` (or CI) that resolves imports of the project's own modules
 (for example pylint's `no-name-in-module` / `import-error` for `erpnext_drive_integrations`), and the rule that tests
 import the real module under test rather than a fake copy of it.
+
+### P70 — Mail and WhatsApp domain split: `tenant.example` for production, `example.com` for the demo
+
+**App:** general · **Also touches:** mail, test-site, erp, signin · **State:** open
+
+**Status:** owner decision 21 November 2026 ("tomorrow we'll have separate email domain for prod and separate email
+for unformat; separate WhatsApp also"); not started, waits for the owner to take it up. Shared foundation of **P19**
+and **P63**: the three are planned, tested and released together, each keeping its own status.
+
+**Decided:** production mail uses the company domain `tenant.example`; `example.com` becomes the demo's own mail
+identity; a second WhatsApp number is the demo's channel. Demo users send evaluation mail and messages from
+`example.com` and the Unformat WhatsApp number (with the P63 allow list and test/demo marker).
+
+**Scope**
+1. **Production on `tenant.example`:** add the domain to the production mail server (DKIM, SPF, DMARC, MX, autoconfig),
+   create or move the production mailboxes to it; the three Google mailboxes move under P19 (blocked by P12, PTR).
+   Today `tenant.example` MX points at Google and `example.com` at our server; in the production ERP 9 of 10 active users
+   sign in with personal addresses of a public mail provider and 1 with `example.com`, so few accounts change. List every place the old address is
+   used (authentik, ERP users and Email Accounts, Drive, DMS mail import, sender addresses, invitations) and move each.
+2. **`example.com` for the demo:** where its mail runs (recommended: production mail server as a separate domain,
+   because the test site sits on a home connection with poor outgoing delivery; alternative: the test site's own mail
+   server), the demo sending accounts, DNS records; production keeps nothing on it afterwards.
+3. **Second WhatsApp number** for the demo (Meta business number), linked to P04; production WhatsApp stays separate.
+4. **Web addresses:** production websites stay on `example.com` host names unless the owner decides otherwise; only
+   the mail and messaging identities split.
+5. **Order and rollback:** DNS changes, mailbox moves and client reconfiguration in an agreed order with a rollback
+   point; nothing changes until the owner says so.
+
+### P71 — GitHub CI/CD: GitHub Actions deploys test and production; "Refresh code" button removed
+
+**App:** general · **Also touches:** test-site, erp, mail, drive, dms, signin · **State:** open
+
+**Status:** owner decision 21 November 2026 ("lets go with this github ci/cd"); plan **settled** the same day;
+**scheduled for later, nothing built**. Starts only when the owner says go (standing rule). Priority: rank 6 (tier 1). Replaces the hand-run deploy steps; takes over
+the deploy parts of **P67** (one complete test deploy), **P54** (branch deploy button) and much of **P59** (promotion
+plan and drift check); those items are reviewed and closed or narrowed when P71 is planned.
+
+**Target flow (GitHub's standard practice):**
+1. **Pull request opened or updated** (branches of this repository only): a GitHub Actions job deploys the branch to
+   the test site and records a deployment (commit, time, result) on the pull request; merging can require it to have
+   passed, so "tested on test" is enforced by GitHub instead of a written note.
+2. **Pull request closed without merging:** a job deploys production's revision (`main`) to test, so test never keeps
+   rejected code. **Merged:** nothing to reset.
+3. **Merge to `main`:** a job promotes the **same tested build** (build once, promote that image) to production; it
+   waits in a protected GitHub "production" environment for the **owner's approval**. Rollback = approve the previous
+   version again.
+4. **Runners:** GitHub's standard self-hosted runner on the test host and on production; they connect out to GitHub, so
+   the design does not depend on where test runs (home host today, a VPS from 22 November 2026).
+
+**"Refresh code" button removal (plan):** the button's job (put test back on production's code) is taken over by
+step 2. Remove it only after the pipeline has run that reset successfully on test: (a) the pipeline's reset works and
+is visible on the pull request; (b) remove the button, its endpoint and its worker path from the portal and the test
+refresh module (keep "Refresh data", which is separate); (c) update the test-refresh module README, the runbook and
+`docs/decisions.md`; (d) tests prove the button and its endpoint are gone and "Refresh data" still works.
+
+**Design points to agree:**
+- **Public logs:** job logs of a public repository are visible to anyone, while today's deploy scripts print host
+  names, addresses, server paths and names; jobs print neutral output only, with a leak check that fails the job.
+- **Secrets stay on the servers** (AGENTS.md): runners read the servers' own secret files; nothing in GitHub secrets
+  beyond what GitHub itself needs.
+- **The GitHub account becomes a key to production:** two-factor login and recovery codes (P41), `main` protected
+  (no direct pushes), production approval by the owner (alone or with a second person: to decide), the production
+  runner limited to deploying.
+- **Fork pull requests** (outside contributors, for example the mobile app) never run on our runners automatically
+  and never see secrets; their code is deployed to test only after a maintainer brings it into a branch here or
+  approves the run.
+- **Break-glass:** a written manual deploy and rollback for when GitHub is unavailable.
+- **Production-only parts** (route files, DNS, proxy settings) keep the post-release browser and protocol check
+  unless the pipeline is taught to check them.
+- **Runner upkeep:** runners are updated like any other component (P62 watch).
+
+**Discussion record (owner, 21 November 2026):**
+- *Why "Refresh code" at all if releases go main, test, production?* In the normal flow it adds little: after a merge,
+  test already runs what `main` has. It matters only when a branch is not merged (rejected, abandoned, or replaced by
+  another branch), when test would keep code production will never get. Decision: replace the manual button by the
+  pipeline's automatic reset on "pull request closed without merging", then remove the button.
+- *Design must not rest on assumptions about where test runs* (owner): test moves to a VPS on 22 November 2026. The
+  standard GitHub runner connects out to GitHub, so the design works on any host; a direct GitHub call (webhook) may be
+  added on a public host as an extra trigger, never the only one.
+- *Owner found the first sketch (polling and scripts of our own) a workaround with too many failure points* and asked
+  for standard practice: GitHub Actions with self-hosted runners, deployments recorded on pull requests, a protected
+  "production" environment with owner approval, build once and promote that build.
+- *What we lose:* nothing functional; trade-offs accepted with mitigations: dependence on GitHub (break-glass manual
+  procedure), the GitHub account as a key to production (two-factor, protected `main`, owner approval, limited
+  runner), **public job logs** (neutral output plus a leak check), secrets stay on the servers, slower hands-on fixes
+  in incidents (break-glass covers emergencies), production-only parts still checked after release, runner upkeep.
+- *No reason to wait for the VPS move* to start: only the test runner is host-specific (minutes to reinstall).
+
+**Agreed order of work (when the owner says go):**
+1. Pipeline for test: pull request opened or updated deploys the branch to test, deployment recorded on the PR.
+2. Reset on close: pull request closed without merging puts test back on `main`.
+3. Remove the "Refresh code" button (after step 2 has worked on test), with docs and tests.
+4. Production: merge to `main`, same tested build promoted after the owner's approval; rollback by approving the
+   previous version; break-glass procedure written.
+5. Then review P67, P54 and P59: close or narrow what P71 has taken over.
+
+**Still to confirm at the start:** who approves production (owner alone, or owner plus a second person).
+

@@ -54,9 +54,11 @@ class BuildGuideTests(unittest.TestCase):
         self.assertIn('pin `eas-cli`', self.GUIDE)
 
     def test_field_methods_named_in_the_guide_exist(self):
-        api = (ROOT / 'erpnext_drive_integrations/field/api.py').read_text(encoding='utf-8')
+        # The HR part was renamed from field/ to custom_hr/ (PR #38); accept either while both PRs are open.
+        path = next(p for p in (ROOT / 'erpnext_drive_integrations/custom_hr/api.py', ROOT / 'erpnext_drive_integrations/field/api.py') if p.is_file())
+        api = path.read_text(encoding='utf-8')
         whitelisted = set(re.findall(r'@frappe\.whitelist[^\n]*\n\s*def (\w+)\(', api))
-        section = self.GUIDE.split('whitelisted methods in `field/api.py`')[1].split(').')[0]
+        section = self.GUIDE.split('whitelisted methods in `custom_hr/api.py` (formerly `field/api.py`; ')[1].split(').')[0]
         named = set(re.findall(r'`(\w+)`', section))
         self.assertGreaterEqual(len(named), 10)
         self.assertEqual(named - whitelisted, set(), 'the guide names a field method that does not exist')

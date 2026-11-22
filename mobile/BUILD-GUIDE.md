@@ -105,7 +105,7 @@ Server (`erpnext_drive_integrations`):
 - **Field attendance (exists):** DocTypes Field Site (with `latitude`, `longitude`, `radius_m`,
   `maximum_accuracy_m`), Field Attendance Entry (with `request_id` against duplicates, photo, location, accuracy,
   check-in, automatic check-out), Field Worker Assignment, Field Shift Allocation, Field Assignment Event,
-  Field Site Member, Field Site Asset; whitelisted methods in `field/api.py` (`bootstrap`, `team`, `entry`,
+  Field Site Member, Field Site Asset; whitelisted methods in `custom_hr/api.py` (formerly `field/api.py`; `bootstrap`, `team`, `entry`,
   `approvals`, `save_capture`, `submit`, `review`, `move`, `setup_options`, `create_shifts`, `save_site`,
   `unassigned`, `enroll`, `my_records`).
 - Web push for the browser portal (`portal/push.py`, device registry on the server); native push does not exist
@@ -170,8 +170,8 @@ Nothing is stored only in the app: every record lives in ERPNext, so the web sho
 | Feature | Received by | Stored in | Photos | Retries / offline |
 |---|---|---|---|---|
 | Incident → Raven | Raven `raven.api.raven_message.send_message_with_attachments` (files uploaded first) | Raven messages in the ERP database, one per chosen channel; Raven checks membership | ERP files, private | Raven's `client_id` is its idempotency key (one per channel) |
-| Supervisor attendance | `field/api.py` (`save_capture`, `submit`, `review`, ...) | Field Attendance Entry (**exists**) | attached | `request_id` (**exists**) |
-| Self check-in | new whitelisted method in `field/`: checks the fence of the person's Field Site on the server, refuses outside or with poor accuracy | ERPNext Employee Checkin (verify its location fields in the pinned HRMS) or Field Attendance Entry | optional | client ID |
+| Supervisor attendance | `custom_hr/api.py` (`save_capture`, `submit`, `review`, ...) | Field Attendance Entry (**exists**) | attached | `request_id` (**exists**) |
+| Self check-in | new whitelisted method in `custom_hr/`: checks the fence of the person's Field Site on the server, refuses outside or with poor accuracy | ERPNext Employee Checkin (verify its location fields in the pinned HRMS) or Field Attendance Entry | optional | client ID |
 | Leave, expense claim, payslip | standard REST / methods as the person | Leave Application, Expense Claim, Salary Slip | attached | client ID |
 | Stores: request, receipt, issue, count | standard | Material Request, Purchase Receipt, Stock Entry, Stock Reconciliation | attached | client ID |
 | Equipment breakdown, maintenance | standard | Asset Repair, Asset Maintenance Log | attached | client ID |

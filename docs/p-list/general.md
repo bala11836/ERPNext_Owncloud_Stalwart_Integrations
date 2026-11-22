@@ -555,3 +555,32 @@ TrueNAS answers.
 no secrets in dashboards or alert texts; licences of Grafana, Loki (AGPL) and Prometheus (Apache) recorded; set up from
 this repository as a module (stack files, config, README), branch, test, owner go, like every other stack.
 
+### P73 — Matrix as federated messaging between tenants
+
+**App:** general · **Also touches:** none · **State:** open · **Category:** long-term plan
+
+**Status:** owner idea, 22 November 2026; recorded as a long-term plan, not scheduled. Nothing starts until the owner
+decides.
+
+**Idea:** Matrix is a federated, open messaging standard: users on different organisations' servers can share rooms.
+One day, separate tenants of this platform could talk to each other directly, which the current chat (Raven, inside
+one ERP site) cannot do.
+
+**Comparison made on 22 November 2026 (summary):**
+- **Raven:** AGPL-3.0, now maintained by Frappe; deep ERPNext integration (same users and roles, share any ERP document,
+  document-change messages, AI agents on ERP data); no federation; no end-to-end encryption (company can keep and
+  search messages); mobile app younger (iPhone app, Android via app or the v3 PWA); almost no running cost here.
+- **Matrix:** open standard (Matrix Foundation) with several servers (Synapse; lighter continuwuity and Tuwunel) and
+  very polished apps (Element X, FluffyChat); federation built in; end-to-end encryption by default (privacy, but
+  company records cannot be kept or searched in encrypted rooms unless configured); single sign-on with authentik
+  needs the Matrix Authentication Service for Element X; group calls need a call server (LiveKit); bridges to other
+  networks exist (WhatsApp bridging uses personal accounts: terms-of-service risk); no ready-made ERPNext integration
+  (one-way notifications through a webhook bot or n8n); a full new stack to run, secure and back up; federation is an
+  internet-facing service; the server software cannot be switched after installation.
+- **Recommendation at the time:** keep Raven as the office chat; when federation between tenants becomes a real goal,
+  pilot Matrix on the test site (light server, Element X, authentik sign-in) and decide its role (between companies
+  only, or replacing Raven); a Raven-Matrix bridge would be custom work.
+
+**To decide when taken up:** the goal (between tenants only, or the default chat), the server software, encryption
+policy for company rooms, calls, bridges, where it runs, and the effect on mobile plans.
+

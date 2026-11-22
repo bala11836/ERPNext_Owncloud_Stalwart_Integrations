@@ -77,14 +77,14 @@ until the owner says; the table only fixes the order to take them up.
 |---|---|---|---|
 | 1 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
 | 2 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 3 | **P57** survive reboots (released 21 Nov; follow-ups open) | production lost Drive editor, proxy entry point and Mail sign-in after one reboot | add the Stalwart reload step; reboot drill on test; no production reboot as a test |
+| 3 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
 
 **Tier 1: high (business-critical, next)**
 
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
 | 4 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
-| 5 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | production defect (dormant today); fix tested on test | merge PR #15, ERP release |
+| 5 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | crash fix live since 21 Nov (`4a5151f`) | remaining: correct the stale native client list on production when the app goes live (P50) |
 | 6 | **P71** GitHub CI/CD and central secrets management: Actions deploy test and production, owner approves production; secrets in one managed place; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |
 | 7 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
 | 8 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |

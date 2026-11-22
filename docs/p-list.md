@@ -186,7 +186,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P19 | Three Google Workspace mailboxes to Stalwart | [Mail](p-list/mail.md) | general · **State:** open | open |
 | P20 | Paperless document links on ERP transactions | [DMS](p-list/dms.md) | erp · **State:** open | open |
 | P21 | Client/project correspondence register and DMS integration | [ERP](p-list/erp.md) | dms · **State:** open | open |
-| P22 | Permission-controlled ERP AI assistant | [ERP](p-list/erp.md) | none · **State:** open | open |
+| P22 | Permission-controlled ERP AI assistant and business automation (Activepieces) | [ERP](p-list/erp.md) | raven, mail, drive, dms, general · **State:** open | open |
 | P23 | PWA offline and poor-connectivity behavior | [Mobile](p-list/mobile.md) | portal · **State:** open | open |
 | P24 | Field attendance pilot and correction acceptance | [ERP](p-list/erp.md) | none · **State:** open | open |
 | P25 | Invitation, passkey enrollment and recovery acceptance | [Sign-in](p-list/signin.md) | none · **State:** open | open |

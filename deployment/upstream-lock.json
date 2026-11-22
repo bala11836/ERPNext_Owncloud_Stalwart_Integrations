@@ -1,8 +1,8 @@
 {
   "frappe": {
     "url": "https://github.com/frappe/frappe.git",
-    "ref": "v16.56.0",
-    "commit": "49789a1711d4dde2be9c6888efe35651465f4b64"
+    "ref": "v16.60.2",
+    "commit": "2df0425571ebbaed878eabc3edc5b7e7c3327ae0"
   },
   "erpnext": {
     "url": "https://github.com/frappe/erpnext.git",

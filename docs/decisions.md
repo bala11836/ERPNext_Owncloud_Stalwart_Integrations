@@ -432,6 +432,18 @@ discussion that led to a decision is not repeated here.
   not exist, so every native app request failed with HTTP 500 on the test site (21 November 2026). **Where:**
   `tests/portal/test_mobile.py` (PR #15), P64, P68.
 
+### The native app: owner decisions, one build guide, and a review workflow for agents (P50)
+- **Decision:** the app's tabs are Today, Inbox, My HR and Menu; Chat, Mail and Drive stay separate apps and are
+  not linked; every person can do in the app what their roles allow on the web. Incidents go to Raven threads the
+  person chooses; approvals and their limits come from ERPNext workflows; English only for now; self check-in
+  outside a site fence is refused by the server; remote wipe and at most one day of offline data; TestFlight for
+  iPhones. Agents build from `mobile/BUILD-GUIDE.md` with a fixed workflow: explore, design with the data path of
+  every feature, owner go, build, review agents and security review, tests, pull request, test site. Only
+  vetted official plugins and skills are used (Anthropic, Expo, Callstack), read before installing.
+- **Why:** owner, 22 November 2026: the app must be built like a production app, not "vibe-coded", and an
+  externally written build guide contradicted the working sign-in, the one-app rule and existing modules.
+  **Where:** `mobile/BUILD-GUIDE.md`, `mobile/AGENTS.md`, `mobile/README.md`, `tests/test_mobile_app.py`.
+
 ### Only open work stays in the P list
 - **Decision:** a P item is removed from its app list as soon as the task is completed, or becomes redundant or
   irrelevant. It leaves one line in the closed log (number, title, app, outcome, date, reason), so numbers are never

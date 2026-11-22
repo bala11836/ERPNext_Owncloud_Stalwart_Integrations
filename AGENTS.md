@@ -43,6 +43,18 @@ behavior or deployment procedures change. An unavailable or failing test
 environment blocks production promotion until it is restored and validation
 passes.
 
+# Working agreements for every agent (owner, 22 November 2026)
+
+The owner keeps general rules for all AI-assisted work (any project, any agent or model) in a
+private repository; agents working here follow them. The essentials, binding in this repository:
+
+1. **No change of any kind until the owner says "go"**: no edits, commits, pull requests, merges,
+   deploys, server or configuration changes, or record edits. Discuss first (what you understood,
+   what you would change, options and trade-offs), then wait; a "go" covers only what was asked.
+2. **Never print secret values** (profiles, env files, secret JSON, container environments): show
+   key names or "same / different" only, redact nested values too, and report any exposure at once.
+3. **Report honestly**: what was done, what was tested, what was not; correct earlier wrong statements.
+
 # Project principles (owner, 17 November 2026)
 
 These are nonnegotiable and apply to this and all future projects:

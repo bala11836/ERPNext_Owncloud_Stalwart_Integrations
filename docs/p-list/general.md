@@ -282,8 +282,8 @@ then merge and production promotion on the owner's go; repeat the drill on the V
 **Released (21 November 2026, PR #7, `d2acab5`):** shutdown grace live on ERP and DMS databases and Redis; host checks
 installed on production and passing; Drive's bridge already on all oCIS networks. **Open follow-ups:** (1) ~~enable the
 editor-bridge check on production~~ done 22 Nov (PR #23, `85c3f01`);
-(2) port 587 published with nothing behind it (Mail); (3) the processing worker's live settings differ from its profile
-render (P59 drift); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
+(2) ~~port 587~~ removed 22 Nov; (3) ~~worker settings drift~~ not drift (the file is written once and kept by design;
+release log 22 Nov); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
 
 
 ### P59 — Promotion plan and drift check: no stack left behind
@@ -406,7 +406,7 @@ identity; a second WhatsApp number is the demo's channel. Demo users send evalua
 5. **Order and rollback:** DNS changes, mailbox moves and client reconfiguration in an agreed order with a rollback
    point; nothing changes until the owner says so.
 
-### P71 — GitHub CI/CD: GitHub Actions deploys test and production; "Refresh code" button removed
+### P71 — GitHub CI/CD and central secrets management: Actions deploy test and production; "Refresh code" button removed
 
 **App:** general · **Also touches:** test-site, erp, mail, drive, dms, signin · **State:** open
 
@@ -470,9 +470,30 @@ refresh module (keep "Refresh data", which is separate); (c) update the test-ref
 1. Pipeline for test: pull request opened or updated deploys the branch to test, deployment recorded on the PR.
 2. Reset on close: pull request closed without merging puts test back on `main`.
 3. Remove the "Refresh code" button (after step 2 has worked on test), with docs and tests.
-4. Production: merge to `main`, same tested build promoted after the owner's approval; rollback by approving the
+4. Central secrets management (scope added 22 November 2026, below): choose the tool, move the secrets, deploys
+   read them from it.
+5. Production: merge to `main`, same tested build promoted after the owner's approval; rollback by approving the
    previous version; break-glass procedure written.
-5. Then review P67, P54 and P59: close or narrow what P71 has taken over.
+6. Then review P67, P54 and P59: close or narrow what P71 has taken over.
 
 **Still to confirm at the start:** who approves production (owner alone, or owner plus a second person).
+
+**Scope added (owner, 22 November 2026): central secrets management.** Reason: secrets live as plain JSON in several
+places on the servers (private profiles, rendered inputs files, Coolify definitions), the same value in several copies
+(the ERP root password was in three inputs files plus the profile, and the profile silently overrides the inputs file),
+and four credentials had to be rotated on 21 and 22 November after the agent printed them in a session terminal.
+Note: a secrets manager does not stop someone with root on a server from reading secrets; the printing itself is
+fixed by a working rule (never print values; recursive redaction; key names or same/different only).
+- **Goal:** one place per secret; deploys (and the GitHub pipeline) read secrets from it at deploy time; no secret in
+  GitHub, in job logs or in rendered files that are kept; rotation is one documented step per secret; an access log.
+- **Options to compare:** (a) **Infisical** (self-hosted: a service with its own database and master key to run, back
+  up and secure; access log, rotation, machine identities); (b) **sops with age** (secrets encrypted in the private
+  repository, decrypted only on the server at deploy time; no new service; keys on the servers and in the password
+  manager); (c) **Bitwarden Secrets Manager** (fits the owner's password manager; hosted). Criteria: what must run
+  and be backed up, recovery if the key is lost (P41 recovery essentials), how the pipeline and the existing renderer
+  read secrets, cost, audit.
+- **Inventory first:** list every secret (ERP database, authentik, Stalwart, Drive, DMS, editor JWT, worker tokens,
+  backup password, Coolify, mail relay, test copies) and where each copy lives today; remove duplicate copies.
+- **Owner decides** the tool after the comparison; nothing is installed before that.
+
 

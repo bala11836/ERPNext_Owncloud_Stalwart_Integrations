@@ -356,6 +356,17 @@ a baseline report of everything that is behind its latest stable release; dry-ru
 week before any message is sent; keep a short false-positive list. Related: P59 (drift
 check), P57, P61, P42.
 
+**First run and finding (22 November 2026):** the colleague's tool (PR #30, branch `p62-upstream-watch`, `a33dd47`, checks
+green; review and test-site run pending) found, and our session confirmed at the source, that production's **Frappe
+v16.56.0 is affected by GHSA-vwqr-4mjv-ffrm** (high, "Unauthorised sending of email in email communication due to
+missing validation", published 19 November, affects >= 16.0.0 < 16.60.1, fix 16.60.1). All other recent Frappe
+advisories were fixed before 16.56.0. **How it slipped through:** releases on 21 November were promoted without an
+advisory check (the watch was still a plan); the owner's rule "security before features and deployments" now requires
+that check for every promotion (working agreements, `AGENTS.md`, decision log). **Upgrade:** the colleague's agent was
+asked to prepare the Frappe upgrade on a branch (release notes and advisories reviewed, compatible app versions,
+tests); building the ERP image, the test site and production stay with the maintainers, each on the owner's go.
+
+
 ### P67 — Test deployments: one complete step, no hand-run pieces or drifting profiles
 
 **App:** general · **Also touches:** test-site · **State:** open

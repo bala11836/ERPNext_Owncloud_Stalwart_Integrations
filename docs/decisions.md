@@ -463,3 +463,17 @@ discussion that led to a decision is not repeated here.
   **Where:** `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.css`, `tools/prepare_test_profiles.py`,
   `tests/test_portal_site_look.py`.
 
+### A daily upstream watch reports releases and flaws; it never upgrades (P62)
+- **Decision:** once a day a watch compares every pinned component (locks, image digests, host components from a
+  private profile) with public sources only (GitHub releases and advisories, OSV.dev, NVD, endoflife.date, the CISA
+  list of actively exploited flaws) and writes a digest into a folder on the server: a baseline, a daily digest only
+  when something is new, a weekly roll-up. Each finding carries severity, whether our version is affected, exposure,
+  the fixed version and a rule-based recommendation (upgrade now, schedule, ignore); the owner decides. It runs on a
+  host without production credentials, as an unprivileged user, with an optional read-only GitHub token; it never
+  upgrades, commits, pushes or sends messages (alerts come with P72). The version behind each pinned image digest is
+  recorded in the repository, because the images carry no reliable version.
+- **Why:** owner, 21 November 2026: new releases and advisories reached us only by chance (the ONLYOFFICE sheet-view
+  crash of 20 to 21 November had an upstream side). An upgrade stays a normal branch, test, merge and production
+  change. **Where:** `tools/upstream_watch.py`, `deployment/upstream-watch.json`, `deployment/upstream-watch.*.example`,
+  `deployment/upstream-watch.example.json`, `tests/test_upstream_watch.py`, `deployment/README.md`.
+

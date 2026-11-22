@@ -1,6 +1,6 @@
 # General: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 21 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 22 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -280,11 +280,10 @@ them at a quiet moment. Test record on PR #7. **Remaining:** owner opens a docum
 then merge and production promotion on the owner's go; repeat the drill on the VPS after the move (P33 successor).
 
 **Released (21 November 2026, PR #7, `d2acab5`):** shutdown grace live on ERP and DMS databases and Redis; host checks
-installed on production and passing; Drive's bridge already on all oCIS networks. **Open follow-ups:** (1) enable the
-editor-bridge check on production through an explicit `host_checks` option (repository change, branch and test first);
+installed on production and passing; Drive's bridge already on all oCIS networks. **Open follow-ups:** (1) ~~enable the
+editor-bridge check on production~~ done 22 Nov (PR #23, `85c3f01`);
 (2) port 587 published with nothing behind it (Mail); (3) the processing worker's live settings differ from its profile
-render (P59 drift); (4) repeat the reboot drill on the VPS after the test move; (5) a planned production reboot at night
-when the owner decides.
+render (P59 drift); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
 
 
 ### P59 — Promotion plan and drift check: no stack left behind

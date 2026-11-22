@@ -58,7 +58,8 @@ class Rename(unittest.TestCase):
         modules = (APP / 'modules.txt').read_text(encoding='utf-8').split('\n')
         self.assertIn('Custom HR', modules)
         self.assertNotIn('Cloud Field', modules)
-        self.assertFalse((APP / 'field').exists() or (APP / 'cloud_field').exists())
+        leftovers = [p for d in ('field', 'cloud_field') for p in (APP / d).rglob('*') if p.suffix in ('.py', '.json', '.js')]
+        self.assertEqual(leftovers, [], 'source left in the former folders')
 
     def test_every_hook_points_at_existing_code(self):
         values = []

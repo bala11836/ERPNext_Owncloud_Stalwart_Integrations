@@ -283,8 +283,7 @@ then merge and production promotion on the owner's go; repeat the drill on the V
 installed on production and passing; Drive's bridge already on all oCIS networks. **Open follow-ups:** (1) ~~enable the
 editor-bridge check on production~~ done 22 Nov (PR #23, `85c3f01`);
 (2) port 587 published with nothing behind it (Mail); (3) the processing worker's live settings differ from its profile
-render (P59 drift); (4) repeat the reboot drill on the VPS after the test move; (5) a planned production reboot at night
-when the owner decides.
+render (P59 drift); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
 
 
 ### P59 — Promotion plan and drift check: no stack left behind

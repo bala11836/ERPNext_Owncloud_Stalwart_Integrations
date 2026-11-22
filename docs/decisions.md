@@ -463,17 +463,12 @@ discussion that led to a decision is not repeated here.
   **Where:** `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.css`, `tools/prepare_test_profiles.py`,
   `tests/test_portal_site_look.py`.
 
-### A daily upstream watch reports releases and flaws; it never upgrades (P62)
-- **Decision:** once a day a watch compares every pinned component (locks, image digests, host components from a
-  private profile) with public sources only (GitHub releases and advisories, OSV.dev, NVD, endoflife.date, the CISA
-  list of actively exploited flaws) and writes a digest into a folder on the server: a baseline, a daily digest only
-  when something is new, a weekly roll-up. Each finding carries severity, whether our version is affected, exposure,
-  the fixed version and a rule-based recommendation (upgrade now, schedule, ignore); the owner decides. It runs on a
-  host without production credentials, as an unprivileged user, with an optional read-only GitHub token; it never
-  upgrades, commits, pushes or sends messages (alerts come with P72). The version behind each pinned image digest is
-  recorded in the repository, because the images carry no reliable version.
-- **Why:** owner, 21 November 2026: new releases and advisories reached us only by chance (the ONLYOFFICE sheet-view
-  crash of 20 to 21 November had an upstream side). An upgrade stays a normal branch, test, merge and production
-  change. **Where:** `tools/upstream_watch.py`, `deployment/upstream-watch.json`, `deployment/upstream-watch.*.example`,
-  `deployment/upstream-watch.example.json`, `tests/test_upstream_watch.py`, `deployment/README.md`.
+### Security before features and deployments
+- **Decision:** every production promotion, upgrade or new dependency starts with a check of the official security
+  advisories and release notes of what it ships, against the pinned versions; the result is recorded in the pull
+  request and the release record, and a known high or critical flaw blocks the release unless the owner accepts it in
+  writing. New software is adopted only after a licence, maintenance and security-history check recorded here.
+- **Why:** on 21 November 2026 releases were promoted with Frappe v16.56.0 although a high-severity advisory
+  (GHSA-vwqr-4mjv-ffrm, unauthorised sending of email, fixed in 16.60.1) had been published on 19 November; it was found
+  only on 22 November by the first run of the upstream watch (P62). **Where:** `AGENTS.md`, the release log, P62.
 

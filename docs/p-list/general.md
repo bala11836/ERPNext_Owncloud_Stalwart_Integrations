@@ -496,4 +496,38 @@ fixed by a working rule (never print values; recursive redaction; key names or s
   backup password, Coolify, mail relay, test copies) and where each copy lives today; remove duplicate copies.
 - **Owner decides** the tool after the comparison; nothing is installed before that.
 
+### P72 — Monitoring and alerting: know when something breaks (on the TrueNAS, watched from outside)
+
+**App:** general · **Also touches:** erp, drive, mail, dms, signin, editor, test-site · **State:** open
+
+**Status:** owner decision 22 November 2026; not started; placed on the **TrueNAS home server after the test machine
+moves to its VPS**. Links: P57 (boot check and restart watch feed alerts), P61 (logs must outlive container
+recreation), P15 (mail health), P02/P40 (backup results), P11 (certificate expiry).
+
+**Why:** today every check (boot check, restart watch, backup result, hourly mail health, ERP error logs) writes only to
+the server's own logs; nobody is told when something breaks at night. Container logs vanish when a container is
+recreated (this slowed the 20 November workbook diagnosis).
+
+**Phases (owner agreed the approach):**
+1. **Alerts first:** an uptime monitor checking every public site every minute, and the existing boot-check,
+   restart-watch, backup and mail-health failures sent to the owner's phone (mail, Telegram or a push app such as ntfy;
+   to choose).
+2. **Metrics:** Prometheus (node exporter, cAdvisor) and Grafana for disk, memory, CPU and per-container health on
+   production, the test VPS and the TrueNAS; alerts for a filling disk, memory pressure, crash loops, certificate
+   expiry.
+3. **Logs:** Loki with Alloy, so logs outlive container recreation, with a set retention and access limited like the
+   servers.
+4. **Not Tempo:** the apps produce no traces; it would add load for no gain.
+
+**Watching the watcher (owner question: how can it monitor the TrueNAS it runs on?):** it cannot alone, so
+(a) **TrueNAS's own alerts** (SMART, pool health, scrub failures, capacity) are configured to reach the owner
+directly, independent of the monitoring stack; (b) a **heartbeat** ("dead man's switch"): the stack checks in with an
+outside service or a small check on the production VPS every few minutes, and missing check-ins raise an alert;
+(c) **mutual checks over the tailnet:** the TrueNAS watches both VPSs, and the production VPS runs a tiny check that the
+TrueNAS answers.
+
+**Constraints:** monitoring never runs only on the machine it watches; Prometheus, Loki and Grafana need roughly
+1 to 2 GB of memory plus storage on the TrueNAS; dashboards and alert channels are reachable only over the tailnet;
+no secrets in dashboards or alert texts; licences of Grafana, Loki (AGPL) and Prometheus (Apache) recorded; set up from
+this repository as a module (stack files, config, README), branch, test, owner go, like every other stack.
 

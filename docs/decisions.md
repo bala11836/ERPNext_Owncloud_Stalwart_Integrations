@@ -463,3 +463,12 @@ discussion that led to a decision is not repeated here.
   **Where:** `erpnext_drive_integrations/www/place_holder.*`, `public/test-refresh.css`, `tools/prepare_test_profiles.py`,
   `tests/test_portal_site_look.py`.
 
+### Security before features and deployments
+- **Decision:** every production promotion, upgrade or new dependency starts with a check of the official security
+  advisories and release notes of what it ships, against the pinned versions; the result is recorded in the pull
+  request and the release record, and a known high or critical flaw blocks the release unless the owner accepts it in
+  writing. New software is adopted only after a licence, maintenance and security-history check recorded here.
+- **Why:** on 21 November 2026 releases were promoted with Frappe v16.56.0 although a high-severity advisory
+  (GHSA-vwqr-4mjv-ffrm, unauthorised sending of email, fixed in 16.60.1) had been published on 19 November; it was found
+  only on 22 November by the first run of the upstream watch (P62). **Where:** `AGENTS.md`, the release log, P62.
+

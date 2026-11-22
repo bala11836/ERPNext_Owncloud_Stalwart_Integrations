@@ -33,7 +33,12 @@ class FieldSiteBase(Document):
             pair=(member.user,member.team_role)
             if pair in seen:frappe.throw('A team member is listed twice.')
             seen.add(pair)
-            if member.enabled:
+            if member.enabled and member.team_role=='Staff':
+                # Self check-in staff need no role, only an active employee record of this site's company.
+                if not frappe.db.get_value('User',member.user,'enabled') or not frappe.db.exists('Employee',
+                        {'user_id':member.user,'status':'Active','company':self.company}):
+                    frappe.throw(f'{member.user} must be enabled and linked to an active employee of {self.company}.')
+            elif member.enabled:
                 role='Field Supervisor' if member.team_role=='Supervisor' else 'Field Attendance Approver'
                 if not frappe.db.get_value('User',member.user,'enabled') or role not in frappe.get_roles(member.user):
                     frappe.throw(f'{member.user} must be enabled and have the {role} role first.')

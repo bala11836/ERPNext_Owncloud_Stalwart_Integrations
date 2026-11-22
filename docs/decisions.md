@@ -427,6 +427,18 @@ discussion that led to a decision is not repeated here.
   app is easier to manage, review and upgrade than several. **Where:** `erpnext_drive_integrations/custom_hr/`,
   `erpnext_drive_integrations/patches.txt`, `tests/test_custom_hr.py`, `modules.json`.
 
+### Self check-in with a selfie, approved by the project manager like team attendance; one attendance path
+- **Decision:** employees with a login check in themselves through `custom_hr` (selfie, location inside the site's
+  fence, the server's time), and every attendance, team or self, is approved by the site's approvers, singly or in
+  bulk; HR attendance is created only on approval. Offline captures (self and team) carry the phone's clock and its
+  measured difference to the server, are accepted for at most one day and are marked for the approver; an exact
+  native clock follows with a development build. Frappe HR's own check-in and automatic attendance are switched
+  off for our sites' shifts, so there is one attendance path.
+- **Why:** owner, 22 November 2026: the project manager's approval is required for all attendance; Frappe HR has no
+  selfie, no approval step for check-ins, takes the phone's clock and has no offline capture. **Where:**
+  `erpnext_drive_integrations/custom_hr/` (service, api, domain, setup, the Field Attendance Entry and Field Site
+  Member DocTypes), `tests/test_custom_hr.py`, `custom_hr/integration_tests.py`.
+
 ### Contributor access to the test site: own key, deploy-only, never the owner's key
 - **Decision:** a contributor who needs to install a branch on the test site gets their own SSH key (they send only
   the public half), bound to a dedicated account whose forced command can only deploy a branch of the public

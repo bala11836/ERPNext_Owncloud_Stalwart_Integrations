@@ -19,7 +19,21 @@ def install():
         'Attendance':[dict(fieldname='custom_field_project',label='Field Project',fieldtype='Link',options='Project',read_only=1,no_copy=1,insert_after='shift'),dict(fieldname='custom_field_entry',label='Approved field attendance evidence',fieldtype='Link',options='Field Attendance Entry',read_only=1,no_copy=1,insert_after='shift')],
     },update=True)
     integrate_hr_navigation()
+    one_attendance_path()
     frappe.clear_cache()
+
+
+def one_attendance_path():
+    """Owner, 22 November 2026: every attendance goes through this module and is approved by the site's approvers.
+    So Frappe HR's own check-in from its web app is switched off, and so is automatic attendance on the shifts our
+    sites use (a check-in elsewhere then creates no attendance). Runs on install and every migrate."""
+    if frappe.db.exists('DocType','HR Settings') and frappe.get_meta('HR Settings').has_field('allow_employee_checkin_from_mobile_app'):
+        frappe.db.set_single_value('HR Settings','allow_employee_checkin_from_mobile_app',0)
+    shifts={s for row in frappe.get_all('Field Site',filters={'enabled':1},fields=['day_shift','night_shift'])
+            for s in (row.day_shift,row.night_shift) if s}
+    for shift in sorted(shifts):
+        if frappe.db.get_value('Shift Type',shift,'enable_auto_attendance'):
+            frappe.db.set_value('Shift Type',shift,'enable_auto_attendance',0)
 
 
 def integrate_hr_navigation():

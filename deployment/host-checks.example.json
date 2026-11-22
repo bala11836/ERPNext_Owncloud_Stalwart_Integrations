@@ -1,5 +1,5 @@
 {
-  "_comment": "Optional 'host_checks' section of the deployment's private profile (P57). Keep the real file outside Git.",
+  "_comment": "Optional 'host_checks' section of the deployment's private profile (P57). Keep the real file outside Git. check_bridge (true/false) overrides the default (checked when the profile's projects include drive); set it when the checks are rendered from a profile without Drive on a server that runs Drive.",
   "host_checks": {
     "containers": [
       "ocis-",
@@ -8,6 +8,7 @@
       "stalwart-",
       "paperless-"
     ],
+    "check_bridge": true,
     "tailnet_ip": "100.64.0.10",
     "tcp": [
       {

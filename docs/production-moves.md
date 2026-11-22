@@ -108,7 +108,8 @@ Reboot for kernel updates deliberately, at night, not by accident:
 
 On the host, from a checkout of this repository (the profile is private and
 stays outside Git; its optional `host_checks` section lists container prefixes,
-tailnet-bound ports and the tailnet address, see
+tailnet-bound ports and the tailnet address, and `check_bridge: true` when the
+profile used has no Drive project but the server runs Drive, see
 `deployment/host-checks.example.json`):
 
     python3 tools/render_host_checks.py --profile /path/to/profile.private.json --output /tmp/host-checks

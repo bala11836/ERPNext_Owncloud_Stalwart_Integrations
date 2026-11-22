@@ -23,6 +23,17 @@ HOST_PATHS = {'erp': ('/', None), 'sso': ('/', None), 'drive': ('/', None), 'mai
               'dms': ('/', None), 'office': ('/healthcheck', [200])}
 
 
+def bridge_wanted(profile, options):
+    """Check the editor bridge when the host runs Drive. A host whose checks are rendered from a profile
+    without Drive (for example the ERP profile on a server that also runs Drive) says so explicitly
+    with host_checks.check_bridge."""
+    if 'check_bridge' in options:
+        if not isinstance(options['check_bridge'], bool):
+            raise ValueError('host_checks.check_bridge must be true or false')
+        return options['check_bridge']
+    return 'drive' in (profile.get('projects') or ['drive'])
+
+
 def build_config(profile):
     hosts = profile.get('hosts') or {}
     options = profile.get('host_checks') or {}
@@ -38,7 +49,7 @@ def build_config(profile):
             item['ok'] = ok
         checks.append(item)
     config = {'http': checks, 'containers': list(options.get('containers', [])),
-              'tcp': list(options.get('tcp', [])), 'check_bridge': 'drive' in (profile.get('projects') or ['drive']),
+              'tcp': list(options.get('tcp', [])), 'check_bridge': bridge_wanted(profile, options),
               'bridge': {'container_prefix': options.get('bridge_prefix', 'collaboration-')}}
     if options.get('tailnet_ip'):
         if not re.fullmatch(r'[0-9.]+', options['tailnet_ip']):

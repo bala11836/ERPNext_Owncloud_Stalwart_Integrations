@@ -43,6 +43,11 @@ behavior or deployment procedures change. An unavailable or failing test
 environment blocks production promotion until it is restored and validation
 passes.
 
+Every pull request carries its promotion plan (`tools/promotion_plan.py`: the
+stacks, steps, live settings and restarts the change reaches, and what the test
+site cannot cover). A promotion is not finished until `tools/drift_check.py` on
+production reports every stack clean for the promoted commit.
+
 # Working agreements for every agent (owner, 22 November 2026)
 
 The owner keeps general rules for all AI-assisted work (any project, any agent or model) in a

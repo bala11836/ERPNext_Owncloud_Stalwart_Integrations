@@ -472,3 +472,15 @@ discussion that led to a decision is not repeated here.
   (GHSA-vwqr-4mjv-ffrm, unauthorised sending of email, fixed in 16.60.1) had been published on 19 November; it was found
   only on 22 November by the first run of the upstream watch (P62). **Where:** `AGENTS.md`, the release log, P62.
 
+### Every release lists the stacks it reaches and ends with a clean drift check (P59)
+- **Decision:** a map in the repository says which stacks, setup steps, live settings and restarts each file
+  reaches; every pull request carries the resulting promotion plan, and a promotion is finished only when the drift
+  check on production reports every stack clean for the promoted commit (also run nightly). The drift check only
+  reads: each stack's recorded commit against `main`, and served pages against local files. The ERP core image's loss
+  to the nightly cleanup is documented; the fix comes with P71 (build once, registry).
+- **Why:** owner, 21 November 2026: a production ERP release missed the website stack, and an earlier statement that
+  one ERP swap carried the fix was wrong; production stacks are promoted one by one and nothing listed what a merge
+  reached. **Where:** `deployment/promotion-map.json`, `tools/promotion_plan.py`, `tools/drift_check.py`,
+  `deployment/drift-check.*`, `AGENTS.md`, `.github/pull_request_template.md`, `docs/production-moves.md`,
+  `tests/test_promotion_plan.py`.
+

@@ -9,10 +9,6 @@ refresh worker) do not change; this index groups them by module.
 - `host_check.py` — Post-boot check, crash-loop watch and tailnet wait for a Docker host (P57).
 - `render_host_checks.py` — Render its config, systemd units and the Docker start-after-Tailscale drop-in from the private profile.
 
-## ONLYOFFICE editor (`onlyoffice-editor`)
-
-- `editor_safety.py` — Editor file safety (P61): list and rescue parked edits, unstick a document, and a five-minute watch for failed saves, disk and cache; never deletes a document.
-
 ## Drive (ownCloud Infinite Scale) adapters (`drive`)
 
 - `prepare_native_drive_clients.py` — Populate private fresh-identity inputs from pinned official native defaults.
@@ -29,6 +25,10 @@ refresh worker) do not change; this index groups them by module.
 ## authentik identity configuration (`authentik-identity`)
 
 - `authentik_blueprint.py` — Render the retained native authentik graph, without exporting any users/keys.
+
+## ONLYOFFICE editor (`onlyoffice-editor`)
+
+- `editor_safety.py` — Editor file safety (P61): list and rescue parked edits, unstick a document, and a five-minute watch for failed saves, disk and cache; never deletes a document.
 
 ## Reproducible build and deployment (`deployment`)
 

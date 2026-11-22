@@ -519,6 +519,30 @@ recreated (this slowed the 20 November workbook diagnosis).
    servers.
 4. **Not Tempo:** the apps produce no traces; it would add load for no gain.
 
+**Backup alerting in detail (owner, 22 November 2026: "do I get alerts if backups are not running as planned?").**
+Today: no. The nightly backup (`cloud-backup`, Restic to off-server storage) and the weekly restore drill on the test
+host (`restore-drill`, Sunday 05:00) write their results only to their server's log; nothing is sent. Alert on all of:
+1. **Missed run, not only a failed run:** each successful backup sends a heartbeat; no success within 26 hours raises an
+   alert (catches a timer that did not fire, a server that was down, a job that hung).
+2. **Failed run:** an immediate alert with the reason (systemd `OnFailure`), separate from the heartbeat.
+3. **Partial backup:** every expected part present in the snapshot (ERP database, Drive data, Mail, DMS database and
+   media, sign-in database and media, configuration); a missing part or a size change beyond a set limit (for example
+   a sudden drop of more than 20 %) is an alert, even if the job "succeeded".
+4. **Downtime during backup:** the time each app was stopped (`stopped_seconds`) above a set limit is a warning.
+5. **Restore drill:** a failed drill, or no drill for more than 8 days, is an alert (the drill moves with the test host
+   to its VPS); the drill's own checks (every database imports, table counts) stay the proof that backups restore.
+6. **Off-server storage health:** a weekly repository check (`restic check`); the bucket's versioning and the rule that
+   production cannot delete protected versions verified on a schedule (`harden_storage.py verify` canary, P40); storage
+   reachable; space and cost growth tracked.
+7. **Retention:** the number and age of snapshots as planned (newest under 26 hours, oldest about 30 days per the
+   lifecycle rule); anything outside is an alert.
+8. **TrueNAS copies:** ZFS snapshots and replication on the TrueNAS (`zfs-snapshot-guard.sh`) and pool health, through
+   TrueNAS's own alerts (see below).
+9. **Human reminders:** the offline USB copy (P40) and the quarterly recovery check of the encryption password and logins
+   (P41, next due 18 February 2027) as dated reminders.
+10. **A weekly summary** ("all backups and the drill passed this week", or what did not), so silence is never mistaken
+   for success.
+
 **Watching the watcher (owner question: how can it monitor the TrueNAS it runs on?):** it cannot alone, so
 (a) **TrueNAS's own alerts** (SMART, pool health, scrub failures, capacity) are configured to reach the owner
 directly, independent of the monitoring stack; (b) a **heartbeat** ("dead man's switch"): the stack checks in with an

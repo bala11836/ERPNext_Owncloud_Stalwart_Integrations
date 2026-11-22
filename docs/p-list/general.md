@@ -279,6 +279,13 @@ containers only when they are recreated (test: ERP `db`, `redis-cache`, `redis-q
 them at a quiet moment. Test record on PR #7. **Remaining:** owner opens a document in Drive on test after the reboot;
 then merge and production promotion on the owner's go; repeat the drill on the VPS after the move (P33 successor).
 
+**Released (21 November 2026, PR #7, `d2acab5`):** shutdown grace live on ERP and DMS databases and Redis; host checks
+installed on production and passing; Drive's bridge already on all oCIS networks. **Open follow-ups:** (1) enable the
+editor-bridge check on production through an explicit `host_checks` option (repository change, branch and test first);
+(2) port 587 published with nothing behind it (Mail); (3) the processing worker's live settings differ from its profile
+render (P59 drift); (4) repeat the reboot drill on the VPS after the test move; (5) a planned production reboot at night
+when the owner decides.
+
 
 ### P59 — Promotion plan and drift check: no stack left behind
 

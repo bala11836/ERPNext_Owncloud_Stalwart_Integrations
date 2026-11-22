@@ -207,18 +207,22 @@ class SelfAttendanceSurface(unittest.TestCase):
         service = (HR / 'service.py').read_text(encoding='utf-8')
         body = service.split('def self_capture(')[1].split('\ndef ')[0]
         for rule in ("Take a selfie to check in.", "Your supervisor records your attendance.", "domain.validate_location",
-                     "moment(data,with_gps=True)", "state='Submitted'", "entry_type='Self'", "notify_approvers("):
+                     "moment(data,with_gps=True)", "state='Submitted'", "entry_type='Self'", "notify_approvers(",
+                     "approve_without_review(doc)"):
             self.assertIn(rule, body)
         self.assertNotIn("Attendance',", body, 'HR attendance is created only on approval')
 
 
 class OneAttendancePath(unittest.TestCase):
-    def test_install_switches_off_frappe_hr_check_in_and_auto_attendance_on_site_shifts(self):
+    def run_setup(self, stored, blocked):
+        """Run setup.one_attendance_path against a fake site; `stored` = HR Settings already has our box saved."""
         writes = []
         meta = types.SimpleNamespace(has_field=lambda name: name == 'allow_employee_checkin_from_mobile_app')
         db = types.SimpleNamespace(
             exists=lambda doctype, name: True,
-            set_single_value=lambda doctype, field, value: writes.append((doctype, field, value)),
+            sql=lambda query: [(1,)] if stored else [],
+            get_single_value=lambda doctype, field: blocked,
+            set_single_value=lambda doctype, field, value=None: writes.append((doctype, field, value)),
             get_value=lambda doctype, name, field: {'Site Day': 1, 'Site Night': 0}.get(name),
             set_value=lambda doctype, name, field, value: writes.append((doctype, name, field, value)))
         frappe = types.SimpleNamespace(db=db, get_meta=lambda doctype: meta, get_all=lambda doctype, **k: [
@@ -238,9 +242,69 @@ class OneAttendancePath(unittest.TestCase):
                     sys.modules.pop(k, None)
                 else:
                     sys.modules[k] = v
-        self.assertEqual(writes, [('HR Settings', 'allow_employee_checkin_from_mobile_app', 0),
-                                  ('Shift Type', 'Site Day', 'enable_auto_attendance', 0)],
-                         'only our sites\' shifts, and only those still on')
+        return writes
+
+    SWITCH_OFF = [('HR Settings', 'allow_employee_checkin_from_mobile_app', 0),
+                  ('Shift Type', 'Site Day', 'enable_auto_attendance', 0)]
+
+    def test_first_install_blocks_and_switches_off_only_our_sites_shifts(self):
+        self.assertEqual(self.run_setup(stored=False, blocked=1), [
+            ('HR Settings', {'custom_block_frappe_hr_checkin': 1, 'custom_checkin_allowed_roles': 'System Manager'}, None),
+            *self.SWITCH_OFF])
+
+    def test_admin_choice_is_kept_on_every_migrate(self):
+        self.assertEqual(self.run_setup(stored=True, blocked=1), self.SWITCH_OFF)
+        self.assertEqual(self.run_setup(stored=True, blocked=0), [], 'unticked: Frappe HR settings are left alone')
+
+    def test_hr_settings_offers_the_admin_the_choice(self):
+        source = (HR / 'setup.py').read_text(encoding='utf-8')
+        for field in ("fieldname='custom_block_frappe_hr_checkin'", "fieldname='custom_checkin_allowed_roles'"):
+            self.assertIn(field, source.split("'HR Settings':[")[1].split("'Attendance':[")[0])
+
+
+class FrappeHrCheckinBlock(unittest.TestCase):
+    def test_rule(self):
+        allowed = domain.checkin_allowed
+        self.assertTrue(allowed(0, '', ['Employee']), 'not blocked: open to all')
+        self.assertFalse(allowed(1, 'System Manager', ['Employee']))
+        self.assertTrue(allowed(1, 'System Manager', ['Employee', 'System Manager']))
+        self.assertTrue(allowed(1, 'HR Manager, System Manager', ['HR Manager']), 'comma-separated')
+        self.assertTrue(allowed(1, 'System Manager\n  HR User  \n', ['HR User']), 'one per line, spaces ignored')
+        self.assertFalse(allowed(1, '', ['System Manager']), 'blocked with no roles listed: nobody')
+        self.assertFalse(allowed(1, 'HR', ['HR Manager']), 'whole role names only')
+        self.assertTrue(allowed(1, '', [], 'Administrator'), 'background jobs')
+
+    def test_every_route_is_blocked_on_the_server(self):
+        self.assertIn('erpnext_drive_integrations.custom_hr.guards.block_frappe_hr_checkin',
+                      hooks.doc_events['Employee Checkin']['validate'])
+        guard = (HR / 'guards.py').read_text(encoding='utf-8').split('def block_frappe_hr_checkin(')[1]
+        for part in ("custom_block_frappe_hr_checkin", "custom_checkin_allowed_roles", "frappe.session.user", "frappe.PermissionError"):
+            self.assertIn(part, guard)
+
+
+class SiteApproval(unittest.TestCase):
+    SERVICE = (HR / 'service.py').read_text(encoding='utf-8')
+
+    def body(self, name):
+        return self.SERVICE.split(f'def {name}(')[1].split('\ndef ')[0]
+
+    def test_sites_need_approval_unless_unticked(self):
+        site = json.loads((HR / 'doctype/field_site/field_site.json').read_text(encoding='utf-8'))
+        field = next(f for f in site['fields'] if f['fieldname'] == 'approval_required')
+        self.assertEqual((field['fieldtype'], field['default']), ('Check', '1'))
+        patches = (APP / 'patches.txt').read_text(encoding='utf-8')
+        self.assertIn('[post_model_sync]\nerpnext_drive_integrations.custom_hr.patches.site_approval_required', patches)
+        self.assertIn('SET approval_required=1', (HR / 'patches/site_approval_required.py').read_text(encoding='utf-8'))
+
+    def test_only_online_entries_skip_approval(self):
+        rule = self.body('approve_without_review')
+        for part in ('doc.captured_offline', "'approval_required'", 'existing_attendance(doc)', 'hr_attendance(doc)'):
+            self.assertIn(part, rule)
+        self.assertLess(rule.index('doc.captured_offline'), rule.index('hr_attendance(doc)'))
+        for caller in ('self_capture', 'submit_entry'):
+            self.assertIn('if not approve_without_review(doc):notify_approvers(', self.body(caller), caller)
+        self.assertIn('hr_attendance(doc)', self.body('review_entry'))
+        self.assertEqual(self.SERVICE.count("doctype='Attendance'"), 1, 'one place creates HR attendance')
 
 
 if __name__ == '__main__':

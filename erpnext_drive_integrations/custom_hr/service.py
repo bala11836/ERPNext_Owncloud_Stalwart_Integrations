@@ -244,13 +244,14 @@ def submit_entry(name):
     elif doc.attendance_status == 'Absent':
         doc.check_in_time = doc.auto_checkout_at = doc.check_out_time = doc.checkout_method = None
     doc.state='Submitted';doc.submitted_at=now_datetime();save(doc)
-    notify_approvers(doc,user)
+    if not approve_without_review(doc):notify_approvers(doc,user)
     return {'name':doc.name,'state':doc.state}
 
 
 def self_capture(data):
     """An employee's own check-in: selfie, location inside the site's fence, server time (or a corrected offline
-    time). It goes straight to the site's approvers; HR attendance is created only when one of them approves."""
+    time). It goes straight to the site's approvers; HR attendance is created only when one of them approves, or at
+    once at a site that needs no approval (see approve_without_review)."""
     user=require_user()
     employee=frappe.db.get_value('Employee',{'user_id':user,'status':'Active'},'name')
     if not employee:frappe.throw('Your user is not linked to an active employee. Ask HR.')
@@ -283,7 +284,7 @@ def self_capture(data):
     mark_offline(doc,data);save(doc)
     from frappe.utils.file_manager import save_file
     doc.photo=save_file(f'field-{doc.name}-1.jpg',photo,'Field Attendance Entry',doc.name,is_private=1).file_url;save(doc)
-    notify_approvers(doc,user,'Self check-in ready for review')
+    if not approve_without_review(doc):notify_approvers(doc,user,'Self check-in ready for review')
     return {'name':doc.name,'state':doc.state,'check_in_time':str(doc.check_in_time),'captured_offline':doc.captured_offline}
 
 
@@ -320,6 +321,32 @@ def review_many(names,decision,remarks=''):
     return results
 
 
+def existing_attendance(doc):
+    # Never reuse or overwrite HR attendance created elsewhere.
+    return frappe.db.exists('Attendance',{'employee':doc.employee,'attendance_date':doc.attendance_date,'shift':doc.shift,'docstatus':['<',2]})
+
+
+def hr_attendance(doc):
+    """Create and submit the HR Attendance for an entry and mark the entry approved (the caller saves it)."""
+    attendance=frappe.get_doc(dict(doctype='Attendance',employee=doc.employee,company=doc.company,
+        attendance_date=doc.attendance_date,shift=doc.shift,status=doc.attendance_status,custom_field_entry=doc.name,custom_field_project=doc.project))
+    if attendance.meta.has_field('project'):attendance.project=doc.project
+    attendance.flags.field_service=True;attendance.insert(ignore_permissions=True)
+    attendance.flags.ignore_permissions=True;attendance.submit()
+    doc.attendance=attendance.name;doc.state='Approved'
+
+
+def approve_without_review(doc):
+    """Sites that need no approval (for example head office; owner, 22 November 2026): a submitted online entry
+    becomes HR attendance at once. Offline entries still go to the site's approvers, and so does a clash with HR
+    attendance created elsewhere. Returns True when approved here."""
+    if doc.captured_offline or frappe.db.get_value('Field Site',doc.site,'approval_required') or existing_attendance(doc):
+        return False
+    lock_employee(doc.employee);hr_attendance(doc)
+    doc.review_remarks='No approval required at this site.';doc.reviewed_at=now_datetime();doc.revision+=1;save(doc)
+    return True
+
+
 def review_entry(name,decision,remarks=''):
     user=require_user();doc=lock_doc('Field Attendance Entry',name)
     fail_rule(domain.validate_reviewer,user,doc.captured_by,frappe.db.get_value('Employee',doc.employee,'user_id'),site_access(doc.site,'Approver',user))
@@ -331,15 +358,8 @@ def review_entry(name,decision,remarks=''):
     if decision=='Return' and not remarks:frappe.throw('Explain what needs correcting.')
     if decision=='Approve':
         lock_employee(doc.employee)
-        # Never reuse or overwrite HR attendance created elsewhere.
-        existing=frappe.db.exists('Attendance',{'employee':doc.employee,'attendance_date':doc.attendance_date,'shift':doc.shift,'docstatus':['<',2]})
-        if existing:frappe.throw('HR attendance already exists for this worker and shift. Ask HR to resolve the conflict; nothing was overwritten.')
-        attendance=frappe.get_doc(dict(doctype='Attendance',employee=doc.employee,company=doc.company,
-            attendance_date=doc.attendance_date,shift=doc.shift,status=doc.attendance_status,custom_field_entry=doc.name,custom_field_project=doc.project))
-        if attendance.meta.has_field('project'):attendance.project=doc.project
-        attendance.flags.field_service=True;attendance.insert(ignore_permissions=True)
-        attendance.flags.ignore_permissions=True;attendance.submit()
-        doc.attendance=attendance.name;doc.state='Approved'
+        if existing_attendance(doc):frappe.throw('HR attendance already exists for this worker and shift. Ask HR to resolve the conflict; nothing was overwritten.')
+        hr_attendance(doc)
     else:doc.state='Returned'
     doc.review_remarks=remarks;doc.reviewed_by=user;doc.reviewed_at=now_datetime();doc.revision+=1;save(doc)
     notify(doc.captured_by,f'Attendance {doc.state.lower()}',doc)

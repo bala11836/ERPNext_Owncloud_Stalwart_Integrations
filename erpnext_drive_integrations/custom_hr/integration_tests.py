@@ -156,9 +156,31 @@ def run():
         odoc=frappe.get_doc('Field Attendance Entry',service.capture(q)['name']);files.append(odoc.photo)
         check('offline team capture keeps its corrected time',odoc.captured_offline==1 and odoc.entry_type=='Team'
               and abs((get_datetime(odoc.captured_at)-(then+timedelta(seconds=60))).total_seconds())<1)
+        # Head office (owner, 22 November 2026): a site that needs no approval; offline entries still go to approvers.
+        frappe.set_user('Administrator');frappe.db.set_value('Field Site',site.name,'approval_required',0);w5=worker('five')
+        frappe.set_user(a)
+        check('offline entry still needs approval where approval is off',service.submit_entry(odoc.name)['state']=='Submitted')
+        fdoc=frappe.get_doc('Field Attendance Entry',service.capture(payload(w5.name))['name']);files.append(fdoc.photo)
+        out=service.submit_entry(fdoc.name);fdoc.reload()
+        check('online entry where approval is off becomes HR attendance at once',out['state']=='Approved'
+              and frappe.db.get_value('Attendance',fdoc.attendance,'docstatus')==1)
+        # Frappe HR's own check-in: blocked on the server while HR Settings says so, except for the listed roles.
+        from erpnext_drive_integrations.custom_hr import guards
+        frappe.set_user('Administrator')
+        check('Frappe HR check-in guard is installed','erpnext_drive_integrations.custom_hr.guards.block_frappe_hr_checkin'
+              in frappe.get_hooks('doc_events').get('Employee Checkin',{}).get('validate',[]))
+        frappe.db.set_single_value('HR Settings',{'custom_block_frappe_hr_checkin':1,'custom_checkin_allowed_roles':'System Manager'})
+        frappe.clear_document_cache('HR Settings','HR Settings')
+        log=frappe.get_doc(dict(doctype='Employee Checkin',employee=frappe.db.get_value('Employee',{'user_id':staff},'name'),log_type='IN',time=now_datetime()))
+        frappe.set_user(staff)
+        denied('Frappe HR check-in is refused while blocked',lambda:guards.block_frappe_hr_checkin(log))
+        frappe.set_user('Administrator')
+        frappe.db.set_single_value('HR Settings','custom_block_frappe_hr_checkin',0);frappe.clear_document_cache('HR Settings','HR Settings')
+        frappe.set_user(staff);guards.block_frappe_hr_checkin(log);check('Frappe HR check-in is open once the admin unticks the box',True)
         print('FIELD_INTEGRATION_PASS',len(checks),checks)
     finally:
         frappe.db.rollback()
+        frappe.clear_document_cache('HR Settings','HR Settings')  # the cached copy would keep the test's values
         frappe.set_user(original)
         for url in files:
             path=Path(frappe.get_site_path('private','files',url.rsplit('/',1)[-1]))

@@ -117,3 +117,13 @@ def checkout_time(check_in, checked_out):
     if checked_out > check_in + AUTO_CHECKOUT:
         raise RuleError('This shift was already closed automatically after 12 hours.')
     return checked_out
+
+
+def checkin_allowed(blocked, allowed_roles, user_roles, user=None):
+    """Frappe HR's own check-in, as the administrator set it in HR Settings: open to everyone when not blocked;
+    when blocked, only for the roles they listed (one per line or comma-separated). Background jobs run as
+    Administrator and always pass."""
+    if not blocked or user == 'Administrator':
+        return True
+    allowed = {r.strip() for r in str(allowed_roles or '').replace(',', '\n').splitlines() if r.strip()}
+    return bool(allowed & set(user_roles or ()))

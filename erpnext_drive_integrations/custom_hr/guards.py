@@ -141,3 +141,13 @@ def on_employee_update(doc,method=None):
     assignment=lock_doc('Field Worker Assignment',name)
     assignment.machine_required=doc.get('custom_field_machine_required') or 0
     save(assignment)
+
+
+def block_frappe_hr_checkin(doc,method=None):
+    """One attendance path: while HR Settings blocks Frappe HR check-ins, only the roles listed there may create or
+    change Employee Checkin records, from any screen or route (the hidden button alone is not enough)."""
+    from erpnext_drive_integrations.custom_hr.domain import checkin_allowed
+    settings=frappe.get_cached_doc('HR Settings')
+    if not checkin_allowed(settings.get('custom_block_frappe_hr_checkin'),settings.get('custom_checkin_allowed_roles'),
+                           frappe.get_roles(),frappe.session.user):
+        frappe.throw('Check in with the company app. Frappe HR check-ins are switched off by your administrator.',frappe.PermissionError)

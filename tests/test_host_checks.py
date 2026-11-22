@@ -188,6 +188,19 @@ class RenderTests(unittest.TestCase):
             self.assertIn('WantedBy=multi-user.target', boot)
             self.assertIn('OnUnitActiveSec=5min', (Path(temp) / 'cloud-restart-watch.timer').read_text())
 
+    def test_bridge_check_follows_drive_or_the_explicit_option(self):
+        def rendered(profile):
+            with tempfile.TemporaryDirectory() as temp:
+                rh.render(profile, temp)
+                return json.loads((Path(temp) / 'config.json').read_text())['check_bridge']
+        self.assertTrue(rendered(self.PROFILE))                                   # Drive in the profile
+        no_drive = dict(self.PROFILE, projects=['erp'])
+        self.assertFalse(rendered(no_drive))                                      # unchanged default
+        self.assertTrue(rendered(dict(no_drive, host_checks=dict(self.PROFILE['host_checks'], check_bridge=True))))
+        self.assertFalse(rendered(dict(self.PROFILE, host_checks=dict(self.PROFILE['host_checks'], check_bridge=False))))
+        with self.assertRaises(ValueError), tempfile.TemporaryDirectory() as temp:
+            rh.render(dict(no_drive, host_checks={'check_bridge': 'yes'}), temp)
+
     def test_bad_input_is_rejected(self):
         for bad in [dict(self.PROFILE, hosts={'erp': 'evil host; rm'}),
                     dict(self.PROFILE, host_checks={'tailnet_ip': '1.2.3.4; x'}),

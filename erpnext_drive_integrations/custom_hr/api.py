@@ -91,15 +91,15 @@ def approvals(site,shift=None):
     user=require_user();location=require_site(site,'Approver')
     filters={'site':site}
     from frappe.query_builder import DocType
-    from frappe.query_builder.functions import Coalesce
 
     entry_table = DocType('Field Attendance Entry')
     eligible = (entry_table.state == 'Verified') | (
-        (entry_table.state == 'Submitted') & (Coalesce(entry_table.verification_required, 0) == 0))
+        (entry_table.state == 'Submitted') & ((entry_table.verification_required == 0)
+                                             | entry_table.verification_required.isnull()))
     if shift:
         details=service.shift_details(location,shift);filters.update(shift=shift,attendance_date=details['attendance_date'])
     query = frappe.qb.from_(entry_table).select(
-        'name', 'site', 'employee', 'employee_name', 'attendance_date', 'shift', 'attendance_status',
+        'name', 'site', 'employee', 'employee_name', 'attendance_date', 'shift', 'attendance_status', 'state',
         'work_mode', 'asset', 'captured_by', 'submitted_at', 'entry_type', 'captured_offline',
         'check_in_time', 'accuracy_m', 'verification_required', 'verified_by', 'verification_method',
     ).where(eligible)

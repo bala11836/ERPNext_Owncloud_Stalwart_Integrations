@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { z } from 'zod';
 
@@ -25,7 +25,8 @@ export function WorkflowActions({ doctype, name }: { doctype: string; name: stri
   const [transitions, setTransitions] = useState<Transition[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const actionInProgress = useRef(false);
+  const [phase, setPhase] = useState<'confirming' | 'sending' | null>(null);
   const [attempt, setAttempt] = useState(0);
   const doc = { doctype, name };
 
@@ -41,15 +42,17 @@ export function WorkflowActions({ doctype, name }: { doctype: string; name: stri
   }, [apiRef, doctype, name, attempt]);
 
   const act = async (tr: Transition) => {
-    if (busy) return;
+    if (actionInProgress.current) return;
+    actionInProgress.current = true;
+    setPhase('confirming');
     setError(null);
     setDone(null);
-    if (!(await confirmIdentity(text('workflow.confirm', { action: tr.action, name })))) {
-      setError(text('workflow.notConfirmed'));
-      return;
-    }
-    setBusy(true);
     try {
+      if (!(await confirmIdentity(text('workflow.confirm', { action: tr.action, name })))) {
+        setError(text('workflow.notConfirmed'));
+        return;
+      }
+      setPhase('sending');
       await callErp(apiRef.current, APPLY_METHOD, z.object({ name: z.string() }), { doc, action: tr.action }, { post: true });
       setDone(text('workflow.done', { action: tr.action, state: tr.next_state }));
       setTransitions(null);
@@ -58,14 +61,15 @@ export function WorkflowActions({ doctype, name }: { doctype: string; name: stri
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setBusy(false);
+      actionInProgress.current = false;
+      setPhase(null);
     }
   };
 
   if (!transitions && !error && !done) return null;
   return (
     <View style={{ gap: 12, padding: 16 }}>
-      {busy && <Status kind="pending" label={text('workflow.sending')} />}
+      {phase === 'sending' && <Status kind="pending" label={text('workflow.sending')} />}
       {done && <Status kind="ok" label={done} />}
       {error && <Status kind="danger" label={error} />}
       {transitions && transitions.length > 0 && (
@@ -79,7 +83,7 @@ export function WorkflowActions({ doctype, name }: { doctype: string; name: stri
               label={tr.action}
               icon="fingerprint"
               secondary={i > 0}
-              disabled={busy}
+              disabled={phase !== null}
               onPress={() => act(tr)}
             />
           ))}

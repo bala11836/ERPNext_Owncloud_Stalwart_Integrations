@@ -75,6 +75,23 @@ describe('inbox screen', () => {
     expect(applied.args).toEqual({ doc: { doctype: 'Purchase Order', name: 'PO-0001' }, action: 'Approve' });
   });
 
+  it('ignores another action while identity confirmation is pending', async () => {
+    const calls = serve();
+    let confirm!: (value: boolean) => void;
+    mockConfirm.mockImplementationOnce(() => new Promise<boolean>((resolve) => { confirm = resolve; }));
+    await openInbox();
+    await fireEvent.press(await screen.findByText('Purchase Order PO-0001'));
+
+    fireEvent.press(await screen.findByText('Approve'));
+    fireEvent.press(screen.getByText('Reject'));
+    expect(mockConfirm).toHaveBeenCalledTimes(1);
+    expect(calls.some((c) => c.method === APPLY_METHOD)).toBe(false);
+
+    confirm(true);
+    expect(await screen.findByText('Approve: done. Now: Approved.')).toBeOnTheScreen();
+    expect(calls.filter((c) => c.method === APPLY_METHOD)).toHaveLength(1);
+  });
+
   it('nothing is sent when Face ID is not confirmed', async () => {
     const calls = serve();
     mockConfirmed = false;

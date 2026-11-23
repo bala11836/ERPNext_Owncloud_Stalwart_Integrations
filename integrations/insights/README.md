@@ -4,7 +4,7 @@ Patches the pinned Insights frontend to take identity from the native authentica
 
 ## Purpose
 
-Makes Frappe Insights take its identity from the native authenticated API rather than shared parent-domain cookies, which can collide between production and test.
+Makes Frappe Insights take its identity from the native authenticated API rather than shared parent-domain cookies, which can collide between production and test. Keeps the main Insights sidebar visible in signed-in workbook routes and marks Workbooks as active while editing queries, charts, or dashboards.
 
 ## Contents
 

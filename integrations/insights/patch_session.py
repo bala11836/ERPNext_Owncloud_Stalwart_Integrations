@@ -1,33 +1,83 @@
 #!/usr/bin/env python3
-"""Apply the declared pinned Insights frontend adapter before compiling it.
+"""Apply local session and workbook navigation changes to pinned Insights."""
 
-Identity comes from the native authenticated API. Parent-domain presentation
-cookies can collide between production and test and are never authorization.
-"""
 from pathlib import Path
 import re
 import sys
 
 
+def patch_session(frontend):
+    file = frontend / "session.ts"
+    source = file.read_text()
+    marker = "// cloud-integrations: native verified session bootstrap"
+    if marker in source:
+        return
+
+    start = source.index("async function initialize(")
+    stop = source.index("\nasync function fetchSessionInfo()", start)
+    if "Object.assign(session.user, getSessionFromCookies())" not in source[start:stop]:
+        raise ValueError("Pinned Insights session initialization changed; review the adapter")
+    source = source[:start] + f"""async function initialize(force: boolean = false) {{
+	if (session.initialized && !force) return
+	{marker}
+	await Promise.all([
+		fetchSiteInfo(),
+		fetchSessionInfo().catch(() => resetSession()),
+	])
+	session.initialized = true
+}}
+""" + source[stop:]
+
+    guard = "\tif (!session.isLoggedIn) return\n"
+    if source.count(guard) != 1:
+        raise ValueError("Pinned Insights session guard changed; review the adapter")
+    source = source.replace(guard, "")
+    source, count = re.subn(
+        r"\nfunction getSessionFromCookies\(\) \{.*?\n\}\n", "", source, flags=re.DOTALL
+    )
+    if count != 1:
+        raise ValueError("Pinned Insights cookie reader changed; review the adapter")
+    file.write_text(source)
+
+
+def patch_workbook_navigation(frontend):
+    router = frontend / "router.ts"
+    routes = router.read_text()
+    marker = "// cloud-integrations: keep the Insights menu in workbooks"
+    workbook_route = "\t\tcomponent: () => import('./workbook/Workbook.vue'),\n"
+    if marker not in routes:
+        hidden_workbook_route = workbook_route + "\t\tmeta: { hideSidebar: true },\n"
+        if routes.count(hidden_workbook_route) != 1:
+            raise ValueError("Pinned Insights workbook route changed; review the adapter")
+        routes = routes.replace(hidden_workbook_route, workbook_route + f"\t\t{marker}\n")
+
+    sidebar = frontend / "components/AppSidebar.vue"
+    links = sidebar.read_text()
+    active_binding = ':isActive="link.to === \'WorkbookList\' && isWorkbookRoute"'
+    if active_binding not in links:
+        target = ':to="link.to"'
+        if links.count(target) != 1 or "const links = ref([" not in links:
+            raise ValueError("Pinned Insights sidebar changed; review the adapter")
+        links = links.replace(target, target + "\n\t\t\t\t\t\t" + active_binding)
+        links = links.replace(
+            "import { computed, ref } from 'vue'",
+            "import { computed, ref } from 'vue'\nimport { useRoute } from 'vue-router'",
+        )
+        links = links.replace(
+            "const links = ref([",
+            "const route = useRoute()\n"
+            "const isWorkbookRoute = computed(() => route.matched.some(record => record.name === 'Workbook'))\n\n"
+            "const links = ref([",
+        )
+    router.write_text(routes)
+    sidebar.write_text(links)
+
+
 def patch(root):
-    file=Path(root)/'frontend/src/stores/sessionStore.ts'
-    text=file.read_text()
-    marker='// cloud-integrations: native verified session bootstrap'
-    if marker in text:return
-    pattern=r'\t\tObject\.assign\(user\.value, getSessionFromCookies\(\)\)\s*isLoggedIn\.value && \(await fetchSessionInfo\(\)\)\s*initialized\.value = true'
-    replacement='''\t\t// cloud-integrations: native verified session bootstrap
-\t\ttry {
-\t\t\tconst verified: SessionUser = await api.fetchUserInfo()
-\t\t\tObject.assign(user.value, { ...verified,
-\t\t\t\tis_admin: Boolean(verified.is_admin), is_user: Boolean(verified.is_user),
-\t\t\t\tis_v2_user: Boolean(verified.is_v2_user) })
-\t\t} catch {
-\t\t\tObject.assign(user.value, emptyUser)
-\t\t}
-\t\tinitialized.value = true'''
-    text,count=re.subn(pattern,lambda _:replacement,text)
-    if count!=1:raise ValueError('Pinned Insights session source changed; review the adapter')
-    file.write_text(text)
+    frontend = Path(root) / "frontend/src2"
+    patch_session(frontend)
+    patch_workbook_navigation(frontend)
 
 
-if __name__=='__main__':patch(sys.argv[1])
+if __name__ == "__main__":
+    patch(sys.argv[1])

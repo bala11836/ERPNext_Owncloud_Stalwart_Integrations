@@ -12,8 +12,8 @@ Never develop directly in production or deploy uncommitted changes.
 ## Session routine (owner, 21 November 2026)
 
 Two repositories: this **public** one (code, module READMEs, `docs/decisions.md`)
-and a **private operations repository**, checked out next to this one as
-`../unformat_erp_integrations` (branch `main`; run `git pull` first). The private
+and a **private operations repository**. Use the project folder map to locate
+its checkout and read its current `main` branch. The private
 repository holds only records and private assets: the pending and priority list
 (`docs/pending.md`), the production release log (`docs/production-releases.md`),
 runbooks, handovers (`docs/handover-<date>.md`), deliberations, and brand assets

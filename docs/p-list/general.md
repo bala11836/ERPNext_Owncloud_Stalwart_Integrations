@@ -86,8 +86,7 @@ copyright "Unformat and contributors", fresh history: one commit `eb887b7`,
 authored with the owner's GitHub no-reply address; tree identical to the
 tested private release `bd78277`). `main` protected (pull requests, no force
 push or deletion). Operations records (this file, release log, runbooks)
-kept in the old private repository, renamed `the private operations repository` and
-now the internal operations repository (full history kept; deploy keys
+kept in the private operations repository (full history kept; deploy keys
 removed). Artwork audit: company logo not published (placeholder), app icons
 from frappe/suite (AGPL-3.0) attributed. Test and production fetch the public
 repository. Still open: (a)–(d) presentation polish per module, upstream

@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from promotion_plan import load, rules_for  # noqa: E402
 
 SHA = re.compile(r'[0-9a-f]{7,40}')
+IMAGE_TAG = re.compile(r'([0-9a-f]{7,40})(?:-runtime)?')
 
 
 def run(args):
@@ -70,7 +71,9 @@ def deployed_commit(spec, config):
             image = run(['docker', 'inspect', '--format',
                          '{{.Config.Image}} {{index .Config.Labels "org.opencontainers.image.revision"}}', name]).split()
             tag = image[0].rsplit(':', 1)[-1] if ':' in image[0].split('/')[-1] else ''
-            commit = image[1] if len(image) > 1 and SHA.fullmatch(image[1]) else tag if SHA.fullmatch(tag) else None
+            tagged = IMAGE_TAG.fullmatch(tag)
+            revision = image[1] if len(image) > 1 else ''
+            commit = revision if SHA.fullmatch(revision) else tagged.group(1) if tagged else None
             if not commit:
                 raise RuntimeError(name + ': the image names no commit (tag or revision label)')
             commits.add(commit)

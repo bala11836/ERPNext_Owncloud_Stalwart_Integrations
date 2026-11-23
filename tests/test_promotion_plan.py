@@ -128,7 +128,7 @@ class DriftCheckTests(unittest.TestCase):
             if args[:2] == ['docker', 'ps']:
                 return 'drive-ocis-1\ndrive-collab-1\nother\n'
             if args[:2] == ['docker', 'inspect']:
-                return 'cloud/drive:' + self.c[:12] + ' <no value>\n'
+                return 'cloud/drive:' + self.c[:12] + '-runtime <no value>\n'
             raise AssertionError(args)
         dc.run = fake_run
         dc.fetch = lambda url: b'<p>two</p>\n' if url.endswith('/same') else b'<p>old</p>\n'

@@ -164,6 +164,57 @@ export function Status({ kind, label }: { kind: StatusKind; label: string }) {
   );
 }
 
+/** A Today card: icon, title and detail in words, an optional count, tappable when it leads somewhere. */
+export function Card({
+  icon,
+  title,
+  detail,
+  count,
+  onPress,
+}: {
+  icon: IconName;
+  title: string;
+  detail?: string;
+  count?: number;
+  onPress?: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={[title, detail].filter(Boolean).join('. ')}
+      onPress={onPress}
+      disabled={!onPress}
+      style={({ pressed }) => ({
+        minHeight: t.touch + 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 14,
+        padding: 16,
+        borderWidth: t.border,
+        borderColor: t.c.border,
+        borderRadius: 12,
+        backgroundColor: pressed ? t.c.surface : t.c.bg,
+      })}>
+      <MaterialCommunityIcons name={icon} size={t.font(30)} color={t.c.primary} />
+      <View style={{ flex: 1, gap: 4 }}>
+        <T style={{ fontWeight: '700' }}>{title}</T>
+        {detail ? (
+          <T variant="small" color="muted">
+            {detail}
+          </T>
+        ) : null}
+      </View>
+      {count !== undefined && (
+        <T variant="title" style={{ minWidth: 32, textAlign: 'right' }}>
+          {count}
+        </T>
+      )}
+      {onPress && <MaterialCommunityIcons name="chevron-right" size={t.font(28)} color={t.c.text} />}
+    </Pressable>
+  );
+}
+
 /** A tappable list row; `selected` (tablet split view) adds a thick left bar, not just a colour change. */
 export function Row({
   title,

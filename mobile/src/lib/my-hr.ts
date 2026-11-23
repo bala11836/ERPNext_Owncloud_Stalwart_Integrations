@@ -109,6 +109,20 @@ export async function loadMyHr(api: Api, today: string): Promise<MyHr | null> {
   return { employee, balances, leaves, claims, summary, holidays, slips };
 }
 
+/** Today's HR card: the next holiday and how many leave applications are still open. Null without an employee. */
+export async function loadTodayHr(api: Api, today: string) {
+  const employee = await callErp(api, `${HR}.get_current_employee_info`, Employee);
+  if (!employee) return null;
+  const [holidays, leaves] = await Promise.all([
+    callErp(api, `${HR}.get_holidays_for_employee`, Holidays, { employee: employee.name }),
+    callErp(api, `${HR}.get_leave_applications`, Leaves, { employee: employee.name, limit: 20 }),
+  ]);
+  return {
+    nextHoliday: holidays.find((h) => h.holiday_date >= today) ?? null,
+    openLeaves: leaves.filter((l) => l.status === 'Open').length,
+  };
+}
+
 /** ERPNext's own status word gets a matching icon (shown with the word, never colour alone). */
 export function statusKind(status?: string | null): StatusKind {
   if (!status) return 'info';

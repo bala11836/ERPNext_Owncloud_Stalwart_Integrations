@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
 import Today from '@/app/(app)/index';
+import { HR_API } from '@/lib/attendance';
 import { ACTIONS_METHOD, LOGS_METHOD, byType, clearInbox } from '@/lib/inbox';
 import { loadTodayHr } from '@/lib/my-hr';
 import { memoryStore } from '@/lib/queue';
@@ -12,6 +13,11 @@ import { fakeErp } from './fake-erp';
 
 const action = (n: string, doctype: string) => ({ name: n, reference_doctype: doctype, reference_name: n, workflow_state: 'Pending', creation: '2026-11-23 10:00:00' });
 const answers = {
+  [`${HR_API}.bootstrap`]: {
+    body: { message: { sites: [{ name: 'S1', label: 'Site 1', supervisor: true, approver: false, shifts: [{ name: 'D', start: '00:00', end: '23:59', label: 'Day' }] }], check_in_sites: [{ name: 'S1', label: 'Site 1' }] } },
+  },
+  [`${HR_API}.my_attendance`]: { body: { message: [] } },
+  [`${HR_API}.team`]: { body: { message: { total: 15, missing: 3 } } },
   [ACTIONS_METHOD]: { body: { message: [action('A', 'Purchase Order'), action('B', 'Leave Application'), action('C', 'Purchase Order')] } },
   [LOGS_METHOD]: {
     body: { message: { notification_logs: [{ name: 'N1', subject: 'x', read: 0, creation: '2026-11-23 10:00:00' }], user_info: {} } },
@@ -74,5 +80,20 @@ describe('Today helpers', () => {
       nextHoliday: { holiday_date: '2999-12-25', description: 'Christmas' },
       openLeaves: 1,
     });
+  });
+});
+
+describe('Today, step T2', () => {
+  beforeEach(() => clearInbox());
+
+  it('puts the check-in status first, then the team card, then what waits', async () => {
+    await renderRouter(app, { initialUrl: '/', wrapper });
+    expect(await screen.findByText('Not checked in yet today')).toBeOnTheScreen();
+    expect(screen.getByText('Team today at Site 1: 12 of 15 marked')).toBeOnTheScreen();
+    await screen.findByText('Waiting for you');
+    const order = ['Not checked in yet today', 'Team today at Site 1: 12 of 15 marked', 'Waiting for you'].map(
+      (label) => screen.toJSON() && JSON.stringify(screen.toJSON()).indexOf(label),
+    );
+    expect([...order].sort((a, b) => Number(a) - Number(b))).toEqual(order);
   });
 });

@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { useApiRef, useAuth } from '@/auth/session';
 import { Card, Screen, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
+import { type TodayAttendance, clock, loadTodayAttendance } from '@/lib/attendance';
 import { formatDate, localToday } from '@/lib/format';
 import { byType, refreshInbox, useInbox } from '@/lib/inbox';
 import { loadTodayHr } from '@/lib/my-hr';
@@ -13,6 +14,8 @@ import { offlineStore } from '@/lib/offline-store';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 type Hr = Awaited<ReturnType<typeof loadTodayHr>>;
+
+const nowHHMM = (d = new Date()) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
 /**
  * Today (build guide section 6), step T1: what waits for the person, from data the app already has. Attendance
@@ -24,6 +27,7 @@ export default function Today() {
   const inbox = useInbox();
   const [queue, setQueue] = useState<{ waiting: number; refused: number } | null>(null);
   const [hr, setHr] = useState<Hr>(null);
+  const [att, setAtt] = useState<TodayAttendance | null>(null);
 
   // Fresh whenever the tab is opened: the offline queue, the inbox and the HR card.
   useFocusEffect(
@@ -41,6 +45,10 @@ export default function Today() {
           () => live && setQueue(null),
         );
       refreshInbox(apiRef.current);
+      loadTodayAttendance(apiRef.current, nowHHMM(), localToday()).then(
+        (a) => live && setAtt(a),
+        () => live && setAtt(null),
+      );
       loadTodayHr(apiRef.current, localToday()).then(
         (h) => live && setHr(h),
         () => live && setHr(null),
@@ -61,6 +69,41 @@ export default function Today() {
         <T variant="title">{user?.name ? text('today.hello', { name: user.name }) : text('tab.today')}</T>
         <T color="muted">{`${WEEKDAYS[new Date().getDay()]}, ${formatDate(today)}`}</T>
       </View>
+
+      {/* ponytail: status only; the check-in, team and bulk-approval screens come with phase 3. */}
+      {att?.self && (
+        <Card
+          icon={att.self.today ? 'map-marker-check-outline' : 'map-marker-outline'}
+          title={
+            att.self.today
+              ? text('today.checkedIn', { time: clock(att.self.today.check_in_time) })
+              : text('today.notCheckedIn')
+          }
+          detail={
+            att.self.today
+              ? [att.self.today.state, att.self.today.check_out_time && text('today.checkedOut', { time: clock(att.self.today.check_out_time) })]
+                  .filter(Boolean)
+                  .join(' · ')
+              : att.self.sites.join(', ')
+          }
+        />
+      )}
+      {att?.teams.map((tm) => (
+        <Card
+          key={`team-${tm.site}`}
+          icon="account-group-outline"
+          title={text('today.team', { site: tm.site, marked: tm.marked, total: tm.total })}
+          detail={text('today.shift', { shift: tm.shift })}
+        />
+      ))}
+      {att?.approvals.map((ap) => (
+        <Card
+          key={`appr-${ap.site}`}
+          icon="clipboard-check-outline"
+          title={text('today.attendanceToApprove', { site: ap.site })}
+          count={ap.count}
+        />
+      ))}
 
       {inbox.loaded && (
         <Card

@@ -215,7 +215,7 @@ class SelfAttendanceSurface(unittest.TestCase):
             self.assertIn(name, entry.get('field_order', list(fields)))
         member = json.loads((HR / 'doctype/field_site_member/field_site_member.json').read_text(encoding='utf-8'))
         role = next(f for f in member['fields'] if f['fieldname'] == 'team_role')
-        self.assertEqual(role['options'], 'Supervisor\nApprover\nStaff')
+        self.assertEqual(role['options'], 'Supervisor\nApprover\nStaff\nVerifier')
 
     def test_self_check_in_rules_are_in_the_service(self):
         service = (HR / 'service.py').read_text(encoding='utf-8')
@@ -316,7 +316,7 @@ class SiteApproval(unittest.TestCase):
             self.assertIn(part, rule)
         self.assertLess(rule.index('doc.captured_offline'), rule.index('hr_attendance(doc)'))
         for caller in ('self_capture', 'submit_entry'):
-            self.assertIn('if not approve_without_review(doc):notify_approvers(', self.body(caller), caller)
+            self.assertRegex(self.body(caller), r'if not approve_without_review\(doc\):\s*notify_approvers\(', caller)
         self.assertIn('hr_attendance(doc)', self.body('review_entry'))
         self.assertEqual(self.SERVICE.count("doctype='Attendance'"), 1, 'one place creates HR attendance')
 

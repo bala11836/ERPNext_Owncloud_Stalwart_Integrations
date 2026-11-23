@@ -42,9 +42,40 @@
     "check_in_time",
     "auto_checkout_at",
     "check_out_time",
-    "checkout_method"
+    "checkout_method",
+    "verification_required",
+    "verified_by",
+    "verified_at",
+    "verification_method"
   ],
   "fields": [
+  {
+   "fieldname": "verification_required",
+   "label": "Verification required",
+   "fieldtype": "Check",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_by",
+   "label": "Verified by",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_at",
+   "label": "Verified at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_method",
+   "label": "Verification method",
+   "fieldtype": "Select",
+   "options": "\nManual\nEngineer capture",
+   "read_only": 1
+  },
     {
       "fieldname": "attendance_key",
       "label": "Unique worker / shift key",
@@ -129,7 +160,7 @@
       "fieldtype": "Select",
       "default": "Draft",
       "reqd": 1,
-      "options": "Draft\nSubmitted\nReturned\nApproved"
+      "options": "Draft\nSubmitted\nReturned\nApproved\nPending Verification\nVerified"
     },
     {
       "fieldname": "work_mode",
@@ -297,6 +328,10 @@
   ],
   "track_changes": 1,
   "permissions": [
+    {
+      "role": "Field Attendance Verifier",
+      "read": 1
+    },
     {
       "role": "Field Attendance Manager",
       "read": 1,

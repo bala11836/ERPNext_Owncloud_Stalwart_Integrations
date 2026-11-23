@@ -1,1 +1,1 @@
-{"doctype":"Page","name":"field-attendance","page_name":"field-attendance","title":"Field Attendance","module":"Custom HR","standard":"Yes","roles":[{"role":"Field Supervisor"},{"role":"Field Attendance Approver"},{"role":"Field Attendance Manager"}]}
+{"doctype":"Page","name":"field-attendance","page_name":"field-attendance","title":"Field Attendance","module":"Custom HR","standard":"Yes","roles":[{"role":"Field Supervisor"},{"role":"Field Attendance Approver"},{"role":"Field Attendance Manager"},{"role":"Field Attendance Verifier"}]}

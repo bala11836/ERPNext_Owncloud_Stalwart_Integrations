@@ -39,11 +39,25 @@ class FieldSiteBase(Document):
                         {'user_id':member.user,'status':'Active','company':self.company}):
                     frappe.throw(f'{member.user} must be enabled and linked to an active employee of {self.company}.')
             elif member.enabled:
-                role='Field Supervisor' if member.team_role=='Supervisor' else 'Field Attendance Approver'
+                role = {
+                    'Supervisor': 'Field Supervisor', 'Approver': 'Field Attendance Approver',
+                    'Verifier': 'Field Attendance Verifier',
+                }[member.team_role]
                 if not frappe.db.get_value('User',member.user,'enabled') or role not in frappe.get_roles(member.user):
                     frappe.throw(f'{member.user} must be enabled and have the {role} role first.')
         if not any(m.enabled and m.team_role=='Approver' for m in self.members):
             frappe.throw('Add at least one attendance approver.')
+        verifiers = {m.user for m in self.members if m.enabled and m.team_role == 'Verifier'}
+        for member in self.members:
+            if not member.enabled or not member.verifier:
+                continue
+            if member.team_role != 'Supervisor' or member.user == member.verifier or member.verifier not in verifiers:
+                frappe.throw('Assign each supervisor a different, enabled engineer on the same site.')
+            if not self.approval_required:
+                frappe.throw('Enable final approval before assigning an attendance engineer.')
+            if not any(m.enabled and m.team_role == 'Approver' and m.user not in (member.user, member.verifier)
+                       for m in self.members):
+                frappe.throw('Add a separate project manager as the final attendance approver.')
         assets=set()
         for row in self.assets:
             if row.asset in assets:frappe.throw('A machine is listed twice.')
@@ -72,6 +86,12 @@ def validate_user(doc, method=None):
                 if frappe.db.get_value('Employee',row.employee,'status')=='Active':
                     frappe.throw('Reassign this user’s workers before disabling the supervisor or removing their supervisor role.')
 
+    if method == 'on_trash' or not doc.enabled or not any(r.role == 'Field Attendance Verifier' for r in doc.roles):
+        sites = frappe.get_all('Field Site Member', filters={
+            'parenttype': 'Field Site', 'team_role': 'Supervisor', 'enabled': 1, 'verifier': doc.name,
+        }, pluck='parent')
+        if any(frappe.db.get_value('Field Site', site, 'enabled') for site in sites):
+            frappe.throw('Reassign this engineer’s supervisors before removing their verification access.')
     if method=='on_trash' or not doc.enabled or not any(r.role=='Field Attendance Approver' for r in doc.roles):
         sites=frappe.get_all('Field Site Member',filters={'user':doc.name,'team_role':'Approver','enabled':1},pluck='parent')
         for site in sites:

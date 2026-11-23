@@ -105,6 +105,10 @@
   "track_changes": 1,
   "permissions": [
     {
+      "role": "Field Attendance Verifier",
+      "read": 1
+    },
+    {
       "role": "Field Attendance Manager",
       "read": 1,
       "write": 1,

@@ -1,6 +1,6 @@
 import frappe
 from frappe.utils import now_datetime, nowdate, cint
-from erpnext_drive_integrations.custom_hr.access import require_user, require_site, require_manager, site_ids, site_access, is_manager, entry_access, self_sites
+from erpnext_drive_integrations.custom_hr.access import require_user, require_site, require_manager, site_ids, site_access, is_manager, entry_access, self_sites, supervised_users, can_verify, approval_access
 from erpnext_drive_integrations.custom_hr import service
 
 
@@ -15,6 +15,7 @@ def bootstrap():
         doc=frappe.get_doc('Field Site',name)
         sites.append(dict(name=name,label=doc.site_name,project=doc.project,project_name=frappe.db.get_value('Project',doc.project,'project_name'),company=doc.company,
             supervisor=site_access(name,'Supervisor',user),approver=site_access(name,'Approver',user),
+            verifier=bool(supervised_users(name, user)),
             shifts=[dict(service.shift_details(doc,s),label=label) for s,label in [(doc.day_shift,'Day'),(doc.night_shift,'Night')]],
             supervisors=[dict(user=m.user,label=frappe.db.get_value('User',m.user,'full_name') or m.user)
                 for m in doc.members if m.enabled and m.team_role=='Supervisor'],
@@ -41,21 +42,29 @@ def team(site,shift,search='',offset=0):
         LEFT JOIN `tabField Shift Allocation` x ON x.employee=a.employee AND x.attendance_date=%(day)s AND x.shift=%(shift)s
         LEFT JOIN `tabField Attendance Entry` f ON f.employee=a.employee AND f.attendance_date=%(day)s AND f.shift=%(shift)s
         WHERE a.site=%(site)s AND e.status='Active' AND (e.employee_name LIKE %(q)s OR a.employee LIKE %(q)s)"""
-    if not can_approve:join+=" AND COALESCE(x.supervisor,a.supervisor)=%(user)s"
+    subteam = supervised_users(site, user)
+    if not can_approve:
+        values['supervisors'] = [user, *subteam]
+        join += " AND COALESCE(x.supervisor,a.supervisor) IN %(supervisors)s"
     counts=frappe.db.sql("SELECT COUNT(*) AS total,SUM(CASE WHEN f.state IS NULL OR f.state IN ('Draft','Returned') THEN 1 ELSE 0 END) AS missing "+join,values,as_dict=True)[0]
     rows=frappe.db.sql("""SELECT a.employee,a.machine_required,e.employee_name,e.designation,
         COALESCE(x.supervisor,a.supervisor) AS supervisor,
         COALESCE(NULLIF(a.locked_by,''),NULLIF(x.locked_by,'')) AS locked_by,
-        f.name AS entry,f.state,f.captured_by,f.revision """+join+' ORDER BY e.employee_name LIMIT 500',values,as_dict=True)
+        f.name AS entry,f.state,f.captured_by,f.responsible_supervisor,f.revision """+join+' ORDER BY e.employee_name LIMIT 500',values,as_dict=True)
     can_capture=site_access(site,'Supervisor',user)
     for row in rows:
         own=row.supervisor==user
         row.locked=bool(row.pop('locked_by',None));row.assignment_source='Approver' if row.locked else 'Supervisor'
-        if row.captured_by!=user and not can_approve:row.entry=None
-        row.state=row.state or 'Not recorded'
-        row.can_capture=own and can_capture
-        row.can_edit=bool(row.entry and row.captured_by==user and row.state in ('Draft','Returned'))
-        row.can_transfer=can_approve or not row.locked
+        if (row.captured_by != user and not can_approve
+                and not (row.responsible_supervisor in subteam and row.state != 'Draft')):
+            row.entry = None
+        row.state = row.state or 'Not recorded'
+        row.can_capture = (own and can_capture) or row.supervisor in subteam
+        row.can_edit = bool(row.entry and row.captured_by == user and row.state in ('Draft', 'Returned')
+                            and (can_capture and row.responsible_supervisor == user
+                                 or row.supervisor == row.responsible_supervisor and row.supervisor in subteam))
+        row.can_transfer = can_approve or (own and can_capture and not row.locked)
+        row.pop('responsible_supervisor', None)
         row.pop('captured_by',None)
     return dict(workers=rows,total=counts.total,truncated=counts.total>500,attendance_date=details['attendance_date'],missing=cint(counts.missing))
 
@@ -65,24 +74,60 @@ def entry(name):
     require_user();doc=frappe.get_doc('Field Attendance Entry',name)
     if not entry_access(doc):frappe.throw('You cannot view this record.',frappe.PermissionError)
     fields=['name','employee','employee_name','site','project','attendance_date','shift','attendance_status','state','work_mode','asset',
-            'remarks','review_remarks','photo','latitude','longitude','accuracy_m','check_in_time','auto_checkout_at','check_out_time','checkout_method','captured_at','captured_by','revision','request_id','attendance','machine_required']
+            'remarks','review_remarks','photo','latitude','longitude','accuracy_m','check_in_time','auto_checkout_at','check_out_time','checkout_method','captured_at','captured_by','responsible_supervisor','verified_by','verified_at','verification_method','revision','request_id','attendance','machine_required']
     result={f:doc.get(f) for f in fields}
-    result['can_review']=site_access(doc.site,'Approver') and doc.captured_by!=frappe.session.user and frappe.db.get_value('Employee',doc.employee,'user_id')!=frappe.session.user
+    result['can_review'] = service.ready_for_approval(doc) and can_review(doc, frappe.session.user)
+    result['can_verify'] = doc.state == 'Pending Verification' and can_verify(doc, frappe.session.user)
     return result
+
+
+def can_review(doc, user):
+    return (approval_access(doc, user) and doc.captured_by != user and doc.verified_by != user
+            and frappe.db.get_value('Employee', doc.employee, 'user_id') != user)
 
 
 @frappe.whitelist()
 def approvals(site,shift=None):
     user=require_user();location=require_site(site,'Approver')
-    filters={'site':site,'state':'Submitted'}
+    filters={'site':site}
+    from frappe.query_builder import DocType
+    from frappe.query_builder.functions import Coalesce
+
+    entry_table = DocType('Field Attendance Entry')
+    eligible = (entry_table.state == 'Verified') | (
+        (entry_table.state == 'Submitted') & (Coalesce(entry_table.verification_required, 0) == 0))
     if shift:
         details=service.shift_details(location,shift);filters.update(shift=shift,attendance_date=details['attendance_date'])
-    docs=frappe.get_all('Field Attendance Entry',filters=filters,
-        fields=['name','employee','employee_name','attendance_date','shift','attendance_status','work_mode','asset','captured_by','submitted_at',
-                'entry_type','captured_offline','check_in_time','accuracy_m'],order_by='submitted_at asc',limit=200)
-    for d in docs:
-        d.can_review=d.captured_by!=user and frappe.db.get_value('Employee',d.employee,'user_id')!=user
+    query = frappe.qb.from_(entry_table).select(
+        'name', 'site', 'employee', 'employee_name', 'attendance_date', 'shift', 'attendance_status',
+        'work_mode', 'asset', 'captured_by', 'submitted_at', 'entry_type', 'captured_offline',
+        'check_in_time', 'accuracy_m', 'verification_required', 'verified_by', 'verification_method',
+    ).where(eligible)
+    for field, value in filters.items():
+        query = query.where(entry_table[field] == value)
+    docs = query.orderby(entry_table.submitted_at).limit(200).run(as_dict=True)
+    for doc in docs:
+        doc.can_review = can_review(doc, user)
     return docs
+
+
+@frappe.whitelist()
+def verifications(site):
+    user = require_user()
+    require_site(site, 'Verifier')
+    supervisors = supervised_users(site, user)
+    if not supervisors:
+        return []
+    records = frappe.get_all('Field Attendance Entry', filters={
+        'site': site, 'state': 'Pending Verification', 'responsible_supervisor': ['in', supervisors],
+    }, fields=['name', 'employee_name', 'attendance_date', 'shift', 'attendance_status', 'captured_by'],
+        order_by='submitted_at asc', limit=200)
+    return records
+
+
+@frappe.whitelist(methods=['POST'])
+def verify(name, decision, remarks=''):
+    return service.verify_entry(name, decision, remarks)
 
 
 @frappe.whitelist(methods=['POST'])
@@ -154,7 +199,7 @@ def save_site(payload):
     for f in ('site_name','company','project','day_shift','night_shift','latitude','longitude','radius_m','maximum_accuracy_m'):
         doc.set(f,p.get(f))
     doc.enabled=1;doc.set('members',[]);doc.set('assets',[])
-    for row in p.get('members',[]):doc.append('members',dict(user=row['user'],team_role=row['team_role'],enabled=1))
+    for row in p.get('members',[]):doc.append('members',dict(user=row['user'],team_role=row['team_role'],enabled=1,verifier=row.get('verifier')))
     for asset in p.get('assets',[]):doc.append('assets',dict(asset=asset))
     doc.save(ignore_permissions=True)
     return {'name':doc.name}
@@ -182,6 +227,6 @@ def enroll(employees,site,supervisor,machine_required=0,locked=0):
 @frappe.whitelist()
 def my_records():
     user=require_user()
-    sites=site_ids(user,'Supervisor')
+    sites=sorted(set(site_ids(user,'Supervisor')) | set(site_ids(user,'Verifier')))
     if not sites:return []
     return frappe.get_all('Field Attendance Entry',filters={'captured_by':user,'site':['in',sites]},fields=['name','employee','employee_name','site','shift','attendance_date','state','review_remarks'],order_by='modified desc',limit=100)

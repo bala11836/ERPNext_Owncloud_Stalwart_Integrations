@@ -4,6 +4,7 @@ from frappe import _
 MANAGER = 'Field Attendance Manager'
 SUPERVISOR = 'Field Supervisor'
 APPROVER = 'Field Attendance Approver'
+VERIFIER = 'Field Attendance Verifier'
 
 
 def is_manager(user=None):
@@ -28,6 +29,8 @@ def site_ids(user=None, role=None):
         permitted.append('Supervisor')
     if APPROVER in roles and role in (None, 'Approver'):
         permitted.append('Approver')
+    if VERIFIER in roles and role in (None, 'Verifier'):
+        permitted.append('Verifier')
     if not permitted:
         return []
     return frappe.db.sql('''SELECT DISTINCT m.parent FROM `tabField Site Member` m
@@ -54,6 +57,44 @@ def eligible_supervisor(site, user):
                     'team_role': 'Supervisor', 'enabled': 1}))
 
 
+def has_membership(site, user, member_role, user_role):
+    return (bool(user) and user_role in frappe.get_roles(user)
+            and bool(frappe.db.get_value('User', user, 'enabled'))
+            and bool(frappe.db.get_value('Field Site', site, 'enabled'))
+            and bool(frappe.db.exists('Field Site Member', {
+                'parent': site, 'parenttype': 'Field Site', 'team_role': member_role,
+                'enabled': 1, 'user': user,
+            })))
+
+
+def approval_access(doc, user):
+    if doc.state == 'Verified' or doc.verification_required:
+        return has_membership(doc.site, user, 'Approver', APPROVER)
+    return site_access(doc.site, 'Approver', user)
+
+
+def verifier_for(site, supervisor):
+    return frappe.db.get_value('Field Site Member', {
+        'parent': site, 'parenttype': 'Field Site', 'team_role': 'Supervisor',
+        'enabled': 1, 'user': supervisor,
+    }, 'verifier')
+
+
+def supervised_users(site, verifier):
+    if not has_membership(site, verifier, 'Verifier', VERIFIER):
+        return []
+    return frappe.get_all('Field Site Member', filters={
+        'parent': site, 'parenttype': 'Field Site', 'team_role': 'Supervisor',
+        'enabled': 1, 'verifier': verifier,
+    }, pluck='user')
+
+
+def can_verify(doc, user):
+    return (doc.get('entry_type') != 'Self' and doc.captured_by != user
+            and doc.responsible_supervisor in supervised_users(doc.site, user)
+            and frappe.db.get_value('Employee', doc.employee, 'user_id') != user)
+
+
 def require_manager():
     require_user()
     if not is_manager():
@@ -67,6 +108,10 @@ def entry_access(doc, user=None):
     if is_manager(user):
         return True
     if doc.captured_by == user and site_access(doc.site, 'Supervisor', user):
+        return True
+    if doc.captured_by == user and site_access(doc.site, 'Verifier', user):
+        return True
+    if doc.state != 'Draft' and doc.responsible_supervisor in supervised_users(doc.site, user):
         return True
     if doc.get('entry_type') == 'Self' and doc.captured_by == user:
         return True

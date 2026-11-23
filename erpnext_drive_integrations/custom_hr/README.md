@@ -1,16 +1,15 @@
 # Custom HR (`custom-hr`)
 
 Our additions to Frappe HR, in the one app `erpnext_drive_integrations`: field sites and their members, worker
-assignments and their events, shift allocation, supervisor-recorded team attendance with photo and location, approval
+assignments and their events, shift allocation, team attendance with photo and location, engineer verification, approval
 by the site's approvers (the project manager), checkout, the field team web page, and the functions the mobile app
 uses for HR. Frappe HR's own features (leave, expenses, payslips, requests) are used as they are; whatever they lack
 is built here. Formerly the field-attendance part (`field/`, module "Cloud Field"; renamed 22 November 2026).
 
 ## Purpose
 
-Attendance for people who work under a supervisor and have no ERP login (recorded by their supervisor with a photo
-and location inside the site's fence), approved by the site's approvers before HR attendance is created; plus the
-HR functions that Frappe HR does not offer.
+Attendance for people who work under a supervisor and have no ERP login. Their supervisor or assigned engineer captures
+a photo and location inside the site’s fence. The module also provides HR functions that Frappe HR does not offer.
 
 ## Contents
 
@@ -19,8 +18,7 @@ HR functions that Frappe HR does not offer.
 - `erpnext_drive_integrations/www/field_team.*` (the web page at `/field-team`)
 - `tests/test_custom_hr.py`
 
-DocType names (Field Site, Field Attendance Entry and the others), role names (Field Supervisor, Field Attendance
-Approver, Field Attendance Manager) and the page addresses `/field-team` and `field-attendance` are unchanged.
+Open the field team web page at `/field-team` or the Desk page at `field-attendance`.
 
 ## Requirements
 
@@ -39,6 +37,26 @@ from the HR "Shift and Attendance" sidebar.
 Site config `cloud_features` key `custom_hr` (the former key `field` is still honoured); no other keys. Roles are
 created on install. Permissions are enforced on the server in `custom_hr/permissions.py`, `custom_hr/access.py` and
 `custom_hr/guards.py`.
+
+### Engineer verification
+
+1. Grant the engineer **Field Attendance Verifier**. On the Field Site, add them as an enabled **Verifier** member.
+2. On each applicable **Supervisor** member row, set **Attendance Engineer** to that engineer.
+3. Keep **Attendance needs approval** enabled and configure a separate project manager as an **Approver** member
+   with **Field Attendance Approver**. Workers use Field Worker Assignments and can remain ERP employees without logins.
+
+A supervisor's submission waits in **Pending Verification** until their assigned engineer verifies it or returns it
+with a reason. The engineer can also capture attendance for workers whose effective supervisor for that site,
+date and shift is assigned to them. On submit, this capture is marked **Verified** automatically and enters the
+project manager's approval queue. Both paths record the verifier, timestamp and method. The project manager's
+approval creates the official HR Attendance. The recorder and verifier cannot issue final approval for that entry.
+
+The field team page shows **Verification** for assigned engineers. API consumers use `bootstrap.sites[].verifier`,
+the worker-level `team` action flags, `verifications(site)`, and the POST-only `verify(name, decision, remarks)`
+with **Verify** or **Return**. `entry` returns `can_verify` and verification audit fields. `approvals` includes
+verified entries and direct submissions. Sites or teams without an engineer assignment keep their existing flow,
+as do self check-ins. An in-progress capture that already requires verification continues to require it if the
+engineer assignment changes.
 
 ### Self check-in, offline captures and approval (owner decisions of 22 November 2026)
 

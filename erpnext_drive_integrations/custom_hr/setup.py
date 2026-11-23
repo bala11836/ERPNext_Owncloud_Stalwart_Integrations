@@ -3,7 +3,7 @@ from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
 
 def roles():
-    for name in ('Field Supervisor','Field Attendance Approver','Field Attendance Manager'):
+    for name in ('Field Supervisor','Field Attendance Approver','Field Attendance Manager','Field Attendance Verifier'):
         if not frappe.db.exists('Role',name):frappe.get_doc(dict(doctype='Role',role_name=name,desk_access=1)).insert(ignore_permissions=True)
 
 

@@ -10,6 +10,7 @@ from datetime import datetime, time
 import frappe
 from frappe.utils import get_datetime, getdate, now_datetime, nowdate, cint
 from erpnext_drive_integrations.custom_hr.access import require_user, require_site, require_manager, eligible_supervisor, site_access, is_manager, site_ids, self_sites
+from erpnext_drive_integrations.custom_hr.access import approval_access, can_verify, supervised_users, verifier_for
 from erpnext_drive_integrations.custom_hr import domain
 
 
@@ -175,11 +176,18 @@ def notify_approvers(doc,user,title='Attendance ready for review'):
 
 def capture(data):
     user=require_user()
-    site=require_site(data.get('site'),'Supervisor')
+    site=require_site(data.get('site'))
+    supervisor_access = site_access(site.name, 'Supervisor', user)
+    verifier_access = site_access(site.name, 'Verifier', user)
+    if not (supervisor_access or verifier_access):
+        frappe.throw('You cannot record attendance at this site.', frappe.PermissionError)
     employee=data.get('employee');worker=lock_employee(employee)
     if worker.user_id==user:frappe.throw('Use your own check-in to record your attendance.')
     details=shift_details(site,data.get('shift'),moment(data));day=details['attendance_date']
     base,extra,effective=assignment(employee,site.name,day,details['name'],lock=True)
+    supervisor = effective['supervisor']
+    can_capture_own_team = supervisor_access and supervisor == user
+    can_capture_subteam = supervisor in supervised_users(site.name, user)
     request_id=str(data.get('request_id') or '')
     if not re.fullmatch(r'[A-Za-z0-9_-]{16,80}',request_id):frappe.throw('Missing request identifier. Reopen the capture screen.')
     existing=data.get('name') or frappe.db.get_value('Field Attendance Entry',{'attendance_key':key(employee,day,details['name'])},'name')
@@ -194,17 +202,24 @@ def capture(data):
             if doc.last_capture_digest!=digest:frappe.throw('A retry cannot change the capture. Refresh and try again.')
             return {'name':doc.name,'state':doc.state,'revision':doc.revision}
         effective['machine_required']=bool(doc.machine_required)
-        if doc.state in ('Submitted','Approved'):
+        if doc.state in ('Pending Verification','Submitted','Verified','Approved'):
             if doc.request_id==request_id:return {'name':doc.name,'state':doc.state}
             frappe.throw('Attendance has already been submitted for this worker and shift.')
+        if doc.captured_by != doc.responsible_supervisor and (
+                not can_capture_subteam or supervisor != doc.responsible_supervisor):
+            frappe.throw('This worker is no longer on your assigned team.', frappe.PermissionError)
+        if doc.captured_by == doc.responsible_supervisor and not supervisor_access:
+            frappe.throw('You cannot edit this submission.', frappe.PermissionError)
         # Require revision match so a stale phone cannot overwrite a returned correction.
         if cint(data.get('revision'))!=doc.revision:frappe.throw('This record changed. Refresh before editing.')
     else:
-        if effective['supervisor']!=user:frappe.throw('This worker is no longer assigned to you. Refresh your team.',frappe.PermissionError)
+        if not (can_capture_own_team or can_capture_subteam):
+            frappe.throw('This worker is no longer assigned to you. Refresh your team.', frappe.PermissionError)
         if frappe.db.exists('Field Attendance Entry',{'request_id':request_id}):frappe.throw('This request identifier is already used.')
         doc=frappe.get_doc(dict(doctype='Field Attendance Entry',attendance_key=key(employee,day,details['name']),request_id=request_id,
             employee=employee,employee_name=worker.employee_name,site=site.name,project=site.project,company=worker.company,attendance_date=day,
-            shift=details['name'],captured_by=user,responsible_supervisor=user,captured_at=now_datetime(),revision=1,state='Draft'))
+            shift=details['name'],captured_by=user,responsible_supervisor=supervisor,captured_at=now_datetime(),revision=1,state='Draft',
+            verification_required=bool(can_capture_subteam or verifier_for(site.name, supervisor))))
     status=data.get('attendance_status') or 'Present';mode=data.get('work_mode') or 'Not applicable';asset=data.get('asset') or None
     fail_rule(domain.validate_work_mode,effective['machine_required'],status,mode,asset,{r.asset for r in site.assets})
     remarks=str(data.get('remarks') or '').strip()
@@ -220,6 +235,7 @@ def capture(data):
         mark_offline(doc,data)
     doc.attendance_status=status;doc.work_mode=mode;doc.asset=asset;doc.remarks=remarks
     doc.machine_required=cint(effective['machine_required']);doc.state='Draft';doc.review_remarks=''
+    doc.verified_by = doc.verified_at = doc.verification_method = None
     doc.last_capture_id=capture_id;doc.last_capture_digest=digest
     if not doc.is_new():doc.revision+=1
     save(doc)
@@ -230,10 +246,29 @@ def capture(data):
     return {'name':doc.name,'state':doc.state,'revision':doc.revision}
 
 
+def lock_entry_for_submission(name):
+    # Capture also locks the employee before related attendance records.
+    employee = frappe.db.get_value('Field Attendance Entry', name, 'employee')
+    if not employee:
+        frappe.throw('Attendance entry was not found.')
+    frappe.db.sql('SELECT name FROM `tabEmployee` WHERE name=%s FOR UPDATE', (employee,))
+    return lock_doc('Field Attendance Entry', name)
+
+
 def submit_entry(name):
-    user=require_user();doc=lock_doc('Field Attendance Entry',name)
-    if doc.captured_by!=user or not site_access(doc.site,'Supervisor',user):frappe.throw('This is not your submission.',frappe.PermissionError)
-    if doc.state in ('Submitted','Approved'):return {'name':doc.name,'state':doc.state}
+    user = require_user()
+    doc = lock_entry_for_submission(name)
+    engineer_capture = doc.captured_by != doc.responsible_supervisor
+    role = 'Verifier' if engineer_capture else 'Supervisor'
+    if doc.captured_by != user or doc.get('entry_type') == 'Self' or not site_access(doc.site, role, user):
+        frappe.throw('This is not your submission.', frappe.PermissionError)
+    if doc.state in ('Pending Verification', 'Submitted', 'Verified', 'Approved'):
+        return {'name': doc.name, 'state': doc.state}
+    if engineer_capture:
+        _, _, effective = assignment(doc.employee, doc.site, doc.attendance_date, doc.shift, lock=True)
+        if (effective['supervisor'] != doc.responsible_supervisor
+                or doc.responsible_supervisor not in supervised_users(doc.site, user)):
+            frappe.throw('This worker is no longer on your assigned team.', frappe.PermissionError)
     # A transfer does not erase a capture. The original supervisor can submit an existing draft;
     # creation/update still requires current assignment and original evidence is retained.
     if doc.attendance_status=='Present' and not doc.photo:frappe.throw('A photograph is required.')
@@ -243,9 +278,74 @@ def submit_entry(name):
         doc.auto_checkout_at = get_datetime(doc.check_in_time) + timedelta(hours=12)
     elif doc.attendance_status == 'Absent':
         doc.check_in_time = doc.auto_checkout_at = doc.check_out_time = doc.checkout_method = None
-    doc.state='Submitted';doc.submitted_at=now_datetime();save(doc)
-    if not approve_without_review(doc):notify_approvers(doc,user)
+    verifier = verifier_for(doc.site, doc.responsible_supervisor)
+    doc.verification_required = bool(doc.verification_required or verifier or engineer_capture)
+    doc.submitted_at = now_datetime()
+    doc.verified_by = doc.verified_at = doc.verification_method = None
+    if engineer_capture:
+        mark_verified(doc, user, 'Engineer capture')
+        save(doc)
+        notify_approvers(doc, user)
+    elif doc.verification_required:
+        if doc.responsible_supervisor not in supervised_users(doc.site, verifier):
+            frappe.throw('Assign an active engineer to this supervisor before submitting.')
+        doc.state = 'Pending Verification'
+        save(doc)
+        notify(verifier, 'Attendance ready for verification', doc)
+    else:
+        doc.state = 'Submitted'
+        save(doc)
+        if not approve_without_review(doc):
+            notify_approvers(doc, user)
     return {'name':doc.name,'state':doc.state}
+
+
+def mark_verified(doc, user, method):
+    doc.state = 'Verified'
+    doc.verified_by = user
+    doc.verified_at = now_datetime()
+    doc.verification_method = method
+
+
+def verify_entry(name, decision, remarks=''):
+    user = require_user()
+    doc = lock_doc('Field Attendance Entry', name)
+    if not can_verify(doc, user):
+        frappe.throw('Only the assigned engineer can verify this record.', frappe.PermissionError)
+    if doc.state == 'Verified' and doc.verified_by == user and decision == 'Verify':
+        return {'name': doc.name, 'state': doc.state}
+    if doc.state != 'Pending Verification':
+        frappe.throw('This record is not pending verification.')
+    if decision not in ('Verify', 'Return'):
+        frappe.throw('Choose Verify or Return.')
+    remarks = review_remarks(remarks, decision)
+    if decision == 'Verify':
+        mark_verified(doc, user, 'Manual')
+    else:
+        doc.state = 'Returned'
+    doc.review_remarks = remarks
+    doc.reviewed_by = user
+    doc.reviewed_at = now_datetime()
+    doc.revision += 1
+    save(doc)
+    if decision == 'Verify':
+        notify_approvers(doc, user)
+    else:
+        notify(doc.captured_by, 'Attendance returned for correction', doc)
+    return {'name': doc.name, 'state': doc.state}
+
+
+def ready_for_approval(doc):
+    return doc.state == 'Verified' or (doc.state == 'Submitted' and not doc.verification_required)
+
+
+def review_remarks(remarks, decision):
+    remarks = str(remarks or '').strip()
+    if len(remarks) > 2000:
+        frappe.throw('Keep review remarks under 2,000 characters.')
+    if decision == 'Return' and not remarks:
+        frappe.throw('Explain what needs correcting.')
+    return remarks
 
 
 def self_capture(data):
@@ -348,14 +448,16 @@ def approve_without_review(doc):
 
 
 def review_entry(name,decision,remarks=''):
-    user=require_user();doc=lock_doc('Field Attendance Entry',name)
-    fail_rule(domain.validate_reviewer,user,doc.captured_by,frappe.db.get_value('Employee',doc.employee,'user_id'),site_access(doc.site,'Approver',user))
+    user = require_user()
+    doc = lock_entry_for_submission(name)
+    fail_rule(domain.validate_reviewer,user,doc.captured_by,frappe.db.get_value('Employee',doc.employee,'user_id'),approval_access(doc, user))
+    if doc.verified_by == user:
+        frappe.throw('A different approver must review this verified record.', frappe.PermissionError)
     if doc.state=='Approved' and decision=='Approve':return {'name':doc.name,'state':'Approved','attendance':doc.attendance}
-    if doc.state!='Submitted':frappe.throw('Only submitted records can be reviewed.')
+    if not ready_for_approval(doc):
+        frappe.throw('This record is not ready for final approval.')
     if decision not in ('Approve','Return'):frappe.throw('Choose Approve or Return.')
-    remarks=str(remarks or '').strip()
-    if len(remarks)>2000:frappe.throw('Keep review remarks under 2,000 characters.')
-    if decision=='Return' and not remarks:frappe.throw('Explain what needs correcting.')
+    remarks = review_remarks(remarks, decision)
     if decision=='Approve':
         lock_employee(doc.employee)
         if existing_attendance(doc):frappe.throw('HR attendance already exists for this worker and shift. Ask HR to resolve the conflict; nothing was overwritten.')

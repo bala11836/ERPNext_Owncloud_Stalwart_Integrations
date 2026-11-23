@@ -29,7 +29,7 @@ refresh worker) do not change; this index groups them by module.
 ## Reproducible build and deployment (`deployment`)
 
 - `build_erp_core.py` — Build the prepared public ERP core with the pinned official apps_json input.
-- `check_repository.py` — Offline syntax, schema and publication checks. Never reads a live site.
+- `check_repository.py` — Offline syntax, schema, import (P68: imports of our own modules and names must exist) and publication checks. Never reads a live site.
 - `coolify_native.py` — Register a prepared Compose service through local Coolify's native models.
 - `initialize_erp.py` — Initialize one empty ERP site using the pinned native installer.
 - `migrate_asset_references.py` — Rewrite retired addon asset prefixes in system settings, never business text.

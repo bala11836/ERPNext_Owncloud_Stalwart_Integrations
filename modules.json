@@ -366,6 +366,7 @@
         "tools/migrate_asset_references.py",
         "tools/verify_erp_assets.py",
         "tools/check_repository.py",
+        "tests/test_check_imports.py",
         "tools/run_unit_tests.py",
         "tools/README.md",
         "tests/test_brand_assets.py",

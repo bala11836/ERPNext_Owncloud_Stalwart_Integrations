@@ -89,18 +89,23 @@ export function Button({
   onPress,
   icon,
   secondary,
+  disabled,
 }: {
   label: string;
   onPress: () => void;
   icon?: IconName;
   secondary?: boolean;
+  /** While an action is being sent: the button cannot be pressed again. */
+  disabled?: boolean;
 }) {
   const t = useTheme();
   const fg = secondary ? t.c.primary : t.c.onPrimary;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
       onPress={onPress}
+      disabled={disabled}
       style={({ pressed }) => ({
         minHeight: t.touch + 8,
         flexDirection: 'row',
@@ -112,7 +117,7 @@ export function Button({
         borderWidth: t.border,
         borderColor: t.c.primary,
         backgroundColor: secondary ? t.c.bg : t.c.primary,
-        opacity: pressed ? 0.75 : 1,
+        opacity: pressed && !disabled ? 0.75 : 1, // no dimming: text keeps its 7:1 contrast
       })}>
       {icon && <MaterialCommunityIcons name={icon} size={t.font(24)} color={fg} />}
       <Text style={{ color: fg, fontSize: t.font(18), fontWeight: '700' }}>{label}</Text>

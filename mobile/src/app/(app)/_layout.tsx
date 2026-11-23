@@ -1,14 +1,26 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { AppState } from 'react-native';
 
+import { useApiRef } from '@/auth/session';
 import type { IconName } from '@/components/ui';
 import { type TextKey, t as text } from '@/i18n';
+import { refreshInbox, unreadCount, useInbox } from '@/lib/inbox';
 import { useSideRail, useTheme } from '@/theme';
 
 /** Owner decision 2: Today · Inbox · My HR · Menu. Phones: bottom tabs; 600 dp and wider: a side rail. */
 export default function AppTabs() {
   const t = useTheme();
   const rail = useSideRail();
+  const apiRef = useApiRef();
+  const waiting = unreadCount(useInbox());
+  // The Inbox count is fresh when the app opens and whenever it comes back to the front (no polling).
+  useEffect(() => {
+    refreshInbox(apiRef.current);
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && refreshInbox(apiRef.current));
+    return () => sub.remove();
+  }, [apiRef]);
   const tab = (label: TextKey, icon: IconName) => ({
     title: text(label),
     tabBarIcon: ({ focused }: { focused: boolean }) => (
@@ -35,7 +47,14 @@ export default function AppTabs() {
         sceneStyle: { backgroundColor: t.c.bg },
       }}>
       <Tabs.Screen name="index" options={tab('tab.today', 'calendar-today')} />
-      <Tabs.Screen name="inbox" options={tab('tab.inbox', 'inbox-outline')} />
+      <Tabs.Screen
+        name="inbox"
+        options={{
+          ...tab('tab.inbox', 'inbox-outline'),
+          tabBarBadge: waiting || undefined,
+          tabBarBadgeStyle: { backgroundColor: t.c.danger, color: t.c.onPrimary, fontWeight: '700' },
+        }}
+      />
       <Tabs.Screen name="my-hr" options={tab('tab.myHr', 'account-circle-outline')} />
       <Tabs.Screen name="menu" options={tab('tab.menu', 'menu')} />
     </Tabs>

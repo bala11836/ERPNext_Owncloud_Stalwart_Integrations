@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import * as AuthSession from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -186,4 +186,14 @@ export function useAuth(): Auth {
   const auth = useContext(AuthContext);
   if (!auth) throw new Error('useAuth must be used inside AuthProvider');
   return auth;
+}
+
+/** The latest `api`, for effects and event handlers that must not re-run each time the session renders. */
+export function useApiRef() {
+  const { api } = useAuth();
+  const ref = useRef(api);
+  useEffect(() => {
+    ref.current = api;
+  });
+  return ref;
 }

@@ -180,5 +180,7 @@
   "today.pending": "{count} pending",
   "today.openApprovals": "Open the approvals",
   "today.captureWaiting": "{count} captures waiting to send",
-  "today.savedEncrypted": "Saved encrypted on this phone; sent by themselves when online."
+  "today.savedEncrypted": "Saved encrypted on this phone; sent by themselves when online.",
+  "today.detail": "Detail",
+  "today.detailEmpty": "Choose a card to see it here"
 }

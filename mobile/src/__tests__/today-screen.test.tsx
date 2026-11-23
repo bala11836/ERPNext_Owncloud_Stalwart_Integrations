@@ -74,6 +74,22 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: async (k: string, v: string) => void mockSaved.set(k, v),
 }));
 
+jest.mock('@/components/approve-view', () => {
+  const { createElement } = jest.requireActual('react');
+  const { Text } = jest.requireActual('react-native');
+  return { ApproveView: ({ site }: { site: string }) => createElement(Text, null, `Approval view ${site}`) };
+});
+jest.mock('@/components/team-view', () => {
+  const { createElement } = jest.requireActual('react');
+  const { Text } = jest.requireActual('react-native');
+  return { TeamView: ({ site, shift }: { site: string; shift: string }) => createElement(Text, null, `Team view ${site} ${shift}`) };
+});
+let mockWidth = 400;
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ width: mockWidth, height: 800, scale: 2, fontScale: 1 }),
+}));
+
 const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
 const stub = (label: string) => {
   const Stub = () => <Text>{label}</Text>;
@@ -231,5 +247,25 @@ describe('Today helpers', () => {
       nextHoliday: { holiday_date: '2999-12-25', description: 'Christmas' },
       openLeaves: 1,
     });
+  });
+});
+
+describe('Today on a tablet (split view with a detail pane)', () => {
+  beforeEach(async () => {
+    clearInbox();
+    mockWidth = 1024;
+    choosePlace('S1', null);
+    await mockStore.clear();
+  });
+  afterEach(() => {
+    mockWidth = 400;
+  });
+
+  it('opens the approval on the right, and the team card switches the pane without leaving Today', async () => {
+    const router = await open();
+    expect(await screen.findByText('Approval view S1')).toBeOnTheScreen();
+    await fireEvent.press(await screen.findByText('Continue marking (3 left)'));
+    expect(await screen.findByText('Team view S1 Day1')).toBeOnTheScreen();
+    expect(router.getPathname()).toBe('/');
   });
 });

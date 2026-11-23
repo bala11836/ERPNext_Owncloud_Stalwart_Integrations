@@ -3,9 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { useApiRef } from '@/auth/session';
+import { ApproveView } from '@/components/approve-view';
 import { HomeHeader } from '@/components/home-header';
 import { Icon, type IconName } from '@/components/icon';
 import { Sheet, SheetOption } from '@/components/sheet';
+import { TeamView } from '@/components/team-view';
 import { Button, Card, Label, Panel, Progress, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { type TodayAttendance, clock, loadTodayAttendance } from '@/lib/attendance';
@@ -15,7 +17,7 @@ import { loadTodayHr } from '@/lib/my-hr';
 import { offlineStore } from '@/lib/offline-store';
 import { loadPlaceChoice, usePlaceChoice } from '@/lib/places';
 import { flushQueue } from '@/lib/sender';
-import { useTheme } from '@/theme';
+import { useIsTablet, useTheme } from '@/theme';
 
 const nowHHMM = (d = new Date()) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
@@ -101,17 +103,23 @@ export default function Today() {
   ];
   const rows = tally(inbox.actions.map((a) => a.reference_doctype));
 
-  return (
-    <View style={{ flex: 1, backgroundColor: t.c.page }}>
-      <HomeHeader unread={unread} places={att?.places ?? []} place={site ?? null} shift={att?.shift ?? null} />
+  // Tablet (owner's design: split view with a detail inspector): the team or approval opens on the right.
+  const tablet = useIsTablet();
+  const [detail, setDetail] = useState<{ kind: 'team' | 'approve'; site: string; shift?: string } | null>(null);
+  const shown =
+    detail ??
+    (att?.approvals[0]
+      ? { kind: 'approve' as const, site: att.approvals[0].siteId }
+      : att?.teams[0]
+        ? { kind: 'team' as const, site: att.teams[0].siteId, shift: att.teams[0].shiftId }
+        : null);
+  const openTeam = (site: string, shift: string) =>
+    tablet ? setDetail({ kind: 'team', site, shift }) : router.push({ pathname: '/attendance/team', params: { site, shift } });
+  const openApprove = (site: string) =>
+    tablet ? setDetail({ kind: 'approve', site }) : router.push({ pathname: '/attendance/approve', params: { site } });
 
-      {queue?.offline && queue.waiting > 0 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: t.c.danger }}>
-          <Icon name="offline" size={t.font(22)} color={t.c.onPrimary} />
-          <T style={{ flex: 1, color: t.c.onPrimary, fontWeight: '700' }}>{text('today.offlineBanner', { count: queue.waiting })}</T>
-        </View>
-      )}
-
+  const cards = (
+    <>
       {/* My own attendance, a strip under the header (design: "My self-attendance"). */}
       {att?.self && (
         <Pressable
@@ -181,7 +189,7 @@ export default function Today() {
                       : text('today.openTeam')
                 }
                 icon={left > 0 ? 'camera' : tm.drafts > 0 ? 'fingerprint' : 'team'}
-                onPress={() => router.push({ pathname: '/attendance/team', params: { site: tm.siteId, shift: tm.shiftId } })}
+                onPress={() => openTeam(tm.siteId, tm.shiftId)}
               />
             </Panel>
           );
@@ -206,7 +214,7 @@ export default function Today() {
               label={text('today.reviewApprove')}
               icon="fingerprint"
               tone="ok"
-              onPress={() => router.push({ pathname: '/attendance/approve', params: { site: ap.siteId } })}
+              onPress={() => openApprove(ap.siteId)}
             />
           </Panel>
         ))}
@@ -273,6 +281,35 @@ export default function Today() {
           />
         )}
       </ScrollView>
+    </>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: t.c.page }}>
+      <HomeHeader unread={unread} places={att?.places ?? []} place={site ?? null} shift={att?.shift ?? null} />
+
+      {queue?.offline && queue.waiting > 0 && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: t.c.danger }}>
+          <Icon name="offline" size={t.font(22)} color={t.c.onPrimary} />
+          <T style={{ flex: 1, color: t.c.onPrimary, fontWeight: '700' }}>{text('today.offlineBanner', { count: queue.waiting })}</T>
+        </View>
+      )}
+
+      {tablet ? (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <View style={{ width: 440, borderRightWidth: 1, borderRightColor: t.c.line }}>{cards}</View>
+          <View style={{ flex: 1, backgroundColor: t.c.bg }}>
+            <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 4, borderBottomWidth: 1, borderBottomColor: t.c.line, backgroundColor: t.c.surface }}>
+              <Label text={text('today.detail')} />
+              <T variant="title">{shown ? text(shown.kind === 'approve' ? 'approve.title' : 'today.myTeam') : text('today.detailEmpty')}</T>
+            </View>
+            {shown?.kind === 'approve' && <ApproveView key={`a-${shown.site}`} site={shown.site} />}
+            {shown?.kind === 'team' && <TeamView key={`t-${shown.site}-${shown.shift}`} site={shown.site} shift={shown.shift ?? ''} />}
+          </View>
+        </View>
+      ) : (
+        cards
+      )}
 
       {/* "+" (56 dp+): only the actions this person really has. */}
       {actions.length > 0 && (

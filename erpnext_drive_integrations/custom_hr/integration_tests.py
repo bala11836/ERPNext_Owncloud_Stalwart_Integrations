@@ -270,10 +270,14 @@ def run():
         check('engineer capture is auto-verified on submit', service.submit_entry(name)['state'] == 'Verified')
         check('engineer submit retry stays verified', service.submit_entry(name)['state'] == 'Verified')
         doc = frappe.get_doc('Field Attendance Entry', name)
-        check('automatic verification keeps engineer, effective supervisor and offline audit', (
-            doc.captured_by, doc.responsible_supervisor, doc.verified_by, doc.verification_method,
-            bool(doc.captured_offline), bool(doc.verified_at), bool(doc.attendance),
-        ) == (engineer, b, engineer, 'Engineer capture', True, True, False))
+        check('automatic verification identifies the recorder, assigned supervisor and verifier',
+              (doc.captured_by, doc.responsible_supervisor, doc.verified_by, doc.verification_method)
+              == (engineer, b, engineer, 'Engineer capture'))
+        check('photo-free offline capture preserves date, GPS and offline marker',
+              doc.captured_offline == 1 and doc.revision == 1
+              and doc.gps_captured_at and doc.device_captured_at)
+        check('automatic verification records time and leaves official attendance for the approver',
+              doc.verified_at and not doc.attendance)
         check('automatically verified entry skips verification queue', not api.verifications(site.name))
         denied('engineer cannot approve own recording', lambda: service.review_entry(name, 'Approve'))
         frappe.set_user(boss)

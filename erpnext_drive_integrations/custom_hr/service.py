@@ -227,7 +227,7 @@ def capture(data):
     if status=='Absent' and not remarks:frappe.throw('Add a reason when marking a worker absent.')
     photo=decode_photo(data['photo']) if data.get('photo') else None
     if status=='Present' and not (photo or doc.photo):frappe.throw('Capture the worker’s photograph.')
-    if photo or doc.is_new():
+    if photo or not existing:
         lat,lon,accuracy=fail_rule(domain.validate_location,data.get('latitude'),data.get('longitude'),data.get('accuracy_m'),
             site.latitude,site.longitude,float(site.radius_m or 0),float(site.maximum_accuracy_m or 200))
         captured_at,gps_time=moment(data,with_gps=True)
@@ -237,7 +237,7 @@ def capture(data):
     doc.machine_required=cint(effective['machine_required']);doc.state='Draft';doc.review_remarks=''
     doc.verified_by = doc.verified_at = doc.verification_method = None
     doc.last_capture_id=capture_id;doc.last_capture_digest=digest
-    if not doc.is_new():doc.revision+=1
+    if existing:doc.revision+=1
     save(doc)
     if photo:
         from frappe.utils.file_manager import save_file

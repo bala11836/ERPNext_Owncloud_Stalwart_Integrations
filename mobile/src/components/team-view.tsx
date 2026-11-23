@@ -5,10 +5,13 @@ import { z } from 'zod';
 
 import { confirmIdentity } from '@/auth/confirm';
 import { useApiRef } from '@/auth/session';
+import { OfflineStrip } from '@/components/offline-strip';
 import { Button, Choice, Row, Status } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { type BootT, HR_API, TeamList, type WorkerT, drafts, loadBoot } from '@/lib/attendance';
 import { callErp } from '@/lib/erp';
+import { offlineStore } from '@/lib/offline-store';
+import { callKept } from '@/lib/saved';
 import { statusKind } from '@/lib/my-hr';
 import { useTheme } from '@/theme';
 
@@ -29,10 +32,20 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState<{ kind: 'ok' | 'danger' | 'pending'; label: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Workers marked on this phone whose capture waits in the offline queue (the saved list predates it).
+  const [queued, setQueued] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([loadBoot(apiRef.current), callErp(apiRef.current, `${HR_API}.team`, TeamList, { site: params.site, shift })])
+    offlineStore()
+      .then((s) => s.all())
+      .then((items) => {
+        const mine = items.filter((i) => i.state === 'waiting' && i.method === `${HR_API}.save_capture`);
+        const p = (i: (typeof items)[number]) => (i.args.payload ?? {}) as { employee?: string; site?: string; shift?: string };
+        setQueued(new Set(mine.filter((i) => p(i).site === params.site && p(i).shift === shift).map((i) => String(p(i).employee))));
+      })
+      .catch(() => setQueued(new Set()));
+    Promise.all([loadBoot(apiRef.current), callKept(apiRef.current, `${HR_API}.team`, TeamList, { site: params.site, shift })])
       .then(([b, tm]) => {
         setBoot(b);
         setTeam(tm);
@@ -92,6 +105,7 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
     <ScrollView
       style={{ backgroundColor: t.c.bg }}
       refreshControl={<RefreshControl refreshing={loading && !!team} onRefresh={load} />}>
+      <OfflineStrip waiting={queued.size} />
       <View style={{ padding: 16, gap: 12 }}>
         {error && <Status kind="danger" label={error} />}
         {!team && !error && <Status kind="pending" label={text('myHr.loading')} />}
@@ -128,7 +142,11 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
             onPress={w.can_capture || w.can_edit ? () => open(w) : undefined}
           />
           <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
-            <Status kind={w.state === 'Not recorded' || w.state === 'Returned' ? 'warn' : statusKind(w.state)} label={w.state} />
+            {queued.has(w.employee) ? (
+              <Status kind="pending" label={text('team.waitingToSend')} />
+            ) : (
+              <Status kind={w.state === 'Not recorded' || w.state === 'Returned' ? 'warn' : statusKind(w.state)} label={w.state} />
+            )}
           </View>
         </View>
       ))}

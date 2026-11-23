@@ -7,11 +7,13 @@ import { confirmIdentity } from '@/auth/confirm';
 import { useApiRef } from '@/auth/session';
 import { Icon } from '@/components/icon';
 import { NoScreenshots } from '@/components/no-screenshots';
+import { OfflineStrip } from '@/components/offline-strip';
 import { PrivateImage } from '@/components/private-image';
 import { Button, Choice, Status, T, TextArea } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, clock, isException } from '@/lib/attendance';
 import { callErp } from '@/lib/erp';
+import { callKept, useConnection } from '@/lib/saved';
 import { formatDate } from '@/lib/format';
 import { useTheme } from '@/theme';
 
@@ -35,10 +37,12 @@ export function ApproveView({ site }: { site: string }) {
   const [remarks, setRemarks] = useState('');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ kind: 'ok' | 'danger'; label: string } | null>(null);
+  // Offline the list is the saved copy: it can be read, but approving waits for a connection (owner).
+  const { offline } = useConnection();
 
   const load = useCallback(() => {
     setLoading(true);
-    callErp(apiRef.current, `${HR_API}.approvals`, Pending, { site })
+    callKept(apiRef.current, `${HR_API}.approvals`, Pending, { site })
       .then((list) => {
         setEntries(list);
         setSelected(new Set());
@@ -120,6 +124,7 @@ export function ApproveView({ site }: { site: string }) {
       contentContainerStyle={{ padding: 16, gap: 12 }}
       refreshControl={<RefreshControl refreshing={loading && !!entries} onRefresh={load} />}>
       <NoScreenshots />
+      <OfflineStrip />
       {error && <Status kind="danger" label={error} />}
       {!entries && !error && <Status kind="pending" label={text('myHr.loading')} />}
       {entries && entries.length === 0 && <Status kind="ok" label={text('approve.none')} />}
@@ -167,6 +172,7 @@ export function ApproveView({ site }: { site: string }) {
               secondary
               onPress={() => expand(e.name)}
             />
+            {open === e.name && offline && detail?.name !== e.name && <Status kind="info" label={text('approve.photoOffline')} />}
             {open === e.name && detail?.name === e.name && (
               <View style={{ gap: 8 }}>
                 {detail.photo ? <PrivateImage path={detail.photo} label={text('approve.photoOf', { name: e.employee_name ?? e.employee })} /> : null}
@@ -182,18 +188,19 @@ export function ApproveView({ site }: { site: string }) {
           <TextArea label={text('approve.remarks')} value={remarks} onChange={setRemarks} />
           {busy && <Status kind="pending" label={text('checkIn.sending')} />}
           {note && <Status kind={note.kind} label={note.label} />}
+          {offline && <Status kind="warn" label={text('approve.needsInternet')} />}
           <Button
             label={text('approve.approveN', { count: selected.size })}
             icon="fingerprint"
             onPress={() => review('Approve')}
-            disabled={busy || selected.size === 0}
+            disabled={busy || offline || selected.size === 0}
           />
           <Button
             label={text('approve.returnN', { count: selected.size })}
             icon="undo"
             secondary
             onPress={() => review('Return')}
-            disabled={busy || selected.size === 0}
+            disabled={busy || offline || selected.size === 0}
           />
         </View>
       )}

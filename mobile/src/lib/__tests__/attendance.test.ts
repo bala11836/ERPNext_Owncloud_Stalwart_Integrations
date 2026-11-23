@@ -12,14 +12,15 @@ const boot = {
   ],
   check_in_sites: [{ name: 'S1', label: 'Site 1', latitude: 17.385, longitude: 78.4867, radius_m: 200, maximum_accuracy_m: 50, shifts: [day, night] }],
 };
+const pending = (name: string) => ({ name, employee: 'W1', attendance_date: '2026-11-23', shift: day.name, attendance_status: 'Present', can_review: true });
 const server = (over: Record<string, unknown> = {}) =>
   fakeErp({
     [`${HR_API}.bootstrap`]: { body: { message: boot } },
     [`${HR_API}.my_attendance`]: {
       body: { message: [{ name: 'E1', site: 'S1', attendance_date: '2026-11-23', state: 'Submitted', check_in_time: '2026-11-23 08:02:41' }] },
     },
-    [`${HR_API}.team`]: { body: { message: { total: 15, missing: 3, workers: [] } } },
-    [`${HR_API}.approvals`]: { body: { message: [{ name: 'A', can_review: true }, { name: 'B', can_review: true }, { name: 'Own', can_review: false }] } },
+    [`${HR_API}.team`]: { body: { message: { total: 15, missing: 3, attendance_date: '2026-11-23', workers: [] } } },
+    [`${HR_API}.approvals`]: { body: { message: [pending('A'), pending('B')] } },
     ...over,
   });
 

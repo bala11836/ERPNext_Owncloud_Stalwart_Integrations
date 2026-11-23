@@ -5,7 +5,8 @@
 import { z } from 'zod';
 
 import { rememberServerClock } from '@/lib/capture';
-import { type Api, callErp } from '@/lib/erp';
+import type { Api } from '@/lib/erp';
+import { callKept } from '@/lib/saved';
 
 export const HR_API = 'erpnext_drive_integrations.custom_hr.api';
 
@@ -47,7 +48,7 @@ export type BootT = z.infer<typeof Boot>;
 
 /** The attendance bootstrap; also remembers the server's clock for offline captures. */
 export async function loadBoot(api: Api): Promise<BootT> {
-  const boot = await callErp(api, `${HR_API}.bootstrap`, Boot);
+  const boot = await callKept(api, `${HR_API}.bootstrap`, Boot);
   if (boot.server_now) await rememberServerClock(boot.server_now);
   return boot;
 }
@@ -61,15 +62,6 @@ export const Mine = z.array(
     check_out_time: z.string().nullish(),
   }),
 );
-const Team = z.object({
-  total: z.number(),
-  missing: z.number(),
-  workers: z.array(z.object({ state: z.string(), can_edit: z.boolean().nullish(), entry: z.string().nullish() })).default([]),
-});
-const Waiting = z.array(
-  z.object({ name: z.string(), captured_offline: z.coerce.number().nullish(), attendance_status: z.string().nullish(), can_review: z.boolean().nullish() }),
-);
-
 /** How many workers are in each state (Not recorded, Draft, Submitted, Returned, Approved). */
 export function stateCounts(workers: { state: string }[]): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -185,7 +177,7 @@ export async function loadTodayAttendance(
   const here = (site: string) => !chosen || chosen.place.site === site;
   const [mine, teams, approvals] = await Promise.all([
     boot.check_in_sites.length
-      ? callErp(api, `${HR_API}.my_attendance`, Mine).catch(() => [])
+      ? callKept(api, `${HR_API}.my_attendance`, Mine).catch(() => null) // unknown offline: no strip
       : Promise.resolve(null),
     Promise.all(
       boot.sites
@@ -194,7 +186,7 @@ export async function loadTodayAttendance(
           const shift = chosen?.place.site === s.name && chosen.shift ? chosen.shift : currentShift(s.shifts, now);
           if (!shift) return null;
           try {
-            const team = await callErp(api, `${HR_API}.team`, Team, { site: s.name, shift: shift.name });
+            const team = await callKept(api, `${HR_API}.team`, TeamList, { site: s.name, shift: shift.name });
             return {
               siteId: s.name,
               site: s.label,
@@ -215,7 +207,7 @@ export async function loadTodayAttendance(
         .filter((s) => s.approver && here(s.name))
         .map(async (s) => {
           try {
-            const list = await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name });
+            const list = await callKept(api, `${HR_API}.approvals`, Pending, { site: s.name });
             return {
               siteId: s.name,
               site: s.label,

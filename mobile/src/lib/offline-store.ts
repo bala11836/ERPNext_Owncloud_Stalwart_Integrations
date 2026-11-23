@@ -1,4 +1,4 @@
-// Where the offline queue lives (build guide sections 5 and 8).
+// Where the offline queue and the saved answers for offline reading live (build guide sections 5 and 8).
 // Development build (Android APK, later iPhone): an SQLCipher-encrypted database; its random key lives in
 // the Keychain / Keystore, on this device only. Expo Go has no SQLCipher, so there (and in tests) the queue
 // is kept in memory only: nothing business-related reaches the phone's storage unencrypted.
@@ -29,7 +29,8 @@ export async function encryptedStore(db: Db, hexKey: string): Promise<QueueStore
     return null;
   }
   await db.execAsync(
-    'CREATE TABLE IF NOT EXISTS queue (id TEXT PRIMARY KEY NOT NULL, created_at INTEGER NOT NULL, body TEXT NOT NULL);',
+    'CREATE TABLE IF NOT EXISTS queue (id TEXT PRIMARY KEY NOT NULL, created_at INTEGER NOT NULL, body TEXT NOT NULL);' +
+      'CREATE TABLE IF NOT EXISTS saved (key TEXT PRIMARY KEY NOT NULL, saved_at INTEGER NOT NULL, body TEXT NOT NULL);',
   );
   return {
     encrypted: true,
@@ -48,8 +49,21 @@ export async function encryptedStore(db: Db, hexKey: string): Promise<QueueStore
     remove: async (id) => {
       await db.runAsync('DELETE FROM queue WHERE id = ?', id);
     },
+    read: async (key, notBefore) => {
+      const row = await db.getFirstAsync<{ saved_at: number; body: string }>(
+        'SELECT saved_at, body FROM saved WHERE key = ? AND saved_at >= ?',
+        key,
+        notBefore,
+      );
+      return row ? { at: row.saved_at, body: row.body } : null;
+    },
+    keep: async (key, body, at, notBefore) => {
+      await db.runAsync('DELETE FROM saved WHERE saved_at < ?', notBefore);
+      await db.runAsync('INSERT OR REPLACE INTO saved (key, saved_at, body) VALUES (?, ?, ?)', key, at, body);
+    },
     clear: async () => {
       await db.runAsync('DELETE FROM queue');
+      await db.runAsync('DELETE FROM saved');
     },
   };
 }
@@ -102,7 +116,7 @@ export async function offlineStorageKind() {
   return kind;
 }
 
-/** Sign-out (and later remote wipe): remove every queued item from the phone. */
+/** Sign-out (and later remote wipe): remove every queued item and saved answer from the phone. */
 export async function wipeOffline() {
   await (await offlineStore()).clear();
 }

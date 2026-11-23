@@ -6,6 +6,7 @@ import { useApiRef } from '@/auth/session';
 import { NoScreenshots } from '@/components/no-screenshots';
 import { Button, Row, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
+import { OfflineError } from '@/lib/erp';
 import { formatDate, formatMoney, localToday } from '@/lib/format';
 import { type MyHr as Data, type Section, loadMyHr, statusKind } from '@/lib/my-hr';
 import { useTheme } from '@/theme';
@@ -19,6 +20,8 @@ export default function MyHr() {
   const apiRef = useApiRef();
   const [data, setData] = useState<Data | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  // Leave and payslips are never kept on the phone (owner, 23 November 2026): offline, My HR says so.
+  const [offline, setOffline] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(() => {
@@ -27,10 +30,12 @@ export default function MyHr() {
       (d) => {
         setData(d);
         setError(null);
+        setOffline(false);
         setLoading(false);
       },
       (e: unknown) => {
         setError(e instanceof Error ? e.message : String(e));
+        setOffline(e instanceof OfflineError);
         setLoading(false);
       },
     );
@@ -62,7 +67,7 @@ export default function MyHr() {
       <NoScreenshots />
       {error && (
         <View style={{ padding: 16, gap: 12 }}>
-          <Status kind="danger" label={text('myHr.error', { error })} />
+          {offline ? <Status kind="info" label={text('myHr.offline')} /> : <Status kind="danger" label={text('myHr.error', { error })} />}
           <Button label={text('inbox.retry')} icon="refresh" secondary onPress={load} />
         </View>
       )}
@@ -71,12 +76,12 @@ export default function MyHr() {
           <Status kind="pending" label={text('myHr.loading')} />
         </View>
       )}
-      {data === null && (
+      {data === null && !error && (
         <View style={{ padding: 16 }}>
           <Status kind="warn" label={text('myHr.noEmployee')} />
         </View>
       )}
-      {data && (
+      {data && !offline && (
         <>
           <View style={{ padding: 16, gap: 4 }}>
             <T variant="title">{data.employee?.employee_name || data.employee?.name}</T>

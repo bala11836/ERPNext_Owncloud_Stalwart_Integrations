@@ -138,7 +138,6 @@
   "today.outdoor": "Outdoor mode: {state}",
   "today.outdoorOn": "ON",
   "today.outdoorOff": "OFF",
-  "today.offlineBanner": "No connection: {count} captures are saved on this phone and are sent by themselves.",
   "today.selfIn": "My attendance: in at {time} · {state} {out}",
   "today.selfNotIn": "My attendance: not checked in yet",
   "today.open": "Open",
@@ -182,5 +181,13 @@
   "today.captureWaiting": "{count} captures waiting to send",
   "today.savedEncrypted": "Saved encrypted on this phone; sent by themselves when online.",
   "today.detail": "Detail",
-  "today.detailEmpty": "Choose a card to see it here"
+  "today.detailEmpty": "Choose a card to see it here",
+  "offline.copy": "Offline. Showing what was saved at {time}.",
+  "offline.noCopy": "Offline. Nothing is saved on this phone yet: open this screen once with signal.",
+  "offline.waiting": "{count} captures are saved on this phone and are sent by themselves.",
+  "offline.sentLater": "Marks and check-ins made now are sent by themselves when the signal is back.",
+  "approve.needsInternet": "Approving needs internet. You can look at the list now and approve when the signal is back.",
+  "approve.photoOffline": "The photo needs internet.",
+  "myHr.offline": "My HR needs internet. Leave and payslips are not kept on this phone.",
+  "team.waitingToSend": "Marked, waiting to send"
 }

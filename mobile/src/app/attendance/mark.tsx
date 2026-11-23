@@ -8,6 +8,7 @@ import { NoScreenshots } from '@/components/no-screenshots';
 import { PhotoTaker } from '@/components/photo-taker';
 import { Button, Choice, Status, T, TextArea } from '@/components/ui';
 import { t as text } from '@/i18n';
+import { OfflineStrip } from '@/components/offline-strip';
 import { type BootT, HR_API, loadBoot } from '@/lib/attendance';
 import { type Fix, fenceProblem, getFix } from '@/lib/capture';
 import { newClientId } from '@/lib/queue';
@@ -114,6 +115,7 @@ export default function MarkWorker() {
 
   return (
     <ScrollView style={{ backgroundColor: t.c.bg }} contentContainerStyle={{ padding: 16, gap: 16 }}>
+      <OfflineStrip />
       <Stack.Screen options={{ title: p.workerName }} />
       <NoScreenshots />
       <T variant="title">{p.workerName}</T>

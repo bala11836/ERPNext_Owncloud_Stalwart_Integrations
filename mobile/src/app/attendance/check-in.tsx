@@ -7,9 +7,10 @@ import { NoScreenshots } from '@/components/no-screenshots';
 import { PhotoTaker } from '@/components/photo-taker';
 import { Button, Choice, Row, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
+import { OfflineStrip } from '@/components/offline-strip';
 import { type BootT, type CheckInSiteT, HR_API, Mine, clock, currentShift, loadBoot } from '@/lib/attendance';
 import { type Fix, fenceProblem, getFix } from '@/lib/capture';
-import { callErp } from '@/lib/erp';
+import { callKept } from '@/lib/saved';
 import { localToday } from '@/lib/format';
 import { newClientId } from '@/lib/queue';
 import { flushQueue, sendOrQueue } from '@/lib/sender';
@@ -45,7 +46,7 @@ export default function CheckIn() {
     try {
       const b = await loadBoot(apiRef.current);
       setBoot(b);
-      const mine = await callErp(apiRef.current, `${HR_API}.my_attendance`, Mine);
+      const mine = await callKept(apiRef.current, `${HR_API}.my_attendance`, Mine);
       setToday(mine.find((m) => m.attendance_date === localToday() && !m.check_out_time) ?? null);
       const first = b.check_in_sites[0];
       if (first) {
@@ -121,6 +122,7 @@ export default function CheckIn() {
 
   return (
     <ScrollView style={{ backgroundColor: t.c.bg }} contentContainerStyle={{ padding: 16, gap: 16 }}>
+      <OfflineStrip />
       <NoScreenshots />
       {error && <Status kind="danger" label={error} />}
       {boot && boot.check_in_sites.length === 0 && <Status kind="warn" label={text('checkIn.noSites')} />}

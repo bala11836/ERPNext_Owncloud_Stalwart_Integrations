@@ -14,7 +14,13 @@ const entry = (name: string, extra: Record<string, unknown> = {}) => ({
 });
 const list = [entry('A'), entry('B', { captured_offline: 1 }), entry('C', { can_review: false }), entry('D', { attendance_status: 'Absent' })];
 let mockErp = fakeErp({});
-const mockApiRef = { current: (...a: Parameters<ReturnType<typeof fakeErp>['api']>) => mockErp.api(...a) };
+let mockDown = false; // no connection: every call fails as fetch does offline
+const mockApiRef = {
+  current: async (...a: Parameters<ReturnType<typeof fakeErp>['api']>) => {
+    if (mockDown) throw new TypeError('Network request failed');
+    return mockErp.api(...a);
+  },
+};
 const serve = (review?: Answer) => {
   mockErp = fakeErp({
     [`${HR_API}.approvals`]: { body: { message: list } },
@@ -41,6 +47,22 @@ const reviewed = () => mockErp.calls.find((c) => c.method === `${HR_API}.review_
 describe('PM approval', () => {
   beforeEach(() => {
     mockConfirmed = true;
+    mockDown = false;
+  });
+
+  it('offline: the saved list can be read, but approving waits for a connection', async () => {
+    serve();
+    const first = await open();
+    await screen.findByText('Worker A'); // online once: the list is saved
+    await first.unmount();
+    mockDown = true;
+    await open();
+    expect(await screen.findByText(/^Offline\. Showing what was saved at \d\d:\d\d\.$/)).toBeOnTheScreen();
+    expect(screen.getByText('Worker A')).toBeOnTheScreen();
+    expect(screen.getByText('Approving needs internet. You can look at the list now and approve when the signal is back.')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByText('Select all 3'));
+    await fireEvent.press(screen.getByText('Approve 3'));
+    expect(reviewed()).toBeUndefined();
   });
 
   it('lists what waits, marks offline captures and what this person may not review', async () => {

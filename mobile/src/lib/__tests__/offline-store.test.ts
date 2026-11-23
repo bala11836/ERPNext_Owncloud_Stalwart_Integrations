@@ -61,6 +61,19 @@ describe('encrypted offline store', () => {
     await store.clear();
     expect(await store.all()).toEqual([]);
   });
+
+  it('saved answers live in the same encrypted file, older than a day are deleted, sign-out deletes all', async () => {
+    const { db, statements } = fakeDb('4.6.1');
+    const store = (await encryptedStore(db, KEY))!;
+    expect(statements.some((s) => s.includes('CREATE TABLE IF NOT EXISTS saved'))).toBe(true);
+    await store.keep('k', '{}', 5000, 1000);
+    expect(statements.slice(-2)).toEqual([
+      'DELETE FROM saved WHERE saved_at < ?',
+      'INSERT OR REPLACE INTO saved (key, saved_at, body) VALUES (?, ?, ?)',
+    ]);
+    await store.clear();
+    expect(statements.slice(-2)).toEqual(['DELETE FROM queue', 'DELETE FROM saved']);
+  });
 });
 
 describe('offline store in Expo Go', () => {

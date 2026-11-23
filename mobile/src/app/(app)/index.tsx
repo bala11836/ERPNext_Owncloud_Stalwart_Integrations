@@ -6,6 +6,7 @@ import { useApiRef } from '@/auth/session';
 import { ApproveView } from '@/components/approve-view';
 import { HomeHeader } from '@/components/home-header';
 import { Icon, type IconName } from '@/components/icon';
+import { OfflineStrip } from '@/components/offline-strip';
 import { Sheet, SheetOption } from '@/components/sheet';
 import { TeamView } from '@/components/team-view';
 import { Button, Card, Label, Panel, Progress, Status, T } from '@/components/ui';
@@ -42,7 +43,7 @@ export default function Today() {
   const apiRef = useApiRef();
   const inbox = useInbox();
   const choice = usePlaceChoice();
-  const [queue, setQueue] = useState<{ waiting: number; refused: number; offline: boolean } | null>(null);
+  const [queue, setQueue] = useState<{ waiting: number; refused: number } | null>(null);
   const [hr, setHr] = useState<Hr>(null);
   const [att, setAtt] = useState<TodayAttendance | null>(null);
   const [sheet, setSheet] = useState(false);
@@ -51,17 +52,16 @@ export default function Today() {
     loadPlaceChoice();
   }, []);
 
-  const countQueue = useCallback(async (offline: boolean) => {
+  const countQueue = useCallback(async () => {
     const items = await (await offlineStore()).all();
     setQueue({
       waiting: items.filter((i) => i.state === 'waiting').length,
       refused: items.filter((i) => i.state === 'failed').length,
-      offline,
     });
   }, []);
   const sendNow = useCallback(async () => {
-    const result = await flushQueue(apiRef.current).catch(() => ({ stopped: true }));
-    await countQueue(result.stopped).catch(() => setQueue(null));
+    await flushQueue(apiRef.current).catch(() => {});
+    await countQueue().catch(() => setQueue(null));
   }, [apiRef, countQueue]);
 
   // Fresh whenever the tab is opened or the place changes: unsent captures go first, then the cards.
@@ -288,12 +288,7 @@ export default function Today() {
     <View style={{ flex: 1, backgroundColor: t.c.page }}>
       <HomeHeader unread={unread} places={att?.places ?? []} place={site ?? null} shift={att?.shift ?? null} />
 
-      {queue?.offline && queue.waiting > 0 && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: t.c.danger }}>
-          <Icon name="offline" size={t.font(22)} color={t.c.onPrimary} />
-          <T style={{ flex: 1, color: t.c.onPrimary, fontWeight: '700' }}>{text('today.offlineBanner', { count: queue.waiting })}</T>
-        </View>
-      )}
+      <OfflineStrip waiting={queue?.waiting ?? 0} />
 
       {tablet ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>

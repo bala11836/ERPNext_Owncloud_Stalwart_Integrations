@@ -9,6 +9,7 @@ import { t as text } from '@/i18n';
 import { clearErpCache } from '@/lib/erp';
 import { clearInbox } from '@/lib/inbox';
 import { wipeOffline } from '@/lib/offline-store';
+import { resetConnection } from '@/lib/saved';
 import { ThemeProvider, useTheme } from '@/theme';
 
 export default function RootLayout() {
@@ -28,6 +29,7 @@ function Nav() {
     if (status !== 'signedOut') return;
     clearErpCache();
     clearInbox();
+    resetConnection();
     // ponytail: wipes unsent items without asking; the warning with "send now" comes with the queue's screen.
     wipeOffline().catch(() => {});
   }, [status]);

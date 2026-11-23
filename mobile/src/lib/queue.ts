@@ -19,13 +19,21 @@ export type QueueItem = {
   error?: string;
 };
 
-/** Where items live: the encrypted database on a development build, memory in Expo Go and tests. */
+/**
+ * Where items live: the encrypted database on a development build, memory in Expo Go and tests. The same
+ * store keeps the last good server answers for reading offline (lib/saved.ts).
+ */
 export interface QueueStore {
   /** True only for the SQLCipher database whose encryption was confirmed. */
   encrypted?: boolean;
   all(): Promise<QueueItem[]>;
   put(item: QueueItem): Promise<void>;
   remove(id: string): Promise<void>;
+  /** A saved answer, if saved at or after `notBefore` (milliseconds). */
+  read(key: string, notBefore: number): Promise<{ at: number; body: string } | null>;
+  /** Save an answer at `at`; answers saved before `notBefore` are deleted. */
+  keep(key: string, body: string, at: number, notBefore: number): Promise<void>;
+  /** Everything: queued items and saved answers (sign-out). */
   clear(): Promise<void>;
 }
 
@@ -36,11 +44,23 @@ export const newClientId = () => Crypto.randomUUID();
 
 export function memoryStore(): QueueStore {
   const items = new Map<string, QueueItem>();
+  const saved = new Map<string, { at: number; body: string }>();
   return {
     all: async () => [...items.values()].map((i) => ({ ...i, args: { ...i.args } })),
     put: async (item) => void items.set(item.id, { ...item, args: { ...item.args } }),
     remove: async (id) => void items.delete(id),
-    clear: async () => items.clear(),
+    read: async (key, notBefore) => {
+      const s = saved.get(key);
+      return s && s.at >= notBefore ? s : null;
+    },
+    keep: async (key, body, at, notBefore) => {
+      for (const [k, s] of saved) if (s.at < notBefore) saved.delete(k);
+      saved.set(key, { at, body });
+    },
+    clear: async () => {
+      items.clear();
+      saved.clear();
+    },
   };
 }
 

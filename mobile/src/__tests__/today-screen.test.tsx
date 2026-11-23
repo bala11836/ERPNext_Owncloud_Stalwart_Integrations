@@ -15,6 +15,12 @@ import { type Answer, fakeErp } from './fake-erp';
 const day = { name: 'Day1', start: '00:00', end: '23:59', label: 'Day' };
 const night = { name: 'Night1', start: '23:59', end: '00:00', label: 'Night' };
 const action = (n: string, doctype: string) => ({ name: n, reference_doctype: doctype, reference_name: n, workflow_state: 'Pending', creation: '2026-11-23 10:00:00' });
+const worker = (i: number, state: string) => ({
+  employee: `W${i}`, state, can_capture: true, can_edit: state === 'Draft', entry: state === 'Draft' ? `E${i}` : null,
+});
+const pending = (name: string, captured_offline: number, attendance_status: string, can_review: boolean) => ({
+  name, employee: `W-${name}`, attendance_date: '2026-11-23', shift: 'Day1', captured_offline, attendance_status, can_review,
+});
 const states = [...Array(8).fill('Submitted'), 'Approved', 'Draft', 'Draft', 'Returned', 'Not recorded', 'Not recorded', 'Not recorded'];
 const answers: Record<string, Answer | ((args: Record<string, unknown>) => Answer)> = {
   [`${HR_API}.bootstrap`]: {
@@ -31,14 +37,14 @@ const answers: Record<string, Answer | ((args: Record<string, unknown>) => Answe
   [`${HR_API}.my_attendance`]: { body: { message: [] } },
   [`${HR_API}.team`]: (args) =>
     args.site === 'S3'
-      ? { body: { message: { total: 4, missing: 4, workers: Array(4).fill({ state: 'Not recorded' }) } } }
-      : { body: { message: { total: 15, missing: 6, workers: states.map((state, i) => ({ state, can_edit: state === 'Draft', entry: state === 'Draft' ? `E${i}` : null })) } } },
+      ? { body: { message: { total: 4, missing: 4, attendance_date: '2026-11-23', workers: [0, 1, 2, 3].map((i) => worker(i, 'Not recorded')) } } }
+      : { body: { message: { total: 15, missing: 6, attendance_date: '2026-11-23', workers: states.map((state, i) => worker(i, state)) } } },
   [`${HR_API}.approvals`]: {
     body: {
       message: [
-        { name: 'P1', captured_offline: 1, attendance_status: 'Present', can_review: true },
-        { name: 'P2', captured_offline: 0, attendance_status: 'Absent', can_review: true },
-        { name: 'P3', captured_offline: 0, attendance_status: 'Present', can_review: false },
+        pending('P1', 1, 'Present', true),
+        pending('P2', 0, 'Absent', true),
+        pending('P3', 0, 'Present', false),
       ],
     },
   },
@@ -56,7 +62,7 @@ let mockOffline = false;
 const mockErp = fakeErp(answers);
 const mockApiRef = {
   current: async (path: string, init?: RequestInit) => {
-    if (mockOffline && path.includes('self_check_in')) throw new TypeError('Network request failed');
+    if (mockOffline) throw new TypeError('Network request failed');
     return mockErp.api(path, init);
   },
 };
@@ -183,11 +189,17 @@ describe('Today', () => {
     expect(teamCalls().at(-1)).toEqual({ site: 'S1', shift: 'Night1' });
   });
 
-  it('what waits to be sent: an offline banner, then "Send now" sends it', async () => {
+  it('offline: the saved copy with its time, what waits to be sent, then "Send now" sends it', async () => {
+    const first = await open();
+    await screen.findByText('9/15'); // online once: the answers are saved
+    await first.unmount();
     mockOffline = true;
     await mockStore.put({ id: 'q1', method: `${HR_API}.self_check_in`, args: { payload: {} }, createdAt: Date.now(), attempts: 0, state: 'waiting' });
     await open();
-    expect(await screen.findByText('No connection: 1 captures are saved on this phone and are sent by themselves.')).toBeOnTheScreen();
+    expect(await screen.findByText(/^Offline\. Showing what was saved at \d\d:\d\d\.$/)).toBeOnTheScreen();
+    expect(await screen.findByText('9/15')).toBeOnTheScreen(); // the team card from the copy
+    expect(screen.getByText('2 ready for you to approve')).toBeOnTheScreen();
+    expect(screen.getByText('1 captures are saved on this phone and are sent by themselves.')).toBeOnTheScreen();
     expect(screen.getByText('1 captures waiting to send')).toBeOnTheScreen();
     mockOffline = false;
     answers[`${HR_API}.self_check_in`] = { body: { message: { name: 'E1' } } };

@@ -20,7 +20,13 @@ const worker = (employee: string, state: string, extra: Record<string, unknown> 
   can_capture: true, can_edit: false, ...extra,
 });
 let mockErp = fakeErp({});
-const mockApiRef = { current: (...a: Parameters<ReturnType<typeof fakeErp>['api']>) => mockErp.api(...a) };
+let mockDown = false; // no connection: every call fails as fetch does offline
+const mockApiRef = {
+  current: async (...a: Parameters<ReturnType<typeof fakeErp>['api']>) => {
+    if (mockDown) throw new TypeError('Network request failed');
+    return mockErp.api(...a);
+  },
+};
 const serve = (over: Record<string, Answer> = {}) => {
   mockErp = fakeErp({
     [`${HR_API}.bootstrap`]: { body: { message: boot } },
@@ -72,7 +78,25 @@ const saved = () => mockErp.calls.find((c) => c.method === `${HR_API}.save_captu
 describe('supervisor team', () => {
   beforeEach(async () => {
     mockConfirmed = true;
+    mockDown = false;
     await mockStore.clear();
+  });
+
+  it('offline: the saved list, and a worker marked on this phone waits to be sent', async () => {
+    serve();
+    const first = await openTeam();
+    await screen.findByText('1 of 3 marked for 2026-11-23'); // online once: the list is saved
+    await first.unmount();
+    mockDown = true;
+    await mockStore.put({
+      id: 'c1', method: `${HR_API}.save_capture`, args: { payload: { employee: 'A', site: 'S1', shift: 'S1 Day' } },
+      createdAt: Date.now(), attempts: 0, state: 'waiting',
+    });
+    await openTeam();
+    expect(await screen.findByText(/^Offline\. Showing what was saved at \d\d:\d\d\.$/)).toBeOnTheScreen();
+    expect(screen.getByText('Marked, waiting to send')).toBeOnTheScreen();
+    expect(screen.queryByText('Not recorded')).toBeNull();
+    expect(screen.getByText('Draft')).toBeOnTheScreen();
   });
 
   it('lists the shift: counts, each state in words, and the drafts to submit', async () => {

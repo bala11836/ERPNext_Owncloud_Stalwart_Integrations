@@ -80,5 +80,28 @@ class OnePasskeyPrompt(unittest.TestCase):
         self.assertNotIn('< int(requested_at) - 5:', SSO)
 
 
+class FrameworkSessionsAndFloor(unittest.TestCase):
+    """Frappe 16.60 stores only the sha256 of each session id (Sessions table and session cache); the raw id
+    stays in the cookie and in frappe.session.sid. Our session registry keys off frappe.session.sid, which keeps
+    working; a lookup of Frappe's own session store by the raw id would silently match nothing."""
+
+    SOURCES = [p for d in ("erpnext_drive_integrations", "integrations", "tools") for p in (ROOT / d).rglob("*.py")]
+
+    def test_session_registry_keys_off_the_raw_session_id(self):
+        self.assertIn("digest(frappe.session.sid)", SSO)
+
+    def test_no_lookup_of_frappe_sessions_by_raw_id(self):
+        lookup = re.compile(r"tabSessions`?[^\n]*\bsid\b|[\"']Sessions[\"'][^\n]*\bsid\b|cache\(?\)?\.hget\([\"']session[\"']")
+        found = [str(p.relative_to(ROOT)) for p in self.SOURCES if lookup.search(p.read_text(encoding="utf-8"))]
+        self.assertEqual(found, [], "use frappe.sessions.hash_sid() or delete_session()")
+
+    def test_frappe_stays_at_or_above_the_exploited_email_fix(self):
+        # GHSA-vwqr-4mjv-ffrm: any signed-in user could send email as another sender; exploited in the wild.
+        import json
+        ref = json.loads((ROOT / "deployment/upstream-lock.json").read_text())["frappe"]["ref"]
+        version = tuple(int(x) for x in re.findall(r"\d+", ref)[:3])
+        self.assertGreaterEqual(version, (16, 60, 1), ref)
+
+
 if __name__ == "__main__":
     unittest.main()

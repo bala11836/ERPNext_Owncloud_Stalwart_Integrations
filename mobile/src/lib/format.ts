@@ -13,6 +13,18 @@ export function formatINR(value: unknown): string {
   return `${negative ? '-' : ''}₹${grouped}.${paise}`;
 }
 
+/** An amount in its currency: Indian format for INR (or no currency given), else "USD 12.50" as sent. */
+export function formatMoney(value: unknown, currency?: string | null): string {
+  if (!currency || currency === 'INR') return formatINR(value);
+  return value === null || value === undefined || value === '' ? '' : `${currency} ${String(value)}`;
+}
+
+/** Today's date on this phone as ERPNext writes dates ("2026-11-23"), not the UTC date. */
+export function localToday(now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 /** ERPNext "2026-11-08" / "2026-11-08 09:37:32.19" -> "08-11-2026" / "08-11-2026 09:37". */
 export function formatDate(value: unknown, withTime = false): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(String(value ?? ''));

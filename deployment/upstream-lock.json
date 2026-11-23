@@ -6,18 +6,18 @@
   },
   "erpnext": {
     "url": "https://github.com/frappe/erpnext.git",
-    "ref": "v16.55.0",
-    "commit": "8e10a348daaa93853de8c36dc55ec789a440c219"
+    "ref": "v16.60.0",
+    "commit": "886ab6ae187244e7f1b852393384ab6019d56264"
   },
   "hrms": {
     "url": "https://github.com/frappe/hrms.git",
-    "ref": "v16.53.2",
-    "commit": "ba5371c5057ae90c3eb6041f28866fe3d749a4f0"
+    "ref": "v16.60.0",
+    "commit": "1b2d7e034e0de8e30a9e513541d7741710587ad5"
   },
   "india_compliance": {
     "url": "https://github.com/resilient-tech/india-compliance.git",
-    "ref": "v16.11.0",
-    "commit": "53a39caeedadb91c0a57deb203deb59f845391ed"
+    "ref": "v16.11.1",
+    "commit": "68982391ab0e487ba418c1f58359b193680136ec"
   },
   "raven": {
     "url": "https://github.com/frappe/raven.git",
@@ -26,8 +26,8 @@
   },
   "insights": {
     "url": "https://github.com/frappe/insights.git",
-    "ref": "v3.15.1",
-    "commit": "c7dc954d8275756deb5ad24f7c35c3f3c2ca1a6c"
+    "ref": "v3.50.3",
+    "commit": "d733108da600c42a01c174837c9694f956adea6c"
   },
   "payment_integration_utils": {
     "url": "https://github.com/resilient-tech/payment_integration_utils.git",

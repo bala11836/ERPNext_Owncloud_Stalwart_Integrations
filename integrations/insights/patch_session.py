@@ -1,33 +1,44 @@
 #!/usr/bin/env python3
-"""Apply the declared pinned Insights frontend adapter before compiling it.
+"""Use the pinned Insights session API to establish frontend identity."""
 
-Identity comes from the native authenticated API. Parent-domain presentation
-cookies can collide between production and test and are never authorization.
-"""
 from pathlib import Path
 import re
 import sys
 
 
 def patch(root):
-    file=Path(root)/'frontend/src/stores/sessionStore.ts'
-    text=file.read_text()
-    marker='// cloud-integrations: native verified session bootstrap'
-    if marker in text:return
-    pattern=r'\t\tObject\.assign\(user\.value, getSessionFromCookies\(\)\)\s*isLoggedIn\.value && \(await fetchSessionInfo\(\)\)\s*initialized\.value = true'
-    replacement='''\t\t// cloud-integrations: native verified session bootstrap
-\t\ttry {
-\t\t\tconst verified: SessionUser = await api.fetchUserInfo()
-\t\t\tObject.assign(user.value, { ...verified,
-\t\t\t\tis_admin: Boolean(verified.is_admin), is_user: Boolean(verified.is_user),
-\t\t\t\tis_v2_user: Boolean(verified.is_v2_user) })
-\t\t} catch {
-\t\t\tObject.assign(user.value, emptyUser)
-\t\t}
-\t\tinitialized.value = true'''
-    text,count=re.subn(pattern,lambda _:replacement,text)
-    if count!=1:raise ValueError('Pinned Insights session source changed; review the adapter')
-    file.write_text(text)
+    file = Path(root) / "frontend/src2/session.ts"
+    source = file.read_text()
+    marker = "// cloud-integrations: native verified session bootstrap"
+    if marker in source:
+        return
+
+    start = source.index("async function initialize(")
+    stop = source.index("\nasync function fetchSessionInfo()", start)
+    if "Object.assign(session.user, getSessionFromCookies())" not in source[start:stop]:
+        raise ValueError("Pinned Insights session initialization changed; review the adapter")
+    source = source[:start] + f"""async function initialize(force: boolean = false) {{
+	if (session.initialized && !force) return
+	{marker}
+	await Promise.all([
+		fetchSiteInfo(),
+		fetchSessionInfo().catch(() => resetSession()),
+	])
+	session.initialized = true
+}}
+""" + source[stop:]
+
+    guard = "\tif (!session.isLoggedIn) return\n"
+    if source.count(guard) != 1:
+        raise ValueError("Pinned Insights session guard changed; review the adapter")
+    source = source.replace(guard, "")
+    source, count = re.subn(
+        r"\nfunction getSessionFromCookies\(\) \{.*?\n\}\n", "", source, flags=re.DOTALL
+    )
+    if count != 1:
+        raise ValueError("Pinned Insights cookie reader changed; review the adapter")
+    file.write_text(source)
 
 
-if __name__=='__main__':patch(sys.argv[1])
+if __name__ == "__main__":
+    patch(sys.argv[1])

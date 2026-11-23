@@ -42,9 +42,12 @@ describe('My HR data', () => {
   });
 
   it('a sign-in without an employee gives null, and asks nothing else', async () => {
-    const { api, calls } = hr({ 'hrms.api.get_current_employee_info': { body: { message: null } } });
-    expect(await loadMyHr(api, '2026-11-23')).toBeNull();
-    expect(calls).toHaveLength(1);
+    // Frappe sends {} when the function returns None (handler.py adds "message" only for a value).
+    for (const body of [{}, { message: null }]) {
+      const { api, calls } = hr({ 'hrms.api.get_current_employee_info': { body } });
+      expect(await loadMyHr(api, '2026-11-23')).toBeNull();
+      expect(calls).toHaveLength(1);
+    }
   });
 
   it('never uses an answer of the wrong shape', async () => {

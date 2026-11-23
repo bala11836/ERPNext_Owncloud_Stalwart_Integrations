@@ -17,7 +17,8 @@ const Employee = z
     department: z.string().nullish(),
     company: z.string().nullish(),
   })
-  .nullable();
+  // No active Employee for this sign-in: the function returns None and Frappe then sends {} (no "message").
+  .nullish();
 const Balances = z.record(
   z.string(),
   z.object({ allocated_leaves: z.number().nullish(), balance_leaves: z.number().nullish() }),

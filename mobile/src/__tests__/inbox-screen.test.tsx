@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
-import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
 import Inbox from '@/app/(app)/inbox';
 import DocScreen from '@/app/doc/[doctype]/[name]';
@@ -82,12 +82,16 @@ describe('inbox screen', () => {
     await openInbox();
     await fireEvent.press(await screen.findByText('Purchase Order PO-0001'));
 
-    fireEvent.press(await screen.findByText('Approve'));
-    fireEvent.press(screen.getByText('Reject'));
+    const approve = await screen.findByRole('button', { name: 'Approve' });
+    const reject = screen.getByRole('button', { name: 'Reject' });
+    await act(async () => {
+      approve.props.onPress();
+      reject.props.onPress();
+    });
     expect(mockConfirm).toHaveBeenCalledTimes(1);
     expect(calls.some((c) => c.method === APPLY_METHOD)).toBe(false);
 
-    confirm(true);
+    await act(async () => { confirm(true); });
     expect(await screen.findByText('Approve: done. Now: Approved.')).toBeOnTheScreen();
     expect(calls.filter((c) => c.method === APPLY_METHOD)).toHaveLength(1);
   });

@@ -72,7 +72,7 @@ export default function Today() {
         <T color="muted">{`${WEEKDAYS[new Date().getDay()]}, ${formatDate(today)}`}</T>
       </View>
 
-      {/* ponytail: team and approval cards show status only until their screens (P3c, P3d) exist. */}
+      {/* ponytail: the approval card shows status only until its screen (P3d) exists. */}
       {att?.self && (
         <Card
           icon={att.self.today ? 'map-marker-check-outline' : 'map-marker-outline'}
@@ -93,15 +93,16 @@ export default function Today() {
       )}
       {att?.teams.map((tm) => (
         <Card
-          key={`team-${tm.site}`}
+          key={`team-${tm.siteId}`}
           icon="account-group-outline"
+          onPress={() => router.push({ pathname: '/attendance/team', params: { site: tm.siteId, shift: tm.shiftId } })}
           title={text('today.team', { site: tm.site, marked: tm.marked, total: tm.total })}
           detail={text('today.shift', { shift: tm.shift })}
         />
       ))}
       {att?.approvals.map((ap) => (
         <Card
-          key={`appr-${ap.site}`}
+          key={`appr-${ap.siteId}`}
           icon="clipboard-check-outline"
           title={text('today.attendanceToApprove', { site: ap.site })}
           count={ap.count}

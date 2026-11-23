@@ -38,8 +38,8 @@ describe('Today attendance', () => {
     const { api, calls } = server();
     expect(await loadTodayAttendance(api, '10:00', '2026-11-23')).toEqual({
       self: { sites: ['Site 1'], today: expect.objectContaining({ state: 'Submitted', check_in_time: '2026-11-23 08:02:41' }) },
-      teams: [{ site: 'Site 1', shift: 'Day', marked: 12, total: 15 }],
-      approvals: [{ site: 'Site 1', count: 2 }],
+      teams: [{ siteId: 'S1', site: 'Site 1', shiftId: 'Site 1 Day', shift: 'Day', marked: 12, total: 15 }],
+      approvals: [{ siteId: 'S1', site: 'Site 1', count: 2 }],
     });
     expect(calls.filter((c) => c.method === `${HR_API}.team`).map((c) => c.args)).toEqual([{ site: 'S1', shift: 'Site 1 Day' }]);
     expect(calls.some((c) => c.args.site === 'S2')).toBe(false); // no role at Site 2: nothing asked

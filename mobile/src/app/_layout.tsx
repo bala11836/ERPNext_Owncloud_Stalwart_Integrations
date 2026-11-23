@@ -57,6 +57,8 @@ function Nav() {
           <Stack.Screen name="doc/[doctype]/[name]" />
           <Stack.Screen name="settings" options={{ title: text('settings.title') }} />
           <Stack.Screen name="attendance/check-in" options={{ title: text('checkIn.title') }} />
+          <Stack.Screen name="attendance/team" options={{ title: text('team.title') }} />
+          <Stack.Screen name="attendance/mark" options={{ title: text('team.title') }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />

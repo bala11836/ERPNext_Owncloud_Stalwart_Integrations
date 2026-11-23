@@ -33,6 +33,53 @@ export function T({
   );
 }
 
+/** A labelled text box (several lines), large text and a visible border. */
+export function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (text: string) => void }) {
+  const t = useTheme();
+  return (
+    <View style={{ gap: 6 }}>
+      <T style={{ fontWeight: '700' }}>{label}</T>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        accessibilityLabel={label}
+        multiline
+        style={{
+          minHeight: t.touch * 2,
+          padding: 12,
+          borderWidth: t.border,
+          borderColor: t.c.border,
+          borderRadius: 10,
+          color: t.c.text,
+          fontSize: t.font(18),
+          textAlignVertical: 'top',
+        }}
+      />
+    </View>
+  );
+}
+
+/** One choice of several (Present / Absent, Operating / Standby): selected is shown by a tick and a thick border. */
+export function Choice({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={{
+        minHeight: t.touch,
+        justifyContent: 'center',
+        paddingHorizontal: 16,
+        borderRadius: 10,
+        borderWidth: selected ? 4 : t.border,
+        borderColor: selected ? t.c.primary : t.c.border,
+      }}>
+      <T style={{ fontWeight: selected ? '700' : '500' }}>{`${selected ? '✓ ' : ''}${label}`}</T>
+    </Pressable>
+  );
+}
+
 /** A search box: large text, a 48 dp+ target, a visible border (not colour alone) and a clear button. */
 export function SearchField({
   value,

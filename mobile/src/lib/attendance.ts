@@ -29,7 +29,14 @@ export type CheckInSiteT = z.infer<typeof CheckInSite>;
 export const Boot = z.object({
   server_now: z.string().nullish(),
   sites: z.array(
-    z.object({ name: z.string(), label: z.string(), supervisor: z.boolean(), approver: z.boolean(), shifts: z.array(Shift) }),
+    z.object({
+      name: z.string(),
+      label: z.string(),
+      supervisor: z.boolean(),
+      approver: z.boolean(),
+      shifts: z.array(Shift),
+      assets: z.array(z.object({ name: z.string(), label: z.string() })).default([]),
+    }),
   ),
   check_in_sites: z.array(CheckInSite),
 });
@@ -63,8 +70,8 @@ export function currentShift<S extends { start: string; end: string }>(shifts: S
 export type TodayAttendance = {
   /** Only for people who check in themselves (listed as Staff on a site). */
   self: { sites: string[]; today: z.infer<typeof Mine>[number] | null } | null;
-  teams: { site: string; shift: string; marked: number; total: number }[];
-  approvals: { site: string; count: number }[];
+  teams: { siteId: string; site: string; shiftId: string; shift: string; marked: number; total: number }[];
+  approvals: { siteId: string; site: string; count: number }[];
 };
 
 /**
@@ -90,7 +97,14 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
           if (!shift) return null;
           try {
             const team = await callErp(api, `${HR_API}.team`, Team, { site: s.name, shift: shift.name });
-            return { site: s.label, shift: shift.label ?? shift.name, marked: team.total - team.missing, total: team.total };
+            return {
+              siteId: s.name,
+              site: s.label,
+              shiftId: shift.name,
+              shift: shift.label ?? shift.name,
+              marked: team.total - team.missing,
+              total: team.total,
+            };
           } catch {
             return null;
           }
@@ -102,7 +116,7 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
         .map(async (s) => {
           try {
             const pending = await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name });
-            return { site: s.label, count: pending.filter((entry) => entry.can_review).length };
+            return { siteId: s.name, site: s.label, count: pending.filter((entry) => entry.can_review).length };
           } catch {
             return null;
           }
@@ -120,3 +134,27 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
 
 /** "08:02" from ERPNext's "2026-11-23 08:02:41". */
 export const clock = (value?: string | null) => /(\d{2}:\d{2})/.exec(value ?? '')?.[1] ?? '';
+
+// ---- team marking (supervisor, P3c): custom_hr's `team` answer ----
+export const Worker = z.object({
+  employee: z.string(),
+  employee_name: z.string().nullish(),
+  designation: z.string().nullish(),
+  machine_required: z.coerce.number().nullish(),
+  state: z.string(),
+  entry: z.string().nullish(),
+  revision: z.number().nullish(),
+  can_capture: z.boolean(),
+  can_edit: z.boolean(),
+});
+export type WorkerT = z.infer<typeof Worker>;
+export const TeamList = z.object({
+  workers: z.array(Worker),
+  total: z.number(),
+  missing: z.number(),
+  attendance_date: z.string(),
+  truncated: z.boolean().nullish(),
+});
+
+/** Entries this supervisor still has to submit for approval (their own drafts). */
+export const drafts = (workers: WorkerT[]) => workers.filter((w) => w.state === 'Draft' && w.can_edit && w.entry);

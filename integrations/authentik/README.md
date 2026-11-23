@@ -25,6 +25,12 @@ authentik (existing instance); run tools under the native `ak shell`.
 
 Apply `configuration.json` through `tools/authentik_blueprint.py`; reuse `invite-recovery/` on its own for single-email invitation recovery (see its README).
 
+The default Brand in the blueprint gives stacked sign-in flows a plain white background and
+uses Authentik's light theme by default. Use the deployment's own logo through the existing
+branding URL. After applying the Brand on a fresh build, verify the sign-in page against the
+logo on desktop and at phone width. For an existing instance, apply the appearance fields
+through the Brand settings without reimporting the full identity graph.
+
 ## Configuration
 
 Private inputs: template slugs, exact callbacks, approved group and gateway for `configure_test_clients.py`; `deployment/scope-mappings.example.json` for custom scopes. Client secrets stay in authentik.

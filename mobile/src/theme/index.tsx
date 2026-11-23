@@ -40,3 +40,8 @@ export function useTheme(): Theme {
 export function useIsTablet(): boolean {
   return useWindowDimensions().width >= 768;
 }
+
+/** Build guide: from 600 dp (tablets, phones in landscape) the tabs become a side rail. */
+export function useSideRail(): boolean {
+  return useWindowDimensions().width >= 600;
+}

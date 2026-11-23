@@ -56,5 +56,11 @@
   "today.unread": "{count} unread notifications",
   "today.refused": "{count} not accepted by ERPNext: open them to see why",
   "today.nextHoliday": "Next holiday: {date} {name}",
-  "today.openLeaves": "{count} leave applications still open"
+  "today.openLeaves": "{count} leave applications still open",
+  "today.checkedIn": "Checked in at {time}",
+  "today.notCheckedIn": "Not checked in yet today",
+  "today.checkedOut": "out at {time}",
+  "today.team": "Team today at {site}: {marked} of {total} marked",
+  "today.shift": "{shift} shift",
+  "today.attendanceToApprove": "Attendance to approve at {site}"
 }

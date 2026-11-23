@@ -1,0 +1,71 @@
+import { fakeErp } from '@/__tests__/fake-erp';
+import { HR_API, clock, currentShift, loadTodayAttendance } from '@/lib/attendance';
+
+jest.mock('@/auth/session', () => ({ SignedOutError: class SignedOutError extends Error {}, useAuth: jest.fn() }));
+
+const day = { name: 'Site 1 Day', start: '08:00', end: '20:00', label: 'Day' };
+const night = { name: 'Site 1 Night', start: '20:00', end: '08:00', label: 'Night' };
+const boot = {
+  sites: [
+    { name: 'S1', label: 'Site 1', supervisor: true, approver: true, shifts: [day, night] },
+    { name: 'S2', label: 'Site 2', supervisor: false, approver: false, shifts: [day] },
+  ],
+  check_in_sites: [{ name: 'S1', label: 'Site 1' }],
+};
+const server = (over: Record<string, unknown> = {}) =>
+  fakeErp({
+    [`${HR_API}.bootstrap`]: { body: { message: boot } },
+    [`${HR_API}.my_attendance`]: {
+      body: { message: [{ name: 'E1', site: 'S1', attendance_date: '2026-11-23', state: 'Submitted', check_in_time: '2026-11-23 08:02:41' }] },
+    },
+    [`${HR_API}.team`]: { body: { message: { total: 15, missing: 3, workers: [] } } },
+    [`${HR_API}.approvals`]: { body: { message: [{ name: 'A', can_review: true }, { name: 'B', can_review: true }, { name: 'Own', can_review: false }] } },
+    ...over,
+  });
+
+describe('current shift', () => {
+  it('finds the running shift, also across midnight', () => {
+    expect(currentShift([day, night], '10:00')).toBe(day);
+    expect(currentShift([day, night], '22:15')).toBe(night);
+    expect(currentShift([day, night], '03:00')).toBe(night);
+    expect(currentShift([day], '23:00')).toBe(day);
+    expect(currentShift([], '10:00')).toBeNull();
+  });
+});
+
+describe('Today attendance', () => {
+  it('own check-in, team marking for the current shift, and what waits for approval', async () => {
+    const { api, calls } = server();
+    expect(await loadTodayAttendance(api, '10:00', '2026-11-23')).toEqual({
+      self: { sites: ['Site 1'], today: expect.objectContaining({ state: 'Submitted', check_in_time: '2026-11-23 08:02:41' }) },
+      teams: [{ site: 'Site 1', shift: 'Day', marked: 12, total: 15 }],
+      approvals: [{ site: 'Site 1', count: 2 }],
+    });
+    expect(calls.filter((c) => c.method === `${HR_API}.team`).map((c) => c.args)).toEqual([{ site: 'S1', shift: 'Site 1 Day' }]);
+    expect(calls.some((c) => c.args.site === 'S2')).toBe(false); // no role at Site 2: nothing asked
+  });
+
+  it('no check-in yet today', async () => {
+    const data = await loadTodayAttendance(server().api, '10:00', '2026-11-24');
+    expect(data?.self).toEqual({ sites: ['Site 1'], today: null });
+  });
+
+  it('no attendance module on the server (not deployed yet): no cards', async () => {
+    expect(await loadTodayAttendance(server({ [`${HR_API}.bootstrap`]: { status: 404, body: {} } }).api, '10:00', '2026-11-23')).toBeNull();
+  });
+
+  it('a person who does not check in themselves gets no check-in card, and empty counts are left out', async () => {
+    const { api } = server({
+      [`${HR_API}.bootstrap`]: { body: { message: { ...boot, check_in_sites: [] } } },
+      [`${HR_API}.approvals`]: { body: { message: [] } },
+    });
+    const data = await loadTodayAttendance(api, '10:00', '2026-11-23');
+    expect(data?.self).toBeNull();
+    expect(data?.approvals).toEqual([]);
+  });
+
+  it('shows the time of day only', () => {
+    expect(clock('2026-11-23 08:02:41')).toBe('08:02');
+    expect(clock(null)).toBe('');
+  });
+});

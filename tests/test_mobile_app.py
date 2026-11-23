@@ -63,6 +63,18 @@ class BuildGuideTests(unittest.TestCase):
         self.assertGreaterEqual(len(named), 10)
         self.assertEqual(named - whitelisted, set(), 'the guide names a field method that does not exist')
 
+    def test_attendance_calls_in_the_guide_exist_once_the_hr_part_is_merged(self):
+        # Section 7a names the calls of PR #39 (custom_hr); checked as soon as that code is on the branch.
+        api_path = ROOT / 'erpnext_drive_integrations/custom_hr/api.py'
+        section = self.GUIDE.split('### 7a. Attendance calls')[1].split('\n## ')[0]
+        named = set(re.findall(r'^\| `(\w+)`(?:, `(\w+)`)?', section, re.M))
+        named = {n for pair in named for n in pair if n}
+        self.assertGreaterEqual(len(named), 9)
+        if not api_path.is_file() or 'def self_check_in(' not in api_path.read_text(encoding='utf-8'):
+            self.skipTest('custom_hr self check-in not merged yet (PR #38, #39)')
+        whitelisted = set(re.findall(r'@frappe\.whitelist[^\n]*\n\s*def (\w+)\(', api_path.read_text(encoding='utf-8')))
+        self.assertEqual(named - whitelisted, set(), 'section 7a names a call that does not exist')
+
     def test_guide_points_at_the_real_sign_in_and_workflow_code(self):
         for path in ('erpnext_drive_integrations/portal/mobile.py', 'erpnext_drive_integrations/onboarding/api.py'):
             self.assertTrue((ROOT / path).is_file(), path)

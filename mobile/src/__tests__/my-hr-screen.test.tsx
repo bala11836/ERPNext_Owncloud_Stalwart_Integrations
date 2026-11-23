@@ -48,13 +48,20 @@ describe('My HR screen', () => {
     expect(screen.getByText("Couldn't load this part. Not permitted")).toBeOnTheScreen();
   });
 
-  it('blocks screenshots while it is open', async () => {
-    mockPrevent.mockClear();
-    const { unmount } = await renderRouter({ 'my-hr': MyHr, index: () => <Text>home</Text> }, { initialUrl: '/my-hr', wrapper });
-    await screen.findByText('Worker A');
-    expect(mockPrevent).toHaveBeenCalled();
-    if (Platform.OS === 'ios') expect(mockEnableSwitcherProtection).toHaveBeenCalledWith(1);
-    await unmount();
-    if (Platform.OS === 'ios') expect(mockDisableSwitcherProtection).toHaveBeenCalled();
+  it('blocks screenshots and protects the iOS app switcher while it is open', async () => {
+    const platform = jest.replaceProperty(Platform, 'OS', 'ios');
+    try {
+      mockPrevent.mockClear();
+      mockEnableSwitcherProtection.mockClear();
+      mockDisableSwitcherProtection.mockClear();
+      const { unmount } = await renderRouter({ 'my-hr': MyHr, index: () => <Text>home</Text> }, { initialUrl: '/my-hr', wrapper });
+      await screen.findByText('Worker A');
+      expect(mockPrevent).toHaveBeenCalled();
+      expect(mockEnableSwitcherProtection).toHaveBeenCalledWith(1);
+      await unmount();
+      expect(mockDisableSwitcherProtection).toHaveBeenCalled();
+    } finally {
+      platform.restore();
+    }
   });
 });

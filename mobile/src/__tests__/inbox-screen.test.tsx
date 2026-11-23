@@ -18,7 +18,7 @@ jest.mock('@/auth/session', () => ({
   useApiRef: () => mockApiRef,
 }));
 let mockConfirmed = true;
-const mockConfirm = jest.fn(async () => mockConfirmed);
+const mockConfirm = jest.fn(async (_reason: string) => mockConfirmed);
 jest.mock('@/auth/confirm', () => ({ confirmIdentity: (reason: string) => mockConfirm(reason) }));
 jest.mock('@/components/doc-view', () => ({ DocView: () => null }));
 

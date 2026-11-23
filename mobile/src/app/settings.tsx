@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 
+import { RELOCK_AFTER_MS } from '@/auth/lock';
 import { useAuth } from '@/auth/session';
 import { Button, Screen, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
@@ -41,7 +42,7 @@ export default function Settings() {
         <View style={{ flex: 1, gap: 4 }}>
           <T style={{ fontWeight: '700' }}>Outdoor mode: {t.outdoor ? 'ON' : 'OFF'}</T>
           <T variant="small" color="muted">
-            Bigger, bolder text and larger buttons for bright sunlight and gloves.
+            {text('settings.outdoorHint')}
           </T>
         </View>
         <Switch
@@ -52,13 +53,7 @@ export default function Settings() {
         />
       </Pressable>
 
-      <T variant="title">How statuses look</T>
-      <Status kind="ok" label="Approved" />
-      <Status kind="warn" label="Needs attention" />
-      <Status kind="danger" label="Rejected" />
-      <Status kind="pending" label="Waiting to sync" />
-      <Status kind="offline" label="Offline" />
-
+      <Status kind="ok" label={text('settings.appLock', { seconds: RELOCK_AFTER_MS / 1000 })} />
       {storage ? (
         <Status
           kind={storage === 'encrypted' ? 'ok' : 'warn'}

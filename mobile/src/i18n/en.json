@@ -18,5 +18,10 @@
   "myHr.soon": "Your leave, expense claims, payslips and holidays will appear here.",
   "menu.settings": "Settings",
   "menu.settingsHint": "Outdoor mode, offline storage, sign out",
-  "settings.title": "Settings"
+  "settings.title": "Settings",
+  "menu.search": "Search your lists",
+  "menu.noMatch": "No list matches “{query}”.",
+  "search.clear": "Clear search",
+  "settings.appLock": "App lock: on. Face ID, fingerprint or passcode when the app opens and after {seconds} seconds away.",
+  "settings.outdoorHint": "Bigger, bolder text and larger buttons for bright sunlight and gloves."
 }

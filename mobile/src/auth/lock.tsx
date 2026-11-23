@@ -10,7 +10,7 @@ import { APP_NAME } from '@/auth/session';
 import { Button, Status, T } from '@/components/ui';
 import { useTheme } from '@/theme';
 
-const RELOCK_AFTER_MS = 60_000;
+export const RELOCK_AFTER_MS = 60_000;
 
 export function AppLock() {
   const t = useTheme();

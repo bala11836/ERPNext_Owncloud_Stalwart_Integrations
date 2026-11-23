@@ -1,7 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import type { ComponentProps, ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View, type TextProps } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View, type TextProps } from 'react-native';
 
+import { t as text } from '@/i18n';
 import type { PaletteColor } from '@/theme/colors';
 import { useTheme } from '@/theme';
 
@@ -29,6 +30,57 @@ export function T({
         style,
       ]}
     />
+  );
+}
+
+/** A search box: large text, a 48 dp+ target, a visible border (not colour alone) and a clear button. */
+export function SearchField({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (text: string) => void;
+  label: string;
+}) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        minHeight: t.touch,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        margin: 16,
+        paddingHorizontal: 12,
+        borderWidth: t.border,
+        borderColor: t.c.border,
+        borderRadius: 10,
+        backgroundColor: t.c.bg,
+      }}>
+      <MaterialCommunityIcons name="magnify" size={t.font(24)} color={t.c.text} />
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={label}
+        placeholderTextColor={t.c.muted}
+        accessibilityLabel={label}
+        autoCorrect={false}
+        autoCapitalize="none"
+        returnKeyType="search"
+        style={{ flex: 1, minHeight: t.touch, color: t.c.text, fontSize: t.font(18) }}
+      />
+      {value ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={text('search.clear')}
+          onPress={() => onChange('')}
+          hitSlop={12}
+          style={{ minWidth: t.touch, minHeight: t.touch, alignItems: 'center', justifyContent: 'center' }}>
+          <MaterialCommunityIcons name="close-circle" size={t.font(24)} color={t.c.text} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 

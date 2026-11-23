@@ -19,7 +19,9 @@ is deployed to the test site and validated there, and the tested commit is
 recorded. Only then does the owner merge it to `main`, and production receives
 that same tested content from `main`, never from a branch. The unit tests and
 repository checks are a gate before the test deployment, not a substitute for
-it. Files that exist only in production (route files, port bindings, host
+it. Unit tests may fake Frappe and outside services, but import the project's
+own modules for real (never a fake copy of them); the repository check refuses
+an import of a module or name that does not exist (P68). Files that exist only in production (route files, port bindings, host
 entries) cannot be exercised on the test site: for them, record a browser and
 protocol check of the affected apps immediately after promotion, and say in the
 release record that test could not cover them. GitHub cannot verify that a

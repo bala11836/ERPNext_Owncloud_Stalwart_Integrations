@@ -430,7 +430,9 @@ discussion that led to a decision is not repeated here.
   under test imports; and the repository checks resolve imports of the project's own names.
 - **Why:** a test that replaced `portal/combined.py` with a fake copy hid a leftover import of a function that does
   not exist, so every native app request failed with HTTP 500 on the test site (21 November 2026). **Where:**
-  `tests/portal/test_mobile.py` (PR #15), P64, P68.
+  `tests/portal/test_mobile.py` (PR #15), P64, P68; the import check is `check_imports` in
+  `tools/check_repository.py` (every import of the project's own modules, also inside functions, must name an
+  existing module and name; it finds the P64 import when run on the code before its fix), rule in `AGENTS.md`.
 
 ### Only open work stays in the P list
 - **Decision:** a P item is removed from its app list as soon as the task is completed, or becomes redundant or

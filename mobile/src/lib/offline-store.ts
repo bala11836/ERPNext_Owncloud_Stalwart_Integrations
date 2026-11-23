@@ -32,6 +32,7 @@ export async function encryptedStore(db: Db, hexKey: string): Promise<QueueStore
     'CREATE TABLE IF NOT EXISTS queue (id TEXT PRIMARY KEY NOT NULL, created_at INTEGER NOT NULL, body TEXT NOT NULL);',
   );
   return {
+    encrypted: true,
     all: async () =>
       (await db.getAllAsync<{ body: string }>('SELECT body FROM queue ORDER BY created_at')).map(
         (row) => JSON.parse(row.body) as QueueItem,
@@ -82,11 +83,23 @@ async function open(): Promise<QueueStore> {
 }
 
 let opened: Promise<QueueStore> | null = null;
+let kind: 'encrypted' | 'memory' = 'memory';
 
 /** The queue's store, opened once. Falls back to memory if the encrypted database cannot be used. */
 export function offlineStore(): Promise<QueueStore> {
-  opened ??= open().catch(() => memoryStore());
+  opened ??= open()
+    .catch(() => memoryStore())
+    .then((store) => {
+      kind = store.encrypted ? 'encrypted' : 'memory';
+      return store;
+    });
   return opened;
+}
+
+/** Shown in Settings: whether unsent items are kept encrypted on this phone or in memory only. */
+export async function offlineStorageKind() {
+  await offlineStore();
+  return kind;
 }
 
 /** Sign-out (and later remote wipe): remove every queued item from the phone. */

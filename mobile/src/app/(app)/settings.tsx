@@ -1,14 +1,21 @@
 import Constants from 'expo-constants';
+import { useEffect, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 
 import { useAuth } from '@/auth/session';
 import { Button, Screen, Status, T } from '@/components/ui';
+import { t as text } from '@/i18n';
+import { offlineStorageKind } from '@/lib/offline-store';
 import { useTheme } from '@/theme';
 
 export default function Settings() {
   const t = useTheme();
   const { user, signOut } = useAuth();
   const toggle = () => t.setOutdoor(!t.outdoor);
+  const [storage, setStorage] = useState<'encrypted' | 'memory' | null>(null);
+  useEffect(() => {
+    offlineStorageKind().then(setStorage, () => setStorage('memory'));
+  }, []);
   return (
     <Screen>
       <View style={{ gap: 6 }}>
@@ -51,6 +58,13 @@ export default function Settings() {
       <Status kind="danger" label="Rejected" />
       <Status kind="pending" label="Waiting to sync" />
       <Status kind="offline" label="Offline" />
+
+      {storage ? (
+        <Status
+          kind={storage === 'encrypted' ? 'ok' : 'warn'}
+          label={text(storage === 'encrypted' ? 'storage.encrypted' : 'storage.memory')}
+        />
+      ) : null}
 
       <Button label="Sign out" icon="logout" secondary onPress={signOut} />
       <T variant="small" color="muted">

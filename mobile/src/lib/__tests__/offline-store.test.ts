@@ -35,7 +35,7 @@ const item = (id: string, createdAt: number): QueueItem => ({
 describe('encrypted offline store', () => {
   it('unlocks with the key before anything else and confirms encryption is on', async () => {
     const { db, statements } = fakeDb('4.6.1 community');
-    expect(await encryptedStore(db, KEY)).not.toBeNull();
+    expect((await encryptedStore(db, KEY))?.encrypted).toBe(true);
     expect(statements[0]).toBe(`PRAGMA key = "x'${KEY}'";`);
     expect(statements[1]).toBe('PRAGMA cipher_version;');
   });
@@ -69,10 +69,12 @@ describe('offline store in Expo Go', () => {
     jest.doMock('expo-constants', () => ({ __esModule: true, default: { executionEnvironment: 'storeClient' }, ExecutionEnvironment: { StoreClient: 'storeClient' } }));
     const openDatabaseAsync = jest.fn();
     jest.doMock('expo-sqlite', () => ({ openDatabaseAsync, deleteDatabaseAsync: jest.fn() }));
-    const { offlineStore } = jest.requireActual('@/lib/offline-store') as typeof import('@/lib/offline-store');
+    const { offlineStore, offlineStorageKind } = jest.requireActual('@/lib/offline-store') as typeof import('@/lib/offline-store');
     const store = await offlineStore();
     await store.put(item('a', 1));
     expect((await store.all()).map((i) => i.id)).toEqual(['a']);
     expect(openDatabaseAsync).not.toHaveBeenCalled();
+    await expect(offlineStorageKind()).resolves.toBe('memory');
+    expect(store.encrypted).toBeUndefined();
   });
 });

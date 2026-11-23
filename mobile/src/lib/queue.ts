@@ -21,6 +21,8 @@ export type QueueItem = {
 
 /** Where items live: the encrypted database on a development build, memory in Expo Go and tests. */
 export interface QueueStore {
+  /** True only for the SQLCipher database whose encryption was confirmed. */
+  encrypted?: boolean;
   all(): Promise<QueueItem[]>;
   put(item: QueueItem): Promise<void>;
   remove(id: string): Promise<void>;

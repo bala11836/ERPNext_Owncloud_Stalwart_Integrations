@@ -6,6 +6,7 @@ import Inbox from '@/app/(app)/inbox';
 import DocScreen from '@/app/doc/[doctype]/[name]';
 import { ACTIONS_METHOD, LOGS_METHOD, MARK_READ_METHOD, clearInbox } from '@/lib/inbox';
 import { APPLY_METHOD, TRANSITIONS_METHOD } from '@/components/workflow-actions';
+import { Button } from '@/components/ui';
 import { ThemeProvider } from '@/theme';
 
 import { type Answer, fakeErp, thrown } from './fake-erp';
@@ -43,7 +44,7 @@ describe('inbox screen', () => {
   beforeEach(() => {
     clearInbox();
     mockConfirmed = true;
-    mockConfirm.mockClear();
+    mockConfirm.mockReset().mockImplementation(async () => mockConfirmed);
   });
 
   it('lists what waits for the person and their notifications, unread marked in words', async () => {
@@ -82,8 +83,10 @@ describe('inbox screen', () => {
     await openInbox();
     await fireEvent.press(await screen.findByText('Purchase Order PO-0001'));
 
-    const approve = await screen.findByRole('button', { name: 'Approve' });
-    const reject = screen.getByRole('button', { name: 'Reject' });
+    await screen.findByText('Approve');
+    const actions = screen.UNSAFE_getAllByType(Button);
+    const approve = actions.find((button) => button.props.label === 'Approve')!;
+    const reject = actions.find((button) => button.props.label === 'Reject')!;
     await act(async () => {
       approve.props.onPress();
       reject.props.onPress();

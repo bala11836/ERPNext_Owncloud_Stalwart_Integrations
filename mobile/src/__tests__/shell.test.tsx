@@ -13,11 +13,28 @@ jest.mock('@/auth/session', () => ({
   useAuth: () => ({ user: { name: 'Worker A', email: 'a@example.com', roles: [] }, api: jest.fn() }),
 }));
 const mockStore = memoryStore();
-jest.mock('@/lib/offline-store', () => ({ offlineStore: async () => mockStore }));
+jest.mock('@/lib/offline-store', () => ({ offlineStore: async () => mockStore, offlineStorageKind: async () => 'encrypted' }));
+const mockSaved = new Map<string, string>();
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: async (k: string) => mockSaved.get(k) ?? null,
+  setItemAsync: async (k: string, v: string) => void mockSaved.set(k, v),
+  deleteItemAsync: async (k: string) => void mockSaved.delete(k),
+}));
 jest.mock('@/lib/erp', () => ({
   ...jest.requireActual('@/lib/erp'),
   useErp: () => ({
-    data: { message: { menus: [{ name: 'hr', label: 'Human Resources', app: 'hrms', items: [] }] } },
+    data: {
+      message: {
+        menus: [
+          {
+            name: 'hr',
+            label: 'Human Resources',
+            app: 'hrms',
+            items: [{ type: 'doctype', label: 'Leave Application', doctype: 'Leave Application' }],
+          },
+        ],
+      },
+    },
     error: null,
     loading: false,
     reload: jest.fn(),
@@ -33,6 +50,7 @@ const app = {
   '(app)/my-hr': Stub,
   '(app)/menu': Menu,
   settings: () => <Text>Settings screen</Text>,
+  'list/[doctype]': () => <Text>List screen</Text>,
 };
 
 describe('app shell', () => {
@@ -69,5 +87,22 @@ describe('app shell', () => {
     await fireEvent.press(screen.getByText('Settings'));
     expect(await screen.findByText('Settings screen')).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/settings');
+  });
+
+  it('Menu search finds a list across the menus and opens it', async () => {
+    const router = await renderRouter(app, { initialUrl: '/menu', wrapper });
+    await fireEvent.changeText(screen.getByLabelText('Search your lists'), 'leave');
+    expect(screen.queryByText('Settings')).toBeNull();
+    await fireEvent.press(screen.getByText('Leave Application'));
+    expect(await screen.findByText('List screen')).toBeOnTheScreen();
+    expect(router.getPathnameWithParams()).toBe('/list/Leave Application');
+  });
+
+  it('Menu search says when nothing matches, and clearing it brings the menus back', async () => {
+    await renderRouter(app, { initialUrl: '/menu', wrapper });
+    await fireEvent.changeText(screen.getByLabelText('Search your lists'), 'payroll');
+    expect(screen.getByText('No list matches “payroll”.')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByLabelText('Clear search'));
+    expect(screen.getByText('Human Resources')).toBeOnTheScreen();
   });
 });

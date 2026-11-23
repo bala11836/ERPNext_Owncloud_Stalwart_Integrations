@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 
 import { MenuPane } from '@/components/menu-pane';
-import { Button, Row, Status, T } from '@/components/ui';
+import { Button, Row, SearchField, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { BOOT_PATH, type Boot, useErp } from '@/lib/erp';
+import { searchMenus } from '@/lib/menu-search';
 import { useIsTablet, useTheme } from '@/theme';
 
 // Home groups ERPNext's menus by the app they come from, so business work comes first.
@@ -22,6 +23,7 @@ export default function Menu() {
   const { data, error, loading, reload } = useErp<{ message: Boot }>(BOOT_PATH);
   const menus = data?.message.menus ?? [];
   const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const current = selected ?? GROUPS.flatMap((g) => menus.filter((m) => groupOf(m.app) === g))[0]?.name;
 
   if (!data) {
@@ -40,36 +42,43 @@ export default function Menu() {
   }
 
   const list = (
-    <ScrollView style={{ backgroundColor: t.c.bg }}>
-      <Row title={text('menu.settings')} subtitle={text('menu.settingsHint')} onPress={() => router.push('/settings')} />
-      {menus.length === 0 && (
-        <View style={{ padding: 16 }}>
-          <Status kind="info" label="Your ERPNext roles don't include any menus yet. Ask the MD or CFO for access." />
-        </View>
+    <ScrollView style={{ backgroundColor: t.c.bg }} keyboardShouldPersistTaps="handled">
+      <SearchField value={query} onChange={setQuery} label={text('menu.search')} />
+      {query.trim() ? (
+        <SearchResults menus={menus} query={query} />
+      ) : (
+        <>
+          <Row title={text('menu.settings')} subtitle={text('menu.settingsHint')} onPress={() => router.push('/settings')} />
+          {menus.length === 0 && (
+            <View style={{ padding: 16 }}>
+              <Status kind="info" label="Your ERPNext roles don't include any menus yet. Ask the MD or CFO for access." />
+            </View>
+          )}
+          {GROUPS.map((g) => {
+            const inGroup = menus.filter((m) => groupOf(m.app) === g);
+            if (!inGroup.length) return null;
+            return (
+              <View key={g}>
+                <T variant="small" color="muted" style={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 6, fontWeight: '700' }}>
+                  {g.toUpperCase()}
+                </T>
+                {inGroup.map((m) => {
+                  const count = m.items.filter((i) => i.type === 'doctype').length;
+                  return (
+                    <Row
+                      key={m.name}
+                      title={m.label}
+                      subtitle={`${count} ${count === 1 ? 'list' : 'lists'}`}
+                      selected={tablet && current === m.name}
+                      onPress={() => (tablet ? setSelected(m.name) : router.push({ pathname: '/menu/[name]', params: { name: m.name } }))}
+                    />
+                  );
+                })}
+              </View>
+            );
+          })}
+        </>
       )}
-      {GROUPS.map((g) => {
-        const inGroup = menus.filter((m) => groupOf(m.app) === g);
-        if (!inGroup.length) return null;
-        return (
-          <View key={g}>
-            <T variant="small" color="muted" style={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 6, fontWeight: '700' }}>
-              {g.toUpperCase()}
-            </T>
-            {inGroup.map((m) => {
-              const count = m.items.filter((i) => i.type === 'doctype').length;
-              return (
-                <Row
-                  key={m.name}
-                  title={m.label}
-                  subtitle={`${count} ${count === 1 ? 'list' : 'lists'}`}
-                  selected={tablet && current === m.name}
-                  onPress={() => (tablet ? setSelected(m.name) : router.push({ pathname: '/menu/[name]', params: { name: m.name } }))}
-                />
-              );
-            })}
-          </View>
-        );
-      })}
     </ScrollView>
   );
 
@@ -80,6 +89,30 @@ export default function Menu() {
       <ScrollView style={{ flex: 1 }}>
         <MenuPane name={current} />
       </ScrollView>
+    </View>
+  );
+}
+
+/** Lists matching the search across all the person's menus; tap opens the list. */
+function SearchResults({ menus, query }: { menus: Boot['menus']; query: string }) {
+  const found = searchMenus(menus, query);
+  if (!found.length) {
+    return (
+      <View style={{ paddingHorizontal: 16 }}>
+        <Status kind="info" label={text('menu.noMatch', { query: query.trim() })} />
+      </View>
+    );
+  }
+  return (
+    <View>
+      {found.map((f) => (
+        <Row
+          key={f.doctype}
+          title={f.label}
+          subtitle={f.menu}
+          onPress={() => router.push({ pathname: '/list/[doctype]', params: { doctype: f.doctype } })}
+        />
+      ))}
     </View>
   );
 }

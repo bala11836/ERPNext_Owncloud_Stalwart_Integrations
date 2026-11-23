@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useWindowDimensions } from 'react-native';
 
 import { palette, type PaletteColor } from './colors';
@@ -16,9 +17,21 @@ type Theme = {
 
 const ThemeContext = createContext<Theme | null>(null);
 
-// ponytail: Outdoor mode resets on app restart; persist it once a storage module lands (Checkpoint 3).
+const OUTDOOR_KEY = 'outdoor-mode';
+
+/** Outdoor mode is a phone-only preference (build guide section 7): it stays on after the app restarts. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [outdoor, setOutdoor] = useState(false);
+  const [outdoor, setOutdoorState] = useState(false);
+  useEffect(() => {
+    SecureStore.getItemAsync(OUTDOOR_KEY).then(
+      (saved) => saved === '1' && setOutdoorState(true),
+      () => {},
+    );
+  }, []);
+  const setOutdoor = (on: boolean) => {
+    setOutdoorState(on);
+    SecureStore.setItemAsync(OUTDOOR_KEY, on ? '1' : '0').catch(() => {});
+  };
   const theme: Theme = {
     c: outdoor ? { ...palette, surface: palette.bg } : palette,
     outdoor,

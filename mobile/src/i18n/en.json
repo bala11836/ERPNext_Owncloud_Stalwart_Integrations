@@ -1,0 +1,10 @@
+{
+  "erp.offline": "Can't reach ERPNext. Check your internet connection.",
+  "erp.forbidden": "You don't have permission to do this in ERPNext.",
+  "erp.notFound": "Not found in ERPNext.",
+  "erp.failed": "ERPNext error ({status}). Try again.",
+  "erp.unexpected": "ERPNext sent an answer this app does not understand. Update the app, or tell your administrator.",
+  "queue.expired": "Not sent within a day, so it was removed. Enter it again if it is still needed.",
+  "storage.encrypted": "Offline storage: encrypted on this phone",
+  "storage.memory": "Offline storage: kept in memory only (this app version cannot encrypt)"
+}

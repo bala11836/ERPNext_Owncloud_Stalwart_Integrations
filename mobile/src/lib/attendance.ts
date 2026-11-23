@@ -4,18 +4,44 @@
 // screens come with the attendance pilot (build guide phase 3).
 import { z } from 'zod';
 
+import { rememberServerClock } from '@/lib/capture';
 import { type Api, callErp } from '@/lib/erp';
 
 export const HR_API = 'erpnext_drive_integrations.custom_hr.api';
 
-const Shift = z.object({ name: z.string(), start: z.string(), end: z.string(), label: z.string().nullish() });
-const Boot = z.object({
+const Shift = z.object({
+  name: z.string(),
+  start: z.string(),
+  end: z.string(),
+  label: z.string().nullish(),
+  attendance_date: z.string().nullish(),
+});
+const CheckInSite = z.object({
+  name: z.string(),
+  label: z.string(),
+  latitude: z.number().nullish(),
+  longitude: z.number().nullish(),
+  radius_m: z.number().nullish(),
+  maximum_accuracy_m: z.number().nullish(),
+  shifts: z.array(Shift),
+});
+export type CheckInSiteT = z.infer<typeof CheckInSite>;
+export const Boot = z.object({
+  server_now: z.string().nullish(),
   sites: z.array(
     z.object({ name: z.string(), label: z.string(), supervisor: z.boolean(), approver: z.boolean(), shifts: z.array(Shift) }),
   ),
-  check_in_sites: z.array(z.object({ name: z.string(), label: z.string() })),
+  check_in_sites: z.array(CheckInSite),
 });
-const Mine = z.array(
+export type BootT = z.infer<typeof Boot>;
+
+/** The attendance bootstrap; also remembers the server's clock for offline captures. */
+export async function loadBoot(api: Api): Promise<BootT> {
+  const boot = await callErp(api, `${HR_API}.bootstrap`, Boot);
+  if (boot.server_now) await rememberServerClock(boot.server_now);
+  return boot;
+}
+export const Mine = z.array(
   z.object({
     name: z.string(),
     site: z.string(),
@@ -46,9 +72,9 @@ export type TodayAttendance = {
  * shows no attendance cards.
  */
 export async function loadTodayAttendance(api: Api, now: string, today: string): Promise<TodayAttendance | null> {
-  let boot: z.infer<typeof Boot>;
+  let boot: BootT;
   try {
-    boot = await callErp(api, `${HR_API}.bootstrap`, Boot);
+    boot = await loadBoot(api);
   } catch {
     return null;
   }

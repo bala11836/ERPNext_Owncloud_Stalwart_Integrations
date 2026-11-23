@@ -14,7 +14,7 @@ import { fakeErp } from './fake-erp';
 const action = (n: string, doctype: string) => ({ name: n, reference_doctype: doctype, reference_name: n, workflow_state: 'Pending', creation: '2026-11-23 10:00:00' });
 const answers = {
   [`${HR_API}.bootstrap`]: {
-    body: { message: { sites: [{ name: 'S1', label: 'Site 1', supervisor: true, approver: false, shifts: [{ name: 'D', start: '00:00', end: '23:59', label: 'Day' }] }], check_in_sites: [{ name: 'S1', label: 'Site 1' }] } },
+    body: { message: { sites: [{ name: 'S1', label: 'Site 1', supervisor: true, approver: false, shifts: [{ name: 'D', start: '00:00', end: '23:59', label: 'Day' }] }], check_in_sites: [{ name: 'S1', label: 'Site 1', shifts: [{ name: 'D', start: '00:00', end: '23:59', label: 'Day' }] }] } },
   },
   [`${HR_API}.my_attendance`]: { body: { message: [] } },
   [`${HR_API}.team`]: { body: { message: { total: 15, missing: 3 } } },

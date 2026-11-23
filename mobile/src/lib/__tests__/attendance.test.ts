@@ -10,7 +10,7 @@ const boot = {
     { name: 'S1', label: 'Site 1', supervisor: true, approver: true, shifts: [day, night] },
     { name: 'S2', label: 'Site 2', supervisor: false, approver: false, shifts: [day] },
   ],
-  check_in_sites: [{ name: 'S1', label: 'Site 1' }],
+  check_in_sites: [{ name: 'S1', label: 'Site 1', latitude: 17.385, longitude: 78.4867, radius_m: 200, maximum_accuracy_m: 50, shifts: [day, night] }],
 };
 const server = (over: Record<string, unknown> = {}) =>
   fakeErp({

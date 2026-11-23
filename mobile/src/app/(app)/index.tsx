@@ -10,6 +10,7 @@ import { formatDate, localToday } from '@/lib/format';
 import { byType, refreshInbox, useInbox } from '@/lib/inbox';
 import { loadTodayHr } from '@/lib/my-hr';
 import { offlineStore } from '@/lib/offline-store';
+import { flushQueue } from '@/lib/sender';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -45,6 +46,7 @@ export default function Today() {
           () => live && setQueue(null),
         );
       refreshInbox(apiRef.current);
+      flushQueue(apiRef.current).catch(() => {});
       loadTodayAttendance(apiRef.current, nowHHMM(), localToday()).then(
         (a) => live && setAtt(a),
         () => live && setAtt(null),
@@ -70,10 +72,11 @@ export default function Today() {
         <T color="muted">{`${WEEKDAYS[new Date().getDay()]}, ${formatDate(today)}`}</T>
       </View>
 
-      {/* ponytail: status only; the check-in, team and bulk-approval screens come with phase 3. */}
+      {/* ponytail: team and approval cards show status only until their screens (P3c, P3d) exist. */}
       {att?.self && (
         <Card
           icon={att.self.today ? 'map-marker-check-outline' : 'map-marker-outline'}
+          onPress={() => router.push('/attendance/check-in')}
           title={
             att.self.today
               ? text('today.checkedIn', { time: clock(att.self.today.check_in_time) })

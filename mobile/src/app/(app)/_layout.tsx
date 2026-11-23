@@ -7,6 +7,7 @@ import { useApiRef } from '@/auth/session';
 import type { IconName } from '@/components/ui';
 import { type TextKey, t as text } from '@/i18n';
 import { refreshInbox, unreadCount, useInbox } from '@/lib/inbox';
+import { flushQueue } from '@/lib/sender';
 import { useSideRail, useTheme } from '@/theme';
 
 /** Owner decision 2: Today · Inbox · My HR · Menu. Phones: bottom tabs; 600 dp and wider: a side rail. */
@@ -17,8 +18,12 @@ export default function AppTabs() {
   const waiting = unreadCount(useInbox());
   // The Inbox count is fresh when the app opens and whenever it comes back to the front (no polling).
   useEffect(() => {
-    refreshInbox(apiRef.current);
-    const sub = AppState.addEventListener('change', (s) => s === 'active' && refreshInbox(apiRef.current));
+    const fresh = () => {
+      refreshInbox(apiRef.current);
+      flushQueue(apiRef.current).catch(() => {}); // unsent captures go when the app is back in front
+    };
+    fresh();
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && fresh());
     return () => sub.remove();
   }, [apiRef]);
   const tab = (label: TextKey, icon: IconName) => ({

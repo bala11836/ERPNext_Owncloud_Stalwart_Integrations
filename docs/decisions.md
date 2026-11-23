@@ -453,6 +453,21 @@ discussion that led to a decision is not repeated here.
 - **Why:** the lists are what people work from; finished items made them long and hid what is still open. **Where:**
   `docs/p-closed.md`, `docs/p-list/`, `CLAUDE.md` (session routine, step 6); the private `tools/p_close.py`.
 
+### Sign-in settings the ERP depends on are one setting each, and tested against authentik (P49)
+- **Decision:** the approval claim's name is one setting (`APPROVED_CLAIM` in the ERP, overridable per site), and a
+  test fails when the ERP provider's scope mapping, the example mappings or the test clients send another name;
+  after every ERP or sign-in deployment someone signs in once in a browser with a passkey. The invitation pages' and
+  e-mails' brand name and template file names are profile settings, so an installation keeps the names authentik's
+  database refers to. The webmail product name comes from its existing setting. The identity stack carries
+  production's tuning: PostgreSQL `jit = off`, 3 GB for the authentik server, an explicit web worker lifetime (the
+  pinned default of 1000 requests), and policy caching kept off as production runs it (origin unknown; a change is a
+  separate, measured decision).
+- **Why:** on 20 November 2026 production's ERP provider sent a legacy claim name while the ERP required
+  `cloud_approved`, and new ERP sign-ins failed for days; production's pages, templates and tuning had drifted from
+  the repository. Importing production's newer pages and templates follows separately. **Where:**
+  `erpnext_drive_integrations/portal/sso.py`, `integrations/authentik/`, `tools/prepare_runtime.py`,
+  `deployment/stacks/identity.compose.json`, `deployment/stacks/inputs.json`, `tests/test_signin_settings.py`.
+
 ### Demo test site: the portal at `/` once signed in, and the landing page options (P63, P60 closed)
 - **Decision:** on a host that is both landing page and portal (the test site), `/` shows the landing page only to
   visitors without an ERP session; signed-in people get the portal at `/`, so the address bar is as clean as on a

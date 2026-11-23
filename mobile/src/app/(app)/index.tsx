@@ -72,7 +72,6 @@ export default function Today() {
         <T color="muted">{`${WEEKDAYS[new Date().getDay()]}, ${formatDate(today)}`}</T>
       </View>
 
-      {/* ponytail: the approval card shows status only until its screen (P3d) exists. */}
       {att?.self && (
         <Card
           icon={att.self.today ? 'map-marker-check-outline' : 'map-marker-outline'}
@@ -103,6 +102,7 @@ export default function Today() {
       {att?.approvals.map((ap) => (
         <Card
           key={`appr-${ap.siteId}`}
+          onPress={() => router.push({ pathname: '/attendance/approve', params: { site: ap.siteId } })}
           icon="clipboard-check-outline"
           title={text('today.attendanceToApprove', { site: ap.site })}
           count={ap.count}

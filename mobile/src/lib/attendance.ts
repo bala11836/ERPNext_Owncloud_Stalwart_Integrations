@@ -158,3 +158,36 @@ export const TeamList = z.object({
 
 /** Entries this supervisor still has to submit for approval (their own drafts). */
 export const drafts = (workers: WorkerT[]) => workers.filter((w) => w.state === 'Draft' && w.can_edit && w.entry);
+
+// ---- approval (PM, P3d): custom_hr's `approvals`, `entry` and `review_many` answers ----
+export const Pending = z.array(
+  z.object({
+    name: z.string(),
+    employee: z.string(),
+    employee_name: z.string().nullish(),
+    attendance_date: z.string(),
+    shift: z.string(),
+    attendance_status: z.string(),
+    work_mode: z.string().nullish(),
+    asset: z.string().nullish(),
+    entry_type: z.string().nullish(),
+    captured_offline: z.coerce.number().nullish(),
+    check_in_time: z.string().nullish(),
+    accuracy_m: z.number().nullish(),
+    can_review: z.boolean(),
+  }),
+);
+export type PendingT = z.infer<typeof Pending>[number];
+export const EntryDetail = z.object({
+  name: z.string(),
+  photo: z.string().nullish(),
+  remarks: z.string().nullish(),
+  captured_at: z.string().nullish(),
+  accuracy_m: z.number().nullish(),
+});
+export const Reviewed = z.array(
+  z.object({ name: z.string(), ok: z.boolean(), error: z.string().nullish(), state: z.string().nullish() }),
+);
+
+/** "Exceptions only": what deserves a closer look before approving (captured offline, or absent). */
+export const isException = (e: PendingT) => !!e.captured_offline || e.attendance_status === 'Absent';

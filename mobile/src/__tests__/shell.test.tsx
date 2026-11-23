@@ -77,9 +77,9 @@ describe('app shell', () => {
 
   it('Today counts what waits in the offline queue', async () => {
     for (const id of ['a', 'b']) {
-      await mockStore.put({ id, method: 'm', args: {}, createdAt: 1, attempts: 0, state: 'waiting' });
+      await mockStore.put({ id, method: 'm', args: {}, createdAt: Date.now(), attempts: 0, state: 'waiting' });
     }
-    await mockStore.put({ id: 'c', method: 'm', args: {}, createdAt: 1, attempts: 1, state: 'failed', error: 'refused' });
+    await mockStore.put({ id: 'c', method: 'm', args: {}, createdAt: Date.now(), attempts: 1, state: 'failed', error: 'refused' });
     await renderRouter(app, { initialUrl: '/', wrapper });
     expect(await screen.findByText('2 waiting to send: sent by itself when you are online')).toBeOnTheScreen();
   });

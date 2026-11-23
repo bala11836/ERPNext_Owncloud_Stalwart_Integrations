@@ -66,7 +66,11 @@ const mockStore = memoryStore();
 jest.mock('@/lib/offline-store', () => ({ offlineStore: async () => mockStore }));
 
 const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
-const stub = (label: string) => () => <Text>{label}</Text>;
+const stub = (label: string) => {
+  const Stub = () => <Text>{label}</Text>;
+  Stub.displayName = label;
+  return Stub;
+};
 const app = {
   index: Today,
   inbox: stub('Inbox screen'),

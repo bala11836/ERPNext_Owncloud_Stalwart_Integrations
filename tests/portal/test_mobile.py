@@ -64,6 +64,39 @@ from erpnext_drive_integrations.portal import mobile, sso  # noqa: E402
 RAVEN, HOV, OTHER = 'raven-client', 'onboarding-client', 'other-client'
 
 
+class TestIdentityOrigin(unittest.TestCase):
+    origin = 'https://test-sso.example.com'
+    issuer = origin + '/application/o/test-erpnext/'
+
+    def test_only_test_copies_can_use_a_different_identity_origin(self):
+        for flag in (False, True):
+            frappe.conf = Bag(cloud_test_copy=flag, cloud_test_identity_origin=self.origin,
+                              cloud_oidc_issuer=self.issuer)
+            if flag:
+                self.assertEqual(sso.issuer(), self.issuer)
+            else:
+                with self.assertRaises(frappe.AuthenticationError):
+                    sso.issuer()
+
+    def test_isolated_logout_uses_the_test_issuer(self):
+        frappe.conf = Bag(cloud_test_copy=True, cloud_test_identity_origin=self.origin,
+                          cloud_oidc_issuer=self.issuer)
+        frappe.session = Bag(user='Guest')
+        class Redirected(Exception):
+            pass
+        with mock.patch.object(sso, 'browser_id', return_value=None), mock.patch.object(sso, 'cookie'), \
+             mock.patch.object(sso, 'redirect', side_effect=Redirected) as redirect:
+            with self.assertRaises(Redirected):
+                sso.finish_logout()
+            redirect.assert_called_once_with(self.issuer + 'end-session/')
+
+    def test_test_issuer_must_match_the_configured_origin(self):
+        frappe.conf = Bag(cloud_test_copy=True, cloud_test_identity_origin=self.origin,
+                          cloud_oidc_issuer='https://other.example.com/application/o/test-erpnext/')
+        with self.assertRaises(frappe.AuthenticationError):
+            sso.issuer()
+
+
 class MobileBindingTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

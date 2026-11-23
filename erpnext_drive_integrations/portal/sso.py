@@ -92,9 +92,23 @@ def browser_id():
     return digest(raw) if len(raw) == 64 else None
 
 
+def test_identity_origin():
+    if frappe.conf.get("cloud_test_copy") is not True:
+        return None
+    origin = frappe.conf.get("cloud_test_identity_origin")
+    if not origin:
+        return None
+    parsed = urlsplit(origin)
+    if (parsed.scheme != "https" or not parsed.hostname or parsed.netloc != parsed.hostname
+            or parsed.path or parsed.query or parsed.fragment):
+        raise frappe.AuthenticationError("Invalid test SSO origin")
+    return origin
+
+
 def issuer():
     value = frappe.conf.get("cloud_oidc_issuer")
-    if not value or not value.startswith(SSO + "/application/o/"):
+    origin = test_identity_origin() or SSO
+    if not value or not value.startswith(origin + "/application/o/"):
         raise frappe.AuthenticationError("SSO issuer configuration is missing")
     return value
 
@@ -364,6 +378,8 @@ def finish_logout():
     cookie(BROWSER_COOKIE, "", max_age=0)
     cookie(PENDING_COOKIE, "", httponly=False, max_age=0)
     cookie("cloud_logout_epoch", secrets.token_hex(16), httponly=False, max_age=604800)
+    if test_identity_origin():
+        redirect(issuer() + "end-session/")
     redirect("https://erp.example.com/outpost.goauthentik.io/sign_out")
 
 

@@ -62,3 +62,11 @@ The portal page keeps its name (title and the company name beside the logo). The
 Every logout ends on the company website: `sso.LANDING`, rendered from the private profile's `landing_url` (default `https://www.<domain>/`). Apps hand over to the ERP's `/login?logged_out=1` or `/signed-out`. Sign-in asks for the passkey once: `max_age=600` instead of `prompt=login` with `max_age=0`; the callback accepts an authentication from the last ten minutes. `tests/test_logout_and_signin.py` pins both.
 
 Signed-out hand-over (P56 follow-up): `/login?logged_out=1` and `/signed-out` forward to the landing page for top-level navigations only. A request made from an iframe (`Sec-Fetch-Dest: iframe`, for example a portal app frame that discovers the sign-out) gets the ERP's own frameable sign-out page, whose Sign in button opens in the whole tab, because the landing page refuses to be framed.
+
+
+### Isolated test identity
+
+A marked test copy can set `cloud_test_identity_origin` to its dedicated Authentik HTTPS origin. Its
+`cloud_oidc_issuer` and Authentik Social Login Key must use the same origin. The ERP logout then ends the
+session at that test issuer. The test provider can use Authentik’s session invalidation flow for account switching,
+and send back-channel logout tokens to the ERP test site.

@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 import yaml
 
+from prepare_ingress import test_identity_origin
+
 
 def native_site_settings(clients):
     """Native apps under test (`"native": true` with a fixed client_id) become the
@@ -60,6 +62,11 @@ def prepare(source,runtime,receipts,profile,output):
         'administrator_name':profile.get('administrator_name','Administrator'),
         'features':{'portal':True,'custom_hr':True,'onboarding':True},'refresh_ready':profile.get('refresh_ready') is True,
         'refresh_users':profile.get('refresh_users',[owner]),'site_settings':{'hov_respond_host':hosts['respond']}}
+    if origin := test_identity_origin(profile):
+        if not erp['issuer'].startswith(origin + '/application/o/'):
+            raise ValueError('The test ERP issuer does not belong to the isolated identity origin')
+        erp['sso_url'] = origin
+        erp['site_settings']['cloud_test_identity_origin'] = origin
     if profile.get('test_oauth_clients'):
         # P38: app OAuth clients blocked on production, re-enabled on test.
         erp['test_oauth_clients']=profile['test_oauth_clients']

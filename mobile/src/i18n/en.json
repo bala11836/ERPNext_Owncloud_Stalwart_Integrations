@@ -51,5 +51,10 @@
   "myHr.approved": "Approved: {amount}",
   "myHr.holidays": "Upcoming holidays",
   "myHr.payslips": "Payslips",
-  "myHr.netPay": "Net pay {amount}"
+  "myHr.netPay": "Net pay {amount}",
+  "today.waitingForYou": "Waiting for you",
+  "today.unread": "{count} unread notifications",
+  "today.refused": "{count} not accepted by ERPNext: open them to see why",
+  "today.nextHoliday": "Next holiday: {date} {name}",
+  "today.openLeaves": "{count} leave applications still open"
 }

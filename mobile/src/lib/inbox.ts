@@ -89,3 +89,14 @@ const subscribe = (l: () => void) => {
 export function useInbox() {
   return useSyncExternalStore(subscribe, () => state);
 }
+
+/** "3 Purchase Order · 2 Leave Application": what waits, by document type, most first. */
+export function byType(doctypes: string[], top = 3): string {
+  const counts = new Map<string, number>();
+  for (const d of doctypes) counts.set(d, (counts.get(d) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, top)
+    .map(([d, n]) => `${n} ${d}`)
+    .join(' · ');
+}

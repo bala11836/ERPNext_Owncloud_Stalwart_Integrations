@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Use the pinned Insights session API to establish frontend identity."""
+"""Apply local session and workbook navigation changes to pinned Insights."""
 
 from pathlib import Path
 import re
 import sys
 
 
-def patch(root):
-    file = Path(root) / "frontend/src2/session.ts"
+def patch_session(frontend):
+    file = frontend / "session.ts"
     source = file.read_text()
     marker = "// cloud-integrations: native verified session bootstrap"
     if marker in source:
@@ -38,6 +38,45 @@ def patch(root):
     if count != 1:
         raise ValueError("Pinned Insights cookie reader changed; review the adapter")
     file.write_text(source)
+
+
+def patch_workbook_navigation(frontend):
+    router = frontend / "router.ts"
+    routes = router.read_text()
+    marker = "// cloud-integrations: keep the Insights menu in workbooks"
+    workbook_route = "\t\tcomponent: () => import('./workbook/Workbook.vue'),\n"
+    if marker not in routes:
+        hidden_workbook_route = workbook_route + "\t\tmeta: { hideSidebar: true },\n"
+        if routes.count(hidden_workbook_route) != 1:
+            raise ValueError("Pinned Insights workbook route changed; review the adapter")
+        routes = routes.replace(hidden_workbook_route, workbook_route + f"\t\t{marker}\n")
+
+    sidebar = frontend / "components/AppSidebar.vue"
+    links = sidebar.read_text()
+    active_binding = ':isActive="link.to === \'WorkbookList\' && isWorkbookRoute"'
+    if active_binding not in links:
+        target = ':to="link.to"'
+        if links.count(target) != 1 or "const links = ref([" not in links:
+            raise ValueError("Pinned Insights sidebar changed; review the adapter")
+        links = links.replace(target, target + "\n\t\t\t\t\t\t" + active_binding)
+        links = links.replace(
+            "import { computed, ref } from 'vue'",
+            "import { computed, ref } from 'vue'\nimport { useRoute } from 'vue-router'",
+        )
+        links = links.replace(
+            "const links = ref([",
+            "const route = useRoute()\n"
+            "const isWorkbookRoute = computed(() => route.matched.some(record => record.name === 'Workbook'))\n\n"
+            "const links = ref([",
+        )
+    router.write_text(routes)
+    sidebar.write_text(links)
+
+
+def patch(root):
+    frontend = Path(root) / "frontend/src2"
+    patch_session(frontend)
+    patch_workbook_navigation(frontend)
 
 
 if __name__ == "__main__":

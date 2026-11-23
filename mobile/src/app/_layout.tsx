@@ -6,6 +6,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { AppLock } from '@/auth/lock';
 import { AuthProvider, useAuth } from '@/auth/session';
 import { clearErpCache } from '@/lib/erp';
+import { wipeOffline } from '@/lib/offline-store';
 import { ThemeProvider, useTheme } from '@/theme';
 
 export default function RootLayout() {
@@ -22,7 +23,10 @@ function Nav() {
   const t = useTheme();
   const { status } = useAuth();
   useEffect(() => {
-    if (status === 'signedOut') clearErpCache();
+    if (status !== 'signedOut') return;
+    clearErpCache();
+    // ponytail: wipes unsent items without asking; the warning with "send now" comes with the queue's screen.
+    wipeOffline().catch(() => {});
   }, [status]);
   if (status === 'loading') {
     return (

@@ -18,6 +18,13 @@ person may see or do, exactly as on the web.
   built from ERPNext's own DocType metadata.
 - **Sunlight first:** light theme with at least 7:1 contrast, large text and 48 dp touch targets, status shown
   with icon and text, Indian number format (1,50,000.00). Tablets get a list and detail side by side.
+- **Foundation (phase 0, no screens yet):** `src/lib/erp.ts` `callErp` checks every ERPNext answer against a
+  schema (zod) before use and turns errors into plain messages (`OfflineError`: try later; `ServerError`:
+  ERPNext refused, with its own reason). `src/lib/queue.ts` keeps offline requests in order with their client
+  ID, so a retry never duplicates; items older than one day are removed; everything is removed at sign-out.
+  `src/lib/offline-store.ts` stores the queue in an SQLCipher-encrypted database (key in the Keychain /
+  Keystore, this device only) on a development build, and **only in memory in Expo Go**: it writes nothing
+  unless encryption is confirmed. Screen texts come from `src/i18n/en.json`.
 
 Not built yet: field attendance with offline capture, approvals with push notifications, Live Activities.
 The Approvals and Inbox tabs are placeholders until then. **What comes next, and how it is built, is in
@@ -35,8 +42,11 @@ phases).
 Modules: `portal-sso` (native login binding and the Bearer gateway route `cloud-raven-native.yaml`),
 `onboarding` (the `bootstrap` API).
 
-Node 22 or later and pnpm 10. Expo Go for quick tests; a development build (EAS) for Face ID on iPhone,
-push notifications and store releases.
+Node 22 or later and pnpm 10. Expo Go for quick tests (iPhone); a development build for the encrypted offline
+store, Face ID on iPhone, push notifications and store releases. Android development build on a PC with
+Android Studio (JDK 17, Android SDK), installed on the phone over USB:
+`pnpm exec expo run:android --device` (the generated `android/` folder stays out of Git). `eas-cli` is pinned
+in `devDependencies`: run it as `pnpm exec eas`, never an unpinned `npx`.
 
 ## Reuse
 
@@ -75,7 +85,8 @@ the SDK.
 ## Tests
 
 - `tests/test_mobile_app.py` (offline, part of `python tools/run_unit_tests.py`)
-- In `mobile/`: `pnpm typecheck`, `pnpm lint`, `pnpm test` (sunlight contrast 7:1 and Indian number format)
+- In `mobile/`: `pnpm typecheck`, `pnpm lint`, `pnpm test` (sunlight contrast 7:1, Indian number format, and
+  the Jest suites in `src/**/__tests__/`: server client, offline queue, encrypted store, texts)
 
 Run these before calling any change done. Real-phone checks are separate: iPhone with and without Dynamic
 Island, a recent Android, an older budget Android, a tablet.

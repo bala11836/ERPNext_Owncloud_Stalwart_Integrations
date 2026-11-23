@@ -39,6 +39,12 @@
         {
           "faceIDPermission": "Face ID unlocks this app."
         }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
       ]
     ],
     "experiments": {

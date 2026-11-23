@@ -1,10 +1,30 @@
-import { usePreventScreenCapture } from 'expo-screen-capture';
+import {
+  disableAppSwitcherProtectionAsync,
+  enableAppSwitcherProtectionAsync,
+  usePreventScreenCapture,
+} from 'expo-screen-capture';
+import { useEffect, useId } from 'react';
+import { Platform } from 'react-native';
 
-/**
- * Build guide section 9: screenshots and the app-switcher preview are blocked while this is on screen
- * (payslips, approvals, My HR). Rendered as a component so screens can switch it on conditionally.
- */
+let protectedScreens = 0;
+
+/** Keep capture and app-switcher snapshots protected while sensitive screens are mounted. */
 export function NoScreenshots() {
-  usePreventScreenCapture();
+  usePreventScreenCapture(useId());
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    protectedScreens += 1;
+    if (protectedScreens === 1) {
+      void enableAppSwitcherProtectionAsync(1).catch(() => {});
+    }
+    return () => {
+      protectedScreens -= 1;
+      if (protectedScreens === 0) {
+        void disableAppSwitcherProtectionAsync().catch(() => {});
+      }
+    };
+  }, []);
+
   return null;
 }

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import { renderRouter, screen } from 'expo-router/testing-library';
 
 import MyHr from '@/app/(app)/my-hr';
@@ -23,7 +23,13 @@ const mockErp = fakeErp({
 const mockApiRef = { current: mockErp.api };
 jest.mock('@/auth/session', () => ({ SignedOutError: class SignedOutError extends Error {}, useApiRef: () => mockApiRef }));
 const mockPrevent = jest.fn();
-jest.mock('expo-screen-capture', () => ({ usePreventScreenCapture: () => mockPrevent() }));
+const mockEnableSwitcherProtection = jest.fn(async (_blur: number) => {});
+const mockDisableSwitcherProtection = jest.fn(async () => {});
+jest.mock('expo-screen-capture', () => ({
+  usePreventScreenCapture: () => mockPrevent(),
+  enableAppSwitcherProtectionAsync: (blur: number) => mockEnableSwitcherProtection(blur),
+  disableAppSwitcherProtectionAsync: () => mockDisableSwitcherProtection(),
+}));
 
 const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
 
@@ -44,8 +50,11 @@ describe('My HR screen', () => {
 
   it('blocks screenshots while it is open', async () => {
     mockPrevent.mockClear();
-    await renderRouter({ 'my-hr': MyHr, index: () => <Text>home</Text> }, { initialUrl: '/my-hr', wrapper });
+    const { unmount } = await renderRouter({ 'my-hr': MyHr, index: () => <Text>home</Text> }, { initialUrl: '/my-hr', wrapper });
     await screen.findByText('Worker A');
     expect(mockPrevent).toHaveBeenCalled();
+    if (Platform.OS === 'ios') expect(mockEnableSwitcherProtection).toHaveBeenCalledWith(1);
+    await unmount();
+    if (Platform.OS === 'ios') expect(mockDisableSwitcherProtection).toHaveBeenCalled();
   });
 });

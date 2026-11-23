@@ -41,5 +41,35 @@ class MobileAppTests(unittest.TestCase):
         self.assertTrue((MOBILE / 'pnpm-lock.yaml').is_file())
 
 
+class BuildGuideTests(unittest.TestCase):
+    """The build guide is what agents follow: it must exist, be the first thing they read, and name only server
+    methods that exist."""
+    GUIDE = (MOBILE / 'BUILD-GUIDE.md').read_text(encoding='utf-8')
+
+    def test_agents_read_the_guide_first_and_never_run_unpinned_eas(self):
+        agents = (MOBILE / 'AGENTS.md').read_text(encoding='utf-8')
+        self.assertIn('BUILD-GUIDE.md', agents.split('## ')[0], 'the pointer belongs at the top')
+        self.assertNotIn('or `npx eas-cli@latest <command>` otherwise', agents, 'the unpinned instruction is back')
+        self.assertIn('never `npx eas-cli@latest`', agents)
+        self.assertIn('pin `eas-cli`', self.GUIDE)
+
+    def test_field_methods_named_in_the_guide_exist(self):
+        # The HR part was renamed from field/ to custom_hr/ (PR #38); accept either while both PRs are open.
+        path = next(p for p in (ROOT / 'erpnext_drive_integrations/custom_hr/api.py', ROOT / 'erpnext_drive_integrations/field/api.py') if p.is_file())
+        api = path.read_text(encoding='utf-8')
+        whitelisted = set(re.findall(r'@frappe\.whitelist[^\n]*\n\s*def (\w+)\(', api))
+        section = self.GUIDE.split('whitelisted methods in `custom_hr/api.py` (formerly `field/api.py`; ')[1].split(').')[0]
+        named = set(re.findall(r'`(\w+)`', section))
+        self.assertGreaterEqual(len(named), 10)
+        self.assertEqual(named - whitelisted, set(), 'the guide names a field method that does not exist')
+
+    def test_guide_points_at_the_real_sign_in_and_workflow_code(self):
+        for path in ('erpnext_drive_integrations/portal/mobile.py', 'erpnext_drive_integrations/onboarding/api.py'):
+            self.assertTrue((ROOT / path).is_file(), path)
+        self.assertIn('frappe.model.workflow.apply_workflow', self.GUIDE)
+        self.assertIn('send_message_with_attachments', self.GUIDE)
+        self.assertIn('frappe.integrations.oauth2', (MOBILE / 'src/auth/session.tsx').read_text(encoding='utf-8'))
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

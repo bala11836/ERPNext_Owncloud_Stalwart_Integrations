@@ -14,8 +14,8 @@ sources. It does not require an image copied from an existing deployment:
 ```sh
 python3 tools/prepare_erp_image.py --output /srv/build/erp-core
 docker build --secret id=apps_json,src=/srv/build/erp-core/apps.json \
-  -t cloud-integrations/erp-core:16.56.0 /srv/build/erp-core
-docker build --build-arg ERP_BASE_IMAGE=cloud-integrations/erp-core:16.56.0 \
+  -t cloud-integrations/erp-core:16.60.2 /srv/build/erp-core
+docker build --build-arg ERP_BASE_IMAGE=cloud-integrations/erp-core:16.60.2 \
   -f deployment/erp/Dockerfile.addon -t cloud-integrations/erp:0.1.0 .
 ```
 

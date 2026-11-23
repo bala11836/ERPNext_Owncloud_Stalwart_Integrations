@@ -507,6 +507,9 @@ div {
                      person in the shared Default view, where their filters change what everyone sees. Now it
                      tries again every few seconds, a bounded number of times per sheet and visit, and a notice
                      tells the person when they are not in their own view (with a button back to it). */
+                /* Cap (P61 g): never add a view to a sheet that already has MAX_VIEWS views; the
+                   person then works in the sheet's normal view. An existing own view is still used. */
+                var MAX_VIEWS = 20;
                 var makePrivateViewKeeper = function (api, name, w) {
                     var MAX_TRIES = 10, RETRY_MS = 4000;
                     var busy = false, created = {}, tries = {}, pending = null;
@@ -534,6 +537,7 @@ div {
                                 later(RETRY_MS);
                                 return;
                             }
+                            if (list.length >= MAX_VIEWS) return;
                             busy = true;
                             api.asc_addNamedSheetView(null, true);
                             var ticks = 0;

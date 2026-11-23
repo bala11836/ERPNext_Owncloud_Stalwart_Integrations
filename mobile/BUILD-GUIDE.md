@@ -5,7 +5,8 @@ The one guide for building the native app in this module. **Order of authority:*
 Externally written plans (for example the "complete build guide" from another AI tool, 22 November 2026) are
 background only; where they differ from this guide, this guide wins (section 13 lists the known differences).
 
-Status: owner decisions of 22 November 2026; nothing in sections 6 to 12 is built yet unless marked **exists**.
+Status: owner decisions of 22 and 23 November 2026; nothing in sections 6 to 12 is built yet unless marked
+**exists** (server parts waiting in an open pull request are marked with its number).
 
 ## 1. Owner decisions (22 November 2026)
 
@@ -28,6 +29,28 @@ Status: owner decisions of 22 November 2026; nothing in sections 6 to 12 is buil
    bought). Android: signed APK.
 10. Oldest supported phones: Android 9 and later, iPhone 11 and later.
 11. **No crash reporting service** for now.
+
+**Attendance and HR (owner, 22 and 23 November 2026)**
+
+12. **Every attendance is approved by the site's approvers** (the project manager), team and self alike, one by
+    one or in bulk; HR Attendance is created only on approval. Nobody approves their own attendance or their
+    own submission.
+13. **Sites without approval** (for example head office): a site can be set so that an online check-in inside the
+    fence becomes HR Attendance at once. Offline check-ins there still go to an approver, so such a site keeps one.
+14. **Who checks in themselves:** employees with a login who are listed on a Field Site as **Staff**
+    (Supervisors and Approvers of that site may too). Workers recorded by a supervisor (no login) cannot.
+15. **Selfie on check-in** (self attendance); team captures keep their photo. Check-out: inside the fence, no
+    selfie, before the automatic check-out after 12 hours.
+16. **Verified time:** online, the server's time. Offline, the phone's clock corrected by the difference to the
+    server measured at the last connection; accepted for at most **1 day**, never in the future, and marked
+    **"Captured offline"** for the approver. Later, with the development build, a native clock that keeps
+    counting while the phone sleeps.
+17. **One attendance path:** the app never uses Frappe HR's own check-in (Employee Checkin). On the server it is
+    blocked by default, the administrator's choice in HR Settings ("Block Frappe HR check-ins", with the roles
+    that may still create them, for example an attendance machine).
+18. **Push without polling:** native push through **Expo's push service**; Frappe's push relay serves only its
+    own HR web app, not this app.
+19. All HR server work lives in `erpnext_drive_integrations` (part `custom_hr`), with **no new desk icon**.
 
 ## 2. Hard rules
 
@@ -108,6 +131,9 @@ Server (`erpnext_drive_integrations`):
   Field Site Member, Field Site Asset; whitelisted methods in `custom_hr/api.py` (formerly `field/api.py`; `bootstrap`, `team`, `entry`,
   `approvals`, `save_capture`, `submit`, `review`, `move`, `setup_options`, `create_shifts`, `save_site`,
   `unassigned`, `enroll`, `my_records`).
+- **HR additions (PR #39, builds on the `custom_hr` rename in PR #38; usable once both are merged):** self check-in
+  and check-out, offline captures with corrected time, bulk approval, sites without approval, the admin's block
+  of Frappe HR check-ins. The calls the app uses are in section 7a.
 - Web push for the browser portal (`portal/push.py`, device registry on the server); native push does not exist
   yet.
 - Raven is installed on the same ERP site.
@@ -130,6 +156,8 @@ Server (`erpnext_drive_integrations`):
 - **Approvals:** ERPNext's `frappe.model.workflow.apply_workflow` (never write `workflow_state` directly); the
   Inbox lists the person's open Workflow Actions and notifications. Face ID before Approve, Reject, Submit and
   Pay.
+- **Push:** the server sends through Expo's push service to the Expo push token each phone registers (section 7,
+  "Mobile Device"); texts stay generic (section 6). No polling for new items.
 - **Native features** (Live Activities, Android Live Updates): config plugins and Expo modules only; never edit
   generated `ios/` or `android/` folders. They need a development build, not Expo Go.
 
@@ -141,7 +169,8 @@ Server (`erpnext_drive_integrations`):
 - **Departments and roles** (17 project roles): Civil (supervisor → engineer → PM), Survey, Billing & Planning,
   Mechanical (supervisor → engineer → PM), Stores (executive → incharge → PM; fuel logged by a designated
   executive), Accounts (cashier), HR (executive), Field Attendance (supervisor marks team), Self Attendance
-  (everyone; PM approves in bulk), Canteen, Safety (incl. permits to work), Quality, Plants (equipment),
+  (employees with a login at their site, selfie and fence; PM approves, singly or in bulk; head office can be set to
+  need no approval), Canteen, Safety (incl. permits to work), Quality, Plants (equipment),
   Administration (security supervisor: gate passes, visitors, material exit). Head office: functional managers,
   procurement, finance, HR, VP, CFO, CEO/MD. Role names map to ERPNext roles; the mapping lives on the server,
   not hard-coded in the app.
@@ -154,8 +183,9 @@ Server (`erpnext_drive_integrations`):
 - **My HR:** own attendance, leave balance and applications, expense claims (with photo), payslips.
 - **Menu:** search, the person's modules, settings (Outdoor Mode, language, app lock, notification categories,
   version, sign out), help.
-- **PM bulk approval:** list with select all and "exceptions only", photo, location and time per entry, one Face ID
-  for the selection.
+- **PM bulk approval:** list with select all and "exceptions only" (for example captured offline, poor GPS
+  accuracy), photo, location, time and the "Captured offline" mark per entry, one Face ID for the selection; the
+  server reviews up to 200 entries per call and reports each one.
 - **Push texts** (generic only): "New approval waiting", "Attendance returned for correction", "Permit expiring in
   1 hour", "3 items waiting to send", "Leave application updated". Tap → app lock → the record. An explanation
   screen before the system permission prompt; per-category switches.
@@ -170,8 +200,8 @@ Nothing is stored only in the app: every record lives in ERPNext, so the web sho
 | Feature | Received by | Stored in | Photos | Retries / offline |
 |---|---|---|---|---|
 | Incident → Raven | Raven `raven.api.raven_message.send_message_with_attachments` (files uploaded first) | Raven messages in the ERP database, one per chosen channel; Raven checks membership | ERP files, private | Raven's `client_id` is its idempotency key (one per channel) |
-| Supervisor attendance | `custom_hr/api.py` (`save_capture`, `submit`, `review`, ...) | Field Attendance Entry (**exists**) | attached | `request_id` (**exists**) |
-| Self check-in | new whitelisted method in `custom_hr/`: checks the fence of the person's Field Site on the server, refuses outside or with poor accuracy | ERPNext Employee Checkin (verify its location fields in the pinned HRMS) or Field Attendance Entry | optional | client ID |
+| Supervisor attendance | `custom_hr/api.py` (`save_capture`, `submit`, `review`, `review_many`, ...) | Field Attendance Entry, entry type Team (**exists**; offline fields in PR #39) | attached | `request_id` (**exists**) |
+| Self check-in and check-out | `custom_hr/api.py` `self_check_in`, `self_check_out` (PR #39): fence and accuracy checked by the server, refused outside | Field Attendance Entry, entry type Self (not Employee Checkin, decision 17) | selfie required on check-in, private ERP file | `request_id`: a retry returns the same entry; one check-in per person and shift |
 | Leave, expense claim, payslip | standard REST / methods as the person | Leave Application, Expense Claim, Salary Slip | attached | client ID |
 | Stores: request, receipt, issue, count | standard | Material Request, Purchase Receipt, Stock Entry, Stock Reconciliation | attached | client ID |
 | Equipment breakdown, maintenance | standard | Asset Repair, Asset Maintenance Log | attached | client ID |
@@ -180,12 +210,30 @@ Nothing is stored only in the app: every record lives in ERPNext, so the web sho
 | Daily progress report, hindrance, permit to work, toolbox talk, gate pass, visitor log, material exit, canteen meals, survey measurement | new whitelisted methods | **new DocTypes in `erpnext_drive_integrations`**, each its own P item, with an ERPNext workflow | attached | client ID |
 | Joint measurement, RA bill | later (large module) | new DocTypes | | |
 | Any offline create | the queue sends when online | a small server-side log of client IDs → created document, so a retry returns the same record | | |
-| Push and Live Activity tokens | new whitelisted method | a "Mobile Device" record per phone (person, platform, tokens, last seen, disabled); disabling it revokes tokens and makes the phone wipe itself | | |
+| Push and Live Activity tokens | new whitelisted method | a "Mobile Device" record per phone (person, platform, Expo push token, Live Activity tokens, last seen, disabled); disabling it revokes tokens and makes the phone wipe itself | | |
 | Today cards, Inbox | server methods reading existing data | nothing new | | |
 | Outdoor Mode, lock time, last tab | | the phone only | | |
 
-The standard DocTypes named above are candidates: confirm each against the pinned ERPNext and HRMS before
-designing on it, and prefer them over new DocTypes.
+The standard DocTypes named above are candidates: confirm each against the pinned ERPNext and HRMS (16.60 once
+the upgrade in PR #40 is merged) before designing on it, and prefer them over new DocTypes.
+
+### 7a. Attendance calls (`erpnext_drive_integrations.custom_hr.api`, PR #39)
+
+Writes are POST only; every call runs as the signed-in person and the server applies every rule again.
+
+| Call | Use | Sends | Returns |
+|---|---|---|---|
+| `bootstrap` | start of the attendance screens | | the person, their sites (their role there, shifts), `check_in_sites` (fence, accuracy limit, shifts), `employee`, `server_now`, `version` |
+| `self_check_in` | own check-in | `payload`: `site`, `shift`, `request_id`, `photo` (selfie as a `data:image/jpeg;base64,...` URL, under 3 MB), `latitude`, `longitude`, `accuracy_m`, `gps_captured_at`, optional `remarks`; offline also `offline`, `device_captured_at`, `clock_offset_s` | `name`, `state` (Submitted, or Approved at a site without approval), `check_in_time`, `captured_offline` |
+| `self_check_out` | own check-out | `payload`: `name`, location fields as above (no photo); offline fields as above | `name`, `check_out_time`, `checkout_method` |
+| `my_attendance` | My HR: own check-ins | | own self check-ins, newest first (up to 100): site, shift, date, state, times, offline mark, approver's remarks |
+| `save_capture`, `submit` | supervisor captures (team) | as today, plus the offline fields | |
+| `approvals` | the approver's list for a site | `site`, optional `shift` | entries, now with entry type, offline mark, check-in time, accuracy |
+| `review`, `review_many` | approve or return one, or up to 200 | `name` or `names`, `decision` (Approve or Return), `remarks` (required for Return) | per entry: `ok`, `state`, `attendance` or `error` |
+
+`clock_offset_s` is the server's time minus the phone's, measured from `server_now` when last online. The GPS fix
+must be at most 5 minutes older than the capture.
+
 
 **Incident banners:** Raven stores message text as HTML and cleans it. Try on the test site whether colour
 survives; otherwise use a severity emoji and a bold first line ("🔴 INJURY · Site 1 · 14:30"), then the
@@ -198,7 +246,9 @@ photos. The first line names kind and site only (it appears on lock screens).
 - A server change since the local copy is shown to the person as a conflict, never overwritten.
 - Local data older than **1 day** is removed; everything is removed at sign-out (with a warning and "send now" if
   items are waiting) and when the server reports the account or device disabled.
-- The phone's clock is not trusted: the server stamps times; location comes with its accuracy; on Android, mock
+- The phone's clock is not trusted on its own: online, the server stamps the time; offline, the app sends its
+  clock reading and the measured difference to the server (section 7a), the server accepts it for at most 1 day
+  and marks the entry "Captured offline". Location comes with its accuracy and its own time; on Android, mock
   locations are detected and rejected.
 
 ## 9. Security baseline (OWASP MASVS, level 1 plus the parts below)
@@ -224,10 +274,11 @@ root/jailbreak detection: decide at the security review before the first release
    checks, the encrypted store and queue skeleton, `en.json`, pinned `eas-cli`; no new screens.
 1. **Shell:** tabs Today, Inbox, My HR, Menu; side rail on tablets; project selector (assigned projects only);
    settings; the generic form engine (web parity).
-2. **Server groundwork:** Today cards and Inbox methods, the Mobile Device record and remote wipe, the client-ID
-   log.
-3. **Pilot, attendance:** supervisor marking (existing field APIs), self check-in inside the fence, PM bulk
-   approval with Face ID, offline sending; real devices.
+2. **Server groundwork:** the Mobile Device record with the Expo push sender on ERPNext's existing notifications
+   and workflow steps (next server item), remote wipe, Today cards and Inbox methods, the client-ID log.
+3. **Pilot, attendance** (server side in PR #39): supervisor marking, self check-in with selfie inside the fence
+   and check-out, offline captures with corrected time, PM bulk approval with Face ID, sites without approval;
+   real devices. Later step: the native sleep-proof clock with the development build.
 4. **Incident → Raven** (banner check on the test site first).
 5. **Push, then Live Activities and Android Live Updates** (needs the development build and, for iPhones, the Apple
    account).
@@ -250,5 +301,5 @@ authentik tokens sent to ERPNext (section 4 is how sign-in works); `bench new-ap
 DocTypes in the ERPNext UI (section 2); new Field Site / Field Attendance Entry / Batch (they exist, section 4);
 its own Quality Inspection or NCR (standard DocTypes exist); `raven.api.send_message` (section 7); approve by
 writing `workflow_state` (section 5); WatermelonDB (not encrypted; section 5); a fence warning only (refused,
-section 1); Telugu and Hindi now (English only); `bench list-doctypes`, `show-workflow`, `show-permissions` and
+section 1); Frappe HR's Employee Checkin for self check-in (decision 17); Telugu and Hindi now (English only); `bench list-doctypes`, `show-workflow`, `show-permissions` and
 API-key logins for checks (they do not exist or do not apply; use the tests and the test site).

@@ -580,3 +580,12 @@ discussion that led to a decision is not repeated here.
   `tools/editor_safety.py`, `integrations/onlyoffice/` (runbook, systemd and settings examples),
   `deployment/stacks/editor-onlyoffice.compose.json`, `docs/production-moves.md`, `tests/test_editor_safety.py`.
 
+
+
+## Engineer verification for field attendance
+
+Configure the reporting relationship on the Field Site. An assigned engineer verifies a supervisor’s submission.
+The engineer can also capture for workers assigned to that supervisor for the shift. These submissions are verified
+automatically and retain the engineer’s identity and the applicable supervisor. Both paths require final approval by
+a separate project manager before creating official HR Attendance. Teams without an engineer and employees who
+check themselves in keep their existing workflows.

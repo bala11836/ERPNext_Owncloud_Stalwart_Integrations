@@ -1,5 +1,5 @@
 import frappe
-from erpnext_drive_integrations.custom_hr.access import is_manager, site_ids, entry_access
+from erpnext_drive_integrations.custom_hr.access import is_manager, site_ids, entry_access, supervised_users
 
 
 def _site_clause(doctype, user, role=None):
@@ -18,7 +18,17 @@ def entry_query(user=None):
     own=frappe.db.escape(user)
     sup=_site_clause('Field Attendance Entry',user,'Supervisor') or '1=1'
     app=_site_clause('Field Attendance Entry',user,'Approver') or '1=1'
-    return f"((`tabField Attendance Entry`.captured_by={own} AND ({sup})) OR (`tabField Attendance Entry`.state!='Draft' AND ({app})))"
+    verifier = _site_clause('Field Attendance Entry', user, 'Verifier')
+    entry = '`tabField Attendance Entry`'
+    clauses = [f"({entry}.captured_by={own} AND (({sup}) OR ({verifier})))",
+               f"({entry}.state!='Draft' AND ({app}))"]
+    for site in site_ids(user, 'Verifier'):
+        supervisors = supervised_users(site, user)
+        if supervisors:
+            scoped = ','.join(frappe.db.escape(supervisor) for supervisor in supervisors)
+            clauses.append(f"({entry}.state!='Draft' AND {entry}.site={frappe.db.escape(site)}"
+                           f" AND {entry}.responsible_supervisor IN ({scoped}))")
+    return '(' + ' OR '.join(clauses) + ')'
 
 
 def assignment_query(user=None):return _site_clause('Field Worker Assignment',user or frappe.session.user)

@@ -6,9 +6,17 @@
   "field_order": [
     "user",
     "team_role",
-    "enabled"
+    "enabled",
+    "verifier"
   ],
   "fields": [
+  {
+   "fieldname": "verifier",
+   "label": "Attendance Engineer",
+   "fieldtype": "Link",
+   "options": "User",
+   "depends_on": "eval:doc.team_role=='Supervisor'"
+  },
     {
       "fieldname": "user",
       "label": "User",
@@ -21,7 +29,7 @@
       "label": "Team role",
       "fieldtype": "Select",
       "reqd": 1,
-      "options": "Supervisor\nApprover\nStaff",
+      "options": "Supervisor\nApprover\nStaff\nVerifier",
       "description": "Supervisor: records their team. Approver: approves the site's attendance (the project manager). Staff: an employee with a login who checks in themselves at this site."
     },
     {

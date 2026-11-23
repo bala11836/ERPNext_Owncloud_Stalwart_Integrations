@@ -181,6 +181,109 @@ def run():
         frappe.set_user('Administrator')
         frappe.db.set_single_value('HR Settings','custom_block_frappe_hr_checkin',0);frappe.clear_document_cache('HR Settings','HR Settings')
         frappe.set_user(staff);guards.block_frappe_hr_checkin(log);check('Frappe HR check-in is open once the admin unticks the box',True)
+        # Same-site hierarchy with a distinct final approver.
+        frappe.set_user('Administrator')
+        engineer = user('engineer', ['Field Attendance Verifier', 'Field Attendance Approver'])
+        peer = user('peer-engineer', ['Field Attendance Verifier'])
+        site.reload()
+        site.approval_required = 1
+        site.append('members', dict(user=engineer, team_role='Verifier', enabled=1))
+        site.append('members', dict(user=engineer, team_role='Approver', enabled=1))
+        site.append('members', dict(user=peer, team_role='Verifier', enabled=1))
+        for member in site.members:
+            if member.user == b and member.team_role == 'Supervisor':
+                member.verifier = engineer
+        site.save(ignore_permissions=True)
+        manual = worker('manual verification', custom_field_initial_supervisor=b)
+        automatic = worker('engineer capture', custom_field_initial_supervisor=c)
+
+        def absent(employee, **kwargs):
+            values = payload(employee.name)
+            values.update(attendance_status='Absent', work_mode='Not applicable', photo=None)
+            values.update(kwargs)
+            return values
+
+        frappe.set_user(boss)
+        service.transfer([automatic.name], site.name, b, 'This shift', day.name)
+        frappe.set_user(engineer)
+        check('engineer roster uses the effective shift supervisor',
+              {r.employee for r in api.team(site.name, day.name)['workers'] if r.can_capture}
+              == {r.employee for r in api.team(site.name, day.name)['workers'] if r.supervisor == b})
+        denied('engineer cannot capture outside the assigned team',
+               lambda: service.capture(absent(automatic, shift=night.name)))
+        denied('engineer cannot capture for an unrelated supervisor',
+               lambda: service.capture(absent(w)))
+        frappe.set_user(b)
+        buf = io.BytesIO()
+        Image.new('RGB', (160, 160), tuple(bytes.fromhex(token[2:8]))).save(buf, 'JPEG')
+        evidence_payload = payload(manual.name)
+        evidence_payload['photo'] = 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
+        evidence = service.capture(evidence_payload)
+        name = evidence['name']
+        photo_url = frappe.db.get_value('Field Attendance Entry', name, 'photo')
+        files.append(photo_url)
+        check('supervisor submission requires verification',
+              service.submit_entry(name)['state'] == 'Pending Verification')
+        denied('supervisor cannot verify own capture', lambda: service.verify_entry(name, 'Verify'))
+        frappe.set_user(boss)
+        check('unverified evidence is excluded from approval queue', name not in [r.name for r in api.approvals(site.name)])
+        denied('project manager cannot approve before verification', lambda: service.review_entry(name, 'Approve'))
+        frappe.set_user(peer)
+        check('unassigned engineer has no verification queue', not api.verifications(site.name))
+        denied('unassigned engineer cannot read evidence', lambda: api.entry(name))
+        check('unassigned engineer cannot view the photo',
+              not frappe.get_doc('File', {'file_url': photo_url}).has_permission('read'))
+        denied('unassigned engineer cannot verify evidence', lambda: service.verify_entry(name, 'Verify'))
+        frappe.set_user(engineer)
+        check('assigned engineer can see the pending evidence', api.entry(name)['can_verify'])
+        check('assigned engineer can view the private photo',
+              frappe.get_doc('File', {'file_url': photo_url}).has_permission('read'))
+        check('assigned engineer sees the pending queue', [r.name for r in api.verifications(site.name)] == [name])
+        check('engineer can return evidence for correction', service.verify_entry(name, 'Return', 'Check remarks')['state'] == 'Returned')
+        frappe.set_user(b)
+        corrected = payload(manual.name)
+        corrected.update(name=name, revision=frappe.db.get_value('Field Attendance Entry', name, 'revision'),
+                         photo=None, remarks='Reviewed test remarks')
+        service.capture(corrected)
+        service.submit_entry(name)
+        frappe.set_user(engineer)
+        check('manual verification routes to final approval', service.verify_entry(name, 'Verify')['state'] == 'Verified')
+        check('verification retry is idempotent', service.verify_entry(name, 'Verify')['state'] == 'Verified')
+        check('manual verification records engineer and time', all([
+            api.entry(name)['verified_by'] == engineer, api.entry(name)['verification_method'] == 'Manual',
+            api.entry(name)['verified_at'],
+        ]))
+        denied('verifier cannot approve even with both roles', lambda: service.review_entry(name, 'Approve'))
+        check('verified status creates no official attendance', not frappe.db.exists('Attendance', {'custom_field_entry': name}))
+        frappe.set_user('Administrator')
+        denied('administrator without site membership cannot approve verified entries',
+               lambda: service.review_entry(name, 'Approve'))
+        frappe.set_user(boss)
+        check('approval queue includes manually verified evidence', name in [r.name for r in api.approvals(site.name) if r.can_review])
+        final = service.review_entry(name, 'Approve')
+        check('only final approval creates official attendance', frappe.db.get_value('Attendance', final['attendance'], 'docstatus') == 1)
+
+        frappe.set_user(engineer)
+        then = now_datetime() - timedelta(minutes=1)
+        offline = absent(automatic, offline=1, device_captured_at=str(then), clock_offset_s=0, gps_captured_at=str(then))
+        name = service.capture(offline)['name']
+        check('engineer capture is auto-verified on submit', service.submit_entry(name)['state'] == 'Verified')
+        check('engineer submit retry stays verified', service.submit_entry(name)['state'] == 'Verified')
+        doc = frappe.get_doc('Field Attendance Entry', name)
+        check('automatic verification identifies the recorder, assigned supervisor and verifier',
+              (doc.captured_by, doc.responsible_supervisor, doc.verified_by, doc.verification_method)
+              == (engineer, b, engineer, 'Engineer capture'))
+        check('photo-free offline capture preserves date, GPS and offline marker',
+              doc.captured_offline == 1 and doc.revision == 1
+              and doc.gps_captured_at and doc.device_captured_at)
+        check('automatic verification records time and leaves official attendance for the approver',
+              doc.verified_at and not doc.attendance)
+        check('automatically verified entry skips verification queue', not api.verifications(site.name))
+        denied('engineer cannot approve own recording', lambda: service.review_entry(name, 'Approve'))
+        frappe.set_user(boss)
+        check('approval queue includes automatically verified evidence', name in [r.name for r in api.approvals(site.name) if r.can_review])
+        final = service.review_entry(name, 'Approve')
+        check('project manager approves an engineer capture', frappe.db.get_value('Attendance', final['attendance'], 'docstatus') == 1)
         print('FIELD_INTEGRATION_PASS',len(checks),checks)
     finally:
         frappe.db.rollback()

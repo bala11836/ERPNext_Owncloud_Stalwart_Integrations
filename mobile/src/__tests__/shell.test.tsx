@@ -8,9 +8,12 @@ import Today from '@/app/(app)/index';
 import { memoryStore } from '@/lib/queue';
 import { ThemeProvider } from '@/theme';
 
+// One ref for every render, as the real useApiRef gives (a new object each render would loop the effects).
+const mockApiRef = { current: async () => { throw new TypeError('offline in tests'); } };
 jest.mock('@/auth/session', () => ({
   SignedOutError: class SignedOutError extends Error {},
   useAuth: () => ({ user: { name: 'Worker A', email: 'a@example.com', roles: [] }, api: jest.fn() }),
+  useApiRef: () => mockApiRef,
 }));
 const mockStore = memoryStore();
 jest.mock('@/lib/offline-store', () => ({ offlineStore: async () => mockStore, offlineStorageKind: async () => 'encrypted' }));

@@ -7,6 +7,7 @@ import { AppLock } from '@/auth/lock';
 import { AuthProvider, useAuth } from '@/auth/session';
 import { t as text } from '@/i18n';
 import { clearErpCache } from '@/lib/erp';
+import { clearInbox } from '@/lib/inbox';
 import { wipeOffline } from '@/lib/offline-store';
 import { ThemeProvider, useTheme } from '@/theme';
 
@@ -26,6 +27,7 @@ function Nav() {
   useEffect(() => {
     if (status !== 'signedOut') return;
     clearErpCache();
+    clearInbox();
     // ponytail: wipes unsent items without asking; the warning with "send now" comes with the queue's screen.
     wipeOffline().catch(() => {});
   }, [status]);

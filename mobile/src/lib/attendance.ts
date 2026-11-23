@@ -58,8 +58,21 @@ export const Mine = z.array(
     check_out_time: z.string().nullish(),
   }),
 );
-const Team = z.object({ total: z.number(), missing: z.number() });
-const Waiting = z.array(z.object({ name: z.string(), can_review: z.boolean() }));
+const Team = z.object({
+  total: z.number(),
+  missing: z.number(),
+  workers: z.array(z.object({ state: z.string(), can_edit: z.boolean().nullish(), entry: z.string().nullish() })).default([]),
+});
+const Waiting = z.array(
+  z.object({ name: z.string(), captured_offline: z.coerce.number().nullish(), attendance_status: z.string().nullish(), can_review: z.boolean().nullish() }),
+);
+
+/** How many workers are in each state (Not recorded, Draft, Submitted, Returned, Approved). */
+export function stateCounts(workers: { state: string }[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const w of workers) counts[w.state] = (counts[w.state] ?? 0) + 1;
+  return counts;
+}
 
 /** The site's shift running at `now` ("HH:MM", phone time; for choosing a card only, never for a record). */
 export function currentShift<S extends { start: string; end: string }>(shifts: S[], now: string): S | null {
@@ -70,8 +83,18 @@ export function currentShift<S extends { start: string; end: string }>(shifts: S
 export type TodayAttendance = {
   /** Only for people who check in themselves (listed as Staff on a site). */
   self: { sites: string[]; today: z.infer<typeof Mine>[number] | null } | null;
-  teams: { siteId: string; site: string; shiftId: string; shift: string; marked: number; total: number }[];
-  approvals: { siteId: string; site: string; count: number }[];
+  teams: {
+    siteId: string;
+    site: string;
+    shiftId: string;
+    shift: string;
+    marked: number;
+    total: number;
+    counts: Record<string, number>;
+    /** Own drafts still to submit for approval. */
+    drafts: number;
+  }[];
+  approvals: { siteId: string; site: string; count: number; exceptions: number; reviewable: number }[];
 };
 
 /**
@@ -104,6 +127,8 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
               shift: shift.label ?? shift.name,
               marked: team.total - team.missing,
               total: team.total,
+              counts: stateCounts(team.workers),
+              drafts: team.workers.filter((w) => w.state === 'Draft' && w.can_edit && w.entry).length,
             };
           } catch {
             return null;
@@ -115,8 +140,14 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
         .filter((s) => s.approver)
         .map(async (s) => {
           try {
-            const pending = await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name });
-            return { siteId: s.name, site: s.label, count: pending.filter((entry) => entry.can_review).length };
+            const list = await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name });
+            return {
+              siteId: s.name,
+              site: s.label,
+              count: list.length,
+              exceptions: list.filter((e) => !!e.captured_offline || e.attendance_status === 'Absent').length,
+              reviewable: list.filter((e) => e.can_review !== false).length,
+            };
           } catch {
             return null;
           }

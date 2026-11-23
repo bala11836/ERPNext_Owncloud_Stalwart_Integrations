@@ -211,6 +211,21 @@ export function Status({ kind, label }: { kind: StatusKind; label: string }) {
   );
 }
 
+/** A progress bar (always shown with its numbers in words next to it; never the only information). */
+export function Progress({ done, total, label }: { done: number; total: number; label: string }) {
+  const t = useTheme();
+  const share = total > 0 ? Math.min(1, done / total) : 0;
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+      accessibilityValue={{ min: 0, max: total, now: done }}
+      style={{ height: 14, borderRadius: 7, borderWidth: t.border, borderColor: t.c.border, overflow: 'hidden' }}>
+      <View style={{ width: `${share * 100}%`, height: '100%', backgroundColor: t.c.primary }} />
+    </View>
+  );
+}
+
 /** A Today card: icon, title and detail in words, an optional count, tappable when it leads somewhere. */
 export function Card({
   icon,

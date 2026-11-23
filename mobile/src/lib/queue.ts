@@ -47,7 +47,7 @@ export function memoryStore(): QueueStore {
 type Send = (item: QueueItem) => Promise<unknown>;
 
 export function createQueue(store: QueueStore, send: Send, now: () => number = Date.now) {
-  let flushing: Promise<{ sent: number; failed: number }> | null = null;
+  let flushing: Promise<{ sent: number; failed: number; stopped: boolean }> | null = null;
 
   const ordered = async () => (await store.all()).sort((a, b) => a.createdAt - b.createdAt);
 
@@ -62,6 +62,7 @@ export function createQueue(store: QueueStore, send: Send, now: () => number = D
     await purge();
     let sent = 0;
     let failed = 0;
+    let stopped = false;
     for (const item of await ordered()) {
       if (item.state !== 'waiting') continue;
       try {
@@ -78,10 +79,11 @@ export function createQueue(store: QueueStore, send: Send, now: () => number = D
         // Offline, a server or rate problem, or anything unexpected (for example signed out): the item keeps
         // waiting, and nothing after it is sent before it.
         await store.put({ ...item, attempts: item.attempts + 1 });
+        stopped = true; // no connection (or server trouble): the rest waits too
         break;
       }
     }
-    return { sent, failed };
+    return { sent, failed, stopped };
   };
 
   return {

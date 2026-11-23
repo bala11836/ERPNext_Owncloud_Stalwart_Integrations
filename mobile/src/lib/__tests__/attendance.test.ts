@@ -36,13 +36,29 @@ describe('current shift', () => {
 describe('Today attendance', () => {
   it('own check-in, team marking for the current shift, and what waits for approval', async () => {
     const { api, calls } = server();
-    expect(await loadTodayAttendance(api, '10:00', '2026-11-23')).toEqual({
+    expect(await loadTodayAttendance(api, '10:00', '2026-11-23')).toMatchObject({
       self: { sites: ['Site 1'], today: expect.objectContaining({ state: 'Submitted', check_in_time: '2026-11-23 08:02:41' }) },
       teams: [{ siteId: 'S1', site: 'Site 1', shiftId: 'Site 1 Day', shift: 'Day', marked: 12, total: 15, counts: {}, drafts: 0 }],
       approvals: [{ siteId: 'S1', site: 'Site 1', count: 2, exceptions: 0, reviewable: 2 }],
     });
     expect(calls.filter((c) => c.method === `${HR_API}.team`).map((c) => c.args)).toEqual([{ site: 'S1', shift: 'Site 1 Day' }]);
     expect(calls.some((c) => c.args.site === 'S2')).toBe(false); // no role at Site 2: nothing asked
+  });
+
+  it("follows the header's choice: the chosen site and shift only", async () => {
+    const { api, calls } = server();
+    const data = await loadTodayAttendance(api, '10:00', '2026-11-23', { site: 'S1', shift: 'Site 1 Night' });
+    expect(calls.filter((c) => c.method === `${HR_API}.team`).map((c) => c.args)).toEqual([{ site: 'S1', shift: 'Site 1 Night' }]);
+    expect(data?.place?.site).toBe('S1');
+    expect(data?.shift?.name).toBe('Site 1 Night');
+    expect(data?.places.map((p) => [p.site, p.supervisor, p.approver, p.staff])).toEqual([
+      ['S1', true, true, true],
+      ['S2', false, false, false],
+    ]);
+    // a site where the person has no role there gives no cards
+    const s2 = await loadTodayAttendance(server().api, '10:00', '2026-11-23', { site: 'S2', shift: null });
+    expect(s2?.teams).toEqual([]);
+    expect(s2?.approvals).toEqual([]);
   });
 
   it('no check-in yet today', async () => {

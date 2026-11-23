@@ -140,16 +140,20 @@ export function Button({
   icon,
   secondary,
   disabled,
+  tone = 'primary',
 }: {
   label: string;
   onPress: () => void;
   icon?: IconName;
   secondary?: boolean;
+  /** Filled colour: primary (blue), ok (green, approve), danger (red, return). */
+  tone?: 'primary' | 'ok' | 'danger';
   /** While an action is being sent: the button cannot be pressed again. */
   disabled?: boolean;
 }) {
   const t = useTheme();
-  const fg = secondary ? t.c.primary : t.c.onPrimary;
+  const fill = t.c[tone];
+  const fg = secondary ? fill : t.c.onPrimary;
   return (
     <Pressable
       accessibilityRole="button"
@@ -165,8 +169,8 @@ export function Button({
         paddingHorizontal: 20,
         borderRadius: 10,
         borderWidth: t.border,
-        borderColor: t.c.primary,
-        backgroundColor: secondary ? t.c.bg : t.c.primary,
+        borderColor: fill,
+        backgroundColor: secondary ? t.c.bg : fill,
         opacity: pressed && !disabled ? 0.75 : 1, // no dimming: text keeps its 7:1 contrast
       })}>
       {icon && <Icon name={icon} size={t.font(24)} color={fg} />}
@@ -209,6 +213,39 @@ export function Status({ kind, label }: { kind: StatusKind; label: string }) {
       <Icon name={s.icon} size={t.font(22)} color={t.c[s.color]} />
       <T variant="small" color={s.color} style={{ fontWeight: '700' }}>
         {label}
+      </T>
+    </View>
+  );
+}
+
+/** A white card on the grey page (owner's reference design); `accent` adds a coloured left edge. */
+export function Panel({ accent, children }: { accent?: 'primary' | 'ok' | 'warn' | 'danger'; children: ReactNode }) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        gap: 10,
+        padding: 16,
+        borderRadius: 16,
+        backgroundColor: t.c.bg,
+        borderWidth: 1,
+        borderColor: t.c.line,
+        borderLeftWidth: accent ? 6 : 1,
+        borderLeftColor: accent ? t.c[accent] : t.c.line,
+      }}>
+      {children}
+    </View>
+  );
+}
+
+/** A small label in capitals on a tinted strip, as the design's card headings. */
+export function Label({ text: label, tone = 'primary' }: { text: string; tone?: 'primary' | 'ok' | 'warn' | 'danger' }) {
+  const t = useTheme();
+  const tint = { primary: t.c.infoTint, ok: t.c.okTint, warn: t.c.warnTint, danger: t.c.dangerTint }[tone];
+  return (
+    <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, backgroundColor: tint }}>
+      <T variant="small" color={tone} style={{ fontWeight: '800', letterSpacing: 0.5 }}>
+        {label.toUpperCase()}
       </T>
     </View>
   );

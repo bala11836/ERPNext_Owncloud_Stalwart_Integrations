@@ -50,7 +50,8 @@ export default function AppTabs() {
           : { backgroundColor: t.c.bg, borderTopWidth: t.border, borderTopColor: t.c.border },
         sceneStyle: { backgroundColor: t.c.bg },
       }}>
-      <Tabs.Screen name="index" options={tab('tab.today', 'today')} />
+      {/* Today draws its own header (project, site, shift), as in the owner's reference design. */}
+      <Tabs.Screen name="index" options={{ ...tab('tab.today', 'today'), headerShown: false }} />
       <Tabs.Screen
         name="inbox"
         options={{

@@ -9,7 +9,7 @@ import { type Api, callErp } from '@/lib/erp';
 
 export const HR_API = 'erpnext_drive_integrations.custom_hr.api';
 
-const Shift = z.object({
+const ShiftSchema = z.object({
   name: z.string(),
   start: z.string(),
   end: z.string(),
@@ -19,11 +19,12 @@ const Shift = z.object({
 const CheckInSite = z.object({
   name: z.string(),
   label: z.string(),
+  project: z.string().nullish(),
   latitude: z.number().nullish(),
   longitude: z.number().nullish(),
   radius_m: z.number().nullish(),
   maximum_accuracy_m: z.number().nullish(),
-  shifts: z.array(Shift),
+  shifts: z.array(ShiftSchema),
 });
 export type CheckInSiteT = z.infer<typeof CheckInSite>;
 export const Boot = z.object({
@@ -32,9 +33,11 @@ export const Boot = z.object({
     z.object({
       name: z.string(),
       label: z.string(),
+      project: z.string().nullish(),
+      project_name: z.string().nullish(),
       supervisor: z.boolean(),
       approver: z.boolean(),
-      shifts: z.array(Shift),
+      shifts: z.array(ShiftSchema),
       assets: z.array(z.object({ name: z.string(), label: z.string() })).default([]),
     }),
   ),
@@ -80,7 +83,71 @@ export function currentShift<S extends { start: string; end: string }>(shifts: S
   return shifts.find(within) ?? shifts[0] ?? null;
 }
 
+// ---- the header's places (project > Field Site > shift) ----
+export type Shift = { name: string; start: string; end: string; label?: string | null };
+export type Place = {
+  site: string;
+  siteLabel: string;
+  project: string;
+  projectLabel: string;
+  shifts: Shift[];
+  /** The person's roles at this site, as custom_hr's bootstrap says. */
+  supervisor: boolean;
+  approver: boolean;
+  staff: boolean;
+};
+
+/** Every site the person may work at (as supervisor, approver or staff), each with its project. */
+export function placesFrom(boot: BootT): Place[] {
+  const byName = new Map<string, Place>();
+  for (const s of boot.sites) {
+    byName.set(s.name, {
+      site: s.name,
+      siteLabel: s.label,
+      project: s.project ?? '',
+      projectLabel: s.project_name || s.project || '',
+      shifts: s.shifts,
+      supervisor: s.supervisor,
+      approver: s.approver,
+      staff: false,
+    });
+  }
+  for (const s of boot.check_in_sites) {
+    const known = byName.get(s.name);
+    if (known) known.staff = true;
+    else {
+      byName.set(s.name, {
+        site: s.name,
+        siteLabel: s.label,
+        project: s.project ?? '',
+        projectLabel: s.project ?? '',
+        shifts: s.shifts,
+        supervisor: false,
+        approver: false,
+        staff: true,
+      });
+    }
+  }
+  return [...byName.values()].sort((a, b) => a.projectLabel.localeCompare(b.projectLabel) || a.siteLabel.localeCompare(b.siteLabel));
+}
+
+/** The projects, each once, in order. */
+export const projectsOf = (places: Place[]) =>
+  [...new Map(places.map((p) => [p.project, { project: p.project, label: p.projectLabel }])).values()];
+
+/** The chosen place, falling back to the first site and its running shift if the choice is gone. */
+export function resolvePlace(places: Place[], c: { site: string | null; shift: string | null }, now: string): { place: Place; shift: Shift | null } | null {
+  const place = places.find((p) => p.site === c.site) ?? places[0];
+  if (!place) return null;
+  const shift = place.shifts.find((s) => s.name === c.shift) ?? currentShift(place.shifts, now);
+  return { place, shift };
+}
+
+
 export type TodayAttendance = {
+  places: Place[];
+  place: Place | null;
+  shift: Shift | null;
   /** Only for people who check in themselves (listed as Staff on a site). */
   self: { sites: string[]; today: z.infer<typeof Mine>[number] | null } | null;
   teams: {
@@ -101,22 +168,30 @@ export type TodayAttendance = {
  * Null when the server has no attendance module (not deployed yet) or answers otherwise: Today then simply
  * shows no attendance cards.
  */
-export async function loadTodayAttendance(api: Api, now: string, today: string): Promise<TodayAttendance | null> {
+export async function loadTodayAttendance(
+  api: Api,
+  now: string,
+  today: string,
+  choice: { site: string | null; shift: string | null } = { site: null, shift: null },
+): Promise<TodayAttendance | null> {
   let boot: BootT;
   try {
     boot = await loadBoot(api);
   } catch {
     return null;
   }
+  const places = placesFrom(boot);
+  const chosen = resolvePlace(places, choice, now);
+  const here = (site: string) => !chosen || chosen.place.site === site;
   const [mine, teams, approvals] = await Promise.all([
     boot.check_in_sites.length
       ? callErp(api, `${HR_API}.my_attendance`, Mine).catch(() => [])
       : Promise.resolve(null),
     Promise.all(
       boot.sites
-        .filter((s) => s.supervisor)
+        .filter((s) => s.supervisor && here(s.name))
         .map(async (s) => {
-          const shift = currentShift(s.shifts, now);
+          const shift = chosen?.place.site === s.name && chosen.shift ? chosen.shift : currentShift(s.shifts, now);
           if (!shift) return null;
           try {
             const team = await callErp(api, `${HR_API}.team`, Team, { site: s.name, shift: shift.name });
@@ -137,7 +212,7 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
     ),
     Promise.all(
       boot.sites
-        .filter((s) => s.approver)
+        .filter((s) => s.approver && here(s.name))
         .map(async (s) => {
           try {
             const list = await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name });
@@ -155,6 +230,9 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
     ),
   ]);
   return {
+    places,
+    place: chosen?.place ?? null,
+    shift: chosen?.shift ?? null,
     self: mine
       ? { sites: boot.check_in_sites.map((s) => s.label), today: mine.find((m) => m.attendance_date === today) ?? null }
       : null,

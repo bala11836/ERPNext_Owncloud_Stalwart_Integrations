@@ -512,3 +512,16 @@ discussion that led to a decision is not repeated here.
   (GHSA-vwqr-4mjv-ffrm, unauthorised sending of email, fixed in 16.60.1) had been published on 19 November; it was found
   only on 22 November by the first run of the upstream watch (P62). **Where:** `AGENTS.md`, the release log, P62.
 
+### Editor file safety: see failed saves within minutes, never lose or delete edits (P61)
+- **Decision:** a five-minute watch on the editor host raises an alarm on failed saves to Drive, edits the editor
+  cannot apply and parked documents, copies every parked document to a root-only recovery folder, and checks disk and
+  cache; a stuck document is closed for everyone only on request, after a forced save and a rescue. No tool deletes a
+  parked document or a Drive file; people are told not to delete or re-upload a file that will not open. The editor gets
+  five minutes to stop, so ONLYOFFICE's own shutdown routine saves every open document; before a host reboot the editor
+  is stopped first. The cache is left to ONLYOFFICE's own hourly expiry.
+- **Why:** owner, 21 November 2026, after a shared workbook became unusable and edits were parked unsaved on
+  20 November: a file must never be left in that state. Nothing guarantees that a save never fails; the aim is that a
+  failure is seen within minutes, no edit is lost and a stuck file is recoverable without deleting it. **Where:**
+  `tools/editor_safety.py`, `integrations/onlyoffice/` (runbook, systemd and settings examples),
+  `deployment/stacks/editor-onlyoffice.compose.json`, `docs/production-moves.md`, `tests/test_editor_safety.py`.
+

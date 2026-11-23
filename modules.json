@@ -522,12 +522,15 @@
         "tests/test_onlyoffice_editor.py",
         "deployment/config/onlyoffice-local-production-linux.json",
         "tests/test_onlyoffice_private_views.py",
-        "tests/test_onlyoffice_sheetview_filter.py"
+        "tests/test_onlyoffice_sheetview_filter.py",
+        "tools/editor_safety.py",
+        "tests/test_editor_safety.py"
       ],
       "tests": [
         "tests/test_onlyoffice_editor.py",
         "tests/test_onlyoffice_private_views.py",
-        "tests/test_onlyoffice_sheetview_filter.py"
+        "tests/test_onlyoffice_sheetview_filter.py",
+        "tests/test_editor_safety.py"
       ],
       "depends_on": [
         "deployment"

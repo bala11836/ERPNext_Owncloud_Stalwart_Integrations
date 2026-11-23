@@ -2,13 +2,20 @@
 """Render complete workspace ingress for a controller's existing Traefik proxy.
 
 Publish only to the administrator-selected proxy directory. The proxy must join
-the workspace network. Existing SSO can be remote; test never hosts a copy of it.
+the workspace network. The test ERP can use a dedicated test identity service.
 """
 import argparse
 import json
 from pathlib import Path
 import re
 import yaml
+
+
+def test_identity_origin(profile):
+    origin = profile.get('erp_test_identity_origin')
+    if origin and (profile.get('tier') != 'test' or not re.fullmatch(r'https://test[.-][a-z0-9.-]+', origin)):
+        raise ValueError('An isolated ERP identity origin must use a test HTTPS hostname')
+    return origin
 
 
 def prepare(source, profile):
@@ -36,12 +43,19 @@ def prepare(source, profile):
     service('website','http://website-web:8080')
     sso_url='https://'+hosts['sso'] if profile.get('existing_sso',True) else 'http://identity-server:9000'
     service('sso',sso_url)
+    erp_outpost = 'sso'
+    erp_forward_auth = profile.get('forward_auth_url', sso_url + '/outpost.goauthentik.io/auth/traefik')
+    if test_identity_origin(profile):
+        test_identity_backend = 'http://cloud-test-identity-server:9000'
+        service('erp-identity', test_identity_backend)
+        erp_outpost = 'erp-identity'
+        erp_forward_auth = test_identity_backend + '/outpost.goauthentik.io/auth/traefik'
     # Remote SSO must expose a test-host outpost route. Preserve the browser's
     # Host for that route; TLS still validates the server URL's SSO hostname.
     middlewares['identity-clean']={'headers':{'customRequestHeaders':{
         key:'' for key in ['X-authentik-username','X-authentik-email','X-authentik-groups',
             'X-authentik-uid','X-authentik-jwt','X-authentik-meta-jwks']}}}
-    middlewares['sso-auth']={'forwardAuth':{'address':profile.get('forward_auth_url',sso_url+'/outpost.goauthentik.io/auth/traefik'),
+    middlewares['sso-auth']={'forwardAuth':{'address':erp_forward_auth,
         'trustForwardHeader':True,'authResponseHeaders':['X-authentik-username','X-authentik-groups',
                                                       'X-authentik-email','X-authentik-uid']}}
     middlewares['frame']={'headers':{'customResponseHeaders':{'X-Frame-Options':''}}}
@@ -61,7 +75,7 @@ def prepare(source, profile):
         signed_in='HeaderRegexp(`Cookie`, `(^|;[ ]*)system_user=yes`)'
         route('website-front',hosts['erp'],'website',priority=5000,path='(Path(`/`) && !'+signed_in+')')
         route('website-assets',hosts['erp'],'website',priority=5000,path='PathPrefix(`/front/`)')
-    route('outpost',hosts['erp'],'sso',300,'PathPrefix(`/outpost.goauthentik.io/`)')
+    route('outpost',hosts['erp'],erp_outpost,300,'PathPrefix(`/outpost.goauthentik.io/`)')
     # These app endpoints perform their own signed OIDC / CSRF / token checks.
     # Only the exact public bootstrap/static endpoints bypass the outpost.
     method='/api/method/erpnext_drive_integrations.portal.'

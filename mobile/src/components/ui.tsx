@@ -1,12 +1,12 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { ComponentProps, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View, type TextProps } from 'react-native';
 
+import { Icon, type IconName } from '@/components/icon';
 import { t as text } from '@/i18n';
 import type { PaletteColor } from '@/theme/colors';
 import { useTheme } from '@/theme';
 
-export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type { IconName } from '@/components/icon';
 
 const SIZES = { small: 16, body: 18, title: 24 } as const;
 
@@ -75,7 +75,10 @@ export function Choice({ label, selected, onPress }: { label: string; selected: 
         borderWidth: selected ? 4 : t.border,
         borderColor: selected ? t.c.primary : t.c.border,
       }}>
-      <T style={{ fontWeight: selected ? '700' : '500' }}>{`${selected ? '✓ ' : ''}${label}`}</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {selected && <Icon name="check" size={t.font(22)} color={t.c.primary} />}
+        <T style={{ fontWeight: selected ? '700' : '500' }}>{label}</T>
+      </View>
     </Pressable>
   );
 }
@@ -105,7 +108,7 @@ export function SearchField({
         borderRadius: 10,
         backgroundColor: t.c.bg,
       }}>
-      <MaterialCommunityIcons name="magnify" size={t.font(24)} color={t.c.text} />
+      <Icon name="search" size={t.font(24)} color={t.c.text} />
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -124,7 +127,7 @@ export function SearchField({
           onPress={() => onChange('')}
           hitSlop={12}
           style={{ minWidth: t.touch, minHeight: t.touch, alignItems: 'center', justifyContent: 'center' }}>
-          <MaterialCommunityIcons name="close-circle" size={t.font(24)} color={t.c.text} />
+          <Icon name="clear" size={t.font(24)} color={t.c.text} />
         </Pressable>
       ) : null}
     </View>
@@ -166,7 +169,7 @@ export function Button({
         backgroundColor: secondary ? t.c.bg : t.c.primary,
         opacity: pressed && !disabled ? 0.75 : 1, // no dimming: text keeps its 7:1 contrast
       })}>
-      {icon && <MaterialCommunityIcons name={icon} size={t.font(24)} color={fg} />}
+      {icon && <Icon name={icon} size={t.font(24)} color={fg} />}
       <Text style={{ color: fg, fontSize: t.font(18), fontWeight: '700' }}>{label}</Text>
     </Pressable>
   );
@@ -174,12 +177,12 @@ export function Button({
 
 // Status is always icon + text, never colour alone (rule 13).
 const STATUS = {
-  ok: { icon: 'check-circle', color: 'ok' },
-  warn: { icon: 'alert', color: 'warn' },
-  danger: { icon: 'close-octagon', color: 'danger' },
-  info: { icon: 'information', color: 'primary' },
-  pending: { icon: 'cloud-upload-outline', color: 'primary' },
-  offline: { icon: 'cloud-off-outline', color: 'muted' },
+  ok: { icon: 'ok', color: 'ok' },
+  warn: { icon: 'warn', color: 'warn' },
+  danger: { icon: 'danger', color: 'danger' },
+  info: { icon: 'info', color: 'primary' },
+  pending: { icon: 'pending', color: 'primary' },
+  offline: { icon: 'offline', color: 'muted' },
 } as const satisfies Record<string, { icon: IconName; color: PaletteColor }>;
 
 export type StatusKind = keyof typeof STATUS;
@@ -203,7 +206,7 @@ export function Status({ kind, label }: { kind: StatusKind; label: string }) {
         borderColor: t.c[s.color],
         backgroundColor: t.c.bg,
       }}>
-      <MaterialCommunityIcons name={s.icon} size={t.font(20)} color={t.c[s.color]} />
+      <Icon name={s.icon} size={t.font(22)} color={t.c[s.color]} />
       <T variant="small" color={s.color} style={{ fontWeight: '700' }}>
         {label}
       </T>
@@ -258,7 +261,7 @@ export function Card({
         borderRadius: 12,
         backgroundColor: pressed ? t.c.surface : t.c.bg,
       })}>
-      <MaterialCommunityIcons name={icon} size={t.font(30)} color={t.c.primary} />
+      <Icon name={icon} size={t.font(28)} color={t.c.primary} />
       <View style={{ flex: 1, gap: 4 }}>
         <T style={{ fontWeight: '700' }}>{title}</T>
         {detail ? (
@@ -272,7 +275,7 @@ export function Card({
           {count}
         </T>
       )}
-      {onPress && <MaterialCommunityIcons name="chevron-right" size={t.font(28)} color={t.c.text} />}
+      {onPress && <Icon name="chevron-right" size={t.font(24)} color={t.c.text} />}
     </Pressable>
   );
 }
@@ -316,7 +319,7 @@ export function Row({
           </T>
         )}
       </View>
-      {onPress && <MaterialCommunityIcons name="chevron-right" size={t.font(28)} color={t.c.text} />}
+      {onPress && <Icon name="chevron-right" size={t.font(24)} color={t.c.text} />}
     </Pressable>
   );
 }

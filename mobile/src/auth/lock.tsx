@@ -58,7 +58,7 @@ export function AppLock() {
           <T variant="title" style={{ fontSize: t.font(30) }}>
             {APP_NAME} is locked
           </T>
-          <Button label="Unlock" icon="face-recognition" onPress={unlock} />
+          <Button label="Unlock" icon="face" onPress={unlock} />
           {error && <Status kind="warn" label={error} />}
         </SafeAreaView>
       )}

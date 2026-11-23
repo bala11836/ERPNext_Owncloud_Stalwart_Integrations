@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { confirmIdentity } from '@/auth/confirm';
 import { useApiRef } from '@/auth/session';
+import { Icon } from '@/components/icon';
 import { NoScreenshots } from '@/components/no-screenshots';
 import { PrivateImage } from '@/components/private-image';
 import { Button, Choice, Status, T, TextArea } from '@/components/ui';
@@ -130,7 +131,7 @@ export default function Approve() {
             <Choice label={text('approve.all')} selected={!onlyExceptions} onPress={() => setOnlyExceptions(false)} />
             <Choice label={text('approve.exceptions')} selected={onlyExceptions} onPress={() => setOnlyExceptions(true)} />
           </View>
-          <Button label={text('approve.selectAll', { count: reviewable.length })} icon="checkbox-multiple-marked-outline" secondary onPress={selectAll} />
+          <Button label={text('approve.selectAll', { count: reviewable.length })} icon="box-checked" secondary onPress={selectAll} />
         </>
       )}
 
@@ -144,7 +145,10 @@ export default function Approve() {
               disabled={!e.can_review}
               onPress={() => toggle(e.name)}
               style={{ minHeight: t.touch, gap: 4 }}>
-              <T style={{ fontWeight: '700' }}>{`${isSel ? '☑ ' : '☐ '}${e.employee_name ?? e.employee}`}</T>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Icon name={isSel ? 'box-checked' : 'box-empty'} size={t.font(26)} color={e.can_review ? t.c.primary : t.c.muted} />
+                <T style={{ flex: 1, fontWeight: '700' }}>{e.employee_name ?? e.employee}</T>
+              </View>
               <T variant="small" color="muted">
                 {[
                   e.attendance_status,
@@ -161,7 +165,7 @@ export default function Approve() {
             {!e.can_review && <Status kind="info" label={text('approve.notYours')} />}
             <Button
               label={open === e.name ? text('approve.hide') : text('approve.show')}
-              icon={open === e.name ? 'chevron-up' : 'image-outline'}
+              icon={open === e.name ? 'chevron-up' : 'image'}
               secondary
               onPress={() => expand(e.name)}
             />
@@ -188,7 +192,7 @@ export default function Approve() {
           />
           <Button
             label={text('approve.returnN', { count: selected.size })}
-            icon="undo-variant"
+            icon="undo"
             secondary
             onPress={() => review('Return')}
             disabled={busy || selected.size === 0}

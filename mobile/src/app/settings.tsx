@@ -61,7 +61,7 @@ export default function Settings() {
         />
       ) : null}
 
-      <Button label="Sign out" icon="logout" secondary onPress={signOut} />
+      <Button label="Sign out" icon="sign-out" secondary onPress={signOut} />
       <T variant="small" color="muted">
         Version {Constants.expoConfig?.version}
       </T>

@@ -1,10 +1,10 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 
 import { useApiRef, useAuth } from '@/auth/session';
-import { Button, Card, type IconName, Progress, Screen, Status, T } from '@/components/ui';
+import { Icon, type IconName } from '@/components/icon';
+import { Button, Card, Progress, Screen, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { type TodayAttendance, clock, loadTodayAttendance } from '@/lib/attendance';
 import { formatDate, localToday } from '@/lib/format';
@@ -72,16 +72,16 @@ export default function Today() {
   const unread = inbox.notifications.filter((n) => !n.read).length;
 
   const actions: Action[] = [
-    ...(att?.self ? [{ key: 'self', icon: 'map-marker-check' as IconName, label: text('fab.checkIn'), go: () => router.push('/attendance/check-in') }] : []),
+    ...(att?.self ? [{ key: 'self', icon: 'checked-in' as IconName, label: text('fab.checkIn'), go: () => router.push('/attendance/check-in') }] : []),
     ...(att?.teams ?? []).map((tm) => ({
       key: `team-${tm.siteId}`,
-      icon: 'account-group' as IconName,
+      icon: 'team' as IconName,
       label: text('fab.mark', { site: tm.site }),
       go: () => router.push({ pathname: '/attendance/team', params: { site: tm.siteId, shift: tm.shiftId } }),
     })),
     ...(att?.approvals ?? []).map((ap) => ({
       key: `appr-${ap.siteId}`,
-      icon: 'clipboard-check' as IconName,
+      icon: 'approve' as IconName,
       label: text('fab.approve', { site: ap.site }),
       go: () => router.push({ pathname: '/attendance/approve', params: { site: ap.siteId } }),
     })),
@@ -110,7 +110,7 @@ export default function Today() {
               borderWidth: t.outdoor ? 4 : t.border,
               borderColor: t.outdoor ? t.c.primary : t.c.border,
             }}>
-            <MaterialCommunityIcons name="white-balance-sunny" size={t.font(28)} color={t.c.text} />
+            <Icon name="sun" size={t.font(26)} color={t.c.text} />
             <T variant="small" style={{ fontWeight: '700' }}>
               {t.outdoor ? text('today.outdoorOn') : text('today.outdoorOff')}
             </T>
@@ -134,8 +134,8 @@ export default function Today() {
               borderWidth: t.border,
               borderColor: att.self.today ? t.c.ok : t.c.warn,
             }}>
-            <MaterialCommunityIcons
-              name={att.self.today ? 'map-marker-check' : 'map-marker-alert-outline'}
+            <Icon
+              name={att.self.today ? 'checked-in' : 'not-checked-in'}
               size={t.font(26)}
               color={att.self.today ? t.c.ok : t.c.warn}
             />
@@ -183,7 +183,7 @@ export default function Today() {
                       ? text('team.submit', { count: tm.drafts })
                       : text('today.openTeam')
                 }
-                icon={left > 0 ? 'camera' : tm.drafts > 0 ? 'fingerprint' : 'account-group'}
+                icon={left > 0 ? 'camera' : tm.drafts > 0 ? 'fingerprint' : 'team'}
                 onPress={go}
               />
             </View>
@@ -211,7 +211,7 @@ export default function Today() {
 
         {inbox.loaded && (
           <Card
-            icon="hand-back-right-outline"
+            icon="hand"
             title={text('today.waitingForYou')}
             detail={inbox.actions.length ? byType(inbox.actions.map((a) => a.reference_doctype)) : text('inbox.noneWaiting')}
             count={inbox.actions.length}
@@ -219,7 +219,7 @@ export default function Today() {
           />
         )}
         {inbox.loaded && unread > 0 && (
-          <Card icon="bell-outline" title={text('today.unread', { count: unread })} onPress={() => router.push('/inbox')} />
+          <Card icon="bell" title={text('today.unread', { count: unread })} onPress={() => router.push('/inbox')} />
         )}
 
         {/* Waiting to send: the encrypted offline queue, with "Send now". */}
@@ -227,7 +227,7 @@ export default function Today() {
           <View style={{ gap: 10, padding: 16, borderRadius: 12, borderWidth: t.border, borderColor: t.c.warn }}>
             {queue.waiting > 0 && <Status kind="pending" label={text('today.waiting', { count: queue.waiting })} />}
             {queue.refused > 0 && <Status kind="danger" label={text('today.refused', { count: queue.refused })} />}
-            {queue.waiting > 0 && <Button label={text('today.sendNow')} icon="cloud-upload-outline" secondary onPress={sendNow} />}
+            {queue.waiting > 0 && <Button label={text('today.sendNow')} icon="upload" secondary onPress={sendNow} />}
           </View>
         ) : (
           queue && <Status kind="ok" label={text('today.nothingWaiting')} />
@@ -235,7 +235,7 @@ export default function Today() {
 
         {hr && (hr.nextHoliday || hr.openLeaves > 0) && (
           <Card
-            icon="calendar-star"
+            icon="holiday"
             title={
               hr.nextHoliday
                 ? text('today.nextHoliday', { date: formatDate(hr.nextHoliday.holiday_date), name: hr.nextHoliday.description ?? '' })
@@ -267,7 +267,7 @@ export default function Today() {
             borderWidth: 3,
             borderColor: t.c.bg,
           }}>
-          <MaterialCommunityIcons name="plus" size={36} color={t.c.onPrimary} />
+          <Icon name="plus" size={32} color={t.c.onPrimary} />
         </Pressable>
       )}
       <Modal visible={sheet} transparent animationType="slide" onRequestClose={() => setSheet(false)}>

@@ -46,10 +46,14 @@ describe('PM approval', () => {
   it('lists what waits, marks offline captures and what this person may not review', async () => {
     serve();
     await open();
-    expect(await screen.findByText('☐ Worker A')).toBeOnTheScreen();
+    expect(await screen.findByText('Worker A')).toBeOnTheScreen();
     expect(screen.getByText("Captured offline: the time comes from the phone's corrected clock.")).toBeOnTheScreen();
     expect(screen.getByText('You captured this, or it is your own attendance: another approver must review it.')).toBeOnTheScreen();
     expect(screen.getAllByText('Present · Marked by supervisor · at 08:10 · GPS ±10 m · 23-11-2026')).toHaveLength(3);
+    // selection is a real checkbox (icon + state), not a text symbol
+    expect(screen.getAllByRole('checkbox').map((c) => c.props.accessibilityState)).toEqual([
+      { checked: false, disabled: false }, { checked: false, disabled: false }, { checked: false, disabled: true }, { checked: false, disabled: false },
+    ]);
   });
 
   it('"select all" takes only what this person may review; one Face ID approves the selection', async () => {
@@ -65,9 +69,9 @@ describe('PM approval', () => {
     serve();
     await open();
     await fireEvent.press(await screen.findByText('Exceptions only (offline or absent)'));
-    expect(screen.queryByText('☐ Worker A')).toBeNull();
-    expect(screen.getByText('☐ Worker B')).toBeOnTheScreen();
-    expect(screen.getByText('☐ Worker D')).toBeOnTheScreen();
+    expect(screen.queryByText('Worker A')).toBeNull();
+    expect(screen.getByText('Worker B')).toBeOnTheScreen();
+    expect(screen.getByText('Worker D')).toBeOnTheScreen();
     expect([list[0], list[1], list[3]].map(isException)).toEqual([false, true, true]);
   });
 
@@ -75,7 +79,7 @@ describe('PM approval', () => {
     serve();
     mockConfirmed = false;
     await open();
-    await fireEvent.press(await screen.findByText('☐ Worker A'));
+    await fireEvent.press(await screen.findByText('Worker A'));
     await fireEvent.press(screen.getByText('Approve 1'));
     expect(await screen.findByText('Not confirmed. Nothing was changed.')).toBeOnTheScreen();
     mockConfirmed = true;
@@ -91,8 +95,8 @@ describe('PM approval', () => {
   it('says per entry what was not done', async () => {
     serve({ body: { message: [{ name: 'A', ok: true, state: 'Approved' }, { name: 'B', ok: false, error: 'Self approval is not allowed' }] } });
     await open();
-    await fireEvent.press(await screen.findByText('☐ Worker A'));
-    await fireEvent.press(screen.getByText('☐ Worker B'));
+    await fireEvent.press(await screen.findByText('Worker A'));
+    await fireEvent.press(screen.getByText('Worker B'));
     await fireEvent.press(screen.getByText('Approve 2'));
     expect(await screen.findByText('1 done. Not done: Worker B: Self approval is not allowed')).toBeOnTheScreen();
   });

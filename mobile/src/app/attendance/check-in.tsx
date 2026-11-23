@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { z } from 'zod';
 
 import { useApiRef } from '@/auth/session';
 import { NoScreenshots } from '@/components/no-screenshots';
 import { PhotoTaker } from '@/components/photo-taker';
-import { Button, Row, Status, T } from '@/components/ui';
+import { Button, Choice, Row, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { type BootT, type CheckInSiteT, HR_API, Mine, clock, currentShift, loadBoot } from '@/lib/attendance';
 import { type Fix, fenceProblem, getFix } from '@/lib/capture';
@@ -141,23 +141,12 @@ export default function CheckIn() {
           ) : (
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
               {site.shifts.map((s) => (
-                <Pressable
+                <Choice
                   key={s.name}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: s.name === shiftName }}
+                  label={text('checkIn.shift', { shift: s.label ?? s.name, start: s.start, end: s.end })}
+                  selected={s.name === shiftName}
                   onPress={() => setShiftName(s.name)}
-                  style={{
-                    minHeight: t.touch,
-                    justifyContent: 'center',
-                    paddingHorizontal: 14,
-                    borderRadius: 10,
-                    borderWidth: s.name === shiftName ? 4 : t.border,
-                    borderColor: s.name === shiftName ? t.c.primary : t.c.border,
-                  }}>
-                  <T style={{ fontWeight: s.name === shiftName ? '700' : '500' }}>
-                    {`${s.name === shiftName ? '✓ ' : ''}${text('checkIn.shift', { shift: s.label ?? s.name, start: s.start, end: s.end })}`}
-                  </T>
-                </Pressable>
+                />
               ))}
             </View>
           )}
@@ -170,7 +159,7 @@ export default function CheckIn() {
           {fix && !locating && <Status kind="ok" label={text('capture.located', { accuracy: Math.round(fix.accuracy_m) })} />}
           {fixError && <Status kind="danger" label={fixError} />}
           {problem && <Status kind="danger" label={problem} />}
-          {(fixError || problem) && !locating && <Button label={text('capture.locate')} icon="crosshairs-gps" secondary onPress={locate} />}
+          {(fixError || problem) && !locating && <Button label={text('capture.locate')} icon="locate" secondary onPress={locate} />}
         </View>
       )}
 
@@ -187,7 +176,7 @@ export default function CheckIn() {
       {site && !done && (
         <Button
           label={text(checkingOut ? 'checkOut.send' : 'checkIn.send')}
-          icon={checkingOut ? 'logout-variant' : 'map-marker-check'}
+          icon={checkingOut ? 'sign-out' : 'checked-in'}
           onPress={send}
           disabled={!ready}
         />

@@ -56,7 +56,7 @@ export function PhotoTaker({ facing, onPhoto }: { facing: 'front' | 'back'; onPh
         <>
           <Image source={{ uri: preview }} style={frame} accessibilityLabel={text('camera.taken')} />
           <Status kind="ok" label={text('camera.taken')} />
-          <Button label={text('camera.retake')} icon="camera-retake" secondary onPress={retake} />
+          <Button label={text('camera.retake')} icon="retake" secondary onPress={retake} />
         </>
       ) : (
         <>

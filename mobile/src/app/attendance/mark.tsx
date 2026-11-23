@@ -149,7 +149,7 @@ export default function MarkWorker() {
         {(fixError || problem) && !locating && (
           <Button
             label={text('capture.locate')}
-            icon="crosshairs-gps"
+            icon="locate"
             secondary
             onPress={() => {
               setLocating(true);
@@ -175,9 +175,9 @@ export default function MarkWorker() {
       {busy && <Status kind="pending" label={text('checkIn.sending')} />}
       {done && <Status kind={done.kind} label={done.label} />}
       {done ? (
-        <Button label={text('mark.back')} icon="arrow-left" secondary onPress={() => router.back()} />
+        <Button label={text('mark.back')} icon="back" secondary onPress={() => router.back()} />
       ) : (
-        <Button label={text('mark.save')} icon="content-save-outline" onPress={save} disabled={!ready} />
+        <Button label={text('mark.save')} icon="save" onPress={save} disabled={!ready} />
       )}
     </ScrollView>
   );

@@ -28,8 +28,8 @@ function site(){return S.context.sites.find(s=>s.name===S.site);}
 function shift(){return site()?.shifts.find(s=>s.name===S.shift);}
 function shell(title,body,{back=false}={}){
  root.innerHTML=`${navigator.onLine?'':'<div class="offline">Offline — submissions are unavailable</div>'}<main class="app"><header class="top"><div><h1>${esc(title)}</h1></div></header>${back?'<button id="back" class="small">← Back</button>':''}${body}</main>${S.context?`<nav class="bottom" aria-label="Field attendance"><button data-view="team" class="${S.view==='team'?'active':''}">My Team</button><button data-view="records" class="${S.view==='records'?'active':''}">My Records</button>${S.context.sites.some(s=>s.verifier)?`<button data-view="verification" class="${S.view==='verification'?'active':''}">Verification</button>`:''}${S.context.sites.some(s=>s.approver)?`<button data-view="approvals" class="${S.view==='approvals'?'active':''}">Approvals</button>`:''}${S.context.manager?`<button data-view="manage" class="${S.view==='manage'?'active':''}">Setup</button>`:''}</nav>`:''}`;
- if($('#back'))$('#back').onclick=()=>{stopCamera();S.form=null;render();};
- $$('[data-view]').forEach(b=>b.onclick=()=>{stopCamera();S.form=null;S.view=b.dataset.view;S.selected.clear();render();});
+ if($('#back'))$('#back').onclick=()=>{if(S.busy)return;stopCamera();S.form=null;render();};
+ $$('[data-view]').forEach(b=>b.onclick=()=>{if(S.busy)return;stopCamera();S.form=null;S.view=b.dataset.view;S.selected.clear();render();});
 }
 function filters(){return `<section class="controls"><div><label for="site">Project / team</label><select id="site">${S.context.sites.map(s=>`<option value="${esc(s.name)}" ${s.name===S.site?'selected':''}>${esc(s.label)}</option>`).join('')}</select></div><div><label for="shift">Shift</label><select id="shift">${(site()?.shifts||[]).map(s=>`<option value="${esc(s.name)}" ${s.name===S.shift?'selected':''}>${esc(s.label)}</option>`).join('')}</select></div></section>`;}
 function bindFilters(){if(!$('#site'))return;$('#site').onchange=()=>{S.site=$('#site').value;S.shift=site()?.shifts[0]?.name;S.selected.clear();render();};$('#shift').onchange=()=>{S.shift=$('#shift').value;S.selected.clear();render();};}
@@ -81,9 +81,11 @@ async function verifications(){
  if(!site()?.verifier){S.site=sites[0].name;S.shift=sites[0].shifts[0].name;}
  shell('Verification',`<section class="controls"><label for="verification-site">Project / team</label><select id="verification-site">${sites.map(s=>`<option value="${esc(s.name)}" ${s.name===S.site?'selected':''}>${esc(s.label)}</option>`).join('')}</select></section><div id="verification-list" class="loading">Loading submissions…</div>`);
  $('#verification-site').onchange=()=>{S.site=$('#verification-site').value;S.shift=site().shifts[0].name;render();};
+ const list=$('#verification-list');
  const rows=await api('verifications',{site:S.site});
- $('#verification-list').className='';
- $('#verification-list').innerHTML=rows.length?rows.map(e=>`<article class="card"><h3>${esc(e.employee_name)}</h3><p>${esc(e.attendance_date)} · ${esc(e.shift)} · ${esc(e.attendance_status)}</p><button class="small" data-verify="${esc(e.name)}">Review evidence</button></article>`).join(''):'<div class="card empty">No attendance is waiting for verification.</div>';
+ if(!list.isConnected)return;
+ list.className='';
+ list.innerHTML=rows.length?rows.map(e=>`<article class="card"><h3>${esc(e.employee_name)}</h3><p>${esc(e.attendance_date)} · ${esc(e.shift)} · ${esc(e.attendance_status)}</p><button class="small" data-verify="${esc(e.name)}">Review evidence</button></article>`).join(''):'<div class="card empty">No attendance is waiting for verification.</div>';
  $$('[data-verify]').forEach(b=>b.onclick=()=>action(async()=>showEntry(await api('entry',{name:b.dataset.verify}),true)));
 }
 function showEntry(e,review){

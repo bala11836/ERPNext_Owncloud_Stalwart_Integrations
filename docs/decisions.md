@@ -489,6 +489,18 @@ discussion that led to a decision is not repeated here.
   `deployment/drift-check.*`, `AGENTS.md`, `.github/pull_request_template.md`, `docs/production-moves.md`,
   `tests/test_promotion_plan.py`.
 
+### Private sheet views isolate filters; every person is kept in their own view (P61)
+- **Decision:** a private sheet view exists only to keep each person's filters and sorting out of everyone
+  else's work. Others may see the views, and other people's cursors stay visible (they only show where someone
+  is working; data is shared, the last value entered in a cell wins). The editor keeps every person in their own
+  view: a create or rename that ONLYOFFICE refuses (another person in View manager) is tried again, and a notice
+  with "Back to my view" shows when someone stays in the Default view or another person's view.
+- **Why:** owner, 23 November 2026, after filters reached other people. The first keeper (PR #12) tried once and
+  gave up, so a refused attempt left the person in the shared Default view. The crash guard of PR #12 was checked
+  against the pinned build (its method names are right) and now cleans the list in place. **Where:**
+  `integrations/onlyoffice/editor-wopi.ejs`, `tests/test_onlyoffice_private_views.py`,
+  `tests/test_onlyoffice_sheetview_filter.py`.
+
 ### Security before features and deployments
 - **Decision:** every production promotion, upgrade or new dependency starts with a check of the official security
   advisories and release notes of what it ships, against the pinned versions; the result is recorded in the pull

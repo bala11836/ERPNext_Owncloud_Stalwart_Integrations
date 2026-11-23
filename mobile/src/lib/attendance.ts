@@ -26,7 +26,7 @@ const Mine = z.array(
   }),
 );
 const Team = z.object({ total: z.number(), missing: z.number() });
-const Waiting = z.array(z.object({ name: z.string() }));
+const Waiting = z.array(z.object({ name: z.string(), can_review: z.boolean() }));
 
 /** The site's shift running at `now` ("HH:MM", phone time; for choosing a card only, never for a record). */
 export function currentShift<S extends { start: string; end: string }>(shifts: S[], now: string): S | null {
@@ -75,7 +75,8 @@ export async function loadTodayAttendance(api: Api, now: string, today: string):
         .filter((s) => s.approver)
         .map(async (s) => {
           try {
-            return { site: s.label, count: (await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name })).length };
+            const pending = await callErp(api, `${HR_API}.approvals`, Waiting, { site: s.name });
+            return { site: s.label, count: pending.filter((entry) => entry.can_review).length };
           } catch {
             return null;
           }

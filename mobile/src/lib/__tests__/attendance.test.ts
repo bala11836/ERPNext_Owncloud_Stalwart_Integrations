@@ -19,7 +19,7 @@ const server = (over: Record<string, unknown> = {}) =>
       body: { message: [{ name: 'E1', site: 'S1', attendance_date: '2026-11-23', state: 'Submitted', check_in_time: '2026-11-23 08:02:41' }] },
     },
     [`${HR_API}.team`]: { body: { message: { total: 15, missing: 3, workers: [] } } },
-    [`${HR_API}.approvals`]: { body: { message: [{ name: 'A' }, { name: 'B' }] } },
+    [`${HR_API}.approvals`]: { body: { message: [{ name: 'A', can_review: true }, { name: 'B', can_review: true }, { name: 'Own', can_review: false }] } },
     ...over,
   });
 

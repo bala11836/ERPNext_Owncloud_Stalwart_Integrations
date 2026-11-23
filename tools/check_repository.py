@@ -70,14 +70,23 @@ def top_level_names(tree):
 
 def imports(node,guarded=False):
     """Every import, also inside functions (lazy imports), except those guarded by `except ImportError` (optional)."""
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        if not guarded:
+            yield node
+        return
+    if isinstance(node, ast.Try) and any(
+        handler.type is None or any(
+            isinstance(name, ast.Name) and name.id in GUARDS for name in ast.walk(handler.type)
+        )
+        for handler in node.handlers
+    ):
+        for statement in node.body:
+            yield from imports(statement, True)
+        for statement in [*node.handlers, *node.orelse, *node.finalbody]:
+            yield from imports(statement, guarded)
+        return
     for child in ast.iter_child_nodes(node):
-        if isinstance(child,(ast.Import,ast.ImportFrom)):
-            if not guarded:yield child
-        elif isinstance(child,ast.Try) and any(h.type is None or any(isinstance(n,ast.Name) and n.id in GUARDS
-                                                for n in ast.walk(h.type)) for h in child.handlers):
-            for stmt in child.body:yield from imports(ast.Module(body=[stmt],type_ignores=[]),True)
-            for stmt in [*child.handlers,*child.orelse,*child.finalbody]:yield from imports(stmt,guarded)
-        else:yield from imports(child,guarded)
+        yield from imports(child, guarded)
 
 
 def check_imports(root,sources):

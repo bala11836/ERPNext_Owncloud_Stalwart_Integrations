@@ -90,6 +90,22 @@ class ImportCheck(unittest.TestCase):
                     optional_feature = None
             '''}), [])
 
+    def test_optional_try_does_not_hide_else_and_finally_imports(self):
+        errors = run({**APP, 'app/portal/guarded.py': '''
+            try:
+                from .combined import optional_feature
+            except ImportError:
+                optional_feature = None
+            else:
+                from .combined import absent_in_else
+            finally:
+                from .combined import absent_in_finally
+        '''})
+        self.assertEqual(errors, [
+            'app/portal/guarded.py:7: imports absent_in_else from app.portal.combined, which does not define it',
+            'app/portal/guarded.py:9: imports absent_in_finally from app.portal.combined, which does not define it',
+        ])
+
     def test_scripts_import_their_neighbours_but_package_modules_do_not(self):
         script = {'tools/helper.py': 'def ok(): pass\n', 'tools/run.py': 'from helper import ok, missing\n'}
         self.assertEqual(run(script), ['tools/run.py:1: imports missing from helper, which does not define it'])

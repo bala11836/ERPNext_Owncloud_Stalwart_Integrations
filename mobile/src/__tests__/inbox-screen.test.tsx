@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { Text } from 'react-native';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
@@ -6,7 +6,6 @@ import Inbox from '@/app/(app)/inbox';
 import DocScreen from '@/app/doc/[doctype]/[name]';
 import { ACTIONS_METHOD, LOGS_METHOD, MARK_READ_METHOD, clearInbox } from '@/lib/inbox';
 import { APPLY_METHOD, TRANSITIONS_METHOD } from '@/components/workflow-actions';
-import { Button } from '@/components/ui';
 import { ThemeProvider } from '@/theme';
 
 import { type Answer, fakeErp, thrown } from './fake-erp';
@@ -22,6 +21,17 @@ let mockConfirmed = true;
 const mockConfirm = jest.fn(async (_reason: string) => mockConfirmed);
 jest.mock('@/auth/confirm', () => ({ confirmIdentity: (reason: string) => mockConfirm(reason) }));
 jest.mock('@/components/doc-view', () => ({ DocView: () => null }));
+const mockWorkflowPresses = new Map<string, () => void>();
+jest.mock('@/components/ui', () => {
+  const ui = jest.requireActual<typeof import('@/components/ui')>('@/components/ui');
+  return {
+    ...ui,
+    Button: (props: ComponentProps<typeof ui.Button>) => {
+      mockWorkflowPresses.set(props.label, props.onPress);
+      return <ui.Button {...props} />;
+    },
+  };
+});
 
 const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
 const action = { name: 'WA-1', reference_doctype: 'Purchase Order', reference_name: 'PO-0001', workflow_state: 'Pending', creation: '2026-11-23 10:00:00' };
@@ -43,6 +53,7 @@ const openInbox = () => renderRouter(app, { initialUrl: '/inbox', wrapper });
 describe('inbox screen', () => {
   beforeEach(() => {
     clearInbox();
+    mockWorkflowPresses.clear();
     mockConfirmed = true;
     mockConfirm.mockReset().mockImplementation(async () => mockConfirmed);
   });
@@ -84,14 +95,8 @@ describe('inbox screen', () => {
     await fireEvent.press(await screen.findByText('Purchase Order PO-0001'));
 
     await screen.findByText('Approve');
-    const onPress = (label: string) => {
-      let button = screen.getByText(label).parent;
-      while (button && button.type !== Button) button = button.parent;
-      if (!button) throw new Error(`Missing workflow button: ${label}`);
-      return button.props.onPress;
-    };
-    const approve = onPress('Approve');
-    const reject = onPress('Reject');
+    const approve = mockWorkflowPresses.get('Approve')!;
+    const reject = mockWorkflowPresses.get('Reject')!;
     await act(async () => {
       approve();
       reject();

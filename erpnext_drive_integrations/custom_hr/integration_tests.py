@@ -212,10 +212,16 @@ def run():
         denied('engineer cannot capture outside the assigned team',
                lambda: service.capture(absent(automatic, shift=night.name)))
         denied('engineer cannot capture for an unrelated supervisor',
-               lambda: service.capture(absent(w.name)))
+               lambda: service.capture(absent(w)))
         frappe.set_user(b)
-        evidence = service.capture(absent(manual))
+        buf = io.BytesIO()
+        Image.new('RGB', (160, 160), tuple(bytes.fromhex(token[2:8]))).save(buf, 'JPEG')
+        evidence_payload = payload(manual.name)
+        evidence_payload['photo'] = 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
+        evidence = service.capture(evidence_payload)
         name = evidence['name']
+        photo_url = frappe.db.get_value('Field Attendance Entry', name, 'photo')
+        files.append(photo_url)
         check('supervisor submission requires verification',
               service.submit_entry(name)['state'] == 'Pending Verification')
         denied('supervisor cannot verify own capture', lambda: service.verify_entry(name, 'Verify'))
@@ -225,13 +231,19 @@ def run():
         frappe.set_user(peer)
         check('unassigned engineer has no verification queue', not api.verifications(site.name))
         denied('unassigned engineer cannot read evidence', lambda: api.entry(name))
+        check('unassigned engineer cannot view the photo',
+              not frappe.get_doc('File', {'file_url': photo_url}).has_permission('read'))
         denied('unassigned engineer cannot verify evidence', lambda: service.verify_entry(name, 'Verify'))
         frappe.set_user(engineer)
         check('assigned engineer can see the pending evidence', api.entry(name)['can_verify'])
+        check('assigned engineer can view the private photo',
+              frappe.get_doc('File', {'file_url': photo_url}).has_permission('read'))
         check('assigned engineer sees the pending queue', [r.name for r in api.verifications(site.name)] == [name])
         check('engineer can return evidence for correction', service.verify_entry(name, 'Return', 'Check remarks')['state'] == 'Returned')
         frappe.set_user(b)
-        corrected = absent(manual, name=name, revision=frappe.db.get_value('Field Attendance Entry', name, 'revision'))
+        corrected = payload(manual.name)
+        corrected.update(name=name, revision=frappe.db.get_value('Field Attendance Entry', name, 'revision'),
+                         photo=None, remarks='Reviewed test remarks')
         service.capture(corrected)
         service.submit_entry(name)
         frappe.set_user(engineer)

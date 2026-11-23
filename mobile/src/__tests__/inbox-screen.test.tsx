@@ -84,12 +84,17 @@ describe('inbox screen', () => {
     await fireEvent.press(await screen.findByText('Purchase Order PO-0001'));
 
     await screen.findByText('Approve');
-    const actions = screen.UNSAFE_getAllByType(Button);
-    const approve = actions.find((button) => button.props.label === 'Approve')!;
-    const reject = actions.find((button) => button.props.label === 'Reject')!;
+    const onPress = (label: string) => {
+      let button = screen.getByText(label).parent;
+      while (button && button.type !== Button) button = button.parent;
+      if (!button) throw new Error(`Missing workflow button: ${label}`);
+      return button.props.onPress;
+    };
+    const approve = onPress('Approve');
+    const reject = onPress('Reject');
     await act(async () => {
-      approve.props.onPress();
-      reject.props.onPress();
+      approve();
+      reject();
     });
     expect(mockConfirm).toHaveBeenCalledTimes(1);
     expect(calls.some((c) => c.method === APPLY_METHOD)).toBe(false);

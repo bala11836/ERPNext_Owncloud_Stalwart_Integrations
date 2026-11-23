@@ -6,5 +6,17 @@
   "erp.unexpected": "ERPNext sent an answer this app does not understand. Update the app, or tell your administrator.",
   "queue.expired": "Not sent within a day, so it was removed. Enter it again if it is still needed.",
   "storage.encrypted": "Offline storage: encrypted on this phone",
-  "storage.memory": "Offline storage: kept in memory only (this app version cannot encrypt)"
+  "storage.memory": "Offline storage: kept in memory only (this app version cannot encrypt)",
+  "tab.today": "Today",
+  "tab.inbox": "Inbox",
+  "tab.myHr": "My HR",
+  "tab.menu": "Menu",
+  "today.hello": "Hello, {name}",
+  "today.nothingWaiting": "Nothing waiting to send",
+  "today.waiting": "{count} waiting to send: sent by itself when you are online",
+  "inbox.soon": "Approvals waiting for you and your notifications will appear here.",
+  "myHr.soon": "Your leave, expense claims, payslips and holidays will appear here.",
+  "menu.settings": "Settings",
+  "menu.settingsHint": "Outdoor mode, offline storage, sign out",
+  "settings.title": "Settings"
 }

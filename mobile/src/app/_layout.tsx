@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { AppLock } from '@/auth/lock';
 import { AuthProvider, useAuth } from '@/auth/session';
+import { t as text } from '@/i18n';
 import { clearErpCache } from '@/lib/erp';
 import { wipeOffline } from '@/lib/offline-store';
 import { ThemeProvider, useTheme } from '@/theme';
@@ -52,6 +53,7 @@ function Nav() {
           <Stack.Screen name="menu/[name]" />
           <Stack.Screen name="list/[doctype]" />
           <Stack.Screen name="doc/[doctype]/[name]" />
+          <Stack.Screen name="settings" options={{ title: text('settings.title') }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />

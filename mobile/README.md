@@ -48,6 +48,26 @@ Android Studio (JDK 17, Android SDK), installed on the phone over USB:
 `pnpm exec expo run:android --device` (the generated `android/` folder stays out of Git). `eas-cli` is pinned
 in `devDependencies`: run it as `pnpm exec eas`, never an unpinned `npx`.
 
+**Building the Android development build on Windows** (found on 23 November 2026; the C++ parts, such as the
+SQLCipher database, hit Windows' 260-character path limit, which the Android tools do not lift):
+
+1. Work in a short folder, for example a Git worktree: `git worktree add --detach C:\w\erp <branch>`; copy
+   your private `mobile/.env` into it.
+2. Install with a flat package layout (local only, not committed):
+   `pnpm install --frozen-lockfile --config.node-linker=hoisted`.
+3. Generate the Android project: `pnpm exec expo prebuild --platform android --no-install` (then undo its
+   `package.json` script change with `git checkout -- package.json`).
+4. Use CMake 3.31 (its Ninja handles long paths; Windows long paths must be on): install `cmake;3.31.6` with
+   the Android SDK manager, and add to `android/local.properties` (generated, not committed):
+   `sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk` and
+   `cmake.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk\\cmake\\3.31.6`.
+5. Build with Java 17 for your phone's chip only (faster):
+   `set JAVA_HOME=<JDK 17 folder>` then `android\gradlew.bat -p android assembleDebug -PreactNativeArchitectures=arm64-v8a`.
+6. Install and connect over USB: `adb install -r android/app/build/outputs/apk/debug/app-debug.apk`,
+   `adb reverse tcp:8081 tcp:8081`, then `pnpm exec expo start` in the same folder; open the app.
+7. Later code changes need no rebuild: update the worktree (`git checkout --detach <commit>`) and the app reloads.
+   Rebuild only when native packages or `app.json` plugins change.
+
 ## Reuse
 
 1. In ERPNext, create an **OAuth Client** for the app (app name `ERP Mobile`): grant type Authorization Code,

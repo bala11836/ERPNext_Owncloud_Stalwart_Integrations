@@ -4,6 +4,22 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-24
+
+### Invitation controls are part of the Authentik build (P49)
+
+Both **Invite users** and **Invitations** are required in the Authentik admin
+console. The deployment stages the companion, CSS and native menu override
+from this module at a recorded Git revision. Check both controls after a
+rebuild or Authentik upgrade. Their roles are user selection and email
+submission in the companion, and status and cancellation in the native console.
+
+The isolated test issuer reuses the companion with its own enrollment flow.
+Only active synthetic accounts waiting for their first passkey are listed.
+Synthetic addresses do not receive mail, so the test form addresses the
+administrator's mailbox. Production enrollment and recovery retain their
+own policies, hosts and mail transport.
+
 ## 2026-11-20
 
 ### A reboot must bring everything back by itself (P57)

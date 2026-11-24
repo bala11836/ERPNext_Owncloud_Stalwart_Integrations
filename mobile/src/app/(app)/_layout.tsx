@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 import { useApiRef } from '@/auth/session';
 import { Icon, type IconName } from '@/components/icon';
 import { type TextKey, t as text } from '@/i18n';
+import { useAlertTaps } from '@/lib/alerts';
 import { refreshInbox, unreadCount, useInbox } from '@/lib/inbox';
 import { flushQueue } from '@/lib/sender';
 import { useSideRail, useTheme } from '@/theme';
@@ -15,6 +16,7 @@ export default function AppTabs() {
   const rail = useSideRail();
   const apiRef = useApiRef();
   const waiting = unreadCount(useInbox());
+  useAlertTaps(); // a tapped alert opens its approval screen
   // The Inbox count is fresh when the app opens and whenever it comes back to the front (no polling).
   useEffect(() => {
     const fresh = () => {

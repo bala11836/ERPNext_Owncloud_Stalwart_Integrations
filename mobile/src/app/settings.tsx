@@ -1,6 +1,5 @@
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
-import { AndroidImportance } from 'expo-notifications';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 
@@ -8,6 +7,9 @@ import { RELOCK_AFTER_MS } from '@/auth/lock';
 import { useApiRef, useAuth } from '@/auth/session';
 import { Button, Screen, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
+import { areaChannel } from '@/lib/alerts';
+import { type Api } from '@/lib/erp';
+import { loadBoot } from '@/lib/attendance';
 import { offlineStorageKind, offlineStore } from '@/lib/offline-store';
 import { flushQueue } from '@/lib/sender';
 import { useTheme } from '@/theme';
@@ -15,17 +17,21 @@ import { useTheme } from '@/theme';
 const CONFIRM_WORD = 'DELETE';
 const TEST_DELAY_S = 60;
 
-/** A local test notification in a minute, so the owner can close the app and see it arrive (no server, no personal data). */
-async function scheduleTest(): Promise<boolean> {
+/**
+ * A test approval alert in a minute, exactly as a real one will look (lib/alerts.ts): the Payments channel, the
+ * kind, a count and the person's first site, no names or amounts; tapping it opens the Inbox. No server involved.
+ */
+async function scheduleTest(api: Api): Promise<boolean> {
   const { granted } = await Notifications.requestPermissionsAsync();
   if (!granted) return false;
-  await Notifications.setNotificationChannelAsync('default', {
-    name: text('notify.channel'),
-    importance: AndroidImportance.HIGH,
-  });
+  const site = await loadBoot(api).then((b) => b.sites[0]?.label ?? b.check_in_sites[0]?.label, () => undefined);
   await Notifications.scheduleNotificationAsync({
-    content: { title: text('notify.testTitle'), body: text('notify.testBody') },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: TEST_DELAY_S, channelId: 'default' },
+    content: {
+      title: text('alert.paymentTitle'),
+      body: site ? text('alert.paymentBody', { site }) : text('alert.paymentBodyNoSite'),
+      data: { url: '/inbox' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: TEST_DELAY_S, channelId: await areaChannel('payments') },
   });
   return true;
 }
@@ -42,7 +48,7 @@ export default function Settings() {
   const [sending, setSending] = useState(false);
   const [test, setTest] = useState<'scheduled' | 'denied' | 'failed' | null>(null);
   const sendTest = () =>
-    scheduleTest().then((ok) => setTest(ok ? 'scheduled' : 'denied'), () => setTest('failed'));
+    scheduleTest(apiRef.current).then((ok) => setTest(ok ? 'scheduled' : 'denied'), () => setTest('failed'));
   const count = useCallback(
     () =>
       offlineStore()

@@ -6,7 +6,7 @@ import { memoryStore } from '@/lib/queue';
 import { ThemeProvider } from '@/theme';
 
 const mockSignOut = jest.fn();
-const mockApiRef = { current: jest.fn() };
+const mockApiRef: { current: jest.Mock } = { current: jest.fn() };
 jest.mock('@/auth/session', () => ({
   SignedOutError: class SignedOutError extends Error {},
   useAuth: () => ({ user: { name: 'Worker A', email: 'a@example.com', roles: ['Employee'] }, signOut: mockSignOut }),
@@ -24,11 +24,12 @@ jest.mock('expo-secure-store', () => ({
 
 const mockSchedule = jest.fn(async (_req: unknown) => 'n1');
 const mockGranted = { granted: true };
+const mockChannels: unknown[][] = [];
 jest.mock('expo-notifications', () => ({
   AndroidImportance: { HIGH: 4 },
   SchedulableTriggerInputTypes: { TIME_INTERVAL: 'timeInterval' },
   requestPermissionsAsync: async () => mockGranted,
-  setNotificationChannelAsync: async () => null,
+  setNotificationChannelAsync: async (...a: unknown[]) => void mockChannels.push(a),
   scheduleNotificationAsync: (req: unknown) => mockSchedule(req),
 }));
 
@@ -86,23 +87,30 @@ describe('settings', () => {
     expect(mockSignOut).toHaveBeenCalled();
   });
 
-  it('sets a test notification for a minute later, with no personal data', async () => {
+  it('a test approval alert a minute later, as a real one: Payments channel, kind, count and site only; opens the Inbox', async () => {
     mockGranted.granted = true;
     mockSchedule.mockClear();
+    mockChannels.length = 0;
+    mockApiRef.current = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ message: { sites: [{ name: 'S1', label: 'Site A', supervisor: false, approver: true, shifts: [] }], check_in_sites: [] } }),
+    }));
     await open();
-    await fireEvent.press(screen.getByRole('button', { name: 'Send test notification' }));
-    expect(await screen.findByText('Test notification in 60 seconds. Close the app now and wait.')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Send test approval alert' }));
+    expect(await screen.findByText('Test approval alert in 60 seconds. Close the app now and wait; tap it when it comes.')).toBeOnTheScreen();
     expect(mockSchedule).toHaveBeenCalledWith({
-      content: { title: 'Test notification', body: 'Notifications from this app reach you while it is closed.' },
-      trigger: { type: 'timeInterval', seconds: 60, channelId: 'default' },
+      content: { title: 'Payment approval waiting', body: '1 payment · Site A', data: { url: '/inbox' } },
+      trigger: { type: 'timeInterval', seconds: 60, channelId: 'payments' },
     });
+    expect(mockChannels).toEqual([['payments', { name: 'Payments', importance: 4 }]]);
   });
 
   it('says how to turn notifications on when the phone refuses', async () => {
     mockGranted.granted = false;
     mockSchedule.mockClear();
     await open();
-    await fireEvent.press(screen.getByRole('button', { name: 'Send test notification' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Send test approval alert' }));
     expect(await screen.findByText(/Notifications are off for this app/)).toBeOnTheScreen();
     expect(mockSchedule).not.toHaveBeenCalled();
   });

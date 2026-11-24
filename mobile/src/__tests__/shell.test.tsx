@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/theme';
 
 // One ref for every render, as the real useApiRef gives (a new object each render would loop the effects).
 const mockApiRef = { current: async () => { throw new TypeError('offline in tests'); } };
+jest.mock('expo-notifications', () => ({ AndroidImportance: { HIGH: 4 }, useLastNotificationResponse: () => null }));
 jest.mock('@/auth/session', () => ({
   APP_NAME: 'ERP Mobile',
   SignedOutError: class SignedOutError extends Error {},

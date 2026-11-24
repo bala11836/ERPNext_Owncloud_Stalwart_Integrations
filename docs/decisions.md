@@ -589,3 +589,17 @@ The engineer can also capture for workers assigned to that supervisor for the sh
 automatically and retain the engineer’s identity and the applicable supervisor. Both paths require final approval by
 a separate project manager before creating official HR Attendance. Teams without an engineer and employees who
 check themselves in keep their existing workflows.
+
+### Forward the test reset from trusted pull-request closure events (P71)
+
+- **Decision:** An unmerged PR targeting main from a branch in this repository
+  can request a test reset. The default-branch workflow passes the PR number
+  to the private test workflow with a short-lived, repository-scoped GitHub App
+  token. The workflow never checks out a PR or accepts credentials from it.
+- **Why:** Test deployment uses a private runner. The private workflow verifies
+  the closed PR and the currently deployed revision before it can restore main.
+- **Dependency review:** GitHub's official MIT-licensed
+  `actions/create-github-app-token` v3.4.0 was checked on 24 November 2026.
+  The version is pinned to its commit. The official repository was active and
+  no advisory matched in GitHub Security Advisories or OSV.
+- **Where:** `.github/workflows/test-pr-close.yml`. Development was assisted by Codex.

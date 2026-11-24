@@ -1,0 +1,41 @@
+name: Request test reset on PR close
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  dispatch:
+    if: >-
+      vars.TEST_PR_RESET_ENABLED == 'true' &&
+      github.event.pull_request.merged == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # This workflow uses the base workflow and never checks out the PR.
+      - name: Create the test reset App token
+        id: app
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          client-id: ${{ vars.TEST_RESET_APP_CLIENT_ID }}
+          private-key: ${{ secrets.TEST_RESET_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ secrets.TEST_RESET_REPOSITORY }}
+          permission-actions: write
+      - name: Dispatch the test reset
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+          TARGET: ${{ secrets.TEST_RESET_REPOSITORY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          [[ "$PR_NUMBER" =~ ^[1-9][0-9]{0,8}$ ]]
+          [[ -n "$TARGET" ]]
+          gh workflow run test-erp-deployment.yml --repo "$OWNER/$TARGET" --ref main \
+            -f operation=reset -f pull_request="$PR_NUMBER" >/dev/null
+          echo "Requested test reset for closed PR $PR_NUMBER."

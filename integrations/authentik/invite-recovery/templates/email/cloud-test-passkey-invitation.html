@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><body>
+<h1>Register a test passkey</h1>
+<p>This invitation is for {% if username %}<strong>{{ username }}</strong>{% else %}a synthetic account{% endif %} on Test Authentik.</p>
+<p><a href="{{ url }}">Register a passkey on Test Authentik</a></p>
+<p>The link is single-use and expires {{ expires|date:"j M Y, H:i T" }}.</p>
+</body></html>

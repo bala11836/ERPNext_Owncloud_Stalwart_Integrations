@@ -30,7 +30,11 @@ class Invitations(unittest.TestCase):
   for e in graph['entries']:
    self.assertNotIn('name__in=["ERPNext"]',e.get('attrs',{}).get('expression',''))
    self.assertNotIn('cloud-invitation-navigation',e.get('attrs',{}).get('branding_custom_css',''))
-  self.assertIn('anchor.before(invite)',(r/'public/admin-navigation.mjs').read_text())
+  navigation=(r/'public/admin-navigation.mjs').read_text()
+  self.assertIn('Invite users',navigation)
+  self.assertIn('#/flow/stages/invitations',navigation)
+  self.assertIn('nativeItem.before(item)',navigation)
+  self.assertIn('admin-navigation.mjs',(r/'templates/if/admin.html').read_text())
   self.assertIn('Manage invitations',(r/'public/index.html').read_text())
  def test_modules_render_group_and_cache_version(self):
   with tempfile.TemporaryDirectory() as d:
@@ -38,5 +42,9 @@ class Invitations(unittest.TestCase):
    r=Path(d)/'build/integrations/authentik/invite-recovery'
    self.assertIn('APPROVAL_GROUP = "Shared Users"',(r/'public/invitations.mjs').read_text())
    self.assertIn('invitations.mjs?v=abcdef1',(r/'public/page.mjs').read_text())
-   self.assertIn('page.mjs?v=abcdef1',(r/'public/index.html').read_text())
+   page=(r/'public/index.html').read_text()
+   self.assertIn('page.mjs?v=abcdef1',page)
+   self.assertIn('style.css?v=abcdef1',page)
+   self.assertIn('invite-mode.mjs?v=abcdef1',(r/'public/page.mjs').read_text())
+   self.assertIn('admin-navigation.mjs?v=abcdef1',(r/'templates/if/admin.html').read_text())
 if __name__=='__main__':unittest.main()

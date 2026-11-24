@@ -20,6 +20,33 @@ discussion that led to a decision is not repeated here.
   files in Drive.
 - **Where:** `erpnext_drive_integrations/drive_store/`, `tests/test_drive_store.py`, issue #53.
 
+### Patch the production identity images before the P49 cutover
+
+Keep PostgreSQL on major version 16 and move its identity pin to 16.16.
+The November PostgreSQL release addresses high-severity advisories affecting
+16.15. Use NGINX 1.30.8 for both identity support services so the gateway's
+upstream DNS resolver also receives the November fixes. Retain the existing
+Authentik version and test the database upgrade and gateway routes in isolation.
+Render both identity proxy configurations from their repository templates.
+TLS certificate material stays in its existing private mount.
+
+Official notes are in the [PostgreSQL 16.16 release](https://www.postgresql.org/docs/release/16.16/)
+and [NGINX advisories](https://nginx.org/en/security_advisories.html).
+
+### Invitation controls are part of the Authentik build (P49)
+
+Both **Invite users** and **Invitations** are required in the Authentik admin
+console. The deployment stages the companion, CSS and native menu override
+from this module at a recorded Git revision. Check both controls after a
+rebuild or Authentik upgrade. Their roles are user selection and email
+submission in the companion, and status and cancellation in the native console.
+
+The isolated test issuer reuses the companion with its own enrollment flow.
+Only active synthetic accounts waiting for their first passkey are listed.
+Synthetic addresses do not receive mail, so the test form addresses the
+administrator's mailbox. Production enrollment and recovery retain their
+own policies, hosts and mail transport.
+
 ## 2026-11-20
 
 ### A reboot must bring everything back by itself (P57)

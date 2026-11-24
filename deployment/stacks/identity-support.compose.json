@@ -1,7 +1,7 @@
 {
   "services": {
     "gateway": {
-      "image": "nginx@sha256:0e52bd054126cdc040b1276c0af347aeb02a41b9cfe305d6094767ac30e97949",
+      "image": "nginx@sha256:6437a63b5c529f0e06162b3f593c0154cff6fa2ea0f94fd7c27928cb399e022d",
       "restart": "unless-stopped",
       "volumes": [
         "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_support_gateway_0:/etc/nginx/nginx.conf:ro",
@@ -19,7 +19,7 @@
       "ports": []
     },
     "invitations": {
-      "image": "nginx@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236",
+      "image": "nginx@sha256:6437a63b5c529f0e06162b3f593c0154cff6fa2ea0f94fd7c27928cb399e022d",
       "restart": "unless-stopped",
       "volumes": [
         "${RUNTIME_ROOT:?Set RUNTIME_ROOT}/mounts/identity_support_invitations_0:/srv/public:ro",

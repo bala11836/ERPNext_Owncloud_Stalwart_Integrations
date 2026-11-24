@@ -7,7 +7,7 @@ const flow = { pk: "enrollment-id", slug: FLOW_SLUG, designation: "enrollment" }
 const recoveryFlow = { pk: "recovery-id", slug: RECOVERY_FLOW_SLUG, designation: "enrollment" };
 const testFlow = { pk: "test-enrollment-id", slug: "mobile-attendance-qa-enroll", designation: "enrollment" };
 const synthetic = { ...baseUser, username: "fake-engineer", email: "fake-engineer@attendance-qa.example.invalid",
-  groups_obj: [{ name: "fake" }] };
+  path: "qa/mobile-attendance", groups_obj: [{ name: "fake" }] };
 const adminEmail = "operator@example.invalid";
 const now = Date.parse("2026-11-06T08:00:00Z");
 function fixture({ user = baseUser, devices = [], admin = true, csrf = true,
@@ -149,6 +149,7 @@ export async function runTests() {
     assert.equal((await f.client.load()).users.length, 1);
     assert.equal((await f.client.send(7, 24)).email, adminEmail);
     assert.equal(f.invitations[0].flow, testFlow.pk);
+    assert.match(f.invitations[0].name, /^enroll-fake-engineer-/);
     assert.deepEqual(f.invitations[0].fixed_data, { email: synthetic.email, user_id: 7, username: synthetic.username });
     const sent = f.requests.find((request) => request.path.endsWith("/send_email/"));
     assert.deepEqual(sent.data, { email_addresses: [adminEmail], template: "email/cloud-test-passkey-invitation.html" });
@@ -158,6 +159,7 @@ export async function runTests() {
       { user: synthetic, devices: [{ pk: 4 }] },
       { user: { ...synthetic, is_superuser: true } },
       { user: { ...synthetic, email: "staff@example.invalid" } },
+      { user: { ...synthetic, path: "users" } },
       { user: baseUser },
     ];
     for (const scenario of scenarios) {

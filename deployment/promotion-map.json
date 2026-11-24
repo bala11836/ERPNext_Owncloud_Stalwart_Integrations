@@ -77,7 +77,7 @@
       "stacks": ["identity"],
       "steps": ["render the identity stack and redeploy it"],
       "restart": ["authentik server and worker"],
-      "not_covered": "the test site uses production's sign-in: these changes reach production sign-in directly"
+      "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."
     },
     {
       "name": "Sign-in companions (gateway, invitation pages)",
@@ -86,14 +86,14 @@
       "steps": ["render the identity-support stack and redeploy it", "run the invitation install scripts in integrations/authentik/invite-recovery when they changed"],
       "live": ["authentik invitation and recovery flows, brand and admin navigation (install scripts)"],
       "restart": ["identity gateway and invitation pages"],
-      "not_covered": "the test site uses production's sign-in: these changes reach production sign-in directly"
+      "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."
     },
     {
       "name": "Sign-in configuration",
       "paths": ["integrations/authentik/configuration.json", "integrations/authentik/configure_test_clients.py", "tools/authentik_blueprint.py", "tools/restore_identity.py", "deployment/scope-mappings.example.json"],
       "stacks": [],
       "live": ["authentik providers, flows, scope mappings and brand: apply the change in authentik (blueprint or by hand)"],
-      "not_covered": "the test site uses production's sign-in: these changes reach production sign-in directly"
+      "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."
     },
     {
       "name": "Production proxy routes",

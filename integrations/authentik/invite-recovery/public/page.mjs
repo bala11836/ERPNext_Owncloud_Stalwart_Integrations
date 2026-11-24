@@ -1,6 +1,6 @@
 import { InvitationClient, InvitationError } from "./invitations.mjs";
 
-import { test } from "./invite-mode.mjs";
+import { mailAvailable, test } from "./invite-mode.mjs";
 
 const client = new InvitationClient({ test });
 let delivery;
@@ -27,6 +27,10 @@ function previewUser() {
       : "First-time enrollment — the user will register their first passkey."
     : "";
   if (test) {
+    if (!mailAvailable) {
+      $("delivery").textContent = "Test invitation email is unavailable. No invitation will be created.";
+      return;
+    }
     $("delivery").textContent = delivery
       ? `The test invitation will be sent to your administrator mailbox, ${delivery}.`
       : "Set an email address on your administrator account to receive test invitations.";
@@ -66,6 +70,7 @@ async function load() {
     previewUser();
     $("invite-form").hidden = users.length === 0;
     $("reload").hidden = false;
+    $("send").disabled = !mailAvailable;
     status(users.length ? "Choose a user and an expiry." : "No eligible users found. Create or approve the user in Authentik, then refresh this list.");
     previewExpiry();
   } catch (error) {
@@ -80,7 +85,7 @@ $("user").addEventListener("input", previewUser);
 $("reload").addEventListener("click", load);
 $("invite-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (pending) return;
+  if (pending || !mailAvailable) return;
   const user = options.get($("user").value);
   if (!user) {
     $("user").setCustomValidity("Select an approved user from the list.");

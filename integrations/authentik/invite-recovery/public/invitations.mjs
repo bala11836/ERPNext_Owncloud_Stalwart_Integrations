@@ -132,6 +132,7 @@ export class InvitationClient {
     const owners = this.passkeyOwners(devices);
     const candidates = users.filter((user) => approved(user, groupName) && !duplicateEmail(users, user.email)
       && (!this.test || (!user.is_superuser && !owners.has(String(user.pk))
+        && user.path === "qa/mobile-attendance"
         && user.email === `${user.username}@attendance-qa.example.invalid`)));
     const eligible = candidates.map((user) => ({ ...user,
       invitationKind: this.test ? "enrollment" : invitationKind(user, owners.has(String(user.pk))) }));
@@ -170,7 +171,7 @@ export class InvitationClient {
         throw new InvitationError("This user already has a valid invitation. Open Invitations in Authentik to resend or expire it first.");
       }
       if (!csrfCookie(this.cookie())) throw new InvitationError("Refresh your Authentik administrator session before sending.");
-      name = `enroll-${user.pk}-${this.uuid()}`;
+      name = `enroll-${this.test ? user.username : user.pk}-${this.uuid()}`;
       const expires = new Date(this.now() + hours * 3600000).toISOString();
       creationAttempted = true;
       created = await this.api(INVITATIONS, { method: "POST", data: {

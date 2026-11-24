@@ -19,9 +19,10 @@
       "title": "Workspace HTTPS monitoring",
       "summary": "Independent HTTPS availability checks for public workspace routes.",
       "readme": "integrations/monitoring/README.md",
-      "paths": ["integrations/monitoring/**"],
+      "paths": ["integrations/monitoring/**", "tests/test_https_monitor.py"],
       "depends_on": [],
-      "tests": []
+      "tests": ["tests/test_https_monitor.py"],
+      "upstream": []
     },
     {
       "id": "erp-addon-shell",

@@ -64,9 +64,8 @@
       progress.textContent = ({idle: 'Test is independent of production.',
         queued: 'Request queued…', snapshotting: 'Preparing a scrambled production copy…',
         transferring: 'Copying to test…', restoring: 'Replacing test data…',
-        validating: 'Checking restored data…': 'Updating test code to the approved release…',
-        succeeded: state.kind === 'code' ? 'Code refresh completed.' : 'Data refresh completed.',
-        failed})[state.phase] || 'Checking status…';
+        validating: 'Checking restored data…', succeeded: 'Data refresh completed.',
+        failed: 'Data refresh failed. The last successful refresh time is unchanged.'})[state.phase] || 'Checking status…';
       // Only a running, queued or failed refresh needs a line under the buttons.
       progress.hidden = state.phase === 'idle' || state.phase === 'succeeded';
       for (const button of buttons) button.disabled = running.has(state.phase);

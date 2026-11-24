@@ -87,6 +87,38 @@ class ApprovalClaim(unittest.TestCase):
                 sso.is_approved({'cloud_approved': True})
 
 
+class IdentityProxyRender(unittest.TestCase):
+    def test_both_proxies_render_as_distinct_files_with_private_certificates(self):
+        with tempfile.TemporaryDirectory() as work:
+            work = Path(work)
+            certificates = work / 'certificates'
+            certificates.mkdir()
+            profile = {
+                'instance': 'identity-fixture',
+                'tier': 'production',
+                'domain': 'example.net',
+                'hosts': {key: f'{key}.example.net' for key in
+                          ('erp', 'sso', 'drive', 'office', 'mail', 'dms', 'respond')},
+                'network': 'identity-fixture',
+                'network_subnet': '192.0.2.0/24',
+                'erp_image': 'erp:fixture',
+                'mail_image': 'mail:fixture',
+                'projects': ['identity-support'],
+                'existing_mounts': {'identity_support_gateway_1': str(certificates)},
+            }
+            root = prepare_runtime.prepare(ROOT, work / 'runtime', profile)
+            mounts = root / 'mounts'
+            gateway = (mounts / 'identity_support_gateway_0').read_text()
+            invitations = (mounts / 'identity_support_invitations_1').read_text()
+            spec = json.loads((root / 'compose' / 'identity-support.json').read_text())
+            self.assertIn('server_name sso.example.net;', gateway)
+            self.assertIn('portal.sso.backchannel', gateway)
+            self.assertIn('auth_request /__invitation_admin_check;', invitations)
+            self.assertIn('proxy_set_header Host sso.example.net;', invitations)
+            self.assertIn(f'{certificates}:/cert:ro', spec['services']['gateway']['volumes'])
+            self.assertEqual(list(certificates.iterdir()), [])
+
+
 class InvitationBranding(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

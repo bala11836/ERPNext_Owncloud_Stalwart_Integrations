@@ -191,6 +191,7 @@ const STATUS = {
   info: { icon: 'info', color: 'primary' },
   pending: { icon: 'pending', color: 'primary' },
   offline: { icon: 'offline', color: 'muted' },
+  none: { icon: 'ok', color: 'muted' },
 } as const satisfies Record<string, { icon: IconName; color: PaletteColor }>;
 
 export type StatusKind = keyof typeof STATUS;
@@ -317,11 +318,14 @@ export function Row({
   subtitle,
   onPress,
   selected,
+  children,
 }: {
   title: string;
   subtitle?: string;
   onPress?: () => void;
   selected?: boolean;
+  /** Status lines of this row, shown under the title inside the row. */
+  children?: ReactNode;
 }) {
   const t = useTheme();
   return (
@@ -344,11 +348,12 @@ export function Row({
       })}>
       <View style={{ flex: 1, gap: 2 }}>
         <T style={{ fontWeight: '600' }}>{title}</T>
-        {subtitle && (
+        {subtitle ? (
           <T variant="small" color="muted">
             {subtitle}
           </T>
-        )}
+        ) : null}
+        {children ? <View style={{ gap: 2, paddingTop: 4 }}>{children}</View> : null}
       </View>
       {onPress && <Icon name="chevron-right" size={t.font(22)} color={t.c.muted} />}
     </Pressable>

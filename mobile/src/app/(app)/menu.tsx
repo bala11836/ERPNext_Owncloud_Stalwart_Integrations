@@ -4,10 +4,12 @@ import { ActivityIndicator, ScrollView, View } from 'react-native';
 
 import { useApiRef } from '@/auth/session';
 import { MenuPane } from '@/components/menu-pane';
+import { OfflineStrip } from '@/components/offline-strip';
 import { Button, Row, SearchField, Status, T } from '@/components/ui';
 import { type TextKey, t as text } from '@/i18n';
 import { type BootT, loadBoot } from '@/lib/attendance';
 import { BOOT_PATH, type Boot, useErp } from '@/lib/erp';
+import { useConnection } from '@/lib/saved';
 import { searchMenus } from '@/lib/menu-search';
 import { useIsTablet, useTheme } from '@/theme';
 
@@ -63,6 +65,7 @@ export default function Menu() {
   const [query, setQuery] = useState('');
   const current = selected ?? GROUPS.flatMap((g) => menus.filter((m) => groupOf(m.app) === g))[0]?.name;
   const work = workOf(boot);
+  const { offline } = useConnection();
 
   const heading = (key: TextKey) => (
     <T variant="small" color="muted" style={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 6, fontWeight: '700' }}>
@@ -72,6 +75,7 @@ export default function Menu() {
 
   const list = (
     <ScrollView style={{ backgroundColor: t.c.bg }} keyboardShouldPersistTaps="handled">
+      <OfflineStrip />
       <SearchField value={query} onChange={setQuery} label={text('menu.search')} />
       {query.trim() ? (
         <SearchResults menus={menus} query={query} />
@@ -89,7 +93,7 @@ export default function Menu() {
           {heading('menu.erpLists')}
           {!data && error && (
             <View style={{ paddingHorizontal: 16, paddingBottom: 8, gap: 10 }}>
-              <Status kind="info" label={text('menu.listsUnavailable', { error })} />
+              <Status kind="info" label={offline ? text('menu.listsOffline') : text('menu.listsUnavailable', { error })} />
               <Button label={text('inbox.retry')} icon="refresh" secondary onPress={reload} />
             </View>
           )}

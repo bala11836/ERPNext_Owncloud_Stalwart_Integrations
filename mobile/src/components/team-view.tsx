@@ -13,6 +13,7 @@ import { callErp } from '@/lib/erp';
 import { offlineStore } from '@/lib/offline-store';
 import { callKept } from '@/lib/saved';
 import { statusKind } from '@/lib/my-hr';
+import { formatDate } from '@/lib/format';
 import { useTheme } from '@/theme';
 
 type Team = z.infer<typeof TeamList>;
@@ -115,7 +116,7 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
             {site.shifts.map((s) => (
               <Choice
                 key={s.name}
-                label={text('checkIn.shift', { shift: s.label ?? s.name, start: s.start, end: s.end })}
+                label={text('team.shiftChoice', { shift: s.label ?? s.name, start: s.start, end: s.end })}
                 selected={s.name === shift}
                 onPress={() => setShift(s.name)}
               />
@@ -125,7 +126,7 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
         {team && (
           <Status
             kind={team.missing ? 'pending' : 'ok'}
-            label={text('team.marked', { marked: team.total - team.missing, total: team.total, date: team.attendance_date })}
+            label={text('team.marked', { marked: team.total - team.missing, total: team.total, date: formatDate(team.attendance_date) })}
           />
         )}
         {note && <Status kind={note.kind} label={note.label} />}
@@ -134,31 +135,27 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
           <Button label={text('team.submit', { count: own.length })} icon="fingerprint" onPress={submitAll} disabled={busy} />
         )}
         {team?.truncated && <Status kind="warn" label={text('team.truncated')} />}
+        {/* Only a worker's own supervisor marks them (custom_hr): said once, each row names the supervisor. */}
+        {team && team.workers.some((w) => !w.can_capture && !w.can_edit) && <Status kind="info" label={text('team.othersMark')} />}
       </View>
       {team?.workers.map((w) => {
         const markable = w.can_capture || w.can_edit;
         const open_ = w.state === 'Not recorded' || w.state === 'Returned';
-        const by = supervisorName(w.supervisor);
+        const by = markable ? null : supervisorName(w.supervisor);
         return (
-          <View key={w.employee}>
-            <Row
-              title={w.employee_name ?? w.employee}
-              subtitle={[w.designation, w.machine_required ? text('team.machine') : null].filter(Boolean).join(' · ') || undefined}
-              onPress={markable ? () => open(w) : undefined}
-            />
-            <View style={{ paddingHorizontal: 16, paddingVertical: 6, gap: 6 }}>
-              {queued.has(w.employee) ? (
-                <Status kind="pending" label={text('team.waitingToSend')} />
-              ) : (
-                <Status
-                  kind={open_ ? 'warn' : statusKind(w.state)}
-                  label={w.can_capture && open_ ? text('team.tapToMark', { state: w.state }) : w.state}
-                />
-              )}
-              {/* Only the worker's own supervisor marks them (custom_hr): say so instead of a row that does nothing. */}
-              {!markable && <Status kind="info" label={by ? text('team.bySupervisor', { name: by }) : text('team.bySupervisorUnknown')} />}
-            </View>
-          </View>
+          <Row
+            key={w.employee}
+            title={w.employee_name ?? w.employee}
+            subtitle={[w.designation, w.machine_required ? text('team.machine') : null, by ? text('team.supervisorIs', { name: by }) : null]
+              .filter(Boolean)
+              .join(' · ') || undefined}
+            onPress={markable ? () => open(w) : undefined}>
+            {queued.has(w.employee) ? (
+              <Status kind="pending" label={text('team.waitingToSend')} />
+            ) : (
+              <Status kind={open_ ? 'warn' : statusKind(w.state)} label={w.can_capture && open_ ? text('team.tapToMark', { state: w.state }) : w.state} />
+            )}
+          </Row>
         );
       })}
       <View style={{ height: 24 }} />

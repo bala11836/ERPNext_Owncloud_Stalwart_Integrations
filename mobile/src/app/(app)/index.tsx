@@ -171,7 +171,7 @@ export default function Today() {
             <Panel key={`team-${tm.siteId}`}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
                 <View style={{ flex: 1, gap: 6 }}>
-                  <Label text={text('today.teamLabel', { site: tm.site, shift: tm.shift })} />
+                  <Label text={text('today.shiftLabel', { shift: tm.shift })} />
                   <T variant="title">{text('today.myTeam')}</T>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
@@ -273,7 +273,7 @@ export default function Today() {
             <Button label={text('today.openApprovals')} icon="chevron-right" onPress={() => router.push('/inbox')} />
           </Panel>
         )}
-        {inbox.loaded && rows.length === 0 && <Status kind="ok" label={text('inbox.noneWaiting')} />}
+        {inbox.loaded && rows.length === 0 && <Status kind="none" label={text('inbox.noneWaiting')} />}
 
         {/* Waiting to send: the encrypted offline queue, with "Send now". */}
         {queue && (queue.waiting > 0 || queue.refused > 0) ? (
@@ -291,7 +291,7 @@ export default function Today() {
             {queue.waiting > 0 && <Button label={text('today.sendNow')} icon="upload" secondary onPress={sendNow} />}
           </Panel>
         ) : (
-          queue && <Status kind="ok" label={text('today.nothingWaiting')} />
+          queue && <Status kind="none" label={text('today.nothingWaiting')} />
         )}
 
         {hr && (hr.nextHoliday || hr.openLeaves > 0) && (

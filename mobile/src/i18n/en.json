@@ -248,5 +248,10 @@
   "menu.lists": "{count} lists",
   "menu.oneList": "1 list",
   "menu.listsUnavailable": "ERPNext lists need a connection. {error}",
-  "menu.noMenus": "Your ERPNext roles don't include any lists yet. Ask your administrator for access."
+  "menu.noMenus": "Your ERPNext roles don't include any lists yet. Ask your administrator for access.",
+  "team.supervisorIs": "Supervisor: {name}",
+  "team.othersMark": "Workers with another supervisor are marked by that supervisor.",
+  "team.shiftChoice": "{shift} {start}–{end}",
+  "today.shiftLabel": "{shift} shift",
+  "menu.listsOffline": "ERPNext lists need a connection."
 }

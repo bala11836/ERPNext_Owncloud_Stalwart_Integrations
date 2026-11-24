@@ -92,7 +92,7 @@ describe('supervisor team', () => {
   it('offline: the saved list, and a worker marked on this phone waits to be sent', async () => {
     serve();
     const first = await openTeam();
-    await screen.findByText('1 of 3 marked for 2026-11-23'); // online once: the list is saved
+    await screen.findByText('1 of 3 marked for 23-11-2026'); // online once: the list is saved
     await first.unmount();
     mockDown = true;
     await mockStore.put({
@@ -109,13 +109,13 @@ describe('supervisor team', () => {
   it('lists the shift: counts, each state in words, and the drafts to submit', async () => {
     serve();
     await openTeam();
-    expect(await screen.findByText('1 of 3 marked for 2026-11-23')).toBeOnTheScreen();
+    expect(await screen.findByText('1 of 3 marked for 23-11-2026')).toBeOnTheScreen();
     expect(screen.getByText('Not recorded: tap to mark')).toBeOnTheScreen();
     expect(screen.getByText('Draft')).toBeOnTheScreen();
     expect(screen.getByText('Submit 1 for approval')).toBeOnTheScreen();
     // another supervisor's worker: seen, not markable, and the row says who marks them
-    expect(screen.getByText('Marked by their supervisor: Supervisor B')).toBeOnTheScreen();
-    expect(screen.getAllByText(/^Marked by their supervisor/)).toHaveLength(1);
+    expect(screen.getByText('Helper · Supervisor: Supervisor B')).toBeOnTheScreen();
+    expect(screen.getByText('Workers with another supervisor are marked by that supervisor.')).toBeOnTheScreen();
   });
 
   it('submits own drafts after Face ID, and not without it', async () => {

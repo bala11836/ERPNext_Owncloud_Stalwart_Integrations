@@ -4,6 +4,7 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 
 import { useApiRef } from '@/auth/session';
 import { Button, Row, Status, T } from '@/components/ui';
+import { OfflineStrip } from '@/components/offline-strip';
 import { t as text } from '@/i18n';
 import { formatDate, formatValue } from '@/lib/format';
 import { type InboxNotification, markRead, refreshInbox, useInbox } from '@/lib/inbox';
@@ -42,6 +43,7 @@ export default function Inbox() {
       refreshControl={
         <RefreshControl refreshing={inbox.loading && inbox.loaded} onRefresh={() => refreshInbox(apiRef.current)} />
       }>
+      <OfflineStrip />
       {inbox.error && (
         <View style={{ padding: 16, gap: 12 }}>
           <Status kind="danger" label={text('inbox.error', { error: inbox.error })} />
@@ -58,7 +60,7 @@ export default function Inbox() {
           {heading(text('inbox.waiting', { count: inbox.actions.length }))}
           {inbox.actions.length === 0 ? (
             <View style={{ paddingHorizontal: 16 }}>
-              <Status kind="ok" label={text('inbox.noneWaiting')} />
+              <Status kind="none" label={text('inbox.noneWaiting')} />
             </View>
           ) : (
             inbox.actions.map((a) => (
@@ -78,7 +80,7 @@ export default function Inbox() {
           {heading(text('inbox.notifications'))}
           {inbox.notifications.length === 0 ? (
             <View style={{ paddingHorizontal: 16 }}>
-              <Status kind="ok" label={text('inbox.noNotifications')} />
+              <Status kind="none" label={text('inbox.noNotifications')} />
             </View>
           ) : (
             inbox.notifications.map((n) => (

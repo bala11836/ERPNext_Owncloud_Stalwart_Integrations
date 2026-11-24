@@ -311,5 +311,17 @@ class ProjectFiles(unittest.TestCase):
                 api.file('PROJ-1', '../other/photo.jpg')
 
 
+class PreviewSize(unittest.TestCase):
+    def test_drive_makes_the_preview_size_the_store_asks_for(self):
+        # oCIS serves only listed thumbnail sizes; any other request gets the next larger one (1080 px on test).
+        inputs = json.loads((ROOT / 'deployment/stacks/inputs.json').read_text())
+        sizes = inputs['CI_DRIVE_OCIS_THUMBNAILS_RESOLUTIONS']['default'].split(',')
+        self.assertIn(f'{api.PREVIEW_PX}x{api.PREVIEW_PX}', sizes)
+        for upstream in ('16x16', '32x32', '64x64', '128x128', '1080x1920', '1920x1080'):
+            self.assertIn(upstream, sizes)
+        compose = json.loads((ROOT / 'deployment/stacks/drive.compose.json').read_text())
+        self.assertIn('CI_DRIVE_OCIS_THUMBNAILS_RESOLUTIONS', compose['services']['ocis']['environment']['THUMBNAILS_RESOLUTIONS'])
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

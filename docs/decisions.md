@@ -15,6 +15,8 @@ discussion that led to a decision is not repeated here.
   records cannot be deleted and the store never deletes in Drive. Receipts, bills and scans keep going to the
   DMS first; project photo spaces stay outside the document worker. Immich and PhotoPrism were compared and
   not adopted for now (no user groups / single sign-on only in a paid edition).
+  Drive's thumbnail sizes gain `256x256` (upstream defaults kept): oCIS serves only listed sizes and returned
+  1080 px for the 256 px preview on test.
 - **Why:** one sign-in for staff (no Drive key on the phone, no Drive account needed to see project photos),
   permissions from ERPNext only, no new service to run or back up, and photos next to the project's other
   files in Drive.

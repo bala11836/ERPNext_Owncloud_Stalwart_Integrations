@@ -1,4 +1,4 @@
-import { distanceM, fenceProblem, localStamp, offlineFields, parseStamp, rememberServerClock } from '@/lib/capture';
+import { distanceM, fenceProblem, localStamp, offlineFields, parseStamp, photoDataUrl, rememberServerClock } from '@/lib/capture';
 
 jest.mock('@/auth/session', () => ({ SignedOutError: class SignedOutError extends Error {}, useAuth: jest.fn() }));
 const mockSaved = new Map<string, string>();
@@ -6,7 +6,23 @@ jest.mock('expo-secure-store', () => ({
   getItemAsync: async (k: string) => mockSaved.get(k) ?? null,
   setItemAsync: async (k: string, v: string) => void mockSaved.set(k, v),
 }));
-jest.mock('expo-image-manipulator', () => ({ ImageManipulator: {}, SaveFormat: { JPEG: 'jpeg' } }));
+let mockBase64: string | undefined = 'QUJD';
+jest.mock('expo-image-manipulator', () => ({
+  ImageManipulator: {
+    manipulate: () => ({
+      resize: () => ({
+        renderAsync: async () => ({ saveAsync: async () => ({ uri: 'file:///cache/small.jpg', base64: mockBase64 }) }),
+      }),
+    }),
+  },
+  SaveFormat: { JPEG: 'jpeg' },
+}));
+const mockDeleted: string[] = [];
+jest.mock('expo-file-system', () => ({
+  File: function MockFile(this: { delete: () => void }, mockUri: string) {
+    this.delete = () => void mockDeleted.push(mockUri);
+  },
+}));
 jest.mock('expo-location', () => ({}));
 
 const site = { latitude: 17.385, longitude: 78.4867, radius_m: 200, maximum_accuracy_m: 50 };
@@ -49,5 +65,23 @@ describe('times', () => {
       device_captured_at: '2026-11-23 09:00:00',
       clock_offset_s: 120,
     });
+  });
+});
+
+describe('photos never stay on the phone as files', () => {
+  beforeEach(() => {
+    mockDeleted.length = 0;
+  });
+
+  it('returns the shrunk photo as a data URL and deletes the camera file and the shrunk file', async () => {
+    mockBase64 = 'QUJD';
+    expect(await photoDataUrl('file:///cache/camera.jpg')).toBe('data:image/jpeg;base64,QUJD');
+    expect(mockDeleted).toEqual(['file:///cache/camera.jpg', 'file:///cache/small.jpg']);
+  });
+
+  it('deletes both files also when shrinking fails', async () => {
+    mockBase64 = undefined;
+    await expect(photoDataUrl('file:///cache/camera.jpg')).rejects.toThrow();
+    expect(mockDeleted).toEqual(['file:///cache/camera.jpg', 'file:///cache/small.jpg']);
   });
 });

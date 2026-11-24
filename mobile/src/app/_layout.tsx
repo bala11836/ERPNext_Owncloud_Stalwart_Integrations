@@ -8,14 +8,14 @@ import { AuthProvider, useAuth } from '@/auth/session';
 import { t as text } from '@/i18n';
 import { clearErpCache } from '@/lib/erp';
 import { clearInbox } from '@/lib/inbox';
-import { wipeOffline } from '@/lib/offline-store';
+import { adoptOffline, purgeOffline, wipeOffline } from '@/lib/offline-store';
 import { resetConnection } from '@/lib/saved';
 import { ThemeProvider, useTheme } from '@/theme';
 
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <AuthProvider>
+      <AuthProvider onUser={adoptOffline}>
         <Nav />
       </AuthProvider>
     </ThemeProvider>
@@ -24,15 +24,19 @@ export default function RootLayout() {
 
 function Nav() {
   const t = useTheme();
-  const { status } = useAuth();
+  const { status, ended } = useAuth();
+  useEffect(() => {
+    purgeOffline().catch(() => {}); // app start: nothing older than a day stays
+  }, []);
   useEffect(() => {
     if (status !== 'signedOut') return;
     clearErpCache();
     clearInbox();
     resetConnection();
-    // ponytail: wipes unsent items without asking; the warning with "send now" comes with the queue's screen.
-    wipeOffline().catch(() => {});
-  }, [status]);
+    // Only Sign out (after its warning, Settings) deletes unsent entries; an expired sign-in keeps them,
+    // encrypted, for the same person (owner decisions 4 and 5); another person's sign-in deletes them first.
+    if (ended === 'signOut') wipeOffline().catch(() => {});
+  }, [status, ended]);
   if (status === 'loading') {
     return (
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: t.c.bg }}>

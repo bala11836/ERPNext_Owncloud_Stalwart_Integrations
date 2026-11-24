@@ -35,8 +35,8 @@ export function PhotoTaker({ facing, onPhoto }: { facing: 'front' | 'back'; onPh
     setError(null);
     try {
       const shot = await camera.current.takePictureAsync({ quality: 0.7, shutterSound: false });
-      const dataUrl = await photoDataUrl(shot.uri);
-      setPreview(shot.uri);
+      const dataUrl = await photoDataUrl(shot.uri); // also deletes the camera's file
+      setPreview(dataUrl); // shown from memory, not from a file
       onPhoto(dataUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : text('capture.photoFailed'));

@@ -193,5 +193,13 @@
   "team.tapToMark": "{state}: tap to mark",
   "team.bySupervisor": "Marked by their supervisor: {name}",
   "team.bySupervisorUnknown": "Marked by their supervisor",
-  "today.markedBySupervisors": "Your workers here are marked by their supervisors."
+  "today.markedBySupervisors": "Your workers here are marked by their supervisors.",
+  "settings.signedIn": "Signed in",
+  "settings.outdoor": "Outdoor mode: {state}",
+  "settings.on": "On",
+  "settings.off": "Off",
+  "settings.signOut": "Sign out",
+  "settings.version": "Version {version}",
+  "signOut.unsent": "{count} entries are not sent yet. Send them now, or type the word below to delete them and sign out.",
+  "signOut.typeDelete": "Type {word} to delete them"
 }

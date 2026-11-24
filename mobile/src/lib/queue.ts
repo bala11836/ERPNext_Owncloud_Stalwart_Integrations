@@ -33,6 +33,8 @@ export interface QueueStore {
   read(key: string, notBefore: number): Promise<{ at: number; body: string } | null>;
   /** Save an answer at `at`; answers saved before `notBefore` are deleted. */
   keep(key: string, body: string, at: number, notBefore: number): Promise<void>;
+  /** Delete queued items and saved answers older than `notBefore` (owner: data stays at most a day). */
+  purge(notBefore: number): Promise<void>;
   /** Everything: queued items and saved answers (sign-out). */
   clear(): Promise<void>;
 }
@@ -56,6 +58,10 @@ export function memoryStore(): QueueStore {
     keep: async (key, body, at, notBefore) => {
       for (const [k, s] of saved) if (s.at < notBefore) saved.delete(k);
       saved.set(key, { at, body });
+    },
+    purge: async (notBefore) => {
+      for (const [k, i] of items) if (i.createdAt < notBefore) items.delete(k);
+      for (const [k, s] of saved) if (s.at < notBefore) saved.delete(k);
     },
     clear: async () => {
       items.clear();

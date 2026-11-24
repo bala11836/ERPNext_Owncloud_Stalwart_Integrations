@@ -7,7 +7,7 @@ import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 
-import { type QueueItem, type QueueStore, memoryStore } from '@/lib/queue';
+import { MAX_AGE_MS, type QueueItem, type QueueStore, memoryStore } from '@/lib/queue';
 
 /** The part of an expo-sqlite database this store uses. */
 export type Db = Pick<SQLite.SQLiteDatabase, 'execAsync' | 'getFirstAsync' | 'getAllAsync' | 'runAsync' | 'closeAsync'>;
@@ -60,6 +60,10 @@ export async function encryptedStore(db: Db, hexKey: string): Promise<QueueStore
     keep: async (key, body, at, notBefore) => {
       await db.runAsync('DELETE FROM saved WHERE saved_at < ?', notBefore);
       await db.runAsync('INSERT OR REPLACE INTO saved (key, saved_at, body) VALUES (?, ?, ?)', key, at, body);
+    },
+    purge: async (notBefore) => {
+      await db.runAsync('DELETE FROM queue WHERE created_at < ?', notBefore);
+      await db.runAsync('DELETE FROM saved WHERE saved_at < ?', notBefore);
     },
     clear: async () => {
       await db.runAsync('DELETE FROM queue');
@@ -119,4 +123,26 @@ export async function offlineStorageKind() {
 /** Sign-out (and later remote wipe): remove every queued item and saved answer from the phone. */
 export async function wipeOffline() {
   await (await offlineStore()).clear();
+  await SecureStore.deleteItemAsync(OWNER).catch(() => {});
+}
+
+/** App start: nothing older than a day stays on the phone, sent or not (owner). */
+export async function purgeOffline(now = Date.now()) {
+  await (await offlineStore()).purge(now - MAX_AGE_MS);
+}
+
+// Whose unsent entries and saved copies these are (owner decision 5, 23 November 2026: an expired sign-in keeps
+// them for the same person). Another person signing in on this phone never sends or sees them.
+const OWNER = 'offline-owner';
+
+/**
+ * Called before the app opens for `email`. Data of another person is deleted first. `keepUnowned`: data
+ * without a recorded owner belongs to this person (app start with their saved sign-in, after an update);
+ * a fresh sign-in deletes it instead.
+ */
+export async function adoptOffline(email: string, keepUnowned: boolean) {
+  const owner = await SecureStore.getItemAsync(OWNER).catch(() => null);
+  if (owner === email) return;
+  if (owner || !keepUnowned) await (await offlineStore()).clear();
+  await SecureStore.setItemAsync(OWNER, email, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }).catch(() => {});
 }

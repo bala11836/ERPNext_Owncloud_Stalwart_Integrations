@@ -1,5 +1,6 @@
 // Shared parts of an attendance capture (build guide phase 3): the GPS fix, the times and the photo.
 // The server decides everything again (fence, accuracy, time, photo); the app only gathers and pre-checks.
+import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
@@ -84,10 +85,31 @@ export function fenceProblem(fix: Fix, fence: Fence): string | null {
 }
 
 // ---- photo ----
-/** Shrink a camera photo to about 200 KB and return it as the data URL the server accepts. */
+/** Delete files from the app's cache; never fails (a missing file is already gone). */
+export function discardFiles(...uris: (string | null | undefined)[]) {
+  for (const uri of uris) {
+    try {
+      if (uri) new File(uri).delete();
+    } catch {
+      // already gone
+    }
+  }
+}
+
+/**
+ * Shrink a camera photo to about 200 KB and return it as the data URL the server accepts. Both files (the
+ * camera's original and the shrunk copy) are deleted at once: photos live only in memory and, unsent, in the
+ * encrypted offline queue (rule 7; owner: no phone storage).
+ */
 export async function photoDataUrl(uri: string): Promise<string> {
-  const image = await ImageManipulator.manipulate(uri).resize({ width: 1280 }).renderAsync();
-  const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.6, base64: true });
-  if (!saved.base64) throw new Error(text('capture.photoFailed'));
-  return `data:image/jpeg;base64,${saved.base64}`;
+  let savedUri: string | null = null;
+  try {
+    const image = await ImageManipulator.manipulate(uri).resize({ width: 1280 }).renderAsync();
+    const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.6, base64: true });
+    savedUri = saved.uri;
+    if (!saved.base64) throw new Error(text('capture.photoFailed'));
+    return `data:image/jpeg;base64,${saved.base64}`;
+  } finally {
+    discardFiles(uri, savedUri);
+  }
 }

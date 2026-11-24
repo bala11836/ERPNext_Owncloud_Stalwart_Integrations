@@ -1,4 +1,4 @@
-# Workspace HTTPS monitoring
+# Workspace monitoring
 
 ## Purpose
 
@@ -10,7 +10,8 @@ bodies. A successful status shows that the monitored route answered.
 
 ## Contents
 
-- `https_probe.py`
+- `https_probe.py` for HTTPS and optional TCP targets
+- `job_probe.py` and systemd units for backup and restore-drill reports
 - `cloud-https-monitor.service` and `cloud-https-monitor.timer`
 
 ## Requirements
@@ -30,9 +31,18 @@ user. Keep credentials out of the URLs and the target labels.
 ```json
 [
   {"name": "Website", "url": "https://example.com/", "statuses": [200]},
-  {"name": "Document manager", "url": "https://dms.example.com/", "statuses": [302]}
+  {"name": "Document manager", "url": "https://dms.example.com/", "statuses": [302]},
+  {"name": "Storage host", "kind": "tcp", "host": "storage.example.com", "port": 443}
 ]
 ```
+
+Install and enable `cloud-backup-monitor.timer` only where the production
+backup reports are written. Enable `cloud-restore-drill-monitor.timer` on
+the test host. Their units read the existing private reports every five
+minutes, with freshness limits of 26 hours and eight days respectively. If
+the report directories differ, configure the service command accordingly.
+The checks do not start backup or restore jobs. TCP checks establish that a
+private port accepts connections. Use native host alerts to monitor storage.
 
 ## Tests
 

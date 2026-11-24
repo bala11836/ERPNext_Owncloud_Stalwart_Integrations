@@ -1,0 +1,12 @@
+[Unit]
+Description=Check the production backup report and 26-hour freshness
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/cloud-monitoring/job_probe.py Backup /var/lib/cloud-backup/last-run.json /var/lib/cloud-backup/last-success.json succeeded 26
+TimeoutStartSec=15s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes

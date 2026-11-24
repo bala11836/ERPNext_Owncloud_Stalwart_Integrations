@@ -1,0 +1,12 @@
+[Unit]
+Description=Check the test restore drill report and eight-day freshness
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/cloud-monitoring/job_probe.py Restore-drill /var/lib/cloud-backup-drill/last-drill.json /var/lib/cloud-backup-drill/last-drill.json passed 192
+TimeoutStartSec=15s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes

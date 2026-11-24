@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Probe configured HTTPS services without logging their URLs or response bodies."""
+"""Probe HTTPS and private TCP services without logging endpoint addresses."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import json
+import socket
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
@@ -17,7 +18,14 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 def check(target):
-    name, url = target["name"], target["url"]
+    name = target["name"]
+    if target.get("kind") == "tcp":
+        try:
+            with socket.create_connection((target["host"], target["port"]), timeout=7):
+                return name, True, "TCP reachable"
+        except OSError:
+            return name, False, "TCP unreachable"
+    url = target["url"]
     try:
         with build_opener(NoRedirect()).open(url, timeout=7) as response:
             status = response.status
@@ -35,14 +43,19 @@ def targets(path):
     if not isinstance(items, list) or not items:
         raise ValueError("Configure at least one target")
     for item in items:
-        url = urlsplit(item["url"])
         name = item["name"]
-        statuses = item["statuses"]
-        if (not name or len(name) > 64 or not name.isprintable() or name in names
-                or url.scheme != "https" or not url.hostname or url.username is not None
-                or url.password is not None or url.fragment or not statuses
-                or any(type(code) is not int or not 200 <= code < 400 for code in statuses)):
-            raise ValueError("Invalid HTTPS monitor target")
+        if not name or len(name) > 64 or not name.isprintable() or name in names:
+            raise ValueError("Invalid or duplicate monitor target name")
+        if item.get("kind") == "tcp":
+            if not item["host"] or type(item["port"]) is not int or not 0 < item["port"] <= 65535:
+                raise ValueError("Invalid TCP monitor target")
+        else:
+            url = urlsplit(item["url"])
+            statuses = item["statuses"]
+            if (item.get("kind", "https") != "https" or url.scheme != "https" or not url.hostname
+                    or url.username is not None or url.password is not None or url.fragment
+                    or not statuses or any(type(code) is not int or not 200 <= code < 400 for code in statuses)):
+                raise ValueError("Invalid HTTPS monitor target")
         names.add(name)
     return items
 

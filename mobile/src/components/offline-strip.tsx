@@ -15,27 +15,27 @@ export function savedTime(at: number, now = new Date()): string {
 }
 
 /**
- * Shown while ERPNext cannot be reached: what is on screen is the copy saved at a given time (or nothing is
+ * A slim bar while ERPNext cannot be reached: what is on screen is the copy saved at a given time (or nothing is
  * saved yet), and captures are sent by themselves later. `waiting`: captures in the offline queue.
  */
 export function OfflineStrip({ waiting = 0 }: { waiting?: number }) {
   const t = useTheme();
   const { offline, copyFrom } = useConnection();
   if (!offline) return null;
+  const parts = [
+    copyFrom ? text('offline.copy', { time: savedTime(copyFrom) }) : text('offline.noCopy'),
+    waiting > 0 ? text('offline.waiting', { count: waiting }) : null,
+  ].filter(Boolean);
   return (
     <View
       accessible
       accessibilityRole="alert"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: t.c.danger }}>
-      <Icon name="offline" size={t.font(22)} color={t.c.onPrimary} />
-      <View style={{ flex: 1, gap: 2 }}>
-        <T style={{ color: t.c.onPrimary, fontWeight: '700' }}>
-          {copyFrom ? text('offline.copy', { time: savedTime(copyFrom) }) : text('offline.noCopy')}
-        </T>
-        <T variant="small" style={{ color: t.c.onPrimary }}>
-          {waiting > 0 ? text('offline.waiting', { count: waiting }) : text('offline.sentLater')}
-        </T>
-      </View>
+      accessibilityLabel={`${parts.join('. ')}. ${text('offline.sentLater')}`}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 8, backgroundColor: t.c.text }}>
+      <Icon name="offline" size={t.font(20)} color={t.c.onPrimary} />
+      <T variant="small" style={{ flex: 1, color: t.c.onPrimary, fontWeight: '700' }}>
+        {parts.join(' · ')}
+      </T>
     </View>
   );
 }

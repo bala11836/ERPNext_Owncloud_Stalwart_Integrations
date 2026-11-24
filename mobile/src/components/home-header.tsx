@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_NAME } from '@/auth/session';
@@ -11,7 +11,7 @@ import { t as text } from '@/i18n';
 import { type Place, type Shift, choosePlace, projectsOf } from '@/lib/places';
 import { useTheme } from '@/theme';
 
-/** The role badge from what the person is at the chosen site (server role cards replace it in step H2). */
+/** What the person is at the chosen site, in words ("Approver · Supervisor"), never cut off. */
 export function roleBadge(place: Place | null): string {
   if (!place) return '';
   return [
@@ -21,17 +21,16 @@ export function roleBadge(place: Place | null): string {
     place.staff && text('role.staff'),
   ]
     .filter(Boolean)
-    .join(' · ')
-    .toUpperCase();
+    .join(' · ');
 }
 
 const shiftText = (s: Shift) => text('checkIn.shift', { shift: s.label ?? s.name, start: s.start, end: s.end });
 const isNight = (s: Shift) => s.start > s.end || /night/i.test(s.label ?? s.name);
 
 /**
- * Today's header (owner's reference design): app name and role badge, one-tap Outdoor mode, the Inbox bell with
- * its count; below, the project, its site (Field Site) and the shift. Sizes follow the design brief (16 pt text,
- * 48 dp targets).
+ * Today's header (owner's reference design, made compact): app name and the person's role at the chosen site,
+ * one-tap Outdoor mode, the Inbox bell with its count; below, one line with the site (and its project) and the
+ * shift. 16 pt text, 48 dp targets.
  */
 export function HomeHeader({
   unread,
@@ -46,17 +45,16 @@ export function HomeHeader({
 }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const [picker, setPicker] = useState<'project' | 'site' | null>(null);
+  const [picking, setPicking] = useState(false);
   const appName = APP_NAME || 'ERP';
   const badge = roleBadge(place);
-  const sitesHere = place ? places.filter((p) => p.project === place.project) : [];
+  const night = shift ? isNight(shift) : false;
   const round = {
-    minWidth: t.touch,
-    minHeight: t.touch,
+    width: t.touch,
+    height: t.touch,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     borderRadius: t.touch / 2,
-    backgroundColor: t.c.surface,
   };
 
   return (
@@ -64,22 +62,22 @@ export function HomeHeader({
       style={{
         backgroundColor: t.c.bg,
         borderBottomWidth: 1,
-        borderBottomColor: t.c.line,
+        borderBottomColor: t.c.divider,
         paddingHorizontal: 16,
-        paddingTop: insets.top + 10,
-        paddingBottom: 10,
-        gap: 8,
+        paddingTop: insets.top + 8,
+        paddingBottom: 8,
+        gap: 6,
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.c.primary, alignItems: 'center', justifyContent: 'center' }}>
-          <T style={{ color: t.c.onPrimary, fontWeight: '800' }}>{appName.slice(0, 3).toUpperCase()}</T>
+        <View style={{ width: 36, height: 36, borderRadius: 9, backgroundColor: t.c.primary, alignItems: 'center', justifyContent: 'center' }}>
+          <T style={{ color: t.c.onPrimary, fontWeight: '800' }}>{appName.slice(0, 1).toUpperCase()}</T>
         </View>
         <View style={{ flex: 1 }}>
-          <T style={{ fontWeight: '800' }} numberOfLines={1}>
+          <T style={{ fontWeight: '700' }} numberOfLines={1}>
             {appName}
           </T>
           {badge ? (
-            <T variant="small" color="muted" style={{ fontWeight: '700' }} numberOfLines={1}>
+            <T variant="small" color="muted" numberOfLines={2}>
               {badge}
             </T>
           ) : null}
@@ -89,129 +87,102 @@ export function HomeHeader({
           accessibilityState={{ checked: t.outdoor }}
           accessibilityLabel={text('today.outdoor', { state: t.outdoor ? 'ON' : 'OFF' })}
           onPress={() => t.setOutdoor(!t.outdoor)}
-          style={[round, t.outdoor && { borderWidth: 3, borderColor: t.c.primary }]}>
+          style={[round, t.outdoor && { backgroundColor: t.c.warnTint }]}>
           <Icon name="sun" size={t.font(24)} color={t.c.warn} />
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel={text('header.inbox', { count: unread })} onPress={() => router.push('/inbox')} style={round}>
-          <Icon name="bell" size={t.font(24)} color={t.c.primary} />
+          <Icon name="bell" size={t.font(24)} color={t.c.text} />
           {unread > 0 && (
             <View
               style={{
                 position: 'absolute',
-                top: 0,
-                right: 0,
-                minWidth: 24,
-                height: 24,
+                top: 4,
+                right: 2,
+                minWidth: 22,
+                height: 22,
                 paddingHorizontal: 5,
-                borderRadius: 12,
+                borderRadius: 11,
                 backgroundColor: t.c.danger,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-              <T variant="small" style={{ color: t.c.onPrimary, fontWeight: '800' }}>
-                {unread > 99 ? '99+' : String(unread)}
-              </T>
+              {/* A count badge, not reading text: the bell's spoken label carries the number. */}
+              <Text style={{ color: t.c.onPrimary, fontWeight: '800', fontSize: 13 }}>{unread > 99 ? '99+' : String(unread)}</Text>
             </View>
           )}
         </Pressable>
       </View>
 
       {place && (
-        <>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* One control for the place: the site and its project (owner: a sub-location is a Field Site of a Project). */}
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={text('header.projectA11y', { project: place.projectLabel })}
-            onPress={() => setPicker('project')}
-            style={{
-              minHeight: t.touch,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              paddingHorizontal: 12,
-              borderRadius: 10,
-              backgroundColor: t.c.surface,
-              borderWidth: 1,
-              borderColor: t.c.line,
-            }}>
-            <Icon name="map-pin" size={t.font(22)} color={t.c.primary} />
-            <T style={{ flex: 1, fontWeight: '700' }} numberOfLines={1}>
-              {place.projectLabel || text('header.noProject')}
-            </T>
-            <T variant="small" color="muted" style={{ fontWeight: '700' }}>
-              {text('header.project')}
-            </T>
-            <Icon name="chevron-down" size={t.font(22)} color={t.c.text} />
-          </Pressable>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={text('header.siteA11y', { site: place.siteLabel })}
-              onPress={() => setPicker('site')}
-              style={{ minHeight: t.touch, flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-              <Icon name="site" size={t.font(22)} color={t.c.primary} />
-              <T color="primary" style={{ fontWeight: '700', textDecorationLine: 'underline', flexShrink: 1 }} numberOfLines={1}>
+            accessibilityLabel={text('header.placeA11y', { project: place.projectLabel || text('header.noProject'), site: place.siteLabel })}
+            onPress={() => setPicking(true)}
+            style={{ flex: 1, minHeight: t.touch, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Icon name="map-pin" size={t.font(20)} color={t.c.primary} />
+            <View style={{ flex: 1 }}>
+              <T style={{ fontWeight: '700' }} numberOfLines={1}>
                 {place.siteLabel}
               </T>
-              <Icon name="chevron-down" size={t.font(20)} color={t.c.primary} />
-            </Pressable>
-            {shift && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={text('header.shiftA11y', { shift: shiftText(shift) })}
-                onPress={() => {
-                  const i = place.shifts.findIndex((s) => s.name === shift.name);
-                  const next = place.shifts[(i + 1) % place.shifts.length];
-                  if (next) choosePlace(place.site, next.name);
-                }}
-                style={{
-                  minHeight: t.touch,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginLeft: 'auto',
-                  paddingHorizontal: 12,
-                  borderRadius: t.touch / 2,
-                  backgroundColor: isNight(shift) ? t.c.infoTint : t.c.warnTint,
-                }}>
-                <Icon name={isNight(shift) ? 'night' : 'sun'} size={t.font(20)} color={isNight(shift) ? t.c.primary : t.c.warn} />
-                <T variant="small" style={{ fontWeight: '700' }} color={isNight(shift) ? 'primary' : 'warn'}>
-                  {shiftText(shift)}
+              {place.projectLabel && place.projectLabel !== place.siteLabel ? (
+                <T variant="small" color="muted" numberOfLines={1}>
+                  {place.projectLabel}
                 </T>
-              </Pressable>
-            )}
-          </View>
-        </>
+              ) : null}
+            </View>
+            <Icon name="chevron-down" size={t.font(20)} color={t.c.muted} />
+          </Pressable>
+          {shift && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={text('header.shiftA11y', { shift: shiftText(shift) })}
+              onPress={() => {
+                const i = place.shifts.findIndex((s) => s.name === shift.name);
+                const next = place.shifts[(i + 1) % place.shifts.length];
+                if (next) choosePlace(place.site, next.name);
+              }}
+              style={{
+                minHeight: t.touch,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                paddingHorizontal: 12,
+                borderRadius: t.touch / 2,
+                backgroundColor: night ? t.c.infoTint : t.c.warnTint,
+              }}>
+              <Icon name={night ? 'night' : 'sun'} size={t.font(18)} color={night ? t.c.primary : t.c.warn} />
+              <T variant="small" style={{ fontWeight: '700' }} color={night ? 'primary' : 'warn'}>
+                {`${shift.start}–${shift.end}`}
+              </T>
+            </Pressable>
+          )}
+        </View>
       )}
 
-      <Sheet open={picker === 'project'} title={text('header.chooseProject')} onClose={() => setPicker(null)}>
+      <Sheet open={picking} title={text('header.choosePlace')} onClose={() => setPicking(false)}>
         {projectsOf(places).map((p) => (
-          <SheetOption
-            key={p.project}
-            icon="map-pin"
-            label={p.label || text('header.noProject')}
-            selected={p.project === place?.project}
-            onPress={() => {
-              const first = places.find((x) => x.project === p.project);
-              if (first) choosePlace(first.site, null);
-              setPicker(null);
-            }}
-          />
-        ))}
-      </Sheet>
-      <Sheet open={picker === 'site'} title={text('header.chooseSite')} onClose={() => setPicker(null)}>
-        {sitesHere.map((p) => (
-          <SheetOption
-            key={p.site}
-            icon="site"
-            label={p.siteLabel}
-            detail={roleBadge(p)}
-            selected={p.site === place?.site}
-            onPress={() => {
-              choosePlace(p.site, null);
-              setPicker(null);
-            }}
-          />
+          <View key={p.project || 'none'} style={{ gap: 8 }}>
+            <T variant="small" color="muted" style={{ fontWeight: '700', paddingTop: 4 }}>
+              {(p.label || text('header.noProject')).toUpperCase()}
+            </T>
+            {places
+              .filter((x) => x.project === p.project)
+              .map((x) => (
+                <SheetOption
+                  key={x.site}
+                  icon="site"
+                  label={x.siteLabel}
+                  detail={roleBadge(x)}
+                  selected={x.site === place?.site}
+                  onPress={() => {
+                    choosePlace(x.site, null);
+                    setPicking(false);
+                  }}
+                />
+              ))}
+          </View>
         ))}
       </Sheet>
     </View>

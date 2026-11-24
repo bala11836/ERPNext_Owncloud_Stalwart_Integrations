@@ -11,9 +11,13 @@ export const palette = {
   okTint: '#E6F3EA',
   warnTint: '#FCF1DE',
   dangerTint: '#FBE8EA',
-  border: '#1F1F1F',
+  /** Outlines of inputs, choices and secondary buttons (4.25:1); Outdoor mode makes them near-black. */
+  border: '#7A7A84',
+  /** Hair lines between list rows and around cards: decoration, not a boundary (Outdoor: `line`). */
+  divider: '#D6D8DE',
   text: '#000000',
-  muted: '#3A3A3A',
+  /** Secondary text: clearly lighter than `text`, still 7:1 on every background. */
+  muted: '#4A4E57',
   primary: '#0A3D91',
   onPrimary: '#FFFFFF',
   ok: '#08551C',

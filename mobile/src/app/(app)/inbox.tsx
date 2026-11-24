@@ -64,8 +64,8 @@ export default function Inbox() {
             inbox.actions.map((a) => (
               <Row
                 key={a.name}
-                title={`${a.reference_doctype} ${a.reference_name}`}
-                subtitle={[a.workflow_state, formatDate(a.creation, true)].filter(Boolean).join(' · ')}
+                title={a.reference_doctype}
+                subtitle={[a.reference_name, a.workflow_state, formatDate(a.creation, true)].filter(Boolean).join(' · ')}
                 onPress={() =>
                   router.push({
                     pathname: '/doc/[doctype]/[name]',

@@ -8,7 +8,8 @@ import { useTheme } from '@/theme';
 
 export type { IconName } from '@/components/icon';
 
-const SIZES = { small: 16, body: 18, title: 24 } as const;
+// Owner's minimum is 16 pt; hierarchy comes from weight and colour (titles 20 pt, secondary text in `muted`).
+const SIZES = { small: 16, body: 16, title: 20 } as const;
 
 /** Text. Minimum 16 pt so it stays readable in sunlight; bolder in Outdoor mode. */
 export function T({
@@ -25,7 +26,7 @@ export function T({
         {
           color: t.c[color],
           fontSize: t.font(SIZES[variant]),
-          fontWeight: variant === 'title' || t.outdoor ? '700' : '500',
+          fontWeight: variant === 'title' || t.outdoor ? '700' : '400',
         },
         style,
       ]}
@@ -51,7 +52,7 @@ export function TextArea({ label, value, onChange }: { label: string; value: str
           borderColor: t.c.border,
           borderRadius: 10,
           color: t.c.text,
-          fontSize: t.font(18),
+          fontSize: t.font(16),
           textAlignVertical: 'top',
         }}
       />
@@ -72,12 +73,15 @@ export function Choice({ label, selected, onPress }: { label: string; selected: 
         justifyContent: 'center',
         paddingHorizontal: 16,
         borderRadius: 10,
-        borderWidth: selected ? 4 : t.border,
+        borderWidth: selected ? t.border + 2 : t.border,
         borderColor: selected ? t.c.primary : t.c.border,
+        backgroundColor: selected ? t.c.infoTint : t.c.bg,
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {selected && <Icon name="check" size={t.font(22)} color={t.c.primary} />}
-        <T style={{ fontWeight: selected ? '700' : '500' }}>{label}</T>
+        <T style={{ fontWeight: selected ? '700' : '400' }} color={selected ? 'primary' : 'text'}>
+          {label}
+        </T>
       </View>
     </Pressable>
   );
@@ -118,7 +122,7 @@ export function SearchField({
         autoCorrect={false}
         autoCapitalize="none"
         returnKeyType="search"
-        style={{ flex: 1, minHeight: t.touch, color: t.c.text, fontSize: t.font(18) }}
+        style={{ flex: 1, minHeight: t.touch, color: t.c.text, fontSize: t.font(16) }}
       />
       {value ? (
         <Pressable
@@ -168,13 +172,13 @@ export function Button({
         gap: 10,
         paddingHorizontal: 20,
         borderRadius: 10,
-        borderWidth: t.border,
+        borderWidth: secondary ? Math.max(t.border, 1.5) : 0,
         borderColor: fill,
         backgroundColor: secondary ? t.c.bg : fill,
         opacity: pressed && !disabled ? 0.75 : 1, // no dimming: text keeps its 7:1 contrast
       })}>
-      {icon && <Icon name={icon} size={t.font(24)} color={fg} />}
-      <Text style={{ color: fg, fontSize: t.font(18), fontWeight: '700' }}>{label}</Text>
+      {icon && <Icon name={icon} size={t.font(22)} color={fg} />}
+      <Text style={{ color: fg, fontSize: t.font(16), fontWeight: '700' }}>{label}</Text>
     </Pressable>
   );
 }
@@ -198,20 +202,10 @@ export function Status({ kind, label }: { kind: StatusKind; label: string }) {
     <View
       accessible
       accessibilityLabel={label}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        alignSelf: 'flex-start',
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 999,
-        borderWidth: t.border,
-        borderColor: t.c[s.color],
-        backgroundColor: t.c.bg,
-      }}>
-      <Icon name={s.icon} size={t.font(22)} color={t.c[s.color]} />
-      <T variant="small" color={s.color} style={{ fontWeight: '700' }}>
+      // A status line, not a box: icon and words (the colour is never the only signal).
+      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 2 }}>
+      <Icon name={s.icon} size={t.font(20)} color={t.c[s.color]} />
+      <T variant="small" color={s.color} style={{ flex: 1, fontWeight: '600' }}>
         {label}
       </T>
     </View>
@@ -226,12 +220,12 @@ export function Panel({ accent, children }: { accent?: 'primary' | 'ok' | 'warn'
       style={{
         gap: 10,
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 14,
         backgroundColor: t.c.bg,
         borderWidth: 1,
-        borderColor: t.c.line,
-        borderLeftWidth: accent ? 6 : 1,
-        borderLeftColor: accent ? t.c[accent] : t.c.line,
+        borderColor: t.c.divider,
+        borderLeftWidth: accent ? 5 : 1,
+        borderLeftColor: accent ? t.c[accent] : t.c.divider,
       }}>
       {children}
     </View>
@@ -244,7 +238,7 @@ export function Label({ text: label, tone = 'primary' }: { text: string; tone?: 
   const tint = { primary: t.c.infoTint, ok: t.c.okTint, warn: t.c.warnTint, danger: t.c.dangerTint }[tone];
   return (
     <View style={{ alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, backgroundColor: tint }}>
-      <T variant="small" color={tone} style={{ fontWeight: '800', letterSpacing: 0.5 }}>
+      <T variant="small" color={tone} style={{ fontWeight: '700', letterSpacing: 0.4 }}>
         {label.toUpperCase()}
       </T>
     </View>
@@ -260,7 +254,7 @@ export function Progress({ done, total, label }: { done: number; total: number; 
       accessibilityRole="progressbar"
       accessibilityLabel={label}
       accessibilityValue={{ min: 0, max: total, now: done }}
-      style={{ height: 14, borderRadius: 7, borderWidth: t.border, borderColor: t.c.border, overflow: 'hidden' }}>
+      style={{ height: 10, borderRadius: 5, backgroundColor: t.c.surface, borderWidth: t.outdoor ? 1 : 0, borderColor: t.c.border, overflow: 'hidden' }}>
       <View style={{ width: `${share * 100}%`, height: '100%', backgroundColor: t.c.primary }} />
     </View>
   );
@@ -293,12 +287,12 @@ export function Card({
         alignItems: 'center',
         gap: 14,
         padding: 16,
-        borderWidth: t.border,
-        borderColor: t.c.border,
-        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: t.c.divider,
+        borderRadius: 14,
         backgroundColor: pressed ? t.c.surface : t.c.bg,
       })}>
-      <Icon name={icon} size={t.font(28)} color={t.c.primary} />
+      <Icon name={icon} size={t.font(26)} color={t.c.primary} />
       <View style={{ flex: 1, gap: 4 }}>
         <T style={{ fontWeight: '700' }}>{title}</T>
         {detail ? (
@@ -343,20 +337,20 @@ export function Row({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderBottomWidth: 1,
-        borderBottomColor: t.c.border,
-        borderLeftWidth: selected ? 6 : 0,
+        borderBottomColor: t.c.divider,
+        borderLeftWidth: selected ? 5 : 0,
         borderLeftColor: t.c.primary,
         backgroundColor: selected || pressed ? t.c.surface : t.c.bg,
       })}>
       <View style={{ flex: 1, gap: 2 }}>
-        <T style={{ fontWeight: '700' }}>{title}</T>
+        <T style={{ fontWeight: '600' }}>{title}</T>
         {subtitle && (
           <T variant="small" color="muted">
             {subtitle}
           </T>
         )}
       </View>
-      {onPress && <Icon name="chevron-right" size={t.font(24)} color={t.c.text} />}
+      {onPress && <Icon name="chevron-right" size={t.font(22)} color={t.c.muted} />}
     </Pressable>
   );
 }

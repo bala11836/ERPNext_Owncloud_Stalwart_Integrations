@@ -62,7 +62,7 @@ describe('PM approval', () => {
     await first.unmount();
     mockDown = true;
     await open();
-    expect(await screen.findByText(/^Offline\. Showing what was saved at \d\d:\d\d\.$/)).toBeOnTheScreen();
+    expect(await screen.findByText(/^Offline · data from \d\d:\d\d/)).toBeOnTheScreen();
     expect(screen.getByText('Worker A')).toBeOnTheScreen();
     expect(screen.getByText('Approving needs internet. You can look at the list now and approve when the signal is back.')).toBeOnTheScreen();
     await fireEvent.press(screen.getByText('Select all 3'));

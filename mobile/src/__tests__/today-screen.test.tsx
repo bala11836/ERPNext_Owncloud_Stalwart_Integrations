@@ -128,9 +128,9 @@ describe('Today', () => {
     await open();
     expect(await screen.findByText('Project 1')).toBeOnTheScreen();
     expect(screen.getByText('ERP Mobile')).toBeOnTheScreen();
-    expect(screen.getByText('APPROVER · SUPERVISOR · STAFF')).toBeOnTheScreen();
+    expect(screen.getByText('Approver · Supervisor · Staff')).toBeOnTheScreen();
     expect(screen.getByText('Site 1')).toBeOnTheScreen();
-    expect(screen.getByText('Day shift (00:00–23:59)')).toBeOnTheScreen();
+    expect(screen.getByText('00:00–23:59')).toBeOnTheScreen();
     expect(await screen.findByLabelText('Inbox: 4 waiting')).toBeOnTheScreen(); // 3 approvals + 1 unread
   });
 
@@ -185,7 +185,7 @@ describe('Today', () => {
     try {
       const router = await open();
       expect(await screen.findByText('Attendance to verify')).toBeOnTheScreen();
-      expect(screen.getByText('ENGINEER')).toBeOnTheScreen();
+      expect(screen.getByText('Engineer')).toBeOnTheScreen();
       expect(screen.getByText('2')).toBeOnTheScreen();
       expect(screen.queryByText('Bulk attendance approval')).toBeNull();
       await fireEvent.press(screen.getByLabelText('Quick actions'));
@@ -218,11 +218,11 @@ describe('Today', () => {
   it('choosing another site in the header shows that site’s cards', async () => {
     await open();
     await screen.findByText('9/15');
-    await fireEvent.press(screen.getByLabelText('Site Site 1. Change'));
+    await fireEvent.press(screen.getByLabelText('Place: Project 1, Site 1. Change'));
     await fireEvent.press(screen.getByText('Site 3'));
     expect(await screen.findByText('0/4')).toBeOnTheScreen();
     expect(screen.queryByText('Bulk attendance approval')).toBeNull(); // not an approver at Site 3
-    expect(screen.getByText('SUPERVISOR')).toBeOnTheScreen();
+    expect(screen.getByText('Supervisor')).toBeOnTheScreen();
     expect(JSON.parse(mockSaved.get('header-place') ?? '{}')).toEqual({ site: 'S3', shift: null });
   });
 
@@ -230,7 +230,7 @@ describe('Today', () => {
     await open();
     await screen.findByText('9/15');
     await fireEvent.press(screen.getByLabelText('Day shift (00:00–23:59). Change shift'));
-    expect(await screen.findByText('Night shift (23:59–00:00)')).toBeOnTheScreen();
+    expect(await screen.findByText('23:59–00:00')).toBeOnTheScreen();
     expect(teamCalls().at(-1)).toEqual({ site: 'S1', shift: 'Night1' });
   });
 
@@ -241,10 +241,10 @@ describe('Today', () => {
     mockOffline = true;
     await mockStore.put({ id: 'q1', method: `${HR_API}.self_check_in`, args: { payload: {} }, createdAt: Date.now(), attempts: 0, state: 'waiting' });
     await open();
-    expect(await screen.findByText(/^Offline\. Showing what was saved at \d\d:\d\d\.$/)).toBeOnTheScreen();
+    expect(await screen.findByText(/^Offline · data from \d\d:\d\d/)).toBeOnTheScreen();
     expect(await screen.findByText('9/15')).toBeOnTheScreen(); // the team card from the copy
     expect(screen.getByText('2 ready for you to approve')).toBeOnTheScreen();
-    expect(screen.getByText('1 captures are saved on this phone and are sent by themselves.')).toBeOnTheScreen();
+    expect(screen.getByText(/· 1 waiting to send$/)).toBeOnTheScreen();
     expect(screen.getByText('1 captures waiting to send')).toBeOnTheScreen();
     mockOffline = false;
     answers[`${HR_API}.self_check_in`] = { body: { message: { name: 'E1' } } };

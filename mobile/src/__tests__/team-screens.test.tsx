@@ -100,7 +100,7 @@ describe('supervisor team', () => {
       createdAt: Date.now(), attempts: 0, state: 'waiting',
     });
     await openTeam();
-    expect(await screen.findByText(/^Offline\. Showing what was saved at \d\d:\d\d\.$/)).toBeOnTheScreen();
+    expect(await screen.findByText(/^Offline · data from \d\d:\d\d/)).toBeOnTheScreen();
     expect(screen.getByText('Marked, waiting to send')).toBeOnTheScreen();
     expect(screen.queryByText('Not recorded')).toBeNull();
     expect(screen.getByText('Draft')).toBeOnTheScreen();

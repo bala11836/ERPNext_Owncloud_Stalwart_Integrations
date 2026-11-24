@@ -77,6 +77,8 @@ function Nav() {
           <Stack.Screen name="photos/index" options={{ title: text('photo.galleryTitle') }} />
           <Stack.Screen name="photos/[name]" options={{ title: text('photo.viewTitle') }} />
           <Stack.Screen name="documents/index" options={{ title: text('docs.title') }} />
+          <Stack.Screen name="approvals/[doctype]/[name]" />
+          <Stack.Screen name="approvals/attendance" options={{ title: text('approve.title') }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />

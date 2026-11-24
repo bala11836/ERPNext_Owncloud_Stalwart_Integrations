@@ -6,7 +6,8 @@
 import { useSyncExternalStore } from 'react';
 import type { z } from 'zod';
 
-import { type Api, OfflineError, ServerError, callErp } from '@/lib/erp';
+import { t } from '@/i18n';
+import { type Api, OfflineError, ServerError, callErp, getJson } from '@/lib/erp';
 import { offlineStore } from '@/lib/offline-store';
 import { MAX_AGE_MS } from '@/lib/queue';
 
@@ -29,17 +30,32 @@ export const resetConnection = () => set({ offline: false, copyFrom: null });
  * connection (or ERPNext down): the saved copy if there is one from the last day (checked against `schema`
  * again), otherwise the error. A refusal by ERPNext is never answered from the copy.
  */
-export async function callKept<S extends z.ZodType>(
+export function callKept<S extends z.ZodType>(
   api: Api,
   method: string,
   schema: S,
   args: Record<string, unknown> = {},
   now: () => number = Date.now,
 ): Promise<z.infer<S>> {
-  const key = `${method}?${JSON.stringify(args)}`;
+  return kept(`${method}?${JSON.stringify(args)}`, () => callErp(api, method, schema, args), schema, now);
+}
+
+/** The same for an ERPNext address whose answer is not under `message` (a record with its details). */
+export function getKept<S extends z.ZodType>(api: Api, path: string, schema: S, now: () => number = Date.now): Promise<z.infer<S>> {
+  return kept(path, () => getChecked(api, path, schema), schema, now);
+}
+
+/** `getJson` checked against `schema`: an answer of the wrong shape is an error, never used. */
+export async function getChecked<S extends z.ZodType>(api: Api, path: string, schema: S): Promise<z.infer<S>> {
+  const checked = schema.safeParse(await getJson(api, path));
+  if (!checked.success) throw new ServerError(t('erp.unexpected'), 200);
+  return checked.data;
+}
+
+async function kept<S extends z.ZodType>(key: string, read: () => Promise<z.infer<S>>, schema: S, now: () => number): Promise<z.infer<S>> {
   const store = await offlineStore();
   try {
-    const data = await callErp(api, method, schema, args);
+    const data = await read();
     await store.keep(key, JSON.stringify(data), now(), now() - MAX_AGE_MS);
     set({ offline: false, copyFrom: null });
     return data;

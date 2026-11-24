@@ -210,7 +210,8 @@ describe('Today', () => {
   it('the approvals tally by document type, with the total', async () => {
     await open();
     expect(await screen.findByText('3 TOTAL')).toBeOnTheScreen();
-    expect(screen.getByText('Purchase Order')).toBeOnTheScreen();
+    expect(screen.getByText('Purchase')).toBeOnTheScreen();
+    expect(screen.getByText('HR')).toBeOnTheScreen();
     expect(screen.getByText('2 pending')).toBeOnTheScreen();
     expect(screen.getByText('1 pending')).toBeOnTheScreen();
   });

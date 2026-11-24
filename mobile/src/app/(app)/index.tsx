@@ -4,6 +4,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 
 import { useApiRef } from '@/auth/session';
 import { ApproveView } from '@/components/approve-view';
+import { AREA_LOOK } from '@/components/approval-row';
 import { HomeHeader } from '@/components/home-header';
 import { Icon, type IconName } from '@/components/icon';
 import { OfflineStrip } from '@/components/offline-strip';
@@ -11,6 +12,7 @@ import { Sheet, SheetOption } from '@/components/sheet';
 import { TeamView } from '@/components/team-view';
 import { Button, Card, Label, Panel, Progress, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
+import { areaOf } from '@/lib/approvals';
 import { type TodayAttendance, clock, loadTodayAttendance } from '@/lib/attendance';
 import { formatDate, localToday } from '@/lib/format';
 import { refreshInbox, useInbox } from '@/lib/inbox';
@@ -110,7 +112,7 @@ export default function Today() {
       go: () => router.push({ pathname: '/attendance/approve', params: { site: ap.siteId } }),
     })),
   ];
-  const rows = tally(inbox.actions.map((a) => a.reference_doctype));
+  const rows = tally(inbox.actions.map((a) => text(AREA_LOOK[areaOf(a.reference_doctype)].label)));
 
   // Tablet (owner's design: split view with a detail inspector): the team or approval opens on the right.
   const tablet = useIsTablet();
@@ -248,7 +250,7 @@ export default function Today() {
           </Panel>
         ))}
 
-        {/* Everyone with workflow approvals: the tally by document type (departments come with H2). */}
+        {/* Everyone with workflow approvals: the tally by area (Payments, Purchase, Stores, HR, Other). */}
         {inbox.loaded && rows.length > 0 && (
           <Panel>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

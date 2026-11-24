@@ -631,3 +631,20 @@ check themselves in keep their existing workflows.
   or the image renderer here. Prometheus 3.16.0 is newer than the listed
   fixes in 3.11.3. No OSV commit match was returned for the six pins.
 - **Where:** `integrations/monitoring/observability/`. AI-assisted by Codex.
+
+### Approvals inbox on the phone (owner, 24 November 2026)
+
+- **Decision:** The app's Inbox lists every open ERPNext Workflow Action for the person and the custom_hr
+  attendance waiting for them, across all their sites, longest waiting first (amber after one day, red after
+  two), filtered by site (the ERPNext project) and by area. Designed cards for Payment Entry, Payment Request,
+  Journal Entry, Purchase Invoice, Material Request, Supplier Quotation, Purchase Order, Stock Entry, Purchase
+  Receipt, Leave Application, Expense Claim, Employee Advance, Attendance Request and Shift Request; a general
+  card for any other document with a workflow. Actions are ERPNext's own transitions (`apply_workflow`), each
+  after Face ID, fingerprint or passcode. A no-action needs a reason, added as a comment. Nothing is sent when
+  the document changed after it was shown.
+- **Owner's choices:** (1) the locked screen will show only the kind, the count and the site; names and
+  amounts only after Face ID. (2) Money approvals one by one; "Approve all" only for attendance, leave and
+  attendance requests. (3) A normal notification sound for every area, which the person can change per area.
+- **Not yet:** alerts on the phone need push (a Firebase project and server work, P14). No server change.
+- **Where:** `mobile/src/lib/approvals.ts`, `mobile/src/components/approval-card.tsx`, `attendance-cards.tsx`,
+  `approval-row.tsx`, `mobile/src/app/(app)/inbox.tsx`, `mobile/src/app/approvals/`. AI-assisted by Claude.

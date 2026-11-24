@@ -26,8 +26,13 @@ person may see or do, exactly as on the web.
   Keystore, this device only) on a development build, and **only in memory in Expo Go**: it writes nothing
   unless encryption is confirmed. Screen texts come from `src/i18n/en.json`.
 
-Not built yet: field attendance with offline capture, approvals with push notifications, Live Activities.
-The Approvals and Inbox tabs are placeholders until then. **What comes next, and how it is built, is in
+- **Approvals (Inbox):** every ERPNext workflow approval for the person and the attendance waiting for them,
+  across all their sites, longest waiting first, by site and area (Payments, Purchase, Stores, HR, Attendance).
+  `src/lib/approvals.ts` describes a card per document type (a general card for any other workflow); actions
+  are ERPNext's own workflow transitions, each after Face ID, fingerprint or passcode. Tablets: list and card
+  side by side; landscape adds attachments and history in a third column.
+
+Not built yet: alerts on the phone (push, needs a Firebase project: P14), Live Activities. **What comes next, and how it is built, is in
 [`BUILD-GUIDE.md`](BUILD-GUIDE.md)** (owner decisions of 22 November 2026, rules, agent workflow, data paths,
 phases).
 

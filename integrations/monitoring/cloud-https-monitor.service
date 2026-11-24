@@ -1,0 +1,13 @@
+[Unit]
+Description=Read-only HTTPS probes for the cloud workspace
+After=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+ExecStart=/usr/bin/python3 /opt/cloud-monitoring/https_probe.py /etc/cloud-monitoring/targets.json
+TimeoutStartSec=50s
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes

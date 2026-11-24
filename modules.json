@@ -15,6 +15,16 @@
   ],
   "modules": [
     {
+      "id": "monitoring",
+      "title": "Workspace HTTPS monitoring",
+      "summary": "Independent HTTPS availability checks for public workspace routes.",
+      "readme": "integrations/monitoring/README.md",
+      "paths": ["integrations/monitoring/**", "tests/test_https_monitor.py"],
+      "depends_on": [],
+      "tests": ["tests/test_https_monitor.py"],
+      "upstream": []
+    },
+    {
       "id": "erp-addon-shell",
       "title": "ERP add-on shell",
       "summary": "The single installed Frappe app: hook composition with per-feature switches (cloud_features), bootstrap, migration, shared role fixtures and app logos.",

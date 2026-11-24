@@ -645,6 +645,13 @@ check themselves in keep their existing workflows.
 - **Owner's choices:** (1) the locked screen will show only the kind, the count and the site; names and
   amounts only after Face ID. (2) Money approvals one by one; "Approve all" only for attendance, leave and
   attendance requests. (3) A normal notification sound for every area, which the person can change per area.
-- **Not yet:** alerts on the phone need push (a Firebase project and server work, P14). No server change.
+- **Full-page alert (owner, same day):** on Android an approval alert comes like a visitor call: a full page over
+  the locked screen that rings with the phone's ringtone for up to 30 seconds (it stops on Later, Review or after
+  30 seconds, then stays as a quiet entry in the list; one ring per area, never one per document; silent and Do
+  Not Disturb respected). Review unlocks the phone and opens the app behind its own lock; nothing can be approved
+  on the locked screen. iPhone: a normal notification (Apple allows a full page only for calls). Android 14+:
+  the person allows full-page alerts once (Settings links there). Built as a local Expo module
+  (`mobile/modules/approval-alert`, Android framework only, no new dependency).
+- **Not yet:** real alerts need push (a Firebase project and server work, P14). No server change.
 - **Where:** `mobile/src/lib/approvals.ts`, `mobile/src/components/approval-card.tsx`, `attendance-cards.tsx`,
   `approval-row.tsx`, `mobile/src/app/(app)/inbox.tsx`, `mobile/src/app/approvals/`. AI-assisted by Claude.

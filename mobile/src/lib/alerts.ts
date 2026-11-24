@@ -4,8 +4,11 @@
 // approval screens), behind the app lock. Real alerts come with push (P14); the Settings test uses the same path.
 import * as Notifications from 'expo-notifications';
 import { AndroidImportance } from 'expo-notifications';
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
+
+import { ApprovalAlert } from '../../modules/approval-alert';
 
 import { AREA_LOOK } from '@/components/approval-row';
 import { t as text } from '@/i18n';
@@ -32,4 +35,38 @@ export function useAlertTaps() {
     handled = id;
     router.push(url as never);
   }, [last]);
+}
+
+/** Android: can this phone show the full page (Android 14+ asks the person once)? Elsewhere: not offered. */
+export const fullPageAllowed = () => ApprovalAlert?.canUseFullScreen() ?? true;
+export const fullPageAvailable = () => !!ApprovalAlert;
+export const openFullPageSettings = () => ApprovalAlert?.openFullScreenSettings();
+
+/**
+ * An approval alert after `seconds`. Android: the full page over the locked screen, ringing up to 30 seconds
+ * (modules/approval-alert). iPhone (Apple allows a full page only for phone calls): a normal notification.
+ * `body` names only the count and the site.
+ */
+export async function scheduleApprovalAlert(seconds: number, a: { area: Area; title: string; body: string; url: string }): Promise<'page' | 'banner'> {
+  const url = openableUrl(a.url) ?? '/inbox';
+  const label = text(AREA_LOOK[a.area].label);
+  if (ApprovalAlert) {
+    ApprovalAlert.schedule(seconds, {
+      area: a.area,
+      areaLabel: label,
+      title: a.title,
+      body: a.body,
+      url: Linking.createURL(url),
+      channel: text('alert.ringChannel', { area: label }),
+      listChannel: text('alert.listChannel', { area: label }),
+      later: text('alert.later'),
+      review: text('alert.review'),
+    });
+    return 'page';
+  }
+  await Notifications.scheduleNotificationAsync({
+    content: { title: a.title, body: a.body, data: { url } },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds, channelId: await areaChannel(a.area) },
+  });
+  return 'banner';
 }

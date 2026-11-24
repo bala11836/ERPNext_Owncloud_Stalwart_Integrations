@@ -1,0 +1,46 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:1:1-18:12
+INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:1:1-18:12
+	package
+		INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.USE_FULL_SCREEN_INTENT
+ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:4:3-79
+	android:name
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:4:20-76
+application
+ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:5:3-17:17
+activity#expo.modules.approvalalert.AlertActivity
+ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:7:5-15:72
+	android:turnScreenOn
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:14:7-34
+	android:excludeFromRecents
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:10:7-40
+	android:showWhenLocked
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:13:7-36
+	android:launchMode
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:11:7-37
+	android:exported
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:9:7-31
+	android:theme
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:15:7-69
+	android:taskAffinity
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:12:7-30
+	android:name
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:8:7-36
+receiver#expo.modules.approvalalert.AlertReceiver
+ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:16:5-72
+	android:exported
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:16:45-69
+	android:name
+		ADDED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml:16:15-44
+uses-sdk
+INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml
+INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\w\erp\mobile\modules\approval-alert\android\src\main\AndroidManifest.xml

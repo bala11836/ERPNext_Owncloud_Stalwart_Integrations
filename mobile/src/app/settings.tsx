@@ -7,7 +7,7 @@ import { RELOCK_AFTER_MS } from '@/auth/lock';
 import { useApiRef, useAuth } from '@/auth/session';
 import { Button, Screen, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
-import { areaChannel } from '@/lib/alerts';
+import { fullPageAllowed, fullPageAvailable, openFullPageSettings, scheduleApprovalAlert } from '@/lib/alerts';
 import { type Api } from '@/lib/erp';
 import { loadBoot } from '@/lib/attendance';
 import { offlineStorageKind, offlineStore } from '@/lib/offline-store';
@@ -18,22 +18,20 @@ const CONFIRM_WORD = 'DELETE';
 const TEST_DELAY_S = 60;
 
 /**
- * A test approval alert in a minute, exactly as a real one will look (lib/alerts.ts): the Payments channel, the
- * kind, a count and the person's first site, no names or amounts; tapping it opens the Inbox. No server involved.
+ * A test approval alert in a minute, exactly as a real one will look (lib/alerts.ts): Payments, the kind, a count
+ * and the person's first site, no names or amounts. Android: the full page over the locked screen, ringing; iPhone:
+ * a notification. Review / tapping opens the Inbox behind the app lock. No server involved.
  */
-async function scheduleTest(api: Api): Promise<boolean> {
+async function scheduleTest(api: Api): Promise<'page' | 'banner' | false> {
   const { granted } = await Notifications.requestPermissionsAsync();
   if (!granted) return false;
   const site = await loadBoot(api).then((b) => b.sites[0]?.label ?? b.check_in_sites[0]?.label, () => undefined);
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: text('alert.paymentTitle'),
-      body: site ? text('alert.paymentBody', { site }) : text('alert.paymentBodyNoSite'),
-      data: { url: '/inbox' },
-    },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: TEST_DELAY_S, channelId: await areaChannel('payments') },
+  return scheduleApprovalAlert(TEST_DELAY_S, {
+    area: 'payments',
+    title: text('alert.paymentTitle'),
+    body: site ? text('alert.paymentBody', { site }) : text('alert.paymentBodyNoSite'),
+    url: '/inbox',
   });
-  return true;
 }
 
 export default function Settings() {
@@ -46,9 +44,14 @@ export default function Settings() {
   const [unsent, setUnsent] = useState(0);
   const [typed, setTyped] = useState('');
   const [sending, setSending] = useState(false);
-  const [test, setTest] = useState<'scheduled' | 'denied' | 'failed' | null>(null);
+  const [test, setTest] = useState<'scheduled' | 'scheduledPage' | 'denied' | 'failed' | null>(null);
   const sendTest = () =>
-    scheduleTest(apiRef.current).then((ok) => setTest(ok ? 'scheduled' : 'denied'), () => setTest('failed'));
+    scheduleTest(apiRef.current).then(
+      (how) => setTest(how === 'page' ? 'scheduledPage' : how ? 'scheduled' : 'denied'),
+      () => setTest('failed'),
+    );
+  // Android 14+: full-page alerts need the person's once-only permission (system Settings).
+  const [pageAllowed, setPageAllowed] = useState(fullPageAllowed);
   const count = useCallback(
     () =>
       offlineStore()
@@ -112,8 +115,22 @@ export default function Settings() {
 
       <View style={{ gap: 10 }}>
         <Button label={text('notify.test')} icon="bell" secondary onPress={sendTest} />
+        {fullPageAvailable() && !pageAllowed && (
+          <>
+            <Status kind="warn" label={text('notify.pageOff')} />
+            <Button
+              label={text('notify.allowPage')}
+              icon="chevron-right"
+              secondary
+              onPress={() => {
+                openFullPageSettings();
+                setPageAllowed(fullPageAllowed());
+              }}
+            />
+          </>
+        )}
         {test ? (
-          <Status kind={test === 'scheduled' ? 'ok' : 'warn'} label={text(`notify.${test}`, { seconds: TEST_DELAY_S })} />
+          <Status kind={test === 'scheduled' || test === 'scheduledPage' ? 'ok' : 'warn'} label={text(`notify.${test}`, { seconds: TEST_DELAY_S })} />
         ) : null}
       </View>
 

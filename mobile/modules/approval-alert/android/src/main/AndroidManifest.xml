@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- The full-page approval alert over the locked screen (owner, 24 November 2026). Android 14+: the person
+       allows it once in Settings; the app's Settings screen links there. -->
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+  <application>
+    <!-- Its own task, not in recents, shown over the locked screen. It shows only the kind, count and site. -->
+    <activity
+      android:name=".AlertActivity"
+      android:exported="false"
+      android:excludeFromRecents="true"
+      android:launchMode="singleTop"
+      android:taskAffinity=""
+      android:showWhenLocked="true"
+      android:turnScreenOn="true"
+      android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+    <receiver android:name=".AlertReceiver" android:exported="false" />
+  </application>
+</manifest>

@@ -33,6 +33,13 @@ jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync: (req: unknown) => mockSchedule(req),
 }));
 
+const mockNative: { current: null | { schedule: jest.Mock; canUseFullScreen: () => boolean; openFullScreenSettings: jest.Mock } } = { current: null };
+jest.mock('../../modules/approval-alert', () => ({
+  get ApprovalAlert() {
+    return mockNative.current;
+  },
+}));
+
 const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
 const open = () => renderRouter({ index: Settings }, { initialUrl: '/', wrapper });
 
@@ -113,5 +120,37 @@ describe('settings', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Send test approval alert' }));
     expect(await screen.findByText(/Notifications are off for this app/)).toBeOnTheScreen();
     expect(mockSchedule).not.toHaveBeenCalled();
+  });
+
+  it('Android: the full page over the locked screen, ringing, with Later / Review; no banner', async () => {
+    mockGranted.granted = true;
+    mockSchedule.mockClear();
+    mockNative.current = { schedule: jest.fn(), canUseFullScreen: () => true, openFullScreenSettings: jest.fn() };
+    mockApiRef.current = jest.fn(async () => ({ ok: true, status: 200, json: async () => ({ message: { sites: [{ name: 'S1', label: 'Site A', supervisor: false, approver: true, shifts: [] }], check_in_sites: [] } }) }));
+    await open();
+    await fireEvent.press(screen.getByRole('button', { name: 'Send test approval alert' }));
+    expect(await screen.findByText(/Lock the phone now \(screen off\) and wait: the full page comes and rings/)).toBeOnTheScreen();
+    expect(mockNative.current.schedule).toHaveBeenCalledWith(60, expect.objectContaining({
+      area: 'payments',
+      areaLabel: 'Payments',
+      title: 'Payment approval waiting',
+      body: '1 payment · Site A',
+      channel: 'Payments: ringing alerts',
+      later: 'Later',
+      review: 'Review',
+    }));
+    expect(String(mockNative.current.schedule.mock.calls[0][1].url)).toMatch(/inbox$/);
+    expect(mockSchedule).not.toHaveBeenCalled();
+    mockNative.current = null;
+  });
+
+  it('Android 14+: when full-page alerts are off, a button opens the system page to allow them', async () => {
+    const openSettings = jest.fn();
+    mockNative.current = { schedule: jest.fn(), canUseFullScreen: () => false, openFullScreenSettings: openSettings };
+    await open();
+    expect(screen.getByText('Full-page alerts are off for this app on this phone.')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Allow full-page alerts' }));
+    expect(openSettings).toHaveBeenCalled();
+    mockNative.current = null;
   });
 });

@@ -66,6 +66,7 @@ function Nav() {
           <Stack.Screen name="attendance/team" options={{ title: text('team.title') }} />
           <Stack.Screen name="attendance/mark" options={{ title: text('team.title') }} />
           <Stack.Screen name="attendance/approve" options={{ title: text('approve.title') }} />
+          <Stack.Screen name="attendance/verify" options={{ title: text('verify.title') }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 
 import Approve from '@/app/attendance/approve';
+import Verify from '@/app/attendance/verify';
 import { HR_API, isException } from '@/lib/attendance';
 import { ThemeProvider } from '@/theme';
 
@@ -133,5 +134,53 @@ describe('PM approval', () => {
     await fireEvent.press((await screen.findAllByText('Show photo and remarks'))[0]);
     expect(await screen.findByText('photo /private/files/field-A-1.jpg')).toBeOnTheScreen();
     expect(screen.getByText('On time')).toBeOnTheScreen();
+  });
+});
+
+describe('engineer check (Pending Verification, before the PM)', () => {
+  const openVerify = () => renderRouter({ 'attendance/verify': Verify }, { initialUrl: '/attendance/verify?site=S1', wrapper });
+  const toCheck = [
+    { name: 'V1', employee_name: 'Worker V1', attendance_date: '2026-11-24', shift: 'S1 Day', attendance_status: 'Present' },
+    { name: 'V2', employee_name: 'Worker V2', attendance_date: '2026-11-24', shift: 'S1 Day', attendance_status: 'Absent' },
+  ];
+  const serveChecks = (verify?: (args: Record<string, unknown>) => Answer) => {
+    mockErp = fakeErp({
+      [`${HR_API}.verifications`]: { body: { message: toCheck } },
+      [`${HR_API}.verify`]: verify ?? ((args) => ({ body: { message: { name: args.name, state: args.decision === 'Verify' ? 'Verified' : 'Returned' } } })),
+    });
+    return mockErp.calls;
+  };
+  beforeEach(() => {
+    mockConfirmed = true;
+    mockDown = false;
+  });
+
+  it('lists what the supervisors marked; one Face ID verifies the selection, one call per entry', async () => {
+    const calls = serveChecks();
+    await openVerify();
+    expect(await screen.findByText('Worker V1')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByText('Select all 2'));
+    await fireEvent.press(screen.getByText('Verify 2'));
+    expect(await screen.findByText('2 verified. They go to the project manager for approval.')).toBeOnTheScreen();
+    expect(calls.filter((c) => c.method === `${HR_API}.verify`).map((c) => c.args)).toEqual([
+      { name: 'V1', decision: 'Verify', remarks: '' },
+      { name: 'V2', decision: 'Verify', remarks: '' },
+    ]);
+    expect(calls.some((c) => c.method === `${HR_API}.review_many`)).toBe(false);
+  });
+
+  it('returning needs a reason; a refusal for one entry is shown, the others go through', async () => {
+    const calls = serveChecks((args) =>
+      args.name === 'V2'
+        ? { status: 403, body: { _server_messages: JSON.stringify([JSON.stringify({ message: 'Only the assigned engineer can verify this record.' })]) } }
+        : { body: { message: { name: args.name, state: 'Returned' } } },
+    );
+    await openVerify();
+    await fireEvent.press(await screen.findByText('Select all 2'));
+    await fireEvent.press(screen.getByText('Return 2 for correction'));
+    expect(calls.some((c) => c.method === `${HR_API}.verify`)).toBe(false);
+    await fireEvent.changeText(screen.getByLabelText('Remarks (required to return)'), 'Photo unclear');
+    await fireEvent.press(screen.getByText('Return 2 for correction'));
+    expect(await screen.findByText(/1 done\. Not done: Worker V2: Only the assigned engineer can verify this record\./)).toBeOnTheScreen();
   });
 });

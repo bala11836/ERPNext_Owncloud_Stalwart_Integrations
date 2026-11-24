@@ -14,7 +14,12 @@ import { useTheme } from '@/theme';
 /** The role badge from what the person is at the chosen site (server role cards replace it in step H2). */
 export function roleBadge(place: Place | null): string {
   if (!place) return '';
-  return [place.approver && text('role.approver'), place.supervisor && text('role.supervisor'), place.staff && text('role.staff')]
+  return [
+    place.approver && text('role.approver'),
+    place.verifier && text('role.verifier'),
+    place.supervisor && text('role.supervisor'),
+    place.staff && text('role.staff'),
+  ]
     .filter(Boolean)
     .join(' · ')
     .toUpperCase();

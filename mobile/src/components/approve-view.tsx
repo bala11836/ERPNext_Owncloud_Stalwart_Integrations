@@ -10,21 +10,32 @@ import { NoScreenshots } from '@/components/no-screenshots';
 import { OfflineStrip } from '@/components/offline-strip';
 import { PrivateImage } from '@/components/private-image';
 import { Button, Choice, Status, T, TextArea } from '@/components/ui';
-import { t as text } from '@/i18n';
-import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, clock, isException } from '@/lib/attendance';
+import { type TextKey, t as text } from '@/i18n';
+import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, ToVerify, asPending, clock, isException } from '@/lib/attendance';
 import { callErp } from '@/lib/erp';
 import { callKept, useConnection } from '@/lib/saved';
 import { formatDate } from '@/lib/format';
 import { useTheme } from '@/theme';
 
 type Detail = z.infer<typeof EntryDetail>;
+type Mode = 'approve' | 'verify';
+type Result = { name: string; ok: boolean; error?: string | null };
+
+/** The texts that differ between the PM's approval and the engineer's check. */
+const TEXTS: Record<Mode, Record<'none' | 'act' | 'confirm' | 'done' | 'needsInternet', TextKey>> = {
+  approve: { none: 'approve.none', act: 'approve.approveN', confirm: 'approve.confirmApprove', done: 'approve.approved', needsInternet: 'approve.needsInternet' },
+  verify: { none: 'verify.none', act: 'verify.verifyN', confirm: 'verify.confirmVerify', done: 'verify.verified', needsInternet: 'verify.needsInternet' },
+};
 
 /**
  * The PM's attendance approval for one site (custom_hr `approvals`): select all or exceptions only, look at an
  * entry's photo, then approve or return the selection with one Face ID (`review_many`, each entry under all the
  * server's rules; the answer says per entry what happened). Nobody approves their own capture or attendance.
+ * `mode="verify"`: the engineer's check before the PM (custom_hr `verifications` / `verify`, Verify or Return,
+ * one entry per call); the server allows only the assigned engineer.
  */
-export function ApproveView({ site }: { site: string }) {
+export function ApproveView({ site, mode = 'approve' }: { site: string; mode?: Mode }) {
+  const k = TEXTS[mode];
   const t = useTheme();
   const apiRef = useApiRef();
   const [entries, setEntries] = useState<PendingT[] | null>(null);
@@ -42,7 +53,10 @@ export function ApproveView({ site }: { site: string }) {
 
   const load = useCallback(() => {
     setLoading(true);
-    callKept(apiRef.current, `${HR_API}.approvals`, Pending, { site })
+    (mode === 'verify'
+      ? callKept(apiRef.current, `${HR_API}.verifications`, ToVerify, { site }).then(asPending)
+      : callKept(apiRef.current, `${HR_API}.approvals`, Pending, { site })
+    )
       .then((list) => {
         setEntries(list);
         setSelected(new Set());
@@ -50,7 +64,7 @@ export function ApproveView({ site }: { site: string }) {
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
-  }, [apiRef, site]);
+  }, [apiRef, site, mode]);
   useFocusEffect(load);
 
   const shown = (entries ?? []).filter((e) => !onlyExceptions || isException(e));
@@ -74,6 +88,29 @@ export function ApproveView({ site }: { site: string }) {
     callErp(apiRef.current, `${HR_API}.entry`, EntryDetail, { name }).then(setDetail, () => setDetail(null));
   };
 
+  const send = async (names: string[], decision: 'Approve' | 'Return'): Promise<Result[]> => {
+    if (mode === 'approve') {
+      return callErp(apiRef.current, `${HR_API}.review_many`, Reviewed, { names, decision, remarks: remarks.trim() }, { post: true });
+    }
+    // No bulk call for the engineer's check: one after another, each answer kept (the server decides each).
+    const results: Result[] = [];
+    for (const name of names) {
+      try {
+        await callErp(
+          apiRef.current,
+          `${HR_API}.verify`,
+          z.unknown(),
+          { name, decision: decision === 'Approve' ? 'Verify' : 'Return', remarks: remarks.trim() },
+          { post: true },
+        );
+        results.push({ name, ok: true });
+      } catch (e) {
+        results.push({ name, ok: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+    return results;
+  };
+
   const review = async (decision: 'Approve' | 'Return') => {
     const names = [...selected];
     if (busy || !names.length) return;
@@ -82,20 +119,14 @@ export function ApproveView({ site }: { site: string }) {
       setNote({ kind: 'danger', label: text('approve.needReason') });
       return;
     }
-    const key = decision === 'Approve' ? 'approve.confirmApprove' : 'approve.confirmReturn';
+    const key = decision === 'Approve' ? k.confirm : 'approve.confirmReturn';
     if (!(await confirmIdentity(text(key, { count: names.length })))) {
       setNote({ kind: 'danger', label: text('workflow.notConfirmed') });
       return;
     }
     setBusy(true);
     try {
-      const results = await callErp(
-        apiRef.current,
-        `${HR_API}.review_many`,
-        Reviewed,
-        { names, decision, remarks: remarks.trim() },
-        { post: true },
-      );
+      const results = await send(names, decision);
       const failed = results.filter((r) => !r.ok);
       setNote(
         failed.length
@@ -106,7 +137,7 @@ export function ApproveView({ site }: { site: string }) {
                 failed: failed.map((r) => `${nameOf(r.name)}: ${r.error}`).join('; '),
               }),
             }
-          : { kind: 'ok', label: text(decision === 'Approve' ? 'approve.approved' : 'approve.returned', { count: results.length }) },
+          : { kind: 'ok', label: text(decision === 'Approve' ? k.done : 'approve.returned', { count: results.length }) },
       );
       setRemarks('');
       load();
@@ -127,7 +158,7 @@ export function ApproveView({ site }: { site: string }) {
       <OfflineStrip />
       {error && <Status kind="danger" label={error} />}
       {!entries && !error && <Status kind="pending" label={text('myHr.loading')} />}
-      {entries && entries.length === 0 && <Status kind="ok" label={text('approve.none')} />}
+      {entries && entries.length === 0 && <Status kind="ok" label={text(k.none)} />}
       {entries && entries.length > 0 && (
         <>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -188,9 +219,9 @@ export function ApproveView({ site }: { site: string }) {
           <TextArea label={text('approve.remarks')} value={remarks} onChange={setRemarks} />
           {busy && <Status kind="pending" label={text('checkIn.sending')} />}
           {note && <Status kind={note.kind} label={note.label} />}
-          {offline && <Status kind="warn" label={text('approve.needsInternet')} />}
+          {offline && <Status kind="warn" label={text(k.needsInternet)} />}
           <Button
-            label={text('approve.approveN', { count: selected.size })}
+            label={text(k.act, { count: selected.size })}
             icon="fingerprint"
             onPress={() => review('Approve')}
             disabled={busy || offline || selected.size === 0}

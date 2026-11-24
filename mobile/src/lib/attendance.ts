@@ -38,6 +38,8 @@ export const Boot = z.object({
       project_name: z.string().nullish(),
       supervisor: z.boolean(),
       approver: z.boolean(),
+      /** Engineer: checks the attendance of the supervisors under them before the PM approves. */
+      verifier: z.boolean().default(false),
       shifts: z.array(ShiftSchema),
       assets: z.array(z.object({ name: z.string(), label: z.string() })).default([]),
       supervisors: z.array(z.object({ user: z.string(), label: z.string() })).default([]),
@@ -87,6 +89,7 @@ export type Place = {
   /** The person's roles at this site, as custom_hr's bootstrap says. */
   supervisor: boolean;
   approver: boolean;
+  verifier: boolean;
   staff: boolean;
 };
 
@@ -102,6 +105,7 @@ export function placesFrom(boot: BootT): Place[] {
       shifts: s.shifts,
       supervisor: s.supervisor,
       approver: s.approver,
+      verifier: s.verifier,
       staff: false,
     });
   }
@@ -117,6 +121,7 @@ export function placesFrom(boot: BootT): Place[] {
         shifts: s.shifts,
         supervisor: false,
         approver: false,
+        verifier: false,
         staff: true,
       });
     }
@@ -159,6 +164,8 @@ export type TodayAttendance = {
     mine: number;
   }[];
   approvals: { siteId: string; site: string; count: number; exceptions: number; reviewable: number }[];
+  /** Engineer: entries waiting for their check (Pending Verification) per site. */
+  checks: { siteId: string; site: string; count: number }[];
 };
 
 /**
@@ -180,7 +187,7 @@ export async function loadTodayAttendance(
   const places = placesFrom(boot);
   const chosen = resolvePlace(places, choice, now);
   const here = (site: string) => !chosen || chosen.place.site === site;
-  const [mine, teams, approvals] = await Promise.all([
+  const [mine, teams, approvals, checks] = await Promise.all([
     boot.check_in_sites.length
       ? callKept(api, `${HR_API}.my_attendance`, Mine).catch(() => null) // unknown offline: no strip
       : Promise.resolve(null),
@@ -228,6 +235,18 @@ export async function loadTodayAttendance(
           }
         }),
     ),
+    Promise.all(
+      boot.sites
+        .filter((s) => s.verifier && here(s.name))
+        .map(async (s) => {
+          try {
+            const list = await callKept(api, `${HR_API}.verifications`, ToVerify, { site: s.name });
+            return { siteId: s.name, site: s.label, count: list.length };
+          } catch {
+            return null;
+          }
+        }),
+    ),
   ]);
   return {
     places,
@@ -238,6 +257,7 @@ export async function loadTodayAttendance(
       : null,
     teams: teams.filter((t): t is NonNullable<typeof t> => t !== null && t.total > 0),
     approvals: approvals.filter((a): a is NonNullable<typeof a> => a !== null && a.count > 0),
+    checks: checks.filter((c): c is NonNullable<typeof c> => c !== null && c.count > 0),
   };
 }
 
@@ -289,6 +309,19 @@ export const Pending = z.array(
   }),
 );
 export type PendingT = z.infer<typeof Pending>[number];
+/** custom_hr `verifications`: what waits for this engineer's check at a site (Pending Verification). */
+export const ToVerify = z.array(
+  z.object({
+    name: z.string(),
+    employee_name: z.string().nullish(),
+    attendance_date: z.string(),
+    shift: z.string(),
+    attendance_status: z.string(),
+  }),
+);
+/** The approval list's shape, so one screen shows both lists (an engineer may verify every entry listed). */
+export const asPending = (list: z.infer<typeof ToVerify>): PendingT[] =>
+  list.map((v) => ({ ...v, employee: v.employee_name ?? v.name, can_review: true }));
 export const EntryDetail = z.object({
   name: z.string(),
   photo: z.string().nullish(),

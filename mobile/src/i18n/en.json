@@ -143,7 +143,7 @@
   "today.open": "Open",
   "today.teamLabel": "{site} · {shift} shift",
   "today.myTeam": "My team today",
-  "today.teamSent": "{count} sent for approval or approved",
+  "today.teamSent": "{count} sent, verified or approved",
   "today.teamDraft": "{count} saved as drafts",
   "today.teamReturned": "{count} returned for correction",
   "today.teamLeft": "{count} not marked yet",
@@ -201,5 +201,17 @@
   "settings.signOut": "Sign out",
   "settings.version": "Version {version}",
   "signOut.unsent": "{count} entries are not sent yet. Send them now, or type the word below to delete them and sign out.",
-  "signOut.typeDelete": "Type {word} to delete them"
+  "signOut.typeDelete": "Type {word} to delete them",
+  "role.verifier": "Engineer",
+  "verify.title": "Verify attendance",
+  "verify.none": "Nothing is waiting for your check.",
+  "verify.verifyN": "Verify {count}",
+  "verify.confirmVerify": "Confirm verifying {count} attendance records",
+  "verify.verified": "{count} verified. They go to the project manager for approval.",
+  "verify.needsInternet": "Verifying needs internet. You can look at the list now and verify when the signal is back.",
+  "today.toCheck": "To check",
+  "today.checkTitle": "Attendance to verify",
+  "today.checkDetail": "Marked by your supervisors at {site}",
+  "today.reviewVerify": "Review and verify",
+  "fab.verify": "Verify attendance at {site}"
 }

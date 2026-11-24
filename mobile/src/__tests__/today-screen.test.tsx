@@ -109,6 +109,7 @@ const app = {
   'attendance/check-in': stub('Check-in screen'),
   'attendance/team': stub('Team screen'),
   'attendance/approve': stub('Approve screen'),
+  'attendance/verify': stub('Verify screen'),
 };
 const open = () => renderRouter(app, { initialUrl: '/', wrapper });
 const position = (label: string) => JSON.stringify(screen.toJSON()).indexOf(label);
@@ -144,7 +145,7 @@ describe('Today', () => {
   it('the team card: marked of total, each state in words, and the next step', async () => {
     const router = await open();
     expect(await screen.findByText('9/15')).toBeOnTheScreen();
-    expect(screen.getByText('9 sent for approval or approved')).toBeOnTheScreen();
+    expect(screen.getByText('9 sent, verified or approved')).toBeOnTheScreen();
     expect(screen.getByText('2 saved as drafts')).toBeOnTheScreen();
     expect(screen.getByText('1 returned for correction')).toBeOnTheScreen();
     expect(screen.getByText('3 not marked yet')).toBeOnTheScreen();
@@ -165,6 +166,35 @@ describe('Today', () => {
       expect(screen.getByText('Open team')).toBeOnTheScreen();
     } finally {
       answers[`${HR_API}.team`] = saved;
+    }
+  });
+
+  it('an engineer: "Attendance to verify" with the count, the ENGINEER badge and the quick action', async () => {
+    const savedBoot = answers[`${HR_API}.bootstrap`];
+    answers[`${HR_API}.bootstrap`] = {
+      body: {
+        message: {
+          sites: [{ name: 'S1', label: 'Site 1', project: 'P1', project_name: 'Project 1', supervisor: false, approver: false, verifier: true, shifts: [day] }],
+          check_in_sites: [],
+        },
+      },
+    };
+    answers[`${HR_API}.verifications`] = {
+      body: { message: [1, 2].map((i) => ({ name: `V${i}`, employee_name: `W${i}`, attendance_date: '2026-11-24', shift: 'Day1', attendance_status: 'Present' })) },
+    };
+    try {
+      const router = await open();
+      expect(await screen.findByText('Attendance to verify')).toBeOnTheScreen();
+      expect(screen.getByText('ENGINEER')).toBeOnTheScreen();
+      expect(screen.getByText('2')).toBeOnTheScreen();
+      expect(screen.queryByText('Bulk attendance approval')).toBeNull();
+      await fireEvent.press(screen.getByLabelText('Quick actions'));
+      expect(screen.getByText('Verify attendance at Site 1')).toBeOnTheScreen();
+      await fireEvent.press(screen.getByText('Verify attendance at Site 1'));
+      expect(router.getPathname()).toBe('/attendance/verify');
+    } finally {
+      answers[`${HR_API}.bootstrap`] = savedBoot;
+      delete answers[`${HR_API}.verifications`];
     }
   });
 

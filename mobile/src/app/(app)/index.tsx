@@ -94,6 +94,12 @@ export default function Today() {
       label: text('fab.mark', { site: tm.site }),
       go: () => router.push({ pathname: '/attendance/team', params: { site: tm.siteId, shift: tm.shiftId } }),
     })),
+    ...(att?.checks ?? []).map((c) => ({
+      key: `check-${c.siteId}`,
+      icon: 'approve' as IconName,
+      label: text('fab.verify', { site: c.site }),
+      go: () => router.push({ pathname: '/attendance/verify', params: { site: c.siteId } }),
+    })),
     ...(att?.approvals ?? []).map((ap) => ({
       key: `appr-${ap.siteId}`,
       icon: 'approve' as IconName,
@@ -105,10 +111,12 @@ export default function Today() {
 
   // Tablet (owner's design: split view with a detail inspector): the team or approval opens on the right.
   const tablet = useIsTablet();
-  const [detail, setDetail] = useState<{ kind: 'team' | 'approve'; site: string; shift?: string } | null>(null);
+  const [detail, setDetail] = useState<{ kind: 'team' | 'approve' | 'verify'; site: string; shift?: string } | null>(null);
   const shown =
     detail ??
-    (att?.approvals[0]
+    (att?.checks[0]
+      ? { kind: 'verify' as const, site: att.checks[0].siteId }
+      : att?.approvals[0]
       ? { kind: 'approve' as const, site: att.approvals[0].siteId }
       : att?.teams[0]
         ? { kind: 'team' as const, site: att.teams[0].siteId, shift: att.teams[0].shiftId }
@@ -117,6 +125,8 @@ export default function Today() {
     tablet ? setDetail({ kind: 'team', site, shift }) : router.push({ pathname: '/attendance/team', params: { site, shift } });
   const openApprove = (site: string) =>
     tablet ? setDetail({ kind: 'approve', site }) : router.push({ pathname: '/attendance/approve', params: { site } });
+  const openVerify = (site: string) =>
+    tablet ? setDetail({ kind: 'verify', site }) : router.push({ pathname: '/attendance/verify', params: { site } });
 
   const cards = (
     <>
@@ -156,7 +166,7 @@ export default function Today() {
         {/* Supervisor: my team's attendance for the site and shift in the header. */}
         {att?.teams.map((tm) => {
           const left = tm.counts['Not recorded'] ?? 0;
-          const sent = (tm.counts.Submitted ?? 0) + (tm.counts.Approved ?? 0);
+          const sent = ['Submitted', 'Pending Verification', 'Verified', 'Approved'].reduce((n, s) => n + (tm.counts[s] ?? 0), 0);
           return (
             <Panel key={`team-${tm.siteId}`}>
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
@@ -195,6 +205,21 @@ export default function Today() {
             </Panel>
           );
         })}
+
+        {/* Engineer: what their supervisors marked, to check before the PM approves. */}
+        {att?.checks.map((c) => (
+          <Panel key={`check-${c.siteId}`} accent="primary">
+            <Label text={text('today.toCheck')} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <T variant="title">{text('today.checkTitle')}</T>
+                <T color="muted">{text('today.checkDetail', { site: c.site })}</T>
+              </View>
+              <T style={{ fontSize: t.font(32), fontWeight: '800' }}>{c.count}</T>
+            </View>
+            <Button label={text('today.reviewVerify')} icon="fingerprint" onPress={() => openVerify(c.siteId)} />
+          </Panel>
+        ))}
 
         {/* Approver: bulk attendance approval for the site (design: "Fast track action"). */}
         {att?.approvals.map((ap) => (
@@ -297,9 +322,12 @@ export default function Today() {
           <View style={{ flex: 1, backgroundColor: t.c.bg }}>
             <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 4, borderBottomWidth: 1, borderBottomColor: t.c.line, backgroundColor: t.c.surface }}>
               <Label text={text('today.detail')} />
-              <T variant="title">{shown ? text(shown.kind === 'approve' ? 'approve.title' : 'today.myTeam') : text('today.detailEmpty')}</T>
+              <T variant="title">
+                {shown ? text(shown.kind === 'approve' ? 'approve.title' : shown.kind === 'verify' ? 'verify.title' : 'today.myTeam') : text('today.detailEmpty')}
+              </T>
             </View>
             {shown?.kind === 'approve' && <ApproveView key={`a-${shown.site}`} site={shown.site} />}
+            {shown?.kind === 'verify' && <ApproveView key={`v-${shown.site}`} site={shown.site} mode="verify" />}
             {shown?.kind === 'team' && <TeamView key={`t-${shown.site}-${shown.shift}`} site={shown.site} shift={shown.shift ?? ''} />}
           </View>
         </View>

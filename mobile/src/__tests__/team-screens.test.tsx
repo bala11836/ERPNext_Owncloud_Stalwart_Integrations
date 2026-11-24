@@ -60,7 +60,11 @@ jest.mock('expo-image-manipulator', () => ({ ImageManipulator: {}, SaveFormat: {
 jest.mock('expo-location', () => ({}));
 let mockIds = 0;
 jest.mock('expo-crypto', () => ({ randomUUID: () => `id-0000-0000-0000-000${++mockIds}` }));
-jest.mock('expo-screen-capture', () => ({ usePreventScreenCapture: () => {} }));
+jest.mock('expo-screen-capture', () => ({
+  usePreventScreenCapture: () => {},
+  enableAppSwitcherProtectionAsync: async () => {},
+  disableAppSwitcherProtectionAsync: async () => {},
+}));
 jest.mock('@/components/photo-taker', () => {
   const { createElement } = jest.requireActual('react');
   const { Pressable, Text } = jest.requireActual('react-native');

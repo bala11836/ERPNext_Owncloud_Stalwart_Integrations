@@ -214,13 +214,14 @@ export async function loadTodayAttendance(
         .filter((s) => s.approver && here(s.name))
         .map(async (s) => {
           try {
-            const list = await callKept(api, `${HR_API}.approvals`, Pending, { site: s.name });
+            // Only what this person may review counts (maintainers' fix on main, f26c4ca).
+            const list = (await callKept(api, `${HR_API}.approvals`, Pending, { site: s.name })).filter((e) => e.can_review);
             return {
               siteId: s.name,
               site: s.label,
               count: list.length,
               exceptions: list.filter((e) => !!e.captured_offline || e.attendance_status === 'Absent').length,
-              reviewable: list.filter((e) => e.can_review !== false).length,
+              reviewable: list.length,
             };
           } catch {
             return null;

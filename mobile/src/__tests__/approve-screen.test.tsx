@@ -33,7 +33,11 @@ const serve = (review?: Answer) => {
 jest.mock('@/auth/session', () => ({ SignedOutError: class SignedOutError extends Error {}, useApiRef: () => mockApiRef }));
 let mockConfirmed = true;
 jest.mock('@/auth/confirm', () => ({ confirmIdentity: async () => mockConfirmed }));
-jest.mock('expo-screen-capture', () => ({ usePreventScreenCapture: () => {} }));
+jest.mock('expo-screen-capture', () => ({
+  usePreventScreenCapture: () => {},
+  enableAppSwitcherProtectionAsync: async () => {},
+  disableAppSwitcherProtectionAsync: async () => {},
+}));
 jest.mock('@/components/private-image', () => {
   const { createElement } = jest.requireActual('react');
   const { Text } = jest.requireActual('react-native');

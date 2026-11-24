@@ -6,6 +6,17 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-24
 
+### Patch the production identity images before the P49 cutover
+
+Keep PostgreSQL on major version 16 and move its identity pin to 16.16.
+The November PostgreSQL release addresses high-severity advisories affecting
+16.15. Use NGINX 1.30.8 for both identity support services so the gateway's
+upstream DNS resolver also receives the November fixes. Retain the existing
+Authentik version and test the database upgrade and gateway routes in isolation.
+
+Official notes are in the [PostgreSQL 16.16 release](https://www.postgresql.org/docs/release/16.16/)
+and [NGINX advisories](https://nginx.org/en/security_advisories.html).
+
 ### Invitation controls are part of the Authentik build (P49)
 
 Both **Invite users** and **Invitations** are required in the Authentik admin

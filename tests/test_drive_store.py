@@ -243,5 +243,50 @@ class NoDeletes(unittest.TestCase):
             self.assertTrue(all(not p.get('delete') and not p.get('write') and not p.get('create') for p in meta['permissions']))
 
 
+
+class ProjectFiles(unittest.TestCase):
+    LISTING = b'''<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">
+<d:response><d:href>/dav/spaces/SP/Site%201/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop></d:propstat></d:response>
+<d:response><d:href>/dav/spaces/SP/Site%201/plan.pdf</d:href><d:propstat><d:prop><d:resourcetype/><d:getcontentlength>2048</d:getcontentlength><d:getcontenttype>application/pdf</d:getcontenttype></d:prop></d:propstat></d:response>
+<d:response><d:href>/dav/spaces/SP/Site%201/2026-11-24/</d:href><d:propstat><d:prop><d:resourcetype><d:collection/></d:resourcetype></d:prop></d:propstat></d:response>
+</d:multistatus>'''
+
+    def test_listing_skips_the_folder_itself_folders_first(self):
+        entries = drive.parse_listing(self.LISTING, 'Site 1')
+        self.assertEqual([(e['name'], e['folder'], e['path']) for e in entries],
+                         [('2026-11-24', True, 'Site 1/2026-11-24'), ('plan.pdf', False, 'Site 1/plan.pdf')])
+        self.assertEqual(entries[1]['size'], 2048)
+
+    def test_paths_cannot_leave_the_space(self):
+        self.assertEqual(drive.clean_path('/Site 1//2026-11-24/'), 'Site 1/2026-11-24')
+        self.assertEqual(drive.clean_path('a' + chr(92) + 'b'), 'a/b')  # a backslash
+        for bad in ('../x', 'a/../../b', './a', 'a/.'):
+            with self.assertRaises(ValueError):
+                drive.clean_path(bad)
+
+    def test_project_access_is_site_membership(self):
+        frappe.get_all = mock.Mock(return_value=['S1', 'S2'])
+        with mock.patch.object(api, 'allowed_sites', return_value={'S2'}):
+            api.require_project('PROJ-1', 'a@example.com')
+        with mock.patch.object(api, 'allowed_sites', return_value={'S9'}):
+            with self.assertRaises(PermissionDenied):
+                api.require_project('PROJ-1', 'a@example.com')
+
+    def test_no_space_yet_lists_nothing_and_creates_nothing(self):
+        frappe.db.get_value = mock.Mock(return_value=None)
+        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'require_project'), \
+                mock.patch.object(drive, 'list_folder') as listing, mock.patch.object(drive, 'create_space') as create:
+            self.assertEqual(api.files('PROJ-1', ''), [])
+        listing.assert_not_called()
+        create.assert_not_called()
+
+    def test_only_images_open_in_the_app_and_bad_paths_are_refused(self):
+        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'require_project'):
+            with self.assertRaises(Thrown):
+                api.file('PROJ-1', 'Site 1/plan.pdf')
+            with self.assertRaises(Thrown):
+                api.file('PROJ-1', '../other/photo.jpg')
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -112,6 +112,44 @@ def photos(site=None, project=None, kind=None, day=None, start=0):
                                   'latitude', 'longitude', 'accuracy_m', 'remarks'])
 
 
+def require_project(project, user):
+    """A project the person may see: one of its sites is theirs (the same membership as photos)."""
+    sites = set(frappe.get_all('Field Site', filters={'project': project}, pluck='name')) if project else set()
+    if not sites & allowed_sites(user):
+        frappe.throw('You do not have access to this project.', frappe.PermissionError)
+
+
+def asked_path(path):
+    try:
+        return drive.clean_path(path)
+    except ValueError:
+        frappe.throw('This folder path is not valid.')
+
+
+@frappe.whitelist(methods=['GET'])
+def files(project, path=''):
+    """Folders and files in a project's Drive space (everything through ERPNext, owner); empty until the
+    project's space exists (its first photo creates it)."""
+    require_project(project, require_user())
+    space_id = frappe.db.get_value('Drive Project Space', {'project': project}, 'space_id')
+    return drive.list_folder(space_id, asked_path(path)) if space_id else []
+
+
+@frappe.whitelist(methods=['GET'])
+def file(project, path, size='full'):
+    """An image from a project's Drive space (preview or full). Other file types open on the web for now."""
+    require_project(project, require_user())
+    path = asked_path(path)
+    if not drive.is_image(path):
+        frappe.throw('Only photos and images open in the app for now.')
+    space_id = frappe.db.get_value('Drive Project Space', {'project': project}, 'space_id')
+    if not space_id:
+        frappe.throw('This project has no Drive space yet.')
+    content = drive.read_file(space_id, path, PREVIEW_PX if size == 'preview' else None)
+    frappe.local.response.update({'type': 'binary', 'filename': path.rsplit('/', 1)[-1], 'filecontent': content,
+                                  'display_content_as': 'inline'})
+
+
 @frappe.whitelist(methods=['GET'])
 def photo(name, size='preview'):
     """One photo's image (a 256 px preview, or the full photo), after the same access check."""

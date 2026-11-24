@@ -10,6 +10,7 @@ live in the site's private folder (mode 600) and take precedence. No token value
 import base64
 import datetime
 import json
+import xml.etree.ElementTree as ET
 import os
 import re
 import time
@@ -166,6 +167,50 @@ def read_file(space_id, path, preview=None):
     """The file's bytes, or a Drive preview `preview` px wide (thumbnail service)."""
     params = {'preview': 1, 'x': preview, 'y': preview, 'a': 1} if preview else None
     return _call('GET', _dav(space_id, path), _auth(), params=params).content
+
+
+_PROPFIND = (b'<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/><d:getcontentlength/>'
+             b'<d:getlastmodified/><d:getcontenttype/></d:prop></d:propfind>')
+
+
+def list_folder(space_id, path):
+    """The folders and files directly inside `path` of the space (Depth 1), folders first, then by name."""
+    body = _call('PROPFIND', _dav(space_id, path), _auth(), data=_PROPFIND,
+                 headers={'Depth': '1', 'Content-Type': 'application/xml'}).content
+    return parse_listing(body, path)
+
+
+def parse_listing(body, path):
+    ns = {'d': 'DAV:'}
+    out = []
+    for response in ET.fromstring(body).findall('d:response', ns)[1:]:  # the first answer is the folder itself
+        href = urllib.parse.unquote(response.findtext('d:href', default='', namespaces=ns)).rstrip('/')
+        name = href.rsplit('/', 1)[-1]
+        prop = response.find('d:propstat/d:prop', ns)
+        if prop is None or not name:
+            continue
+        folder = prop.find('d:resourcetype/d:collection', ns) is not None
+        entry_path = f'{path}/{name}' if path else name
+        out.append({'name': name, 'path': entry_path, 'folder': folder,
+                    'size': int(prop.findtext('d:getcontentlength', default='0', namespaces=ns) or 0),
+                    'modified': prop.findtext('d:getlastmodified', default='', namespaces=ns),
+                    'type': prop.findtext('d:getcontenttype', default='', namespaces=ns)})
+    return sorted(out, key=lambda e: (not e['folder'], e['name'].lower()))
+
+
+def clean_path(path):
+    """A path inside a space as asked by the app: no '.' or '..' parts, no backslashes, no leading slash."""
+    parts = [p for p in str(path or '').replace('\\', '/').split('/') if p]
+    if any(p in ('.', '..') for p in parts):
+        raise ValueError('path')
+    return '/'.join(parts)
+
+
+IMAGE_TYPES = ('.jpg', '.jpeg', '.png', '.webp', '.gif')
+
+
+def is_image(path):
+    return path.lower().endswith(IMAGE_TYPES)
 
 
 # ---- pure rules (unit-tested without Frappe or Drive) ----

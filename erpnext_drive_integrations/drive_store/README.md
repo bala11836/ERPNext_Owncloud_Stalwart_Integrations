@@ -30,6 +30,8 @@ Calls for the app (`erpnext_drive_integrations.drive_store.api`):
 | `upload_photo` (POST, `payload`) | `client_id`, `site`, `kind` (Progress / Hindrance / Incident / Other), `photo` (data URL, under 3 MB; re-encoded, EXIF removed), optional `latitude`, `longitude`, `accuracy_m`, `gps_captured_at`, `from_gallery`, `remarks`, offline fields as in custom_hr. A retry with the same `client_id` returns the same record. |
 | `photos` (GET) | The photos the person may see, newest first, 30 at a time: `site`, `project`, `kind`, `day`, `start`. |
 | `photo` (GET) | One photo as an image: `size=preview` (256 px, Drive's thumbnail service) or `size=full`. |
+| `files` (GET) | Folders and files in a project's Drive space (`project`, `path`), for people with a site in that project; empty until the space exists. |
+| `file` (GET) | An image from a project's space (`project`, `path`, `size`); other file types open on the web for now. |
 
 Records: **Drive Project Space** (project, Drive space id) and **Drive Photo** (one per photo, with its tags).
 
@@ -58,7 +60,7 @@ feature can be switched off with `cloud_features: {"drive_store": false}`.
 
 - `tests/test_drive_store.py` (fake Frappe and Drive): fixed paths, no folder escape, tags, token renewal (same
   account, old token revoked, never on mismatch, no token in errors), access by site membership, idempotent
-  upload, no deletes.
+  upload, no deletes, folder listing, paths that cannot leave the space, project access.
 - To prove on the test site: space creation, upload, tags (`/graph/v1.0/extensions/org.libregraph/tags`) and
   previews against the pinned oCIS version; that the document worker does not pick up project photo spaces.
 

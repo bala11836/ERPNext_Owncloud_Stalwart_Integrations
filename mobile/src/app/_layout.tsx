@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/auth/session';
 import { t as text } from '@/i18n';
 import { clearErpCache } from '@/lib/erp';
 import { clearInbox } from '@/lib/inbox';
+import { clearPreviews } from '@/lib/photos';
 import { adoptOffline, purgeOffline, wipeOffline } from '@/lib/offline-store';
 import { resetConnection } from '@/lib/saved';
 import { ThemeProvider, useTheme } from '@/theme';
@@ -34,6 +35,7 @@ function Nav() {
     if (status !== 'signedOut') return;
     clearErpCache();
     clearInbox();
+    clearPreviews();
     resetConnection();
     // Only Sign out (after its warning, Settings) deletes unsent entries; an expired sign-in keeps them,
     // encrypted, for the same person (owner decisions 4 and 5); another person's sign-in deletes them first.
@@ -71,6 +73,10 @@ function Nav() {
           <Stack.Screen name="attendance/mark" options={{ title: text('team.title') }} />
           <Stack.Screen name="attendance/approve" options={{ title: text('approve.title') }} />
           <Stack.Screen name="attendance/verify" options={{ title: text('verify.title') }} />
+          <Stack.Screen name="photos/add" options={{ title: text('photo.addTitle') }} />
+          <Stack.Screen name="photos/index" options={{ title: text('photo.galleryTitle') }} />
+          <Stack.Screen name="photos/[name]" options={{ title: text('photo.viewTitle') }} />
+          <Stack.Screen name="documents/index" options={{ title: text('docs.title') }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />

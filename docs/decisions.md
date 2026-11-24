@@ -4,6 +4,22 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-24
+
+### Work photos in each project's Drive space, reached only through ERPNext (P74)
+- **Decision:** the mobile app's site photos (progress, hindrance, incident) go straight to the project's
+  Drive (oCIS) space, one folder per site and date, tagged with project, site, type, time, GPS, who took
+  them, "From gallery" and "Captured offline". The phone talks only to ERPNext: ERPNext checks the person's
+  site membership (the attendance rule) and a dedicated Drive account writes and reads the space with an
+  oCIS app token renewed every 30 days, the document worker's pattern. Nobody deletes a work photo: the
+  records cannot be deleted and the store never deletes in Drive. Receipts, bills and scans keep going to the
+  DMS first; project photo spaces stay outside the document worker. Immich and PhotoPrism were compared and
+  not adopted for now (no user groups / single sign-on only in a paid edition).
+- **Why:** one sign-in for staff (no Drive key on the phone, no Drive account needed to see project photos),
+  permissions from ERPNext only, no new service to run or back up, and photos next to the project's other
+  files in Drive.
+- **Where:** `erpnext_drive_integrations/drive_store/`, `tests/test_drive_store.py`, issue #53.
+
 ## 2026-11-20
 
 ### A reboot must bring everything back by itself (P57)

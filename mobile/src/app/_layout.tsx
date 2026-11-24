@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppLock } from '@/auth/lock';
 import { AuthProvider, useAuth } from '@/auth/session';
@@ -24,6 +25,7 @@ export default function RootLayout() {
 
 function Nav() {
   const t = useTheme();
+  const insets = useSafeAreaInsets();
   const { status, ended } = useAuth();
   useEffect(() => {
     purgeOffline().catch(() => {}); // app start: nothing older than a day stays
@@ -53,11 +55,13 @@ function Nav() {
           headerStyle: { backgroundColor: t.c.bg },
           headerTintColor: t.c.text,
           headerTitleStyle: { fontSize: t.font(20), fontWeight: '700' },
-          contentStyle: { backgroundColor: t.c.bg },
+          // Edge-to-edge Android: screens without tabs keep their last row above the system navigation bar.
+          contentStyle: { backgroundColor: t.c.bg, paddingBottom: insets.bottom },
         }}>
         {/* App screens open only after a real ERPNext sign-in; signing out (here or on the web) closes them. */}
         <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="(app)" options={{ headerShown: false }} />
+          {/* The tabs keep clear of the navigation bar themselves. */}
+          <Stack.Screen name="(app)" options={{ headerShown: false, contentStyle: { backgroundColor: t.c.bg } }} />
           <Stack.Screen name="menu/[name]" />
           <Stack.Screen name="list/[doctype]" />
           <Stack.Screen name="doc/[doctype]/[name]" />

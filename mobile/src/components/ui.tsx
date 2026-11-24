@@ -71,7 +71,7 @@ export function Choice({ label, selected, onPress }: { label: string; selected: 
       style={{
         minHeight: t.touch,
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        paddingHorizontal: 12,
         borderRadius: 10,
         borderWidth: selected ? t.border + 2 : t.border,
         borderColor: selected ? t.c.primary : t.c.border,

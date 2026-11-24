@@ -22,6 +22,16 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: async (k: string, v: string) => void mockSaved.set(k, v),
 }));
 
+const mockSchedule = jest.fn(async (_req: unknown) => 'n1');
+const mockGranted = { granted: true };
+jest.mock('expo-notifications', () => ({
+  AndroidImportance: { HIGH: 4 },
+  SchedulableTriggerInputTypes: { TIME_INTERVAL: 'timeInterval' },
+  requestPermissionsAsync: async () => mockGranted,
+  setNotificationChannelAsync: async () => null,
+  scheduleNotificationAsync: (req: unknown) => mockSchedule(req),
+}));
+
 const wrapper = ({ children }: { children: ReactNode }) => <ThemeProvider>{children}</ThemeProvider>;
 const open = () => renderRouter({ index: Settings }, { initialUrl: '/', wrapper });
 
@@ -74,5 +84,26 @@ describe('settings', () => {
     expect(screen.queryByText(/entries are not sent yet/)).toBeNull();
     await fireEvent.press(screen.getByText('Sign out'));
     expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it('sets a test notification for a minute later, with no personal data', async () => {
+    mockGranted.granted = true;
+    mockSchedule.mockClear();
+    await open();
+    await fireEvent.press(screen.getByRole('button', { name: 'Send test notification' }));
+    expect(await screen.findByText('Test notification in 60 seconds. Close the app now and wait.')).toBeOnTheScreen();
+    expect(mockSchedule).toHaveBeenCalledWith({
+      content: { title: 'Test notification', body: 'Notifications from this app reach you while it is closed.' },
+      trigger: { type: 'timeInterval', seconds: 60, channelId: 'default' },
+    });
+  });
+
+  it('says how to turn notifications on when the phone refuses', async () => {
+    mockGranted.granted = false;
+    mockSchedule.mockClear();
+    await open();
+    await fireEvent.press(screen.getByRole('button', { name: 'Send test notification' }));
+    expect(await screen.findByText(/Notifications are off for this app/)).toBeOnTheScreen();
+    expect(mockSchedule).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,6 @@
 import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, Switch, TextInput, View } from 'react-native';
 
@@ -11,6 +13,22 @@ import { flushQueue } from '@/lib/sender';
 import { useTheme } from '@/theme';
 
 const CONFIRM_WORD = 'DELETE';
+const TEST_DELAY_S = 60;
+
+/** A local test notification in a minute, so the owner can close the app and see it arrive (no server, no personal data). */
+async function scheduleTest(): Promise<boolean> {
+  const { granted } = await Notifications.requestPermissionsAsync();
+  if (!granted) return false;
+  await Notifications.setNotificationChannelAsync('default', {
+    name: text('notify.channel'),
+    importance: AndroidImportance.HIGH,
+  });
+  await Notifications.scheduleNotificationAsync({
+    content: { title: text('notify.testTitle'), body: text('notify.testBody') },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: TEST_DELAY_S, channelId: 'default' },
+  });
+  return true;
+}
 
 export default function Settings() {
   const t = useTheme();
@@ -22,6 +40,9 @@ export default function Settings() {
   const [unsent, setUnsent] = useState(0);
   const [typed, setTyped] = useState('');
   const [sending, setSending] = useState(false);
+  const [test, setTest] = useState<'scheduled' | 'denied' | 'failed' | null>(null);
+  const sendTest = () =>
+    scheduleTest().then((ok) => setTest(ok ? 'scheduled' : 'denied'), () => setTest('failed'));
   const count = useCallback(
     () =>
       offlineStore()
@@ -82,6 +103,13 @@ export default function Settings() {
           label={text(storage === 'encrypted' ? 'storage.encrypted' : 'storage.memory')}
         />
       ) : null}
+
+      <View style={{ gap: 10 }}>
+        <Button label={text('notify.test')} icon="bell" secondary onPress={sendTest} />
+        {test ? (
+          <Status kind={test === 'scheduled' ? 'ok' : 'warn'} label={text(`notify.${test}`, { seconds: TEST_DELAY_S })} />
+        ) : null}
+      </View>
 
       {unsent > 0 && (
         <View style={{ gap: 10 }}>

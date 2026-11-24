@@ -69,6 +69,8 @@ def render(source, destination, config):
         if version and p.suffix in {".html", ".mjs"}:
             text=re.sub(r'(\.mjs)(?:\?v=[A-Za-z0-9_.-]+)?(?=[\"\'])',
                         lambda match:match.group(1)+'?v='+version,text)
+        if version and p.name == "index.html" and p.parent.parts[-2:] == ("invite-recovery", "public"):
+            text = text.replace('href="./style.css"', f'href="./style.css?v={version}"')
         p.write_text(text)
     logo = config.get("company_logo")
     if logo:

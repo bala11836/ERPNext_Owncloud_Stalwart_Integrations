@@ -5,12 +5,17 @@ const baseUser = { pk: 7, name: "Test user", username: "test-user", email: "test
   type: "internal", is_active: true, groups_obj: [{ name: "Workspace Users" }], attributes: {}, last_login: null };
 const flow = { pk: "enrollment-id", slug: FLOW_SLUG, designation: "enrollment" };
 const recoveryFlow = { pk: "recovery-id", slug: RECOVERY_FLOW_SLUG, designation: "enrollment" };
+const testFlow = { pk: "test-enrollment-id", slug: "mobile-attendance-qa-enroll", designation: "enrollment" };
+const synthetic = { ...baseUser, username: "fake-engineer", email: "fake-engineer@attendance-qa.example.invalid",
+  path: "qa/mobile-attendance", groups_obj: [{ name: "fake" }] };
+const adminEmail = "operator@example.invalid";
 const now = Date.parse("2026-11-06T08:00:00Z");
 function fixture({ user = baseUser, devices = [], admin = true, csrf = true,
   sendFails = false, cleanupFails = false, duplicate = false, activeInvite = false,
-  missingRecovery = false, listFails = false } = {}) {
+  missingRecovery = false, listFails = false, test = false, delivery = adminEmail } = {}) {
   const requests = [], invitations = [];
   const client = new InvitationClient({
+    test,
     origin: () => "https://sso.example.invalid", now: () => now,
     cookie: () => csrf ? "authentik_csrf=test-csrf" : "", uuid: () => "test-attempt",
     fetcher: async (url, request) => {
@@ -19,9 +24,12 @@ function fixture({ user = baseUser, devices = [], admin = true, csrf = true,
       requests.push({ path, ...request, data: request.body ? JSON.parse(request.body) : undefined });
       const reply = (data, status = 200) => ({ ok: status < 400, status, json: async () => data });
       const page = (results) => reply({ results, pagination: { current: 1, total_pages: 1 } });
-      if (path === "core/users/me/") return reply({ user: { is_active: true, is_superuser: admin } });
+      if (path === "core/users/me/") return reply({ user: { is_active: true, is_superuser: admin, email: delivery } });
       if (path === "core/users/") return page(duplicate ? [user, { ...user, pk: 8 }] : [user]);
-      if (path === "flows/instances/") return page(query.get("slug") === FLOW_SLUG ? [flow] : missingRecovery ? [] : [recoveryFlow]);
+      if (path === "flows/instances/") {
+        if (query.get("slug") === testFlow.slug) return page([testFlow]);
+        return page(query.get("slug") === FLOW_SLUG ? [flow] : missingRecovery ? [] : [recoveryFlow]);
+      }
       if (path === "authenticators/admin/webauthn/") return listFails ? reply({}, 500)
         : page(devices.map((d) => ({ user: { pk: user.pk }, ...d })));
       if (path === "stages/invitation/invitations/" && request.method === "GET") {
@@ -136,5 +144,37 @@ export async function runTests() {
     await assert.rejects(f.client.api("/api/v3/../../elsewhere"), /Unexpected API/);
     assert.equal(f.requests.length, 0);
   });
+  await check("test invitation fixes the synthetic identity and delivers to the signed-in administrator", async () => {
+    const f = fixture({ test: true, user: synthetic });
+    assert.equal((await f.client.load()).users.length, 1);
+    assert.equal((await f.client.send(7, 24)).email, adminEmail);
+    assert.equal(f.invitations[0].flow, testFlow.pk);
+    assert.match(f.invitations[0].name, /^enroll-fake-engineer-/);
+    assert.deepEqual(f.invitations[0].fixed_data, { email: synthetic.email, user_id: 7, username: synthetic.username });
+    const sent = f.requests.find((request) => request.path.endsWith("/send_email/"));
+    assert.deepEqual(sent.data, { email_addresses: [adminEmail], template: "email/cloud-test-passkey-invitation.html" });
+  });
+  await check("test invites exclude existing keys, administrators and real staff identities", async () => {
+    const scenarios = [
+      { user: synthetic, devices: [{ pk: 4 }] },
+      { user: { ...synthetic, is_superuser: true } },
+      { user: { ...synthetic, email: "staff@example.invalid" } },
+      { user: { ...synthetic, path: "users" } },
+      { user: baseUser },
+    ];
+    for (const scenario of scenarios) {
+      const f = fixture({ test: true, ...scenario });
+      assert.deepEqual((await f.client.load()).users, []);
+      await assert.rejects(f.client.send(7, 24), /no longer eligible/);
+      assert.equal(writes(f).length, 0);
+    }
+  });
+  await check("test invitation without a delivery address creates no link", async () => {
+    const f = fixture({ test: true, user: synthetic, delivery: "" });
+    await assert.rejects(f.client.send(7, 24), /administrator account/);
+    assert.equal(writes(f).length, 0);
+  });
   return { passed };
 }
+
+await runTests();

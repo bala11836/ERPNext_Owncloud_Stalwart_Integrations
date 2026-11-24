@@ -6,7 +6,7 @@ is `Workspace Users`; map it to the deployment group with `public_replacements`.
 Do not recreate a retired ERP-only group to work around an empty selector.
 Active status, unique email and native administrator permissions remain required.
 
-Keep both Directory entries: **Invite users** opens the simple selection form;
+Keep both admin entries under Flows and Stages: **Invite users** opens the simple selection form;
 **Invitations** opens native management. The simple form also has a **Manage
 invitations** link. Never hide or replace native management. The historical
 `hide-native-invitations.py` entry point now removes only its old marked CSS.
@@ -26,10 +26,13 @@ group reference does not require deleting or registering passkeys again.
 
 ## Test and release
 
-Test shares the existing identity service. It does not duplicate its database
-or send invitations through copied test mailboxes. Stage the rendered companion
-and blueprint from Git in the test checkout, run offline regression tests, and
-verify shared live rules read-only. Never apply a fresh-install blueprint over
+A dedicated test identity instance stages the same companion, CSS and admin
+template from the public release commit. Validate both entries in the actual
+test admin console, including selection, creation, listing and cancellation.
+Its synthetic enrollment flow fixes the existing test username. Use an
+explicitly configured test-only mail transport and recipient policy. Activate
+the send control only after verifying that the transport accepts the approved
+sender and recipient. Intercept delivery in repeatable browser tests. Never apply a fresh-install blueprint over
 live identity. Native policy tests must roll back and mock email. Real device
 acceptance requires an approved identity and an interactive passkey ceremony.
 

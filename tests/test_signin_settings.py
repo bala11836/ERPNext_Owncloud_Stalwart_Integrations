@@ -111,7 +111,8 @@ class InvitationBranding(unittest.TestCase):
         names = sorted(p.name for p in (self.templates / 'email').iterdir())
         self.assertEqual(names, ['acme-enrollment-invitation.html', 'acme-enrollment-invitation.txt',
                                  'acme-passkey-steps.html', 'acme-passkey-steps.txt',
-                                 'acme-recovery-invitation.html', 'acme-recovery-invitation.txt'])
+                                 'acme-recovery-invitation.html', 'acme-recovery-invitation.txt',
+                                 'acme-test-passkey-invitation.html'])
         html = (self.templates / 'email/acme-enrollment-invitation.html').read_text()
         self.assertIn('Set up your Acme Works passkey', html)
         self.assertIn('iCloud Keychain', html, 'iCloud is not the brand')

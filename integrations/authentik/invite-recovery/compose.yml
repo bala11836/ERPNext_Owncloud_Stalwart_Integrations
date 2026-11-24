@@ -1,6 +1,6 @@
 services:
   invitations:
-    image: nginx:1.28-alpine
+    image: nginx@sha256:6437a63b5c529f0e06162b3f593c0154cff6fa2ea0f94fd7c27928cb399e022d
     container_name: cloud-invitations
     user: "101:101"
     entrypoint: ["nginx", "-g", "daemon off;"]

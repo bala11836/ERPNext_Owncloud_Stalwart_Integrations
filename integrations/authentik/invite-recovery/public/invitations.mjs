@@ -14,10 +14,10 @@ export function csrfCookie(cookie) {
   return match ? decodeURIComponent(match.slice("authentik_csrf=".length)) : "";
 }
 
-export function approved(user) {
+export function approved(user, groupName = APPROVAL_GROUP) {
   return user.is_active === true && ["internal", "external"].includes(user.type)
     && Array.isArray(user.groups_obj)
-    && user.groups_obj.some((group) => group.name === APPROVAL_GROUP)
+    && user.groups_obj.some((group) => group.name === groupName)
     && typeof user.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)
     && user.email === user.email.trim();
 }
@@ -34,9 +34,9 @@ export function invitationKind(user, hasPasskey) {
 }
 
 export class InvitationClient {
-  constructor({ fetcher = (...args) => globalThis.fetch(...args), cookie = () => document.cookie,
+  constructor({ fetcher = (...args) => globalThis.fetch(...args), cookie = () => document.cookie, test = false,
     origin = () => location.origin, now = () => Date.now(), uuid = () => crypto.randomUUID() } = {}) {
-    Object.assign(this, { fetcher, cookie, origin, now, uuid });
+    Object.assign(this, { fetcher, cookie, origin, now, uuid, test });
     this.busy = false;
   }
 
@@ -116,23 +116,28 @@ export class InvitationClient {
   }
 
   async load() {
-    await this.requireAdmin();
+    const admin = await this.requireAdmin();
+    const flowSlug = this.test ? "mobile-attendance-qa-enroll" : FLOW_SLUG;
+    const groupName = this.test ? "fake" : APPROVAL_GROUP;
     const [users, flows, recoveryFlows, devices] = await Promise.all([
       this.list("core/users/?page_size=100&include_groups=true"),
-      this.list(`flows/instances/?slug=${FLOW_SLUG}&page_size=100`),
-      this.list(`flows/instances/?slug=${RECOVERY_FLOW_SLUG}&page_size=100`),
+      this.list(`flows/instances/?slug=${flowSlug}&page_size=100`),
+      this.test ? [] : this.list(`flows/instances/?slug=${RECOVERY_FLOW_SLUG}&page_size=100`),
       this.list("authenticators/admin/webauthn/?page_size=100"),
     ]);
-    const flow = flows.find((entry) => entry.slug === FLOW_SLUG && entry.designation === "enrollment");
+    const flow = flows.find((entry) => entry.slug === flowSlug && entry.designation === "enrollment");
     if (!flow?.pk) throw new InvitationError("The controlled first-time enrollment flow is unavailable.");
     const recoveryFlow = recoveryFlows.find((entry) => entry.slug === RECOVERY_FLOW_SLUG
       && entry.designation === "enrollment");
-    const candidates = users.filter((user) => approved(user) && !duplicateEmail(users, user.email));
     const owners = this.passkeyOwners(devices);
+    const candidates = users.filter((user) => approved(user, groupName) && !duplicateEmail(users, user.email)
+      && (!this.test || (!user.is_superuser && !owners.has(String(user.pk))
+        && user.path === "qa/mobile-attendance"
+        && user.email === `${user.username}@attendance-qa.example.invalid`)));
     const eligible = candidates.map((user) => ({ ...user,
-      invitationKind: invitationKind(user, owners.has(String(user.pk))) }));
+      invitationKind: this.test ? "enrollment" : invitationKind(user, owners.has(String(user.pk))) }));
     eligible.sort((a, b) => (a.name || a.username).localeCompare(b.name || b.username));
-    return { users: eligible, flow, recoveryFlow };
+    return { users: eligible, flow, recoveryFlow, delivery: this.test ? admin.email : undefined };
   }
 
   async expire(pk) {
@@ -151,9 +156,12 @@ export class InvitationClient {
       await this.requireAdmin();
       // Read again immediately before writing: do not trust the page's earlier
       // user list, a typed email, an earlier approval, or a cached device list.
-      const { users, flow: enrollmentFlow, recoveryFlow } = await this.load();
+      const { users, flow: enrollmentFlow, recoveryFlow, delivery } = await this.load();
       const user = users.find((entry) => String(entry.pk) === String(userPk));
       if (!user) throw new InvitationError("This user is no longer eligible. They must be active, approved and have a unique email.");
+      if (this.test && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(delivery || "")) {
+        throw new InvitationError("Set an email address on your administrator account before sending a test invitation.");
+      }
       const flow = user.invitationKind === "recovery" ? recoveryFlow : enrollmentFlow;
       if (!flow?.pk) throw new InvitationError("The controlled passkey recovery flow is not yet available. No invitation was sent.");
       const invitations = await this.list(`${INVITATIONS}?flow__slug=${flow.slug}&page_size=100`);
@@ -163,20 +171,20 @@ export class InvitationClient {
         throw new InvitationError("This user already has a valid invitation. Open Invitations in Authentik to resend or expire it first.");
       }
       if (!csrfCookie(this.cookie())) throw new InvitationError("Refresh your Authentik administrator session before sending.");
-      name = `enroll-${user.pk}-${this.uuid()}`;
+      name = `enroll-${this.test ? user.username : user.pk}-${this.uuid()}`;
       const expires = new Date(this.now() + hours * 3600000).toISOString();
       creationAttempted = true;
       created = await this.api(INVITATIONS, { method: "POST", data: {
         name, expires, flow: flow.pk, single_use: true,
-        fixed_data: { email: user.email, user_id: user.pk },
+        fixed_data: { email: user.email, user_id: user.pk, ...(this.test ? { username: user.username } : {}) },
       } });
       if (!created?.pk) throw new InvitationError("Invitation creation could not be confirmed.");
       await this.api(`${INVITATIONS}${encodeURIComponent(created.pk)}/send_email/`, {
-        method: "POST", data: { email_addresses: [user.email],
-          template: user.invitationKind === "recovery"
+        method: "POST", data: { email_addresses: [this.test ? delivery : user.email],
+          template: this.test ? "email/cloud-test-passkey-invitation.html" : user.invitationKind === "recovery"
             ? "email/cloud-recovery-invitation.html" : "email/cloud-enrollment-invitation.html" },
       });
-      return { email: user.email, expires, kind: user.invitationKind };
+      return { email: this.test ? delivery : user.email, expires, kind: user.invitationKind };
     } catch (error) {
       if (creationAttempted) {
         try {

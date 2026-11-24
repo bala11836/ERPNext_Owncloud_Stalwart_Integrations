@@ -148,7 +148,7 @@
   "today.teamReturned": "{count} returned for correction",
   "today.teamLeft": "{count} not marked yet",
   "today.continueMarking": "Continue marking ({count} left)",
-  "today.openTeam": "Open my team",
+  "today.openTeam": "Open team",
   "today.readyToApprove": "{count} ready for you to approve",
   "today.exceptions": "{count} exceptions (offline or absent)",
   "today.reviewApprove": "Review and approve",
@@ -189,5 +189,9 @@
   "approve.needsInternet": "Approving needs internet. You can look at the list now and approve when the signal is back.",
   "approve.photoOffline": "The photo needs internet.",
   "myHr.offline": "My HR needs internet. Leave and payslips are not kept on this phone.",
-  "team.waitingToSend": "Marked, waiting to send"
+  "team.waitingToSend": "Marked, waiting to send",
+  "team.tapToMark": "{state}: tap to mark",
+  "team.bySupervisor": "Marked by their supervisor: {name}",
+  "team.bySupervisorUnknown": "Marked by their supervisor",
+  "today.markedBySupervisors": "Your workers here are marked by their supervisors."
 }

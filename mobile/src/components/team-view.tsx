@@ -61,6 +61,7 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
     if (site && onTitle) onTitle(site.label);
   }, [site, onTitle]);
   const own = team ? drafts(team.workers) : [];
+  const supervisorName = (user?: string | null) => site?.supervisors.find((s) => s.user === user)?.label ?? user ?? null;
 
   const submitAll = async () => {
     if (busy || !own.length) return;
@@ -134,22 +135,32 @@ export function TeamView({ site: siteId, shift: initialShift, onTitle }: { site:
         )}
         {team?.truncated && <Status kind="warn" label={text('team.truncated')} />}
       </View>
-      {team?.workers.map((w) => (
-        <View key={w.employee}>
-          <Row
-            title={w.employee_name ?? w.employee}
-            subtitle={[w.designation, w.machine_required ? text('team.machine') : null].filter(Boolean).join(' · ')}
-            onPress={w.can_capture || w.can_edit ? () => open(w) : undefined}
-          />
-          <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
-            {queued.has(w.employee) ? (
-              <Status kind="pending" label={text('team.waitingToSend')} />
-            ) : (
-              <Status kind={w.state === 'Not recorded' || w.state === 'Returned' ? 'warn' : statusKind(w.state)} label={w.state} />
-            )}
+      {team?.workers.map((w) => {
+        const markable = w.can_capture || w.can_edit;
+        const open_ = w.state === 'Not recorded' || w.state === 'Returned';
+        const by = supervisorName(w.supervisor);
+        return (
+          <View key={w.employee}>
+            <Row
+              title={w.employee_name ?? w.employee}
+              subtitle={[w.designation, w.machine_required ? text('team.machine') : null].filter(Boolean).join(' · ') || undefined}
+              onPress={markable ? () => open(w) : undefined}
+            />
+            <View style={{ paddingHorizontal: 16, paddingVertical: 6, gap: 6 }}>
+              {queued.has(w.employee) ? (
+                <Status kind="pending" label={text('team.waitingToSend')} />
+              ) : (
+                <Status
+                  kind={open_ ? 'warn' : statusKind(w.state)}
+                  label={w.can_capture && open_ ? text('team.tapToMark', { state: w.state }) : w.state}
+                />
+              )}
+              {/* Only the worker's own supervisor marks them (custom_hr): say so instead of a row that does nothing. */}
+              {!markable && <Status kind="info" label={by ? text('team.bySupervisor', { name: by }) : text('team.bySupervisorUnknown')} />}
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
       <View style={{ height: 24 }} />
     </ScrollView>
   );

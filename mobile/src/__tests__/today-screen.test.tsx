@@ -148,9 +148,24 @@ describe('Today', () => {
     expect(screen.getByText('2 saved as drafts')).toBeOnTheScreen();
     expect(screen.getByText('1 returned for correction')).toBeOnTheScreen();
     expect(screen.getByText('3 not marked yet')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByText('Continue marking (3 left)'));
+    await fireEvent.press(screen.getByText('Continue marking (4 left)'));
     expect(await screen.findByText('Team screen')).toBeOnTheScreen();
     expect(router.getSearchParams()).toMatchObject({ site: 'S1', shift: 'Day1' });
+  });
+
+  it('an approver whose workers here have other supervisors: says so, no "Continue marking"', async () => {
+    const saved = answers[`${HR_API}.team`];
+    answers[`${HR_API}.team`] = {
+      body: { message: { total: 2, missing: 2, attendance_date: '2026-11-23', workers: [0, 1].map((i) => ({ ...worker(i, 'Not recorded'), can_capture: false })) } },
+    };
+    try {
+      await open();
+      expect(await screen.findByText('Your workers here are marked by their supervisors.')).toBeOnTheScreen();
+      expect(screen.queryByText(/Continue marking/)).toBeNull();
+      expect(screen.getByText('Open team')).toBeOnTheScreen();
+    } finally {
+      answers[`${HR_API}.team`] = saved;
+    }
   });
 
   it('the bulk approval card: count, ready for this person, exceptions, then the bulk screen', async () => {
@@ -276,7 +291,7 @@ describe('Today on a tablet (split view with a detail pane)', () => {
   it('opens the approval on the right, and the team card switches the pane without leaving Today', async () => {
     const router = await open();
     expect(await screen.findByText('Approval view S1')).toBeOnTheScreen();
-    await fireEvent.press(await screen.findByText('Continue marking (3 left)'));
+    await fireEvent.press(await screen.findByText('Continue marking (4 left)'));
     expect(await screen.findByText('Team view S1 Day1')).toBeOnTheScreen();
     expect(router.getPathname()).toBe('/');
   });

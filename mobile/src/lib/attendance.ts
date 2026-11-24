@@ -40,6 +40,7 @@ export const Boot = z.object({
       approver: z.boolean(),
       shifts: z.array(ShiftSchema),
       assets: z.array(z.object({ name: z.string(), label: z.string() })).default([]),
+      supervisors: z.array(z.object({ user: z.string(), label: z.string() })).default([]),
     }),
   ),
   check_in_sites: z.array(CheckInSite),
@@ -152,6 +153,10 @@ export type TodayAttendance = {
     counts: Record<string, number>;
     /** Own drafts still to submit for approval. */
     drafts: number;
+    /** Workers this person may mark (their own) that are not marked yet or were returned. */
+    toMark: number;
+    /** Workers this person may mark or edit at all; 0 for an approver whose site has other supervisors. */
+    mine: number;
   }[];
   approvals: { siteId: string; site: string; count: number; exceptions: number; reviewable: number }[];
 };
@@ -196,6 +201,8 @@ export async function loadTodayAttendance(
               total: team.total,
               counts: stateCounts(team.workers),
               drafts: team.workers.filter((w) => w.state === 'Draft' && w.can_edit && w.entry).length,
+              toMark: team.workers.filter((w) => w.can_capture && (w.state === 'Not recorded' || w.state === 'Returned')).length,
+              mine: team.workers.filter((w) => w.can_capture || w.can_edit).length,
             };
           } catch {
             return null;
@@ -242,6 +249,8 @@ export const Worker = z.object({
   employee_name: z.string().nullish(),
   designation: z.string().nullish(),
   machine_required: z.coerce.number().nullish(),
+  /** The worker's supervisor (user); only they can mark the worker. */
+  supervisor: z.string().nullish(),
   state: z.string(),
   entry: z.string().nullish(),
   revision: z.number().nullish(),

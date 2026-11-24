@@ -179,16 +179,17 @@ export default function Today() {
                 {(tm.counts.Draft ?? 0) > 0 && <Status kind="pending" label={text('today.teamDraft', { count: tm.counts.Draft })} />}
                 {(tm.counts.Returned ?? 0) > 0 && <Status kind="warn" label={text('today.teamReturned', { count: tm.counts.Returned })} />}
                 {left > 0 && <Status kind="warn" label={text('today.teamLeft', { count: left })} />}
+                {tm.mine === 0 && <Status kind="info" label={text('today.markedBySupervisors')} />}
               </View>
               <Button
                 label={
-                  left > 0
-                    ? text('today.continueMarking', { count: left })
+                  tm.toMark > 0
+                    ? text('today.continueMarking', { count: tm.toMark })
                     : tm.drafts > 0
                       ? text('team.submit', { count: tm.drafts })
                       : text('today.openTeam')
                 }
-                icon={left > 0 ? 'camera' : tm.drafts > 0 ? 'fingerprint' : 'team'}
+                icon={tm.toMark > 0 ? 'camera' : tm.drafts > 0 ? 'fingerprint' : 'team'}
                 onPress={() => openTeam(tm.siteId, tm.shiftId)}
               />
             </Panel>

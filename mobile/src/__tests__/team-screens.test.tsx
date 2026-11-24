@@ -12,7 +12,10 @@ import { type Answer, fakeErp, thrown } from './fake-erp';
 const shift = { name: 'S1 Day', start: '08:00', end: '20:00', label: 'Day' };
 const boot = {
   server_now: '2026-11-23 08:00:00',
-  sites: [{ name: 'S1', label: 'Site 1', supervisor: true, approver: false, shifts: [shift], assets: [{ name: 'EXC-1', label: 'Excavator 1' }] }],
+  sites: [{
+    name: 'S1', label: 'Site 1', supervisor: true, approver: false, shifts: [shift], assets: [{ name: 'EXC-1', label: 'Excavator 1' }],
+    supervisors: [{ user: 'sup-b@example.com', label: 'Supervisor B' }],
+  }],
   check_in_sites: [],
 };
 const worker = (employee: string, state: string, extra: Record<string, unknown> = {}) => ({
@@ -34,7 +37,7 @@ const serve = (over: Record<string, Answer> = {}) => {
       body: {
         message: {
           total: 3, missing: 2, attendance_date: '2026-11-23',
-          workers: [worker('A', 'Not recorded'), worker('B', 'Draft', { entry: 'FAE-1', revision: 1, can_edit: true }), worker('C', 'Submitted', { can_capture: false })],
+          workers: [worker('A', 'Not recorded'), worker('B', 'Draft', { entry: 'FAE-1', revision: 1, can_edit: true }), worker('C', 'Submitted', { can_capture: false, supervisor: 'sup-b@example.com' })],
         },
       },
     },
@@ -103,9 +106,12 @@ describe('supervisor team', () => {
     serve();
     await openTeam();
     expect(await screen.findByText('1 of 3 marked for 2026-11-23')).toBeOnTheScreen();
-    expect(screen.getByText('Not recorded')).toBeOnTheScreen();
+    expect(screen.getByText('Not recorded: tap to mark')).toBeOnTheScreen();
     expect(screen.getByText('Draft')).toBeOnTheScreen();
     expect(screen.getByText('Submit 1 for approval')).toBeOnTheScreen();
+    // another supervisor's worker: seen, not markable, and the row says who marks them
+    expect(screen.getByText('Marked by their supervisor: Supervisor B')).toBeOnTheScreen();
+    expect(screen.getAllByText(/^Marked by their supervisor/)).toHaveLength(1);
   });
 
   it('submits own drafts after Face ID, and not without it', async () => {

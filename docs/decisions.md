@@ -13,6 +13,8 @@ The November PostgreSQL release addresses high-severity advisories affecting
 16.15. Use NGINX 1.30.8 for both identity support services so the gateway's
 upstream DNS resolver also receives the November fixes. Retain the existing
 Authentik version and test the database upgrade and gateway routes in isolation.
+Render both identity proxy configurations from their repository templates.
+TLS certificate material stays in its existing private mount.
 
 Official notes are in the [PostgreSQL 16.16 release](https://www.postgresql.org/docs/release/16.16/)
 and [NGINX advisories](https://nginx.org/en/security_advisories.html).

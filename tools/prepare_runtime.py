@@ -208,6 +208,10 @@ def prepare(source, output, profile):
         '/app/document-worker.py': 'integrations/document-worker/document-worker.py',
         '/etc/nginx/conf.d/default.conf': 'integrations/website/nginx-default.conf',
     }
+    identity_proxy_files = {
+        'identity_support_gateway_0': 'integrations/authentik/identity-support/nginx.conf',
+        'identity_support_invitations_1': 'integrations/authentik/invite-recovery/nginx.conf',
+    }
     copy_dirs = {'/opt/cloud-extension':'integrations/dms',
                  '/templates':'integrations/authentik/invite-recovery/templates',
                  '/srv/public':'integrations/authentik/invite-recovery/public',
@@ -294,8 +298,8 @@ def prepare(source, output, profile):
                 refresh.mkdir(exist_ok=True, mode=0o750)
                 if os.geteuid() == 0:
                     os.chown(refresh,1000,1000)
-        elif target in copy_files:
-            relative = copy_files[target]
+        elif target in copy_files or item['path'] in identity_proxy_files:
+            relative = identity_proxy_files.get(item['path']) or copy_files[target]
             origin = build/relative if (build/relative).is_file() else source/relative
             path.write_text(public(origin.read_text()))
             path.chmod(0o644)
@@ -325,7 +329,7 @@ def prepare(source, output, profile):
                       '/var/www/onlyoffice/documentserver/web-apps/apps/api/wopi/editor-wopi.ejs': source/'integrations/onlyoffice/editor-wopi.ejs'}[target]
             shutil.copy2(origin, path)
             path.chmod(0o644)
-        # Optional private DNS and identity gateway mounts are configured by
+        # Optional private DNS and identity certificates are configured by
         # their separate operator-owned modules; selected stacks must not use
         # missing mounts (checked below).
 

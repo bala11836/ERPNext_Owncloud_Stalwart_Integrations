@@ -224,8 +224,10 @@ def safe_part(text, fallback='site'):
 
 
 def photo_path(site_label, taken, kind, client_id):
-    """`<site>/<YYYY-MM-DD>/<HHMMSS>-<kind>-<id>.jpg`: one fixed path per photo, so a retry writes the same file."""
-    return f"{safe_part(site_label)}/{taken:%Y-%m-%d}/{taken:%H%M%S}-{safe_part(kind, 'photo')}-{client_id[:12]}.jpg"
+    """`<site>/<YYYY-MM-DD>/<HHMMSS>-<kind>-<id>.jpg`: one fixed path per photo, so a retry writes the same file.
+    The whole `client_id` is in the name: the upload refuses an id already used, so no new upload can reach the
+    path of an existing photo (Drive's PUT overwrites, and nobody may replace a work photo)."""
+    return f"{safe_part(site_label)}/{taken:%Y-%m-%d}/{taken:%H%M%S}-{safe_part(kind, 'photo')}-{client_id}.jpg"
 
 
 def photo_tags(project_label, site_label, kind, user, taken, gps, from_gallery, offline):

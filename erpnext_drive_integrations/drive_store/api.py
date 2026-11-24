@@ -112,11 +112,21 @@ def photos(site=None, project=None, kind=None, day=None, start=0):
                                   'latitude', 'longitude', 'accuracy_m', 'remarks'])
 
 
-def require_project(project, user):
-    """A project the person may see: one of its sites is theirs (the same membership as photos)."""
-    sites = set(frappe.get_all('Field Site', filters={'project': project}, pluck='name')) if project else set()
-    if not sites & allowed_sites(user):
+def project_folders(project, user):
+    """The top folders of a project's space the person may open: one per site of theirs in that project (the
+    first part of `drive.photo_path`). Other sites' folders stay closed, as in `photos`."""
+    mine = allowed_sites(user)
+    rows = frappe.get_all('Field Site', filters={'project': project}, fields=['name', 'site_name']) if project else []
+    folders = {drive.safe_part(r.get('site_name')) for r in rows if r.get('name') in mine}
+    if not folders:
         frappe.throw('You do not have access to this project.', frappe.PermissionError)
+    return folders
+
+
+def require_folder(path, folders):
+    """A path inside one of the person's site folders (the space's top level is listed separately)."""
+    if path.split('/', 1)[0] not in folders:
+        frappe.throw('You do not have access to this folder.', frappe.PermissionError)
 
 
 def asked_path(path):
@@ -130,16 +140,23 @@ def asked_path(path):
 def files(project, path=''):
     """Folders and files in a project's Drive space (everything through ERPNext, owner); empty until the
     project's space exists (its first photo creates it)."""
-    require_project(project, require_user())
+    folders = project_folders(project, require_user())
+    path = asked_path(path)
+    if path:
+        require_folder(path, folders)
     space_id = frappe.db.get_value('Drive Project Space', {'project': project}, 'space_id')
-    return drive.list_folder(space_id, asked_path(path)) if space_id else []
+    if not space_id:
+        return []
+    entries = drive.list_folder(space_id, path)
+    return entries if path else [e for e in entries if e['folder'] and e['name'] in folders]
 
 
 @frappe.whitelist(methods=['GET'])
 def file(project, path, size='full'):
     """An image from a project's Drive space (preview or full). Other file types open on the web for now."""
-    require_project(project, require_user())
+    folders = project_folders(project, require_user())
     path = asked_path(path)
+    require_folder(path, folders)
     if not drive.is_image(path):
         frappe.throw('Only photos and images open in the app for now.')
     space_id = frappe.db.get_value('Drive Project Space', {'project': project}, 'space_id')

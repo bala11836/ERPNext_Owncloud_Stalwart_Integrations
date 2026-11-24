@@ -30,8 +30,8 @@ Calls for the app (`erpnext_drive_integrations.drive_store.api`):
 | `upload_photo` (POST, `payload`) | `client_id`, `site`, `kind` (Progress / Hindrance / Incident / Other), `photo` (data URL, under 3 MB; re-encoded, EXIF removed), optional `latitude`, `longitude`, `accuracy_m`, `gps_captured_at`, `from_gallery`, `remarks`, offline fields as in custom_hr. A retry with the same `client_id` returns the same record. |
 | `photos` (GET) | The photos the person may see, newest first, 30 at a time: `site`, `project`, `kind`, `day`, `start`. |
 | `photo` (GET) | One photo as an image: `size=preview` (256 px, Drive's thumbnail service) or `size=full`. |
-| `files` (GET) | Folders and files in a project's Drive space (`project`, `path`), for people with a site in that project; empty until the space exists. |
-| `file` (GET) | An image from a project's space (`project`, `path`, `size`); other file types open on the web for now. |
+| `files` (GET) | Folders and files in a project's Drive space (`project`, `path`), showing only the folders of the person's own sites in that project (as `photos`); empty until the space exists. |
+| `file` (GET) | An image from one of the person's site folders in a project's space (`project`, `path`, `size`); other file types open on the web for now. |
 
 Records: **Drive Project Space** (project, Drive space id) and **Drive Photo** (one per photo, with its tags).
 

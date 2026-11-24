@@ -73,7 +73,7 @@ CLIENT = 'abcdef0123456789abcd'
 
 class Paths(unittest.TestCase):
     def test_one_fixed_path_per_photo(self):
-        self.assertEqual(drive.photo_path('Site 1', TAKEN, 'Progress', CLIENT), 'Site 1/2026-11-24/101530-Progress-abcdef012345.jpg')
+        self.assertEqual(drive.photo_path('Site 1', TAKEN, 'Progress', CLIENT), 'Site 1/2026-11-24/101530-Progress-abcdef0123456789abcd.jpg')
         self.assertEqual(drive.photo_path('Site 1', TAKEN, 'Progress', CLIENT), drive.photo_path('Site 1', TAKEN, 'Progress', CLIENT))
 
     def test_no_folder_escape_or_odd_characters(self):
@@ -83,6 +83,11 @@ class Paths(unittest.TestCase):
             self.assertNotIn('\\', part)
             self.assertNotIn(part, ('', '.', '..'))
         self.assertTrue(drive.photo_path('../x', TAKEN, '../../y', CLIENT).startswith('x/2026-11-24/'))
+
+    def test_ids_sharing_a_prefix_never_share_a_path(self):
+        # Drive's PUT overwrites: two different ids must never reach the same file (nobody replaces a photo).
+        other = CLIENT[:12] + 'ZZZZZZZZ'
+        self.assertNotEqual(drive.photo_path('S', TAKEN, 'Progress', CLIENT), drive.photo_path('S', TAKEN, 'Progress', other))
 
 
 class Tags(unittest.TestCase):
@@ -209,7 +214,7 @@ class Upload(unittest.TestCase):
                 mock.patch.object(drive, 'set_tags') as tags:
             result = api.upload_photo({'client_id': CLIENT, 'site': 'S1', 'kind': 'Progress', 'photo': 'x', 'from_gallery': 1,
                                        'latitude': 17.385, 'longitude': 78.486, 'accuracy_m': 9})
-        path = 'Site 1/2026-11-24/101530-Progress-abcdef012345.jpg'
+        path = 'Site 1/2026-11-24/101530-Progress-abcdef0123456789abcd.jpg'
         self.assertEqual(result, {'name': 'DP-9', 'path': path})
         folders.assert_called_once_with('SPACE-1', 'Site 1/2026-11-24')
         put.assert_called_once_with('SPACE-1', path, b'jpeg')
@@ -264,24 +269,42 @@ class ProjectFiles(unittest.TestCase):
             with self.assertRaises(ValueError):
                 drive.clean_path(bad)
 
+    SITES = [{'name': 'S1', 'site_name': 'Site 1'}, {'name': 'S2', 'site_name': 'Site 2'}]
+
     def test_project_access_is_site_membership(self):
-        frappe.get_all = mock.Mock(return_value=['S1', 'S2'])
+        frappe.get_all = mock.Mock(return_value=self.SITES)
         with mock.patch.object(api, 'allowed_sites', return_value={'S2'}):
-            api.require_project('PROJ-1', 'a@example.com')
+            self.assertEqual(api.project_folders('PROJ-1', 'a@example.com'), {'Site 2'})
         with mock.patch.object(api, 'allowed_sites', return_value={'S9'}):
             with self.assertRaises(PermissionDenied):
-                api.require_project('PROJ-1', 'a@example.com')
+                api.project_folders('PROJ-1', 'a@example.com')
+
+    def test_other_sites_folders_stay_closed(self):
+        frappe.get_all = mock.Mock(return_value=self.SITES)
+        frappe.db.get_value = mock.Mock(return_value='SP')
+        top = [{'name': 'Site 1', 'folder': True}, {'name': 'Site 2', 'folder': True}, {'name': 'note.txt', 'folder': False}]
+        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'allowed_sites', return_value={'S2'}), \
+                mock.patch.object(drive, 'list_folder', return_value=top) as listing, mock.patch.object(drive, 'read_file') as read:
+            self.assertEqual(api.files('PROJ-1', ''), [{'name': 'Site 2', 'folder': True}])
+            for asked in (lambda: api.files('PROJ-1', 'Site 1'), lambda: api.files('PROJ-1', 'Site 1/2026-11-24'),
+                          lambda: api.file('PROJ-1', 'Site 1/2026-11-24/101530-Progress-x.jpg'),
+                          lambda: api.file('PROJ-1', 'note.jpg')):
+                with self.assertRaises(PermissionDenied):
+                    asked()
+            api.files('PROJ-1', 'Site 2/2026-11-24')
+        self.assertEqual(listing.call_args_list[-1][0], ('SP', 'Site 2/2026-11-24'))
+        read.assert_not_called()
 
     def test_no_space_yet_lists_nothing_and_creates_nothing(self):
         frappe.db.get_value = mock.Mock(return_value=None)
-        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'require_project'), \
+        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'project_folders', return_value={'Site 1'}), \
                 mock.patch.object(drive, 'list_folder') as listing, mock.patch.object(drive, 'create_space') as create:
             self.assertEqual(api.files('PROJ-1', ''), [])
         listing.assert_not_called()
         create.assert_not_called()
 
     def test_only_images_open_in_the_app_and_bad_paths_are_refused(self):
-        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'require_project'):
+        with mock.patch.object(api, 'require_user', return_value='a'), mock.patch.object(api, 'project_folders', return_value={'Site 1'}):
             with self.assertRaises(Thrown):
                 api.file('PROJ-1', 'Site 1/plan.pdf')
             with self.assertRaises(Thrown):

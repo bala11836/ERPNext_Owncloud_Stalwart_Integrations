@@ -1,7 +1,5 @@
 /* Test-only status panel. Production never renders or loads this module.
-   Two actions (owner decision, 19 November 2026):
-   - "Refresh code" resets the test site to the tested release (main).
-   - "Refresh data" replaces test data with a scrambled copy of the last 60
+   "Refresh data" replaces test data with a scrambled copy of the last 60
      days of production (personal details replaced, documents as placeholders).
      It uses production resources, so it is meant for occasional use. */
 (() => {
@@ -11,17 +9,12 @@
   const buttons = [...panel.querySelectorAll('button[data-kind]')];
   const progress = panel.querySelector('[data-progress]');
   const last = panel.querySelector('[data-last-refresh]');
-  const lastCode = panel.querySelector('[data-last-code]');
   const base = '/api/method/erpnext_drive_integrations.portal.test_refresh.';
   const csrf = document.querySelector('meta[name="test-refresh-csrf"]')?.content;
   let polling;
   let observedRefresh = false;
-  const running = new Set(['queued', 'snapshotting', 'transferring', 'restoring', 'validating', 'updating-code']);
+  const running = new Set(['queued', 'snapshotting', 'transferring', 'restoring', 'validating']);
   const texts = {
-    code: {title: 'Reset test code?',
-      body: 'Put the test site back to the approved release (main)? Any branch deployed for testing is replaced. '
-        + 'Test data stays as it is. Nothing changes on production.',
-      confirm: 'Refresh code'},
     data: {title: 'Replace test data?',
       body: 'Replace test data in ERP, Drive, DMS and Mail with a scrambled copy of the last 60 days of production. '
         + 'Names, contact details, bank and tax numbers are replaced, documents become placeholders and test mailboxes '
@@ -68,14 +61,10 @@
       if (!response.ok) throw new Error('Temporarily unavailable');
       const {message: state} = await response.json();
       last.textContent = format(state.last_successful_at);
-      if (lastCode) lastCode.textContent = format(state.last_code_refresh_at) + (state.revision ? ` (${state.revision})` : '');
-      const failed = state.kind === 'code'
-        ? 'Code refresh failed. The test site keeps its previous code.'
-        : 'Data refresh failed. The last successful refresh time is unchanged.';
       progress.textContent = ({idle: 'Test is independent of production.',
         queued: 'Request queued…', snapshotting: 'Preparing a scrambled production copy…',
         transferring: 'Copying to test…', restoring: 'Replacing test data…',
-        validating: 'Checking restored data…', 'updating-code': 'Updating test code to the approved release…',
+        validating: 'Checking restored data…': 'Updating test code to the approved release…',
         succeeded: state.kind === 'code' ? 'Code refresh completed.' : 'Data refresh completed.',
         failed})[state.phase] || 'Checking status…';
       // Only a running, queued or failed refresh needs a line under the buttons.

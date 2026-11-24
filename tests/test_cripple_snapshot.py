@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 import re
 import struct
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -18,7 +17,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 import cripple_snapshot as c  # noqa: E402
 from restore_test_data import require_crippled_snapshot  # noqa: E402
-import test_refresh_worker as worker  # noqa: E402
 
 CUTOFF = datetime(2026, 9, 20, tzinfo=timezone.utc)
 
@@ -403,30 +401,6 @@ class Boundaries(unittest.TestCase):
         with self.assertRaises(ValueError):
             require_crippled_snapshot({'require_crippled': True}, {'crippled': None})
         require_crippled_snapshot({'require_crippled': True}, {'crippled': {'policy': 'crippled-v1'}})
-
-    def test_code_refresh_resets_to_main_and_runs_the_profile_command(self):
-        with tempfile.TemporaryDirectory() as folder:
-            folder = Path(folder)
-            upstream, source = folder / 'upstream', folder / 'source'
-            env = dict(os.environ, GIT_AUTHOR_NAME='t', GIT_AUTHOR_EMAIL='t@example.com',
-                       GIT_COMMITTER_NAME='t', GIT_COMMITTER_EMAIL='t@example.com')
-            subprocess.run(['git', 'init', '-q', '-b', 'main', str(upstream)], check=True)
-            (upstream / 'a').write_text('1')
-            subprocess.run(['git', '-C', str(upstream), 'add', 'a'], check=True)
-            subprocess.run(['git', '-C', str(upstream), 'commit', '-qm', 'one'], check=True, env=env)
-            subprocess.run(['git', 'clone', '-q', str(upstream), str(source)], check=True)
-            (upstream / 'a').write_text('2')
-            subprocess.run(['git', '-C', str(upstream), 'commit', '-qam', 'two'], check=True, env=env)
-            marker = folder / 'deployed'
-            config = {'source': str(source), 'code_refresh': {'command': ['sh', '-c', f'cp a {marker}']}}
-            with open(folder / 'log', 'wb') as log:
-                revision = worker.refresh_code(config, log)
-            self.assertEqual(marker.read_text(), '2')
-            self.assertEqual(revision, subprocess.check_output(['git', '-C', str(upstream), 'rev-parse', '--short', 'HEAD'],
-                                                               text=True).strip())
-            with self.assertRaises(RuntimeError), open(folder / 'log', 'wb') as log:
-                worker.refresh_code({'source': str(source)}, log)
-
 
 if __name__ == '__main__':
     unittest.main()

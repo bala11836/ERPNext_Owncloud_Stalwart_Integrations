@@ -603,3 +603,10 @@ check themselves in keep their existing workflows.
   The version is pinned to its commit. The official repository was active and
   no advisory matched in GitHub Security Advisories or OSV.
 - **Where:** `.github/workflows/test-pr-close.yml`. Development was assisted by Codex.
+
+### Keep only data refresh on the test Desk (P71)
+
+- **Decision:** GitHub Actions restores the test code baseline after an unmerged
+  test PR closes. Retire the Desk's code refresh button and its worker command.
+  The one-way data refresh and its last successful refresh timestamp stay in use.
+- **Where:** the test Desk, the test refresh API, and the data refresh worker.

@@ -10,13 +10,9 @@ from urllib.parse import urlsplit
 
 STATE_ROOT = Path('/var/lib/cloud-integration/test-refresh')
 PUBLIC_FIELDS = ('phase', 'requested_at', 'started_at', 'finished_at',
-                 'last_successful_at', 'request_id', 'kind', 'last_code_refresh_at',
-                 'revision')
+                 'last_successful_at', 'request_id', 'kind')
 PHASES = {'idle', 'queued', 'snapshotting', 'transferring', 'restoring',
-          'validating', 'updating-code', 'succeeded', 'failed'}
-# "code" resets the test site to the tested release (main); "data" replaces
-# test data with a scrambled 60-day production copy (use sparingly).
-KINDS = {'code', 'data'}
+          'validating', 'succeeded', 'failed'}
 
 
 def enabled():
@@ -46,19 +42,20 @@ def read_state():
         if file.is_symlink() or file.stat().st_size > 16384:
             raise RuntimeError('Invalid refresh status file')
         saved=json.loads(file.read_text())
+        if saved.get('kind') == 'code':
+            saved={'phase':'idle','last_successful_at':saved.get('last_successful_at')}
     queued=STATE_ROOT/'request.json'
     if queued.exists():
         if queued.is_symlink() or queued.stat().st_size>4096:
             raise RuntimeError('Invalid refresh request file')
         pending=json.loads(queued.read_text())
-        if pending['request_id']!=saved.get('request_id') or saved.get('phase') in {'idle','succeeded','failed'}:
+        if pending.get('kind', 'data') == 'data' and (
+                pending['request_id']!=saved.get('request_id') or saved.get('phase') in {'idle','succeeded','failed'}):
             saved.update(phase='queued',request_id=pending['request_id'],requested_at=pending['requested_at'],
                          kind=pending.get('kind','data'))
     out = {key: saved.get(key) for key in PUBLIC_FIELDS}
     out['phase'] = out.get('phase') if out.get('phase') in PHASES else 'failed'
-    out['kind'] = out.get('kind') if out.get('kind') in KINDS else 'data'
-    if out.get('revision') is not None and not str(out['revision']).isalnum():
-        out['revision'] = None
+    out['kind'] = 'data'
     return out
 
 
@@ -75,7 +72,7 @@ def request_refresh(kind='data'):
     require_test_host()
     if frappe.request.method != 'POST' or not can_request():
         frappe.throw('Only a test System Manager may replace test data.', frappe.PermissionError)
-    if kind not in KINDS:
+    if kind != 'data':
         frappe.throw('Unknown refresh kind.', frappe.ValidationError)
     STATE_ROOT.mkdir(parents=True, exist_ok=True, mode=0o750)
     request = {'request_id': str(uuid.uuid4()), 'actor': frappe.session.user,

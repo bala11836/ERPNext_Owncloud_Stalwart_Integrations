@@ -1,19 +1,19 @@
 # Permanent test site and one-way refresh (`test-refresh`)
 
-Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, refresh buttons and progress, test profiles, egress policy and the verification tools used for acceptance.
+Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, the refresh control and progress, test profiles, egress policy and the verification tools used for acceptance.
 
 ## Purpose
 
-Keeps a permanent test site that mirrors production data one way only: a restricted export on production, a root-only worker on test that validates, restores and quarantines (outbound email, webhooks, schedulers, API keys, sessions, provider credentials), refresh buttons with progress, test profiles, egress policy and the verification tools used for acceptance.
+Keeps a permanent test site that mirrors production data one way only: a restricted export on production, a root-only worker on test that validates, restores and quarantines (outbound email, webhooks, schedulers, API keys, sessions, provider credentials), the refresh control with progress, test profiles, egress policy and the verification tools used for acceptance.
 
-### Two buttons (owner decision, 19 November 2026)
+### Test refresh and code reset
 
-- **Refresh code** resets the test site to the tested release (`main`): the
-  worker fetches `main` into the test checkout and runs the host's deploy
-  command from its private profile. Use it after someone has deployed a branch
-  for testing. Test data is not touched.
-- **Refresh data** replaces test data with a **crippled** production copy.
-  It uses production resources, so it is meant for occasional use.
+**Refresh data** replaces test data with a crippled production copy. It uses
+production resources, so it is meant for occasional use.
+
+GitHub Actions takes care of test code. When a PR is closed without merging,
+the reset workflow restores the approved main build if the PR head is still
+deployed. Test data stays in place.
 
 ### Crippled data
 
@@ -97,15 +97,13 @@ Install `tools/export_snapshot.py` on the source host and `tools/test_refresh_wo
 
 Profiles: `deployment/test-runtime.example.json`; systemd examples `deployment/test-refresh-worker.*`. Site config on test: `cloud_test_copy`, `cloud_test_refresh_enabled`, `cloud_test_refresh_users`. Never restore test data into production.
 
-Private settings for crippled data and the code button:
+Private settings for crippled data:
 
 - production exporter profile: `"cripple": {"enabled": true, "days": 60,
   "keep_accounts": ["<login of each member of Testers>"]}` and
   `"require_cripple": true` (refuse any uncrippled export);
 - test worker profile: `"require_crippled": true` (restore refuses an
-  uncrippled snapshot) and `"code_refresh": {"command": [<host deploy
-  command>], "branch": "main", "timeout_seconds": 3600}`. Without
-  `code_refresh` the code button reports that it is not configured.
+  uncrippled snapshot).
 
 ## Tests
 

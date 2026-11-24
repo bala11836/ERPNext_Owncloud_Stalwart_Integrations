@@ -56,6 +56,7 @@ async function load() {
     const { users } = result;
     delivery = result.delivery;
     if (test) {
+      $("own-passkey").hidden = false;
       $("intro").textContent = "Send a first-time passkey invitation for a synthetic test account.";
       $("eligibility").textContent = "Only synthetic accounts awaiting their first passkey appear here.";
       $("footnote").textContent = "Test invitations are single-use. Register a separate passkey on the test host.";

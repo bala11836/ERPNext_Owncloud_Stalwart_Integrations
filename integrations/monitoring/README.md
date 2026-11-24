@@ -30,7 +30,7 @@ user. Keep credentials out of the URLs and the target labels.
 
 ```json
 [
-  {"name": "Website", "url": "https://example.com/", "statuses": [200]},
+  {"name": "Website", "url": "https://example.com/", "statuses": [200], "minimum_certificate_days": 14},
   {"name": "Document manager", "url": "https://dms.example.com/", "statuses": [302]},
   {"name": "Storage host", "kind": "tcp", "host": "storage.example.com", "port": 443}
 ]
@@ -67,13 +67,15 @@ Prometheus, Grafana, Loki, Alloy, node_exporter and cAdvisor. Start the
 dashboard and storage components with the `central` profile. The default
 bindings are loopback. Use a private HTTPS proxy for the dashboard. Keep
 the required `admin_password` file, deployment URL and private scrape target
-addresses outside Git. Grant the Grafana container's UID 472 read access to
-its password file. Never include credentials in metric labels or logs.
+addresses outside Git. Set the password file to root:root and mode 0440 for the pinned Grafana
+image, which runs with GID 0. Verify the configured administrator can
+sign in before enabling the private proxy. Never include credentials in metric labels or logs.
 
 The exporters can run alone on a watched host. Where a remote Prometheus
 requires access, set `METRICS_BIND` to its private network address. cAdvisor
 uses read-only host mounts and local Docker and containerd sockets to read
-container metrics. Keep it isolated from application networks.
+container metrics. cAdvisor collects CPU, memory, network and OOM metrics.
+Host disk capacity is collected by node_exporter. Keep the exporters isolated from application networks.
 Allow access to the exporter ports only over the private monitoring network.
 
 Prometheus keeps 14 days of metrics up to its configured size limit.

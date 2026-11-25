@@ -4,6 +4,29 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-25
+
+### Choose the first administrator at setup; switch off `akadmin` (P77)
+
+- **Decision:** a fresh authentik asks the person setting it up for the
+  administrator's email and name. That administrator has no password and signs
+  in with a passkey from an approved provider, registered through a one-time
+  24-hour link; rerunning the command issues a new link. The built-in `akadmin`
+  is switched off (inactive, unknown password, no groups, roles or tokens), not
+  deleted.
+- **Why:** nothing chose who administers a new instance, and `akadmin` kept an
+  unused generated password. Deleting it would reopen upstream's first-time
+  setup page, which opens whenever `akadmin` is missing or has no usable
+  password; upstream's bootstrap blueprint only creates the account, so a
+  switched-off `akadmin` stays off.
+- **Approved passkey providers** are one list in
+  `integrations/authentik/first-admin/passkey-providers.json`: Apple Passwords,
+  Bitwarden (also with Vaultwarden), Google Password Manager and Chrome on Mac.
+  Google Password Manager is included because phones on Android 13 or older
+  cannot use a third-party passkey app. Moving every other check onto this list
+  is P79.
+- **Where:** [`integrations/authentik/first-admin/`](../integrations/authentik/first-admin/README.md).
+
 ## 2026-11-24
 
 ### Upgrade the mail server to Stalwart 1.1.1 before mail retention (P75)

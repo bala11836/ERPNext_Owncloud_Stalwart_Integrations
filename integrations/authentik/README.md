@@ -14,6 +14,7 @@ Reproducible authentik setup: a retained blueprint of providers, applications an
 - `deployment/scope-mappings.example.json`
 - `tools/authentik_blueprint.py`
 - `tests/test_invitation_configuration.py`
+- `tests/test_first_admin.py`
 
 ## Requirements
 
@@ -23,7 +24,8 @@ authentik (existing instance); run tools under the native `ak shell`.
 
 ## Reuse
 
-Apply `configuration.json` through `tools/authentik_blueprint.py`; reuse `invite-recovery/` on its own for single-email invitation recovery (see its README).
+Choose the first administrator of a fresh instance and switch off `akadmin` with
+[`first-admin/`](first-admin/README.md). Apply `configuration.json` through `tools/authentik_blueprint.py`; reuse `invite-recovery/` on its own for single-email invitation recovery (see its README).
 
 The default Brand in the blueprint gives stacked sign-in flows a plain white background and
 uses Authentik's light theme by default. Use the deployment's own logo through the existing

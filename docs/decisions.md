@@ -4,6 +4,58 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-25
+
+### Invitation links allow 1 to 5 attempts (P78)
+
+- **Decision:** the administrator chooses how many times an invitation link may
+  be opened, 1 to 5, default 5, for first-time setup and for recovery. Each
+  opening counts as one attempt. The link is removed after the last attempt and
+  ends as soon as setup succeeds. One attempt stays a native single-use link.
+- **Why:** Authentik consumes a single-use link as soon as it is opened, so one
+  failed passkey prompt meant a new invitation.
+- **How:** reusable invitations carry `fixed_data.attempts`. The invitation
+  policies count openings in a server-side ledger (once per flow) and remove the
+  invitation at the limit. A site offers the choice only when its
+  `invite-mode.mjs` sets `attemptsAvailable`, after its policies are updated.
+- **Where:** `integrations/authentik/invite-recovery/` (form and `native_recovery.py`).
+
+### Approved passkey providers are one setting (P79)
+
+- **Decision:** `integrations/authentik/passkey-providers.json` is the only list
+  of approved providers: Apple Passwords, Bitwarden (also with Vaultwarden),
+  Google Password Manager and Chrome on Mac. Everything else is refused,
+  including providers that report no identity.
+- **Why:** the list was copied in five places, and phones on Android 13 or
+  older cannot use a third-party passkey app, so they need Google Password
+  Manager. Chrome on Mac keeps a passkey on that Mac only, so a lost Mac needs a
+  recovery invitation.
+- **How:** `tools/sync_passkey_providers.py` rewrites the literal copies
+  Authentik needs (policies, installer, blueprint), and
+  `tests/test_passkey_providers.py` fails on any difference. Setup emails and
+  the invitation form name the same providers.
+
+### Choose the first administrator at setup; switch off `akadmin` (P77)
+
+- **Decision:** a fresh authentik asks the person setting it up for the
+  administrator's email and name. That administrator has no password and signs
+  in with a passkey from an approved provider, registered through a one-time
+  24-hour link; rerunning the command issues a new link. The built-in `akadmin`
+  is switched off (inactive, unknown password, no groups, roles or tokens), not
+  deleted.
+- **Why:** nothing chose who administers a new instance, and `akadmin` kept an
+  unused generated password. Deleting it would reopen upstream's first-time
+  setup page, which opens whenever `akadmin` is missing or has no usable
+  password; upstream's bootstrap blueprint only creates the account, so a
+  switched-off `akadmin` stays off.
+- **Approved passkey providers** are one list in
+  `integrations/authentik/first-admin/passkey-providers.json`: Apple Passwords,
+  Bitwarden (also with Vaultwarden), Google Password Manager and Chrome on Mac.
+  Google Password Manager is included because phones on Android 13 or older
+  cannot use a third-party passkey app. Moving every other check onto this list
+  is P79.
+- **Where:** [`integrations/authentik/first-admin/`](../integrations/authentik/first-admin/README.md).
+
 ## 2026-11-24
 
 ### Upgrade the mail server to Stalwart 1.1.1 before mail retention (P75)

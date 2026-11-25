@@ -90,10 +90,17 @@
     },
     {
       "name": "Sign-in configuration",
-      "paths": ["integrations/authentik/configuration.json", "integrations/authentik/configure_test_clients.py", "tools/authentik_blueprint.py", "tools/restore_identity.py", "deployment/scope-mappings.example.json"],
+      "paths": ["integrations/authentik/configuration.json", "integrations/authentik/passkey-providers.json", "tools/sync_passkey_providers.py", "integrations/authentik/configure_test_clients.py", "tools/authentik_blueprint.py", "tools/restore_identity.py", "deployment/scope-mappings.example.json"],
       "stacks": [],
       "live": ["authentik providers, flows, scope mappings and brand: apply the change in authentik (blueprint or by hand)"],
       "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."
+    },
+    {
+      "name": "First administrator (operator tool, P77)",
+      "paths": ["integrations/authentik/first-admin/**"],
+      "stacks": [],
+      "live": ["only when (re)setting the first administrator: run first-admin.sh against the authentik server container; it creates or refreshes the administrator without a password, prints a one-time passkey link and switches off akadmin"],
+      "not_covered": "Test Authentik covers the tool; production has not run it. Check production's akadmin and that its sign-in flow admits the administrator's passkey before running it there."
     },
     {
       "name": "Production proxy routes",

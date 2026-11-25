@@ -29,7 +29,9 @@ if [ "${FIRST_ADMIN_YES:-}" != 1 ]; then
     case $answer in y|Y|yes) ;; *) echo 'Cancelled; nothing changed.' >&2; exit 1 ;; esac
 fi
 
-providers=$(cat "$here/passkey-providers.json")
+setting="$here/passkey-providers.json"
+[ -e "$setting" ] || setting="$here/../passkey-providers.json"
+providers=$(cat "$setting")
 set -- -e FIRST_ADMIN_EMAIL="$email" -e FIRST_ADMIN_NAME="$name" -e FIRST_ADMIN_PATH="$folder" \
     -e FIRST_ADMIN_PROVIDERS="$providers"
 if [ -n "${FIRST_ADMIN_BASE_URL:-}" ]; then set -- "$@" -e FIRST_ADMIN_BASE_URL="$FIRST_ADMIN_BASE_URL"; fi

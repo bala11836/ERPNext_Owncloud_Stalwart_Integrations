@@ -27,7 +27,7 @@ class FirstAdmin(unittest.TestCase):
         self.tree = ast.parse(self.source)
 
     def test_provider_list_is_the_approved_set(self):
-        providers = json.loads((MODULE / "passkey-providers.json").read_text())["providers"]
+        providers = json.loads((MODULE.parent / "passkey-providers.json").read_text())["providers"]
         aaguids = [p["aaguid"].lower() for p in providers]
         self.assertEqual(set(aaguids), REQUIRED)
         self.assertEqual(len(aaguids), len(set(aaguids)))

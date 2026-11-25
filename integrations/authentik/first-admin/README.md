@@ -13,7 +13,7 @@ confirmation, and then:
   `administrators`), in the administrator group, **without a password**;
 - prints a one-time link, valid for 24 hours, that registers the administrator's
   passkey and signs them in. The passkey must come from an approved provider in
-  [`passkey-providers.json`](passkey-providers.json) (Apple Passwords, Bitwarden
+  [`passkey-providers.json`](../passkey-providers.json) (shared by every passkey check, P79) (Apple Passwords, Bitwarden
   or Vaultwarden, Google Password Manager, Chrome on Mac), with user verification;
 - switches off `akadmin`: inactive, a random password nobody knows, no groups,
   roles or tokens.

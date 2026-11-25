@@ -1,8 +1,9 @@
 import { InvitationClient, InvitationError } from "./invitations.mjs";
 
-import { mailAvailable, test } from "./invite-mode.mjs";
+import { attemptsAvailable, mailAvailable, test } from "./invite-mode.mjs";
 
-const client = new InvitationClient({ test });
+const client = new InvitationClient({ test, attemptsAvailable });
+$("attempts-field").hidden = !attemptsAvailable;
 let delivery;
 const $ = (id) => document.getElementById(id);
 let options = new Map();
@@ -94,18 +95,19 @@ $("invite-form").addEventListener("submit", async (event) => {
     return;
   }
   pending = true;
-  for (const id of ["send", "reload", "user", "expiry"]) $(id).disabled = true;
+  for (const id of ["send", "reload", "user", "expiry", "attempts"]) $(id).disabled = true;
   $("send").textContent = "Sending…";
   status("Checking eligibility and sending the invitation…");
   try {
-    const result = await client.send(user.pk, Number($("expiry").value));
-    status(`${result.kind === "recovery" ? "Recovery" : "Enrollment"} invitation queued for ${result.email}. It expires ${new Date(result.expires).toLocaleString()}. Check Authentik System Tasks if the email does not arrive.`);
+    const result = await client.send(user.pk, Number($("expiry").value),
+      attemptsAvailable ? Number($("attempts").value) : 1);
+    status(`${result.kind === "recovery" ? "Recovery" : "Enrollment"} invitation queued for ${result.email}. It expires ${new Date(result.expires).toLocaleString()} and can be opened ${result.attempts} time${result.attempts === 1 ? "" : "s"}. Check Authentik System Tasks if the email does not arrive.`);
     $("invite-form").hidden = true;
   } catch (error) {
     status(error instanceof InvitationError ? error.message : "The invitation could not be completed. Check Authentik Invitations before retrying.", true);
   } finally {
     pending = false;
-    for (const id of ["send", "reload", "user", "expiry"]) $(id).disabled = false;
+    for (const id of ["send", "reload", "user", "expiry", "attempts"]) $(id).disabled = false;
     $("send").textContent = "Send invitation";
   }
 });

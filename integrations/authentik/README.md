@@ -15,6 +15,8 @@ Reproducible authentik setup: a retained blueprint of providers, applications an
 - `tools/authentik_blueprint.py`
 - `tests/test_invitation_configuration.py`
 - `tests/test_first_admin.py`
+- `tests/test_passkey_providers.py`
+- `tools/sync_passkey_providers.py`
 
 ## Requirements
 
@@ -24,7 +26,8 @@ authentik (existing instance); run tools under the native `ak shell`.
 
 ## Reuse
 
-Choose the first administrator of a fresh instance and switch off `akadmin` with
+The approved passkey providers are one setting, [`passkey-providers.json`](passkey-providers.json); after changing it run
+`tools/sync_passkey_providers.py` (P79). Choose the first administrator of a fresh instance and switch off `akadmin` with
 [`first-admin/`](first-admin/README.md). Apply `configuration.json` through `tools/authentik_blueprint.py`; reuse `invite-recovery/` on its own for single-email invitation recovery (see its README).
 
 The default Brand in the blueprint gives stacked sign-in flows a plain white background and

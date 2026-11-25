@@ -90,7 +90,7 @@
     },
     {
       "name": "Sign-in configuration",
-      "paths": ["integrations/authentik/configuration.json", "integrations/authentik/configure_test_clients.py", "tools/authentik_blueprint.py", "tools/restore_identity.py", "deployment/scope-mappings.example.json"],
+      "paths": ["integrations/authentik/configuration.json", "integrations/authentik/passkey-providers.json", "tools/sync_passkey_providers.py", "integrations/authentik/configure_test_clients.py", "tools/authentik_blueprint.py", "tools/restore_identity.py", "deployment/scope-mappings.example.json"],
       "stacks": [],
       "live": ["authentik providers, flows, scope mappings and brand: apply the change in authentik (blueprint or by hand)"],
       "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."

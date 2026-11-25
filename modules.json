@@ -353,6 +353,8 @@
         "tools/authentik_blueprint.py",
         "tests/test_invitation_configuration.py",
         "tests/test_first_admin.py",
+        "tests/test_passkey_providers.py",
+        "tools/sync_passkey_providers.py",
         "tests/test_authentik_card_corners.py",
         "tests/test_signin_settings.py"
       ],
@@ -360,6 +362,7 @@
       "tests": [
         "tests/test_invitation_configuration.py",
         "tests/test_first_admin.py",
+        "tests/test_passkey_providers.py",
         "tests/test_restore_identity.py",
         "integrations/authentik/invite-recovery/test_native.py",
         "tests/test_authentik_card_corners.py",

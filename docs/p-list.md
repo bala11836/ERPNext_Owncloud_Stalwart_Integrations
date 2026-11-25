@@ -155,13 +155,13 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | General | [pending/general.md](p-list/general.md) | 20 | 20 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
-| Editor | [pending/editor.md](p-list/editor.md) | 1 | 1 |
+| Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
 | ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
 | Mobile | [pending/mobile.md](p-list/mobile.md) | 5 | 5 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
-| Sign-in | [pending/signin.md](p-list/signin.md) | 3 | 3 |
+| Sign-in | [pending/signin.md](p-list/signin.md) | 7 | 7 |
 | Test site | [pending/test-site.md](p-list/test-site.md) | 4 | 4 |
 
 ## All P items (index)
@@ -225,4 +225,10 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P72 | Monitoring and alerting: know when something breaks (on the TrueNAS, watched from outside) | [General](p-list/general.md) | erp, drive, mail, dms, signin, editor, test-site · **State:** open | open |
 | P73 | Matrix as federated messaging between tenants | [General](p-list/general.md) | none · **State:** open · **Category:** long-term plan | open |
 | P74 | Document and photo store in the mobile app (Drive / oCIS) | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** in progress | in progress |
+| P76 | Owner's passkey sign-in on the test site | [Sign-in](p-list/signin.md) | test-site · **State:** in progress | in progress |
+| P77 | First administrator chosen at setup; built-in `akadmin` switched off | [Sign-in](p-list/signin.md) | test-site · **State:** in progress | in progress |
+| P78 | Invitation link attempts chosen by the administrator | [Sign-in](p-list/signin.md) | none · **State:** in progress | in progress |
+| P79 | Approved passkey providers as one setting | [Sign-in](p-list/signin.md) | test-site · **State:** in progress | in progress |
+| P80 | Editor stays registered with Drive after every Drive restart | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
+| P81 | Editor follow-ups: Compose safety net and release rule | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 <!-- APP-INDEX-END -->

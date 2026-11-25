@@ -10,7 +10,7 @@ from datetime import datetime, time
 import frappe
 from frappe.utils import get_datetime, getdate, now_datetime, nowdate, cint
 from erpnext_drive_integrations.custom_hr.access import require_user, require_site, require_manager, eligible_supervisor, site_access, is_manager, site_ids, self_sites
-from erpnext_drive_integrations.custom_hr.access import approval_access, can_verify, supervised_users, verifier_for
+from erpnext_drive_integrations.custom_hr.access import approval_access, can_verify, supervised_users, verifier_for, has_membership, APPROVER
 from erpnext_drive_integrations.custom_hr import domain
 
 
@@ -384,7 +384,8 @@ def self_capture(data):
     mark_offline(doc,data);save(doc)
     from frappe.utils.file_manager import save_file
     doc.photo=save_file(f'field-{doc.name}-1.jpg',photo,'Field Attendance Entry',doc.name,is_private=1).file_url;save(doc)
-    if not approve_without_review(doc):notify_approvers(doc,user,'Self check-in ready for review')
+    own_site_approver=has_membership(site.name,user,'Approver',APPROVER)
+    if not approve_without_review(doc,own_site_approver):notify_approvers(doc,user,'Self check-in ready for review')
     return {'name':doc.name,'state':doc.state,'check_in_time':str(doc.check_in_time),'captured_offline':doc.captured_offline}
 
 
@@ -436,14 +437,18 @@ def hr_attendance(doc):
     doc.attendance=attendance.name;doc.state='Approved'
 
 
-def approve_without_review(doc):
-    """Sites that need no approval (for example head office; owner, 22 November 2026): a submitted online entry
-    becomes HR attendance at once. Offline entries still go to the site's approvers, and so does a clash with HR
-    attendance created elsewhere. Returns True when approved here."""
-    if doc.captured_offline or frappe.db.get_value('Field Site',doc.site,'approval_required') or existing_attendance(doc):
+def approve_without_review(doc, own_site_approver=False):
+    """Sites that need no approval (for example head office; owner, 22 November 2026) and a site approver's own
+    check-in (project manager; owner, 25 November 2026): a submitted online entry becomes HR attendance at once.
+    Offline entries still go to the site's approvers, and so does a clash with HR attendance created elsewhere
+    (domain.skips_approval). Returns True when approved here."""
+    site_needs_approval=bool(frappe.db.get_value('Field Site',doc.site,'approval_required'))
+    if not domain.skips_approval(bool(doc.captured_offline),site_needs_approval,bool(existing_attendance(doc)),own_site_approver):
         return False
     lock_employee(doc.employee);hr_attendance(doc)
-    doc.review_remarks='No approval required at this site.';doc.reviewed_at=now_datetime();doc.revision+=1;save(doc)
+    doc.review_remarks=('Own check-in of the site approver: no approval required.' if site_needs_approval
+                        else 'No approval required at this site.')
+    doc.reviewed_at=now_datetime();doc.revision+=1;save(doc)
     return True
 
 

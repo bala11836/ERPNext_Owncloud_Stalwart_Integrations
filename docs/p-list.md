@@ -2,7 +2,7 @@
 
 > **Generated file: do not edit by hand.** This is the project's work list (every "P" number used in
 > commits, pull requests, READMEs and `docs/decisions.md`) published from the maintainers' private
-> list on 22 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
+> list on 25 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
 > deploying organisation's name (`<tenant>`), host names (`example.com`), IP addresses
 > (documentation ranges), server file paths and rollback folders, mail addresses, names of people and
 > of third parties' internal products, business file names, and links to private records
@@ -75,28 +75,29 @@ until the owner says; the table only fixes the order to take them up.
 
 | Rank | Item | Why now | Depends on / note |
 |---|---|---|---|
-| 1 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
-| 2 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 3 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
+| 1 | **P74** document and photo store in the mobile app (Drive) | server part on production 25 Nov (`059f8bf`); next: phone test | app #66 needs #64 |
+| 2 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
+| 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
+| 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
 
 **Tier 1: high (business-critical, next)**
 
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
-| 4 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
-| 5 | **P72** monitoring and alerting (on the TrueNAS after the test move; watched from outside) | nobody is told when something breaks; logs vanish on container recreation | after the test VPS move; alerts first, then metrics, then logs |
-| 6 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | crash fix live since 21 Nov (`4a5151f`) | remaining: correct the stale native client list on production when the app goes live (P50) |
-| 7 | **P71** GitHub CI/CD and central secrets management: Actions deploy test and production, owner approves production; secrets in one managed place; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |
-| 8 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
-| 9 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
-| 10 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
-| 11 | **P13** remaining users, permissions, worker enrollment | adoption: 10 of about 20 users | P25 |
-| 12 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
-| 13 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
-| 14 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
-| 15 | **P69** mail retention: keep every message, users cannot delete permanently (owner request) | data loss and compliance: today a user can delete company mail for good | paused by the owner; mechanism checked, one decision waiting in the item; with P02/P40 backups and P19 |
-| 16 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
-| 17 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
+| 5 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
+| 6 | **P72** monitoring and alerting | VPS metrics, uptime, probe logs and backup audit live | phone delivery deferred; remaining storage and logging checks in P72 |
+| 7 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | crash fix live since 21 Nov (`4a5151f`) | remaining: correct the stale native client list on production when the app goes live (P50) |
+| 8 | **P71** GitHub CI/CD and central secrets management: Actions deploy test and production, owner approves production; secrets in one managed place; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |
+| 9 | **P67** test deployments as one complete step (gateway, profiles, setup) | hand-run steps and profile drift found installing PR #15 | with P54, P59 |
+| 10 | **P49** sign-in pages and templates into the repository (finishes P45) | a claim-name mismatch already caused an ERP sign-in outage (20 Nov); authentik settings (JIT, memory, brand, flows) live only in its database | P45 remainder; rehearse on test |
+| 11 | **P08** global logout and fresh passkey, end to end | security acceptance; parts verified 21 Nov (logout ends the session; passkey is asked, Bitwarden answers silently) | owner checks each app as initiator |
+| 12 | **P13** remaining users, permissions, worker enrollment | adoption: 10 of about 20 users | P25 |
+| 13 | **P25** invitation, passkey enrollment and recovery acceptance | needed before more users join; lost-device recovery untested | real SMTP and devices |
+| 14 | **P12** PTR and external mail delivery; **P15** SMTP health | mail is live but external delivery is unverified; PTR still the provider's | provider (the hosting provider); blocks P19 |
+| 15 | **P11** certificate renewal acceptance | dated: ERP, SSO, Drive, Respond expire **30 Jan 2027**; Office, Mail, DMS in February | do well before January |
+| 16 | **P69** mail retention: keep every message, users cannot delete permanently (owner request) | data loss and compliance: today a user can delete company mail for good | Community edition chosen; isolated test passed 24 Nov (journal copy on all paths, permanent delete refused in webmail and IMAP, restore kept it); decided: 7 years max, administrator only, all mailboxes; on test since 24 Nov (draft PR #69); reader (a) on test incl. Authentik user; waiting: owner passkey for archive-reader, phone check; with P02/P40 backups, P17 and P19 |
+| 17 | **P24** field attendance pilot and corrections | real workers waiting on acceptance | business rules for cancellation |
+| 18 | **P43** tablet layout and touch check | tablets will be used (ONLYOFFICE touch is view-only) | test site |
 
 **Tier 2: medium (planned, useful, not urgent)**
 
@@ -157,7 +158,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | Editor | [pending/editor.md](p-list/editor.md) | 1 | 1 |
 | ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 4 | 4 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 5 | 5 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 3 | 3 |
@@ -181,7 +182,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P14 | Retained mobile/browser push acceptance | [Mobile](p-list/mobile.md) | erp, raven · **State:** open | open |
 | P15 | Existing SMTP health alerts | [Mail](p-list/mail.md) | none · **State:** open | open |
 | P16 | Raven attachments and Drive storage integration | [Raven and Insights](p-list/raven.md) | drive · **State:** open | open |
-| P17 | Automatic Drive links for Mail attachments over 200 KB | [Mail](p-list/mail.md) | drive · **State:** open | open |
+| P17 | Automatic Drive links for Mail attachments over 200 KB | [Mail](p-list/mail.md) | drive, dms · **State:** open | open |
 | P18 | Allowed Mail clients and protocol access policy | [Mail](p-list/mail.md) | none · **State:** open | open |
 | P19 | Three Google Workspace mailboxes to Stalwart | [Mail](p-list/mail.md) | general · **State:** open | open |
 | P20 | Paperless document links on ERP transactions | [DMS](p-list/dms.md) | erp · **State:** open | open |
@@ -223,4 +224,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P71 | GitHub CI/CD and central secrets management: Actions deploy test and production; "Refresh code" button removed | [General](p-list/general.md) | test-site, erp, mail, drive, dms, signin · **State:** open | open |
 | P72 | Monitoring and alerting: know when something breaks (on the TrueNAS, watched from outside) | [General](p-list/general.md) | erp, drive, mail, dms, signin, editor, test-site · **State:** open | open |
 | P73 | Matrix as federated messaging between tenants | [General](p-list/general.md) | none · **State:** open · **Category:** long-term plan | open |
+| P74 | Document and photo store in the mobile app (Drive / oCIS) | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** in progress | in progress |
 <!-- APP-INDEX-END -->

@@ -1,6 +1,6 @@
 # Mobile: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 22 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -105,4 +105,31 @@ for the app title, its sign-in record and its link scheme (`erpmobile`); on test
 no longer raises the ImportError. **Remaining:** the stale native client list on production (`psvrvmandb`) is corrected
 when the app goes to production (P50), and whether Raven Mobile should be a native client is decided then.
 
+### P74 — Document and photo store in the mobile app (Drive / oCIS)
+
+**App:** mobile · **Also touches:** drive, erp, signin · **State:** in progress
+
+**Status:** proposed in public issue #53 (owner decisions 23 November 2026), design revised by the owner on
+24 November 2026. Server part public PR #65, app part PR #66 (builds on #64).
+- **Owner decisions (23 and 24 November 2026):** no Drive app on phones; no separate photo server (Immich and
+  PhotoPrism compared and set aside); site photos go straight to the project's Drive space, tagged (project, site,
+  type, time, GPS, who, "From gallery", "Captured offline"); nobody deletes a work photo; phone storage only for the
+  encrypted offline queue (at most 1 day); receipts, bills and scans stay with the DMS; phone scanning to Paperless
+  later. **Everything through ERPNext with one sign-in:** the phone talks only to ERPNext, which checks site
+  membership (the attendance rule); a dedicated Drive account (`erp-photo-service`, Space Admin) owned by the server
+  writes and reads one project space per ERPNext Project; no member sync, no TUS.
+- **Review fixes (24 November 2026, on #65):** full photo id in the Drive path (no upload can replace a photo);
+  project browsing limited to the person's own site folders; Drive thumbnail sizes gain `256x256` (owner chose
+  option A; oCIS served 1080 px for the 256 px preview).
+- **Test site (24 November 2026):** #65 head `db3969c` deployed; 30 of 31 live API checks passed, the failed one
+  (preview size) fixed by the Drive setting. Receipts `p74-test-*`.
+- **Merged 24 November 2026:** #65 at `059f8bf` (tree identical to tested `db3969c`). Production held: it needs the
+  main ERP release with PR #40 and #51 (owner decision).
+- **Production 25 November 2026:** Drive preview size, ERP main `059f8bf` (with #40 and #51), the
+  `erp-photo-service` account and `drive_store` config are live (release log, receipts `p74-production-*`). No
+  production test photo (owner).
+- **Open:** browser checks by the owner (Desk, Insights, attendance, an office document); the first daily token
+  renewal on the production scheduler; phone test with #64 and #66; backups and disk growth with P72 (about 1 MB per photo
+  before compression; the app sends about 200 KB); privacy (photos show workers and the public: project access only,
+  no public links); the daily token renewal needs the scheduler (test has none).
 

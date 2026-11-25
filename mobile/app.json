@@ -67,7 +67,6 @@
         "expo-image-picker",
         {
           "photosPermission": "Choose a site photo from your gallery to add it to the project folder. It is marked \"From gallery\".",
-          "cameraPermission": false,
           "microphonePermission": false
         }
       ]

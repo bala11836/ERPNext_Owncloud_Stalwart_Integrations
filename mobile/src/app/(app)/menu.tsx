@@ -35,6 +35,13 @@ function workOf(boot: BootT | null): Work[] {
     ...boot.sites.filter((s) => s.supervisor).map((s) => ({ key: `t-${s.name}`, title: text('menu.mark'), subtitle: s.label, go: site('/attendance/team', s.name) })),
     ...boot.sites.filter((s) => s.verifier).map((s) => ({ key: `v-${s.name}`, title: text('menu.verify'), subtitle: s.label, go: site('/attendance/verify', s.name) })),
     ...boot.sites.filter((s) => s.approver).map((s) => ({ key: `a-${s.name}`, title: text('menu.approve'), subtitle: s.label, go: site('/attendance/approve', s.name) })),
+    ...(boot.sites.length || boot.check_in_sites.length
+      ? [
+          { key: 'photos', title: text('menu.photos'), subtitle: text('menu.photosHint'), go: () => router.push('/photos') },
+          { key: 'photo-add', title: text('menu.addPhoto'), go: () => router.push('/photos/add') },
+          { key: 'docs', title: text('menu.documents'), subtitle: text('menu.documentsHint'), go: () => router.push('/documents') },
+        ]
+      : []),
   ];
 }
 

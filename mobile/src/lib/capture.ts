@@ -1,6 +1,6 @@
 // Shared parts of an attendance capture (build guide phase 3): the GPS fix, the times and the photo.
 // The server decides everything again (fence, accuracy, time, photo); the app only gathers and pre-checks.
-import { File } from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
@@ -85,11 +85,20 @@ export function fenceProblem(fix: Fix, fence: Fence): string | null {
 }
 
 // ---- photo ----
-/** Delete files from the app's cache; never fails (a missing file is already gone). */
+/**
+ * Delete the app's own temporary copies; never fails (a missing file is already gone). Only files inside the
+ * app's cache folder: a gallery photo's original on the phone is never touched.
+ */
 export function discardFiles(...uris: (string | null | undefined)[]) {
+  let cache = '';
+  try {
+    cache = Paths.cache.uri;
+  } catch {
+    return; // no file system (tests): nothing to delete
+  }
   for (const uri of uris) {
     try {
-      if (uri) new File(uri).delete();
+      if (uri && cache && uri.startsWith(cache)) new File(uri).delete();
     } catch {
       // already gone
     }

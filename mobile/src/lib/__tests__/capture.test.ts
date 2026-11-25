@@ -19,6 +19,7 @@ jest.mock('expo-image-manipulator', () => ({
 }));
 const mockDeleted: string[] = [];
 jest.mock('expo-file-system', () => ({
+  Paths: { cache: { uri: 'file:///cache/' } },
   File: function MockFile(this: { delete: () => void }, mockUri: string) {
     this.delete = () => void mockDeleted.push(mockUri);
   },
@@ -83,5 +84,14 @@ describe('photos never stay on the phone as files', () => {
     mockBase64 = undefined;
     await expect(photoDataUrl('file:///cache/camera.jpg')).rejects.toThrow();
     expect(mockDeleted).toEqual(['file:///cache/camera.jpg', 'file:///cache/small.jpg']);
+  });
+});
+
+describe("only the app own copies are deleted", () => {
+  it('a file outside the app cache (a gallery original) is never deleted', async () => {
+    mockDeleted.length = 0;
+    mockBase64 = 'QUJD';
+    await photoDataUrl('content://media/external/images/1');
+    expect(mockDeleted).toEqual(['file:///cache/small.jpg']);
   });
 });

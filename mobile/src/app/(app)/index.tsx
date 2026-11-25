@@ -94,6 +94,9 @@ export default function Today() {
       label: text('fab.mark', { site: tm.site }),
       go: () => router.push({ pathname: '/attendance/team', params: { site: tm.siteId, shift: tm.shiftId } }),
     })),
+    ...((att?.places.length ?? 0) > 0
+      ? [{ key: 'photo', icon: 'camera' as IconName, label: text('fab.photo'), go: () => router.push('/photos/add') }]
+      : []),
     ...(att?.checks ?? []).map((c) => ({
       key: `check-${c.siteId}`,
       icon: 'approve' as IconName,

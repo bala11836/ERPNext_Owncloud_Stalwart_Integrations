@@ -84,9 +84,11 @@ const BOOT = {
   sites: [{ name: 'S1', label: 'Site A', project: 'PROJ-A', project_name: 'Tower A', supervisor: false, approver: true, verifier: false, shifts: [] }],
   check_in_sites: [],
 };
+// Today's attendance, whatever day the tests run (a fixed date made its age change from day to day).
+const TODAY = ago(0).slice(0, 10);
 const ENTRIES = [
-  { name: 'A1', employee: 'E1', employee_name: 'Mason One', attendance_date: '2026-11-24', shift: 'Morning', attendance_status: 'Present', entry_type: 'Team', check_in_time: '2026-11-24 08:02:00', accuracy_m: 8, can_review: true },
-  { name: 'A2', employee: 'E2', employee_name: 'Helper Two', attendance_date: '2026-11-24', shift: 'Morning', attendance_status: 'Present', entry_type: 'Team', captured_offline: 1, can_review: true },
+  { name: 'A1', employee: 'E1', employee_name: 'Mason One', attendance_date: TODAY, shift: 'Morning', attendance_status: 'Present', entry_type: 'Team', check_in_time: `${TODAY} 08:02:00`, accuracy_m: 8, can_review: true },
+  { name: 'A2', employee: 'E2', employee_name: 'Helper Two', attendance_date: TODAY, shift: 'Morning', attendance_status: 'Present', entry_type: 'Team', captured_offline: 1, can_review: true },
 ];
 
 function serve(over: Record<string, Answer | ((args: Record<string, unknown>) => Answer)> = {}) {

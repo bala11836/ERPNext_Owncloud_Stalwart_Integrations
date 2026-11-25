@@ -3,9 +3,16 @@ import { InvitationClient, InvitationError } from "./invitations.mjs";
 import { attemptsAvailable, mailAvailable, test } from "./invite-mode.mjs";
 
 const client = new InvitationClient({ test, attemptsAvailable });
-$("attempts-field").hidden = !attemptsAvailable;
 let delivery;
 const $ = (id) => document.getElementById(id);
+$("attempts-field").hidden = !attemptsAvailable;
+// "Back" returns one step to the page the administrator came from on this site;
+// opened directly, it falls back to the Authentik administration (its href).
+$("back").addEventListener("click", (event) => {
+  let sameSite = false;
+  try { sameSite = Boolean(document.referrer) && new URL(document.referrer).origin === location.origin; } catch { sameSite = false; }
+  if (sameSite && history.length > 1) { event.preventDefault(); history.back(); }
+});
 let options = new Map();
 let pending = false;
 
@@ -60,7 +67,9 @@ async function load() {
       $("own-passkey").hidden = false;
       $("intro").textContent = "Send a first-time passkey invitation for a synthetic test account.";
       $("eligibility").textContent = "Only synthetic accounts awaiting their first passkey appear here.";
-      $("footnote").textContent = "Test invitations are single-use. Register a separate passkey on the test host.";
+      $("footnote").textContent = attemptsAvailable
+        ? "Test invitations can be opened the chosen number of times and stop working once the passkey is set up. Register a separate passkey on the test host."
+        : "Test invitations are single-use. Register a separate passkey on the test host.";
     }
     for (const user of users) {
       const label = `${user.name || user.username} — ${user.username} — ${user.email}`;

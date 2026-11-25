@@ -112,3 +112,104 @@ spare) and a cap on gunicorn worker lifetime/memory, because a worker grew to
 (policy caching is off in the legacy stack since the 14 November move, origin
 unknown) and decide whether to keep it. Compare the running environment of old
 and new containers when switching (lesson of the Mail move).
+
+### P76 — Owner's passkey sign-in on the test site
+
+**App:** signin · **Also touches:** test-site · **State:** in progress
+
+**Found 24 November 2026:** after the owner's account
+became a native Test Authentik administrator without a production link, its
+test passkey (Bitwarden) passed on the normal test sign-in page, but the final
+login step admitted only the synthetic accounts, so no session was created.
+
+**Objective:** the owner signs in on test.example.com with the test passkey
+alone, as on production. **Scope:** only the `mobile-attendance-qa-eligible`
+login policy in `deployment/test-identity/configure.py`. Synthetic accounts,
+linked staff, the passkey stage, applications, test ERP and test Drive are
+unchanged. **Acceptance:** a policy dry run on test covers the owner with an
+approved and a disallowed provider, without a passkey, synthetic, bootstrap
+admin and linked staff accounts; then the owner completes a real passkey
+sign-in on test.example.com and reaches the ERP.
+
+**Status 25 November 2026:** applied to test; the owner signed in on
+test.example.com with the passkey and reached the ERP. The provider list moves
+to one setting in P79. Released together with P77 to P79; merged to public `main` 25 Nov (PR #72, `f4a3f37`).
+
+### P77 — First administrator chosen at setup; built-in `akadmin` switched off
+
+**App:** signin · **Also touches:** test-site · **State:** in progress
+
+**Why:** a fresh Authentik setup creates the built-in `akadmin` account with a
+generated password nobody uses, and nothing asks who should administer the
+system. Upstream's first-time setup page reopens whenever `akadmin` is missing
+or has no usable password, so deleting it would expose that page.
+
+**What (owner decisions, 25 November 2026):** the setup asks the person setting
+it up for the administrator's email and name (no password). It creates that
+administrator and shows a single 24-hour link, only on the operator's terminal,
+to register a passkey from an approved provider (P79). The administrator signs
+in with the passkey only (no password) and manages other users. Rerunning the
+same command on the server issues a new link when the passkey is lost. `akadmin`
+is switched off, not deleted: inactive, a random password nobody knows, out of
+the admin group, and the bootstrap password file removed. The test invitation
+helper uses the configured administrator instead of `akadmin`. On test, the
+owner's account becomes passkey-only.
+
+**How it is tested:** a throwaway Authentik from scratch on the test VM (setup
+prompt, link, passkey sign-in, setup page stays closed, rerun link, `akadmin`
+cannot sign in), then the real test instance with the owner's sign-in checked
+again. Production is not touched; whether production has an `akadmin` is a
+separate step with its own go.
+
+**Production (25 Nov):** done. `akadmin` recreated switched off via `--akadmin-only`
+(PR #73, `0ed08d4`), and the owner's production administrator is passkey-only.
+The owner's browser sign-in check is pending.
+
+**Status 25 November 2026:** on test. Public draft PR #72 (module `6586c38`,
+CI green), throwaway test passed, Test Authentik switched over (the owner's
+account is the passkey-only administrator, `akadmin` off). Merged to public
+`main` 25 Nov (PR #72, `f4a3f37`, tree equal to tested `f5b4f89`); production pending.
+
+### P78 — Invitation link attempts chosen by the administrator
+
+**App:** signin · **Also touches:** none · **State:** in progress
+
+**Why:** the invitation form creates single-use links, which Authentik consumes
+as soon as the link is opened, even if passkey setup then fails.
+
+**What (owner decisions, 25 November 2026):** the Invite users form asks how
+many attempts the link allows, 1 to 5, default 5. Each opening of the link counts
+as one attempt. A successful passkey setup ends the link immediately, whatever
+attempts remain. The same choice applies to recovery invitations for a lost
+passkey. **Tests:** attempts counted per opening, link refused after the last
+attempt and after success, existing single-use behaviour at 1.
+
+**Status 25 November 2026:** on test from public `2530a3f` (draft PR #72 with
+P77 and P79, CI green). Live links on the test enrollment flow and the shared
+policy logic passed; production recovery and first-time flows are not on test.
+Merged 25 Nov (PR #72, `f4a3f37`); production needs a separate go.
+
+### P79 — Approved passkey providers as one setting
+
+**App:** signin · **Also touches:** test-site · **State:** in progress
+
+**Why:** the approved-provider list (Apple Passwords and Bitwarden) is copied in
+five places, and phones running Android 13 or older cannot use a third-party
+passkey app, so their users need Google Password Manager.
+
+**What (owner decisions, 25 November 2026):** one setting lists the approved
+providers: Apple Passwords, Bitwarden (also used with Vaultwarden), Google
+Password Manager and Chrome's own Mac store. Everything else is refused, including
+providers that report no identity. Every check reads that setting, including the
+test passkey stage for the synthetic accounts. Chrome's Mac store keeps the passkey
+on one Mac only, so a lost Mac needs a recovery invitation. Test first;
+production only with a separate go after the upstream advisory check.
+
+**Production (25 Nov):** done with `tools/identity_passkeys_p79.sh` (7 stages, 6
+production policies). Rollback point `<rollback folder>`.
+Production email wording and P78 on production wait for P49.
+
+**Status 25 November 2026:** on test from public `2530a3f`
+(`passkey-providers.json`, `tools/sync_passkey_providers.py`); every Test
+Authentik passkey step uses the five providers. Not merged; production needs a
+separate go.

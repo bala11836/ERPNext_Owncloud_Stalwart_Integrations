@@ -88,9 +88,9 @@ def bind(flow, stage, order, policy=None):
         })
 
 
-def switch_off_akadmin(admin):
+def switch_off_akadmin(admin=None):
     akadmin = User.objects.filter(username="akadmin").first()
-    if akadmin and akadmin.pk == admin.pk:
+    if akadmin and admin is not None and akadmin.pk == admin.pk:
         raise SystemExit("FIRST_ADMIN_ERROR the administrator cannot be akadmin")
     if not akadmin:
         # Present but unusable keeps upstream's first-time setup page closed.
@@ -105,6 +105,19 @@ def switch_off_akadmin(admin):
     akadmin.refresh_from_db()
     if akadmin.is_active or akadmin.is_superuser or not akadmin.has_usable_password():
         raise SystemExit("FIRST_ADMIN_ERROR akadmin could not be switched off")
+
+
+@transaction.atomic
+def akadmin_only():
+    """Existing instances whose administrator is managed elsewhere (for example a
+    Google-linked account): only make sure akadmin exists and is switched off."""
+    admins = [u for u in User.objects.filter(is_active=True).exclude(username="akadmin") if u.is_superuser]
+    keyed = [u for u in admins if u.webauthndevice_set.filter(confirmed=True).exists()]
+    if not keyed:
+        raise SystemExit("FIRST_ADMIN_ERROR no other active administrator with a passkey; nothing changed")
+    existed = User.objects.filter(username="akadmin").exists()
+    switch_off_akadmin()
+    print(f"FIRST_ADMIN_OK akadmin={'switched-off' if existed else 'recreated-switched-off'} administrators_with_passkey={len(keyed)}")
 
 
 @transaction.atomic
@@ -178,4 +191,7 @@ def run():
     print(f"FIRST_ADMIN_LINK {base}/if/flow/{FLOW}/?itoken={invitation.pk}")
 
 
-run()
+if os.environ.get("FIRST_ADMIN_MODE") == "akadmin-only":
+    akadmin_only()
+else:
+    run()

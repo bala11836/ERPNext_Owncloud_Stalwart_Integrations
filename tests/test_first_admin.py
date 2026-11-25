@@ -58,6 +58,16 @@ class FirstAdmin(unittest.TestCase):
                      "Token.objects.filter(user=akadmin).delete()", "not akadmin.has_usable_password()"):
             self.assertIn(step, body)
 
+    def test_akadmin_only_mode_keeps_an_administrator(self):
+        body = self.source[self.source.index("def akadmin_only"):self.source.index("def run")]
+        self.assertIn("no other active administrator with a passkey", body)
+        self.assertIn("switch_off_akadmin()", body)
+        self.assertNotIn("set_unusable_password", body)
+        self.assertIn('os.environ.get("FIRST_ADMIN_MODE") == "akadmin-only"', self.source)
+        script = (MODULE / "first-admin.sh").read_text()
+        self.assertIn("--akadmin-only", script)
+        self.assertIn("-e FIRST_ADMIN_MODE=akadmin-only", script)
+
     def test_wrapper_never_echoes_secrets_or_traces(self):
         script = (MODULE / "first-admin.sh").read_text()
         subprocess.run(["sh", "-n", str(MODULE / "first-admin.sh")], check=True)

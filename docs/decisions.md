@@ -6,6 +6,31 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-25
 
+### The office editor stays registered with Drive after every Drive restart (P80)
+
+- **Decision:** (1) every script that recreates, restarts or starts Drive (oCIS)
+  runs one shared step afterwards, `host_check.py editor-restart`: wait until
+  Drive is healthy, restart the editor bridge, confirm the editor is registered;
+  (2) the nightly backup starts its stopped containers in order, each after the
+  previous one is healthy (Drive before the bridge); (3) a signed-in check every
+  five minutes reads Drive's app list with its own low-rights account, restarts
+  the bridge once when the editor is missing while Drive is healthy (at most every
+  30 minutes) and reports every such run as failed in the journal.
+- **Why:** Drive learns which editors exist only when the bridge starts and
+  registers; restarting Drive alone empties the list without any error, and
+  office files then only download. On 25 November a release recreated Drive
+  alone and editing was down for about 6.5 hours; the step was known but lived
+  in prose, and no check could see it. The nightly backup's simultaneous start
+  made the bridge's first registration fail on 24 and 25 November (only Docker's
+  restart policy recovered it). The automatic repair turns a silent outage into
+  at most about five minutes; the failed run keeps it visible.
+- **Account:** a normal Drive user (no admin or space role), created with a
+  10-minute admin app token from Drive's own CLI; its own app token is stored
+  root-only and renewed by the check through the same CLI. No new software.
+- **Where:** `tools/host_check.py`, `tools/render_host_checks.py`,
+  `integrations/backup/backup.py`, `docs/production-moves.md`. Follow-ups:
+  a Compose dependency safety net and the release rule (P81). AI-assisted by Claude.
+
 ### Invitation links allow 1 to 5 attempts (P78)
 
 - **Decision:** the administrator chooses how many times an invitation link may

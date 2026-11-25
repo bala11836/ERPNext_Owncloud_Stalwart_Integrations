@@ -11,7 +11,7 @@ import { OfflineStrip } from '@/components/offline-strip';
 import { PrivateImage } from '@/components/private-image';
 import { Button, Choice, Status, T, TextArea } from '@/components/ui';
 import { type TextKey, t as text } from '@/i18n';
-import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, ToVerify, asPending, clock, isException } from '@/lib/attendance';
+import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, ToVerify, asPending, clock, isException, photoPath } from '@/lib/attendance';
 import { callErp } from '@/lib/erp';
 import { callKept, useConnection } from '@/lib/saved';
 import { formatDate } from '@/lib/format';
@@ -206,7 +206,7 @@ export function ApproveView({ site, mode = 'approve' }: { site: string; mode?: M
             {open === e.name && offline && detail?.name !== e.name && <Status kind="info" label={text('approve.photoOffline')} />}
             {open === e.name && detail?.name === e.name && (
               <View style={{ gap: 8 }}>
-                {detail.photo ? <PrivateImage path={detail.photo} label={text('approve.photoOf', { name: e.employee_name ?? e.employee })} /> : null}
+                {detail.photo ? <PrivateImage path={photoPath(detail.name)} label={text('approve.photoOf', { name: e.employee_name ?? e.employee })} /> : null}
                 {detail.remarks ? <T>{detail.remarks}</T> : null}
               </View>
             )}

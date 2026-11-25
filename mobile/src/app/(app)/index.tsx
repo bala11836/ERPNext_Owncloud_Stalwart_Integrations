@@ -278,7 +278,10 @@ export default function Today() {
             <Button label={text('today.openApprovals')} icon="chevron-right" onPress={() => router.push('/inbox')} />
           </Panel>
         )}
-        {inbox.loaded && rows.length === 0 && <Status kind="none" label={text('inbox.noneWaiting')} />}
+        {/* Only when nothing at all waits: the attendance cards above count too. */}
+        {inbox.loaded && rows.length === 0 && !att?.approvals.length && !att?.checks.length && (
+          <Status kind="none" label={text('inbox.noneWaiting')} />
+        )}
 
         {/* Waiting to send: the encrypted offline queue, with "Send now". */}
         {queue && (queue.waiting > 0 || queue.refused > 0) ? (

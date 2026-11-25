@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { rememberServerClock } from '@/lib/capture';
-import type { Api } from '@/lib/erp';
+import { type Api, callErp } from '@/lib/erp';
 import { callKept } from '@/lib/saved';
 
 export const HR_API = 'erpnext_drive_integrations.custom_hr.api';
@@ -329,6 +329,25 @@ export const EntryDetail = z.object({
   captured_at: z.string().nullish(),
   accuracy_m: z.number().nullish(),
 });
+/**
+ * An entry's photo through custom_hr `entry_photo` (our site rules). The private file URL itself applies ERPNext's
+ * Employee user permissions, so a project manager could not open another employee's selfie.
+ */
+export const photoPath = (name: string) => `/api/method/${HR_API}.entry_photo?name=${encodeURIComponent(name)}`;
+
+export const ENTRY_DOCTYPE = 'Field Attendance Entry';
+const EntryLink = z.object({ site: z.string(), can_review: z.boolean(), can_verify: z.boolean() });
+/**
+ * The screen a notification about an attendance entry opens: verify or approve for that site, or null when the
+ * entry no longer waits for this person. The general record screen would refuse other employees' entries (Employee
+ * user permissions); custom_hr `entry` checks our own site rules.
+ */
+export async function entryScreen(api: Api, name: string) {
+  const e = await callErp(api, `${HR_API}.entry`, EntryLink, { name });
+  if (e.can_verify) return { pathname: '/attendance/verify' as const, params: { site: e.site } };
+  if (e.can_review) return { pathname: '/attendance/approve' as const, params: { site: e.site } };
+  return null;
+}
 export const Reviewed = z.array(
   z.object({ name: z.string(), ok: z.boolean(), error: z.string().nullish(), state: z.string().nullish() }),
 );

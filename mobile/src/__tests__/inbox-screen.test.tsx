@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 import { router as nav } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 
 import Inbox from '@/app/(app)/inbox';
 import ApprovalScreen from '@/app/approvals/[doctype]/[name]';
@@ -138,6 +138,7 @@ const app = {
   'approvals/[doctype]/[name]': ApprovalScreen,
   'approvals/attendance': AttendanceApprovalScreen,
   'doc/[doctype]/[name]': DocScreen,
+  'attendance/approve': () => <Text>approve screen</Text>,
   index: () => <Text>home</Text>,
 };
 const openInbox = () => renderRouter(app, { initialUrl: '/inbox', wrapper });
@@ -290,7 +291,7 @@ describe('approvals inbox', () => {
     await openInbox();
     await fireEvent.press(await screen.findByText('Attendance · 2 entries'));
     expect(await screen.findByText('Helper Two')).toBeOnTheScreen(); // captured offline: first
-    expect(await screen.findByText('photo /private/files/A2.jpg')).toBeOnTheScreen();
+    expect(await screen.findByText(`photo /api/method/${HR_API}.entry_photo?name=A2`)).toBeOnTheScreen();
     expect(screen.getByText(/Captured offline/)).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Approve' }));
     const first = mockErp.calls.find((c) => c.method === `${HR_API}.review_many`);
@@ -316,6 +317,27 @@ describe('approvals inbox', () => {
     await fireEvent.press(await screen.findByText('PO-0233 was updated'));
     expect(calls.some((c) => c.method === MARK_READ_METHOD && c.post && c.args.docname === 'NL-1')).toBe(true);
     expect(router.getPathname()).toBe('/doc/Purchase Order/PO-0233');
+  });
+
+  // The general record screen refuses another employee's entry (ERPNext's Employee user permissions).
+  const attendanceNote = (entry: Answer) => ({
+    [LOGS_METHOD]: { body: { message: { notification_logs: [{ ...note, name: 'NL-2', subject: 'Self check-in ready for review', document_type: 'Field Attendance Entry', document_name: 'FAE-1' }] } } },
+    [`${HR_API}.entry`]: entry,
+  });
+  it('a notification about attendance opens the approval screen of its site, not the general record', async () => {
+    serve(attendanceNote({ body: { message: { name: 'FAE-1', site: 'S1', can_review: true, can_verify: false } } }));
+    const router = await openInbox();
+    await fireEvent.press(await screen.findByText('Self check-in ready for review'));
+    await waitFor(() => expect(router.getPathname()).toBe('/attendance/approve'));
+    expect(router.getSearchParams()).toMatchObject({ site: 'S1' });
+  });
+
+  it('an attendance notification that cannot open says why and stays in the Inbox', async () => {
+    serve(attendanceNote({ status: 403, body: thrown('You cannot view this record.') }));
+    const router = await openInbox();
+    await fireEvent.press(await screen.findByText('Self check-in ready for review'));
+    expect(await screen.findByText('You cannot view this record.')).toBeOnTheScreen();
+    expect(router.getPathname()).toBe('/inbox');
   });
 
   it('the attachment opens in the app when it is a picture', async () => {

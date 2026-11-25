@@ -27,6 +27,7 @@
   "inbox.retry": "Try again",
   "inbox.waiting": "Waiting for you ({count})",
   "inbox.noneWaiting": "Nothing is waiting for your approval",
+  "inbox.openFailed": "This record could not be opened. Try again in a moment.",
   "inbox.notifications": "Notifications",
   "inbox.noNotifications": "No notifications",
   "inbox.notification": "Notification",

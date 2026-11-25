@@ -297,13 +297,13 @@ export async function loadAttendanceItems(api: Api): Promise<Item[]> {
       asks.push(
         callKept(api, `${HR_API}.approvals`, Pending, { site: s.name })
           .then((all) => all.filter((e) => e.can_review))
-          .then((l) => ({ s, mode: 'approve' as const, count: l.length, exceptions: l.filter(isException).length, first: l.map((e) => e.attendance_date).sort()[0] }))
+          .then((l) => ({ s, mode: 'approve' as const, count: l.length, exceptions: l.filter(isException).length, first: waitingSince(l) }))
           .catch(() => null),
       );
     if (s.verifier)
       asks.push(
         callKept(api, `${HR_API}.verifications`, ToVerify, { site: s.name })
-          .then((l) => ({ s, mode: 'verify' as const, count: l.length, exceptions: 0, first: l.map((e) => e.attendance_date).sort()[0] }))
+          .then((l) => ({ s, mode: 'verify' as const, count: l.length, exceptions: 0, first: waitingSince(l) }))
           .catch(() => null),
       );
   }
@@ -317,10 +317,15 @@ export async function loadAttendanceItems(api: Api): Promise<Item[]> {
       detail: join(s.label, exceptions > 0 && text('approvals.exceptions', { count: exceptions })),
       project: s.project ?? null,
       amount: null,
-      created: `${first ?? ''} 00:00:00`,
+      created: first ?? '',
       attendance: { site: s.name, mode, count, exceptions },
     }));
 }
+
+/** When the oldest entry started waiting: its check-in time, or the start of its day when it has none (absent, or
+ * the verification list, which sends no time). Never midnight for a timed check-in (16:09 showed "18 h" at 18:07). */
+export const waitingSince = (l: { attendance_date: string; check_in_time?: string | null }[]) =>
+  l.map((e) => e.check_in_time || `${e.attendance_date} 00:00:00`).sort()[0];
 
 // ---- ages (owner, 23 November 2026: amber after one day, red after two) ----
 export type Age = { label: string; level: 'new' | 'amber' | 'red' };

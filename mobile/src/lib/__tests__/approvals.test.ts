@@ -11,6 +11,7 @@ import {
   loadCard,
   setQueue,
   splitActions,
+  waitingSince,
   type Item,
 } from '@/lib/approvals';
 import { memoryStore } from '@/lib/queue';
@@ -35,6 +36,17 @@ describe('ages (owner: amber after one day, red after two)', () => {
     expect(ageOf(at(180), NOW)).toEqual({ label: '3 h', level: 'new' });
     expect(ageOf(at(1500), NOW)).toEqual({ label: '1 day', level: 'amber' });
     expect(ageOf(at(3 * 1440), NOW)).toEqual({ label: '3 days', level: 'red' });
+  });
+  it('attendance waits from its check-in time, not from midnight of its day', () => {
+    const evening = new Date(2026, 10, 25, 18, 7).getTime();
+    const since = waitingSince([
+      { attendance_date: '2026-11-25', check_in_time: '2026-11-25 18:09:00' },
+      { attendance_date: '2026-11-25', check_in_time: '2026-11-25 16:09:12' },
+    ]);
+    expect(since).toBe('2026-11-25 16:09:12');
+    expect(ageOf(since, evening).label).toBe('1 h');
+    // No time (absent, or the verification list): the start of the day.
+    expect(ageOf(waitingSince([{ attendance_date: '2026-11-25', check_in_time: null }]), evening).label).toBe('18 h');
   });
   it('longest waiting first, split at one day', () => {
     const { longest, newer } = arrange([item('a', 10), item('b', 3000), item('c', 200), item('d', 1600)], NOW);

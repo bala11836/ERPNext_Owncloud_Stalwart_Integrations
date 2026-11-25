@@ -12,7 +12,7 @@ import { PrivateImage } from '@/components/private-image';
 import { Sheet } from '@/components/sheet';
 import { Button, Status, T, TextArea } from '@/components/ui';
 import { t as text } from '@/i18n';
-import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, ToVerify, asPending, clock, isException } from '@/lib/attendance';
+import { EntryDetail, HR_API, Pending, type PendingT, Reviewed, ToVerify, asPending, clock, isException, photoPath } from '@/lib/attendance';
 import { callErp } from '@/lib/erp';
 import { formatDate } from '@/lib/format';
 import { callKept, useConnection } from '@/lib/saved';
@@ -153,7 +153,7 @@ export function AttendanceCards({ site, mode = 'approve', onDone }: { site: stri
         <OfflineStrip />
         {note && <Status kind={note.kind} label={note.label} />}
         {offline && !detail && <Status kind="info" label={text('approve.photoOffline')} />}
-        {detail?.name === e.name && detail.photo ? <PrivateImage path={detail.photo} label={text('approve.photoOf', { name })} /> : null}
+        {detail?.name === e.name && detail.photo ? <PrivateImage path={photoPath(detail.name)} label={text('approve.photoOf', { name })} /> : null}
         <Facts
           facts={[
             { label: text('approvals.status'), value: e.attendance_status },

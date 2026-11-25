@@ -132,7 +132,8 @@ describe('PM approval', () => {
     serve();
     await open();
     await fireEvent.press((await screen.findAllByText('Show photo and remarks'))[0]);
-    expect(await screen.findByText('photo /private/files/field-A-1.jpg')).toBeOnTheScreen();
+    // Through custom_hr entry_photo: the private file URL would be refused by Employee user permissions.
+    expect(await screen.findByText(`photo /api/method/${HR_API}.entry_photo?name=A`)).toBeOnTheScreen();
     expect(screen.getByText('On time')).toBeOnTheScreen();
   });
 });

@@ -12,7 +12,7 @@ import { Sheet, SheetOption } from '@/components/sheet';
 import { Button, Choice, Row, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { AREAS, type Area, type Item, arrange, finish, loadAttendanceItems, loadDocItems, setQueue } from '@/lib/approvals';
-import { loadBoot } from '@/lib/attendance';
+import { ENTRY_DOCTYPE, entryScreen, loadBoot } from '@/lib/attendance';
 import { formatDate, formatValue } from '@/lib/format';
 import { type InboxNotification, markRead, refreshInbox, useInbox } from '@/lib/inbox';
 import { useTheme } from '@/theme';
@@ -85,9 +85,16 @@ export default function Inbox() {
     setSelected(next?.key ?? null);
     reload();
   };
+  const [openFailed, setOpenFailed] = useState<string | null>(null);
   const openNotification = (n: InboxNotification) => {
     if (!n.read) markRead(apiRef.current, n.name);
-    if (n.document_type && n.document_name) {
+    setOpenFailed(null);
+    if (n.document_type === ENTRY_DOCTYPE && n.document_name) {
+      // Attendance opens its own screen; the general record screen refuses other employees' entries.
+      entryScreen(apiRef.current, n.document_name)
+        .then((to) => (to ? router.push(to) : router.push('/')))
+        .catch((e: unknown) => setOpenFailed(e instanceof Error && e.message ? e.message : text('inbox.openFailed')));
+    } else if (n.document_type && n.document_name) {
       router.push({ pathname: '/doc/[doctype]/[name]', params: { doctype: n.document_type, name: n.document_name } });
     }
   };
@@ -156,6 +163,11 @@ export default function Inbox() {
       {inbox.loaded && (
         <>
           {heading(text('inbox.notifications'))}
+          {openFailed && (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+              <Status kind="warn" label={openFailed} />
+            </View>
+          )}
           {inbox.notifications.length === 0 ? (
             <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
               <Status kind="none" label={text('inbox.noNotifications')} />

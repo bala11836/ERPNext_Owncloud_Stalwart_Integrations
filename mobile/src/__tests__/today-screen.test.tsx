@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
-import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
 
 import Today from '@/app/(app)/index';
 import { HR_API } from '@/lib/attendance';
@@ -205,6 +205,20 @@ describe('Today', () => {
     await fireEvent.press(screen.getByText('Review and approve'));
     expect(await screen.findByText('Approve screen')).toBeOnTheScreen();
     expect(router.getSearchParams()).toMatchObject({ site: 'S1' });
+  });
+
+  it('never says nothing waits while attendance waits (no other approvals)', async () => {
+    const saved = answers[ACTIONS_METHOD];
+    answers[ACTIONS_METHOD] = { body: { message: [] } };
+    try {
+      await open();
+      expect(await screen.findByText('2 ready for you to approve')).toBeOnTheScreen();
+      await waitFor(() => expect(mockErp.calls.some((c) => c.method === ACTIONS_METHOD)).toBe(true));
+      await act(async () => {}); // let the empty Inbox answer render
+      expect(screen.queryByText('Nothing is waiting for your approval')).toBeNull();
+    } finally {
+      answers[ACTIONS_METHOD] = saved;
+    }
   });
 
   it('the approvals tally by document type, with the total', async () => {

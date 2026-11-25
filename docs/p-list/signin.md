@@ -1,6 +1,6 @@
 # Sign-in: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 22 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -49,6 +49,60 @@ names, generic branding). Import them into
 file names profile settings, rehearse on the test site, then switch sign-in
 (P45). Also make the webmail product name a setting (production showed
 "Unformat Mail"; the repository build shows "Mail").
+
+**24 November progress.** Deployed both administrator entries on the
+isolated Test Authentik issuer from public revision `a0541d4`. The test
+build takes the companion, stylesheet, admin template and test email template
+from the public release commit and requires them at startup. The six
+production enrollment and recovery template files match the existing public
+templates after applying the deployment brand and template prefix. Production
+identity migration and performance settings remain open.
+
+The test companion lists eligible synthetic accounts and links signed-in
+administrators to their own native WebAuthn setup. Test invitation email is
+disabled because the test sender's SMTP connection closes during authentication.
+Browser acceptance intercepts email submission and checks real invitation
+creation, listing and cancellation on the isolated issuer.
+
+**Invitation mail follow-up.** The owner approved adding the TrueNAS VM's
+single tailnet IP to the dedicated Stalwart test sender. Test Authentik now
+submits via a private, recipient-restricted SMTP relay. The live companion
+has Send enabled at public revision `7088f51`. Stalwart accepted all three
+requested enrollment messages. The owner's external mailbox visibly showed the
+supervisor invitation. The other two messages were accepted, with no mail
+for the mailbox remaining on the Stalwart queue. The existing single-use
+links were retained and expire at 19:44 IST on 24 November.
+
+**PR #63 merged.** The public invitation module and future build checks are
+on `main` at `5db9a66`. The merge tree matches the tested TrueNAS revision
+`7088f51`. A clean stage from merged `main` included the approved favicon set
+and the test invitation mail setting. Production identity reconciliation
+and promotion remain open under P49.
+
+**Production cutover preflight.** [PR #67](https://github.com/rdavuluri44/ERPNext_Owncloud_Stalwart_Integrations/pull/67)
+updates the affected identity pins and renders both gateway configs. All
+GitHub checks and the isolated PostgreSQL 16.15 to 16.16 upgrade rehearsal
+passed. A production scratch render preserved the running environment and
+external peers, and a verified root-only rollback backup was captured.
+Production SMTP already fails authentication from the current Authentik
+worker. Resolve its source-IP restriction during the authorized cutover.
+See the private cutover runbook (private record).
+
+**PR #67 merged.** Public `main` is `288993c` with the exact tested tree.
+The live SMTP connection reaches Stalwart from a shared bridge address
+different from the exact address on the production credential. The merge is
+complete. A dedicated SMTP route and production cutover still require approval.
+
+**Production deployed.** Both identity stacks are at public `288993c`. A
+dedicated worker SMTP route authenticated before and after recreation.
+The initial native sign-in and admin HTTP 500 was traced to restrictive
+asset file permissions, corrected in the private renderer and verified
+over HTTPS and in Chrome. PostgreSQL is 16.16 with JIT off, both companions
+are on NGINX 1.30.8, and the server's 3 GB cap and memory alert are active.
+Production issuer discovery, signing keys, existing ERP session, both
+invitation controls, and JWT rejection at the ERP logout endpoint passed.
+P59 marks both identity stacks clean. A fresh physical passkey ceremony
+and delivery of a new production invitation were outside this check.
 
 **Carry into the repository identity stack (found 20 November 2026):**
 PostgreSQL `jit = off` for authentik's database (sign-in step 1.2 s to 0.3 s);

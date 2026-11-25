@@ -1,6 +1,6 @@
 # Closed P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 22 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](p-list.md) for the rules).
 
@@ -51,3 +51,4 @@ Current production versions: **Frappe 16.56.0, ERPNext 16.55.0, HRMS 16.53.2**. 
 Only the current retained requests are included here; superseded historical proposals are excluded.
 | P65 | Relayed test sign-in loses the requested page (X-Forwarded-Uri dropped) | test-site | completed | 2026-11-21 | Forwarded headers trusted on the SSO host's private entry point from the test VM only; live 21 Nov (942d84d); test gateway returns to the requested page |
 | P60 | Portal address `/ezone` instead of `/place_holder` | portal | redundant | 2026-11-21 | Owner chose the portal at / once signed in (P63): the address is clean without renaming the page |
+| P75 | Stalwart 1.1.0 to 1.1.1 (security fixes) before P69 | mail | completed | 2026-11-24 | Released to production 24 Nov (bb546d7) |

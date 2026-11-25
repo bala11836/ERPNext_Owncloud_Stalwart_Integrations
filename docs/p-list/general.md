@@ -1,6 +1,6 @@
 # General: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 22 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -289,8 +289,16 @@ release log 22 Nov); (4) repeat the reboot drill on the VPS after the test move;
 
 **App:** general · **Also touches:** none · **State:** open
 
-**Status:** open, owner request 21 November 2026 ("add a P for this and we'll do it
-again"); not started. **Why:** on 21 November the production ERP swap for `3a93de8`
+**Status (24 November 2026):** PR #35 delivered the planner and checker. The VPS nightly
+check is enabled. PR #62 passed on the isolated VM, merged at `2e8b112` and is deployed
+on the VPS. Both the website and the ERP favicon match their live files. The drift report
+remains open. The independent baseline in `deployment/promotion/README.md` confirms the
+website render, Drive bridge networks, and DMS shutdown timeouts already match the relevant
+changes. ERP and editor have stack-specific changes to promote through their own releases.
+Mail's saved profile needs to preserve the live display name. Identity provenance belongs
+with the P49 cutover. The PR #32 Frappe security release is now deployed and its
+verified production ERP core is archived. Later ERP app changes remain in their own
+release scope. **Why:** on 21 November the production ERP swap for `3a93de8`
 missed the website stack (Employee Zone single-click fix): the test deploy script
 re-renders every stack, but production stacks are promoted by hand from separate
 profiles (ERP in `p37`, website, Drive, Mail, DMS and identity in `p45`), and nothing
@@ -510,9 +518,27 @@ fixed by a working rule (never print values; recursive redaction; key names or s
 
 **App:** general · **Also touches:** erp, drive, mail, dms, signin, editor, test-site · **State:** open
 
-**Status:** owner decision 22 November 2026; not started; placed on the **TrueNAS home server after the test machine
-moves to its VPS**. Links: P57 (boot check and restart watch feed alerts), P61 (logs must outlive container
-recreation), P15 (mail health), P02/P40 (backup results), P11 (certificate expiry).
+**Status as of 24 November 2026:** production and the TrueNAS test VM check each other every minute.
+The test VM checks the production Grafana HTTPS endpoint independently, and the VPS checks the
+TrueNAS management port. The HTTPS probes report certificates with fewer than 14 days remaining.
+Backup and restore-drill monitors check reports immediately after service failure and check freshness
+every five minutes (26 hours and eight days). Phone delivery remains deferred by the owner.
+
+Grafana, Prometheus, Loki and Alloy run on the VPS. The TrueNAS VM runs only the two exporters to
+leave RAM available on the appliance. Prometheus collects host and container data from both Linux
+hosts. Grafana uses tailnet-only HTTPS and a local administrator. Loki retains the VPS probe
+journals for seven days. Test restore probe logs remain on the test VM. The production audit runs
+weekly and checks Restic metadata, snapshot age and count, configured snapshot paths, processed-byte
+changes and app downtime. First run passed with 16 of 16 parts, eight snapshots, and 23.9 seconds
+maximum application stop time. Thresholds are 20% for a processed-byte drop and 120 seconds for
+app downtime. TrueNAS direct ZFS inspection found seven recent backup-guard snapshots and enabled
+cron, two healthy pools and two existing alert destinations.
+
+**Still open:** a separate TrueNAS replication destination and scheduled ZFS freshness checks,
+the bucket policy canary and retention/cost trend validation, offline-copy reminders and a combined
+weekly report, and centralized test and application logs. P41 already records the quarterly recovery
+check due 18 February 2027. Phone delivery stays pending. See the dated handoff and the private
+deployment receipts before changing the service. Links: P57, P61, P15, P02/P40, P11.
 
 **Why:** today every check (boot check, restart watch, backup result, hourly mail health, ERP error logs) writes only to
 the server's own logs; nobody is told when something breaks at night. Container logs vanish when a container is

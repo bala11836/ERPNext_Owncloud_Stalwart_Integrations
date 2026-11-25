@@ -19,6 +19,13 @@ class MobileAppTests(unittest.TestCase):
         self.assertEqual(expo['android']['package'], 'com.example.erp')
         self.assertEqual(expo['name'], 'ERP')
 
+    def test_no_plugin_blocks_the_camera(self):
+        # `"cameraPermission": false` in an Expo plugin removes the CAMERA permission for the whole app on
+        # Android and deletes the iPhone camera text: check-in selfies and worker photos then can't open.
+        for plugin in json.loads((MOBILE / 'app.json').read_text())['expo']['plugins']:
+            if isinstance(plugin, list):
+                self.assertIsNot(plugin[1].get('cameraPermission'), False, f'{plugin[0]} blocks the camera')
+
     def test_source_names_no_real_host(self):
         for path in list((MOBILE / 'src').rglob('*.ts*')) + [MOBILE / 'app.config.ts', MOBILE / '.env.example']:
             for host in re.findall(r'https?://([A-Za-z0-9.-]+)', path.read_text()):

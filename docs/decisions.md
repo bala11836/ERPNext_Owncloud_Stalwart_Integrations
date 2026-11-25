@@ -54,6 +54,12 @@ discussion that led to a decision is not repeated here.
   Google Password Manager is included because phones on Android 13 or older
   cannot use a third-party passkey app. Moving every other check onto this list
   is P79.
+- **Existing instances** whose administrator is managed elsewhere (for example a
+  Google-linked account) use `first-admin.sh --akadmin-only`: `akadmin` is
+  recreated switched off when it was deleted, so upstream's bootstrap blueprint
+  cannot bring it back active. A lost administrator passkey is replaced through
+  upstream's `ak create_recovery_key` from a root shell on the server, or by
+  rerunning the setup for an administrator it created.
 - **Where:** [`integrations/authentik/first-admin/`](../integrations/authentik/first-admin/README.md).
 
 ## 2026-11-24

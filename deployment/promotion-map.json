@@ -96,6 +96,13 @@
       "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."
     },
     {
+      "name": "First administrator (operator tool, P77)",
+      "paths": ["integrations/authentik/first-admin/**"],
+      "stacks": [],
+      "live": ["only when (re)setting the first administrator: run first-admin.sh against the authentik server container; it creates or refreshes the administrator without a password, prints a one-time passkey link and switches off akadmin"],
+      "not_covered": "Test Authentik covers the tool; production has not run it. Check production's akadmin and that its sign-in flow admits the administrator's passkey before running it there."
+    },
+    {
       "name": "Production proxy routes",
       "paths": ["deployment/config/proxy/**", "deployment/config/proxy-inputs.json", "deployment/production/**", "tools/prepare_auth_bridge.py", "tools/sso_proxy_trust.py", "tools/coolify_proxy_hosts.py", "tools/coolify_proxy_http3.py"],
       "stacks": ["proxy"],

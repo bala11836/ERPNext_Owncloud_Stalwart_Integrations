@@ -75,8 +75,8 @@ class Drive:
                 return 200, {'mime-types': []}
             return 200, {'mime-types': [{'ext': e, 'app_providers': [{'name': 'OnlyOffice'}]}
                                         for e in ('docx', 'xlsx', 'pptx', 'pdf')]}
-        if '/graph/v1.0/users?' in url:
-            return 200, {'value': [{'id': 'u1'}] if self.account_exists else []}
+        if url.endswith('/graph/v1.0/users/editor-check') and method == 'GET':
+            return (200, {'id': 'u1'}) if self.account_exists else (404, {'error': {}})
         if url.endswith('/graph/v1.0/users') and method == 'POST':
             self.created.append(body)
             return 201, {'id': 'u1'}

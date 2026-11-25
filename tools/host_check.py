@@ -455,12 +455,12 @@ def editor_setup(config, env):
         return 1
     admin = basic(editor['admin_user'], token)
     users = editor['url'].rstrip('/') + '/graph/v1.0/users'
-    status, body = env.request_json('GET', users + "?$filter=onPremisesSamAccountName%20eq%20'"
-                                    + editor['account'] + "'", admin)
-    if status != 200:
+    # Lookup by name: oCIS 8.2 answers 501 to a $filter on onPremisesSamAccountName.
+    status, body = env.request_json('GET', users + '/' + editor['account'], admin)
+    if status not in (200, 404):
         log('editor-setup: user lookup answers %s' % status)
         return 1
-    if (body or {}).get('value'):
+    if status == 200:
         log('editor-setup: account %s already exists' % editor['account'])
     else:
         status, body = env.request_json('POST', users, admin, {

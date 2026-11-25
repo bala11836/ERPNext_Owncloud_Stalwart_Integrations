@@ -1,0 +1,15 @@
+# S05: the Inbox loads (approvals or "nothing waiting") with notifications below. Read-only.
+appId: ${APP_ID}
+name: Inbox loads
+tags:
+  - read-only
+---
+- runFlow: _open.yaml
+- tapOn: "Inbox"
+- extendedWaitUntil:
+    visible: "Waiting longest|Newer|Nothing is waiting for your approval|Couldn't load your inbox.*"
+    timeout: 30000
+- assertNotVisible: "Couldn't load your inbox.*"
+- scrollUntilVisible:
+    element: "Notifications"
+    direction: DOWN

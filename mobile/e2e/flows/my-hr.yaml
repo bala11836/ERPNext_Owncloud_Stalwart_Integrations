@@ -1,0 +1,12 @@
+# S13: My HR loads (or says the sign-in has no employee, or needs internet). Read-only.
+appId: ${APP_ID}
+name: My HR loads
+tags:
+  - read-only
+---
+- runFlow: _open.yaml
+- tapOn: "My HR"
+- extendedWaitUntil:
+    visible: "Leave balance|My leave applications|Your sign-in is not linked.*|My HR needs internet.*|Couldn't load My HR.*"
+    timeout: 30000
+- assertNotVisible: "Couldn't load My HR.*"

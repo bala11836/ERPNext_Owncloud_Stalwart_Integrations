@@ -44,3 +44,6 @@ example
 
 # local native modules: their build output
 /modules/*/android/build/
+
+# robot test results: screenshots of real test-site data, never committed
+/e2e/results/

@@ -113,6 +113,9 @@ the SDK.
 - In `mobile/`: `pnpm typecheck`, `pnpm lint`, `pnpm test` (sunlight contrast 7:1, Indian number format, and
   the Jest suites in `src/**/__tests__/`: server client, offline queue, encrypted store, texts)
 
+- Robot tests on phones (Maestro): `e2e/README.md`. Flows per screen and chains across the phones of different
+  roles, against the test site only.
+
 Run these before calling any change done. Real-phone checks are separate: iPhone with and without Dynamic
 Island, a recent Android, an older budget Android, a tablet.
 

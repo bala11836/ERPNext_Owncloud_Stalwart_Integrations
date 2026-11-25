@@ -1,0 +1,10 @@
+# Opens the app and waits for the Today tab. Used by the other flows (runFlow), not run alone.
+# The app lock comes first: on a real phone the person touches the fingerprint sensor when it asks.
+appId: ${APP_ID}
+tags:
+  - subflow
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 90000

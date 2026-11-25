@@ -1,0 +1,11 @@
+{
+  "name": "Smoke: each phone opens the app and reads",
+  "steps": [
+    { "phone": "A", "flow": "flows/today.yaml" },
+    { "phone": "B", "flow": "flows/today.yaml" },
+    { "phone": "C", "flow": "flows/inbox.yaml" },
+    { "phone": "C", "flow": "flows/my-hr.yaml" },
+    { "phone": "C", "flow": "flows/menu.yaml" },
+    { "phone": "C", "flow": "flows/settings-outdoor.yaml" }
+  ]
+}

@@ -1,0 +1,11 @@
+# S04: Today shows the person's roles and the four tabs. Read-only.
+appId: ${APP_ID}
+name: Today opens with the roles and the tabs
+tags:
+  - read-only
+---
+- runFlow: _open.yaml
+- assertVisible: ".*(Approver|Supervisor|Engineer|Staff).*"
+- assertVisible: "Inbox"
+- assertVisible: "My HR"
+- assertVisible: "Menu"

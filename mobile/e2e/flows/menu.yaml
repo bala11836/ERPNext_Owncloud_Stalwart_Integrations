@@ -1,0 +1,14 @@
+# S14: the Menu opens and its search says when nothing matches. Read-only.
+appId: ${APP_ID}
+name: Menu and its search
+tags:
+  - read-only
+---
+- runFlow: _open.yaml
+- tapOn: "Menu"
+- extendedWaitUntil:
+    visible: "Search your lists"
+    timeout: 30000
+- tapOn: "Search your lists"
+- inputText: "zzqq"
+- assertVisible: "No list matches.*"

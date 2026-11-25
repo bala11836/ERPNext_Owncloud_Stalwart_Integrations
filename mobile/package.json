@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/check-contrast.ts && node scripts/check-format.ts && node scripts/check-no-emoji.ts && jest"
+    "test": "node scripts/check-contrast.ts && node scripts/check-format.ts && node scripts/check-no-emoji.ts && node scripts/check-chain.ts && jest"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

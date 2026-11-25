@@ -4,6 +4,26 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-25
+
+### Robot tests on phones: Maestro (owner)
+- **Decision:** the mobile app gets robot tests that tap through it on phones (Maestro flows in `mobile/e2e/`),
+  and chains that run steps on the phones of different roles one after another (`run-chain.ts`). Test phones:
+  two Android virtual phones on the test PC and one real Android phone on USB; a virtual tablet for tablet
+  layouts. Each phone is signed in once by hand with a test account (passkeys are not automated); no secrets in
+  the flows. Flows run against the test site only. Pull requests list the roles they affect (template).
+- **Why:** approvals pass between roles, so one phone and unit tests can't show that a supervisor's entry reaches
+  the engineer and then the project manager. Maestro is Expo's documented choice for end-to-end tests and runs
+  locally for free.
+- **Adoption check:** Maestro CLI 2.12.1 (published 2 November 2026), Apache-2.0, maintained by mobile.dev
+  (active, about 16,500 stars); GitHub has no security advisories for the project and OSV none for
+  `dev.mobile:maestro-cli`, `maestro-client` and `maestro-orchestra` 2.12.1; fixes ship as GitHub releases with
+  SHA-256 digests (checked). Installed outside the repository, not a project dependency. Usage reporting off
+  (`MAESTRO_CLI_NO_ANALYTICS=1`); Maestro Cloud and `--analyze` are not used, so screenshots of test data stay
+  on the PC (`e2e/results/` is ignored by git).
+- **Where:** `mobile/e2e/`, `mobile/scripts/check-chain.ts`, `.github/pull_request_template.md`. AI-assisted by
+  Claude.
+
 ## 2026-11-20
 
 ### A reboot must bring everything back by itself (P57)

@@ -1,0 +1,22 @@
+# S22: Outdoor mode turns on and off. Changes only this phone's display setting; leaves it off.
+appId: ${APP_ID}
+name: Outdoor mode on and off
+tags:
+  - read-only
+---
+- runFlow: _open.yaml
+- tapOn: "Menu"
+- scrollUntilVisible:
+    element: "Settings"
+    direction: DOWN
+    timeout: 120000 # the Menu is long for people with many ERPNext lists; a faster swipe opens rows
+- tapOn: "Settings"
+- runFlow:
+    when:
+      visible: "Outdoor mode: On"
+    commands:
+      - tapOn: "Outdoor mode: On"
+- tapOn: "Outdoor mode: Off"
+- assertVisible: "Outdoor mode: On"
+- tapOn: "Outdoor mode: On"
+- assertVisible: "Outdoor mode: Off"

@@ -3,6 +3,13 @@
 ## Module(s) touched
 <!-- from modules.json -->
 
+## Roles affected
+<!-- Every role this change reaches (e.g. supervisor, engineer, project manager, payments approver, no-role user).
+     For each: what it must see or do, what it must not, and how ERPNext refusing the rest was checked
+     (hiding a screen is not security). "None" if no role sees a difference. -->
+| Role | Must see / do | Must not see / do | ERPNext refuses (how checked) |
+|:--|:--|:--|:--|
+
 ## Promotion plan
 <!-- output of `python tools/promotion_plan.py <commit production runs> <this branch>`: stacks, steps, live settings, restarts, what test cannot cover -->
 

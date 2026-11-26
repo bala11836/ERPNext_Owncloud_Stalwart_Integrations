@@ -88,12 +88,12 @@ Made against: frappe_docker `0ad1a11`, bench 5.31.1, Node 24.22.1, Yarn 1.22.22
   reproducible build from public pins (`docs/deployment.md`).
 - **How:** text replacement on upstream's file in `tools/prepare_erp_image.py`
   (around lines 41-59); `tools/build_erp_core.py`.
-- **Upgrade:** **re-check** on every frappe_docker bump. **Silent:** only one of the
-  seven replacements is checked (the `USER frappe` marker fails loudly). If
-  upstream rewords the others, our pins silently do not apply, and Frappe could be
-  cloned from GitHub instead of our pinned copy. Compare the generated
-  `Dockerfile` with upstream's Containerfile.
-- **Tests:** none; CI does not build images.
+- **Upgrade:** **re-check** on every frappe_docker bump. **Loud** since P91: each of
+  the seven changes must find its upstream line exactly once, or the build stops
+  (`replace_once`), so a reworded line can no longer silently drop our pins. Still
+  compare the generated `Dockerfile` with upstream's Containerfile for new lines
+  that need a pin.
+- **Tests:** `tests/test_prepare_erp_image.py` (each changed line stops the build).
 
 ### BUILD-2 Our copy of Frappe's nginx template
 
@@ -583,10 +583,11 @@ Made against: v3.50.3 (`d733108`).
 - **How:** `integrations/insights/patch_session.py`, run and compiled in
   `deployment/erp/Dockerfile.addon`. No compiled bundle is copied.
 - **Upgrade:** **re-apply** on every Insights upgrade; it was rewritten once already for
-  3.15.1 to 3.50.3 (commit `edf508c`). Most anchors fail the build loudly, but the
-  two `AppSidebar.vue` replacements are not counted (**to verify:** a changed import
-  line could leave `useRoute` undefined at runtime). Then open a workbook on test.
-- **Tests:** none for the patch logic.
+  3.15.1 to 3.50.3 (commit `edf508c`). Every line it changes must appear exactly
+  once upstream, or the build stops (since P91; before, a changed `vue` import line
+  left `useRoute` undefined at runtime without a build error). Then open a
+  workbook on test.
+- **Tests:** `tests/test_insights_patch.py`.
 - **Upstream:** not reported. Workaround (`deployment/upstream-watch.json`).
 
 ### INSIGHTS-2 Insights opens inside the portal
@@ -886,8 +887,8 @@ Made against: oCIS 8.2.3, ownCloud Web 12.5.0.
 
 ## ONLYOFFICE Docs (office editor)
 
-Made against: 10.0.0 build 169 (the module README says 10.0.0.1; **to verify** and
-align).
+Made against: 10.0.0 build 169 (package `onlyoffice-documentserver` 10.0.0-169, checked
+on the pinned image 26 November 2026).
 
 ### OFFICE-1 Patched WOPI start page over the image's own file (re-apply every upgrade)
 
@@ -900,12 +901,14 @@ align).
   `/var/www/onlyoffice/documentserver/web-apps/apps/api/wopi/editor-wopi.ejs`. Injects
   CSS and DOM changes into the editor frame by element ID and uses `Asc` sheet-view
   APIs.
-- **Upgrade:** **re-apply** with the README procedure: copy the new image's original,
-  re-apply our marked parts, update the checksum. **Silent:** the test only checks our
-  stored copy of the original, not the file inside the new image, so a digest bump
-  alone passes CI and mounts the old page over the new editor.
-- **Tests:** `tests/test_onlyoffice_editor.py`, `tests/test_onlyoffice_private_views.py`
-  (headless Chrome).
+- **Upgrade:** **re-apply** with the README procedure: `tools/refresh_editor_original.py`
+  copies the new image's own start page (without starting the image) and records
+  image and checksum in `integrations/onlyoffice/upstream.json`; then re-apply our
+  marked parts. **Loud** since P91: the tests fail unless the stored original, that
+  record and the image in the stack agree, so a digest bump alone fails CI. The
+  record was checked against the pinned image on 26 November 2026.
+- **Tests:** `tests/test_onlyoffice_editor.py`, `tests/test_refresh_editor_original.py`,
+  `tests/test_onlyoffice_private_views.py` (headless Chrome).
 
 ### OFFICE-2 Sheet-view empty-filter crash guard (temporary)
 
@@ -1014,10 +1017,15 @@ Made against: commit `933bc18` (1.21.2), `integrations/mail/upstream.json`.
   button and `lib/cloud-session.ts`.
 - **How:** `integrations/mail/overlay/`, applied by `tools/prepare_mail.py`, which also
   packs the matching source for the AGPL.
-- **Upgrade:** **re-apply** by a three-way merge of each file against the new commit.
-  **Silent:** copying whole files undoes upstream's changes to them.
-- **Tests:** constants only (`tests/test_logout_and_signin.py`,
-  `tests/test_rebuild_templates.py`); nothing ties the overlay to its base commit.
+- **Upgrade:** **re-apply** by a three-way merge of each file against the new commit:
+  `tools/refresh_webmail_overlay_base.py --checkout <clone>` lists the files upstream
+  changed, then `--write` records the new base. **Loud** since P91:
+  `overlay_base` in `integrations/mail/upstream.json` holds the upstream checksum of
+  every file we replace, `tools/prepare_mail.py` stops when the clone differs, and
+  the tests fail when the commit changes without it. Checked against a clone of the
+  pinned commit on 26 November 2026.
+- **Tests:** `tests/test_webmail_overlay_base.py`; constants in
+  `tests/test_logout_and_signin.py`, `tests/test_rebuild_templates.py`.
 
 ### WEBMAIL-2 Admin policy and blocked admin routes
 
@@ -1093,8 +1101,9 @@ Made against: 3.4.2.
 - **NGINX-1** nginx: our own full `nginx.conf` for the identity gateway and invitation
   companion (Docker DNS `127.0.0.11`) and the website `default.conf`. **Re-check** (low).
 - **MONITORING-1** Prometheus, Grafana, Loki, Alloy, node_exporter, cAdvisor
-  (`integrations/monitoring/observability/compose.yml`): pinned, but **not in
-  `deployment/upstream-watch.json`** yet. **Re-check** at upgrade; add to the watch.
+  (`integrations/monitoring/observability/compose.yml`): pinned and, since P91, in
+  `deployment/upstream-watch.json` (the watch now reads the module compose files).
+  **Re-check** at upgrade.
 
 ## Traefik (Coolify's proxy)
 
@@ -1261,21 +1270,15 @@ Found on 26 November 2026 and reported to the owner; none of them is changed by 
 
 - **HRMS-4:** the Job Offer "Request response" button points at a file that does not
   exist (probable bug).
-- **OFFICE-1:** nothing compares the stored original start page with the file inside a
-  newly pinned image, so an image bump alone passes CI. The same gap exists for the
-  webmail overlay's base commit.
-- **BUILD-1:** six of the seven Containerfile replacements are unchecked.
-- **INSIGHTS-1:** two `AppSidebar.vue` replacements are unchecked.
-- **Upstream watch:** only Insights, Bulwark and ONLYOFFICE have `workaround` notes in
-  `deployment/upstream-watch.json`; authentik, oCIS, Stalwart, Paperless, Coolify,
-  Traefik and Tailscale have workarounds here but none there. The monitoring images
-  are not watched at all.
+- **OFFICE-1, WEBMAIL-1, BUILD-1, INSIGHTS-1:** fixed in P91 (each check now fails
+  loudly on a changed upstream file, image or commit).
+- **Upstream watch:** fixed in P91 (`workaround` notes for every app with entries here;
+  monitoring images watched).
 - **Collabora leftovers:** `tools/prepare_ingress.py` still restricts Collabora admin
   paths (no ONLYOFFICE admin path is restricted; whether ONLYOFFICE 10 has one is to
   verify); `integrations/drive/README.md` and `deployment/README.md` still describe
   deploying Collabora.
-- **ONLYOFFICE version:** 10.0.0 in the watch, 10.0.0.1 in the module README, build 169
-  in the patch.
+- **ONLYOFFICE version:** fixed in P91 (10.0.0 build 169 everywhere).
 - **Left-over or unexplained code:** BUILD-7 (payment assets manifest), BUILD-8
   (PYTHONPATH), FRAPPE-15/16 (the NetBird names: nothing reads those headers; NetBird
   is not pinned or watched), HRMS-5 (retired launcher script).

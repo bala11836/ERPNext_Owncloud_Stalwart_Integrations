@@ -901,3 +901,26 @@ check themselves in keep their existing workflows.
   setting made by hand that no code reproduces. A CI check that the register
   is updated is deferred until the register has settled.
 - **Where:** `docs/upstream-customizations.md`, `AGENTS.md`. AI-assisted by Claude Code.
+
+### Upgrade checks fail loudly on a changed upstream file, image or commit (P91)
+
+- **Decision:** A patch on an upstream file must find every line it changes exactly
+  once, or the build stops (frappe_docker's Containerfile, the Insights frontend
+  patch). A file we replace whole is tied to the exact upstream version it was made
+  from: `integrations/onlyoffice/upstream.json` records the image and the checksum of
+  its own start page, and `overlay_base` in `integrations/mail/upstream.json` records
+  the upstream checksum of every webmail file the overlay replaces. The tests fail
+  when the image or commit changes without the record, and two tools refresh the
+  record during an upgrade (`tools/refresh_editor_original.py`,
+  `tools/refresh_webmail_overlay_base.py`). The upstream watch points every app
+  with a workaround at its register entries and also reads the module compose
+  files, so the monitoring images are watched.
+- **Why:** Before, an upstream rewording silently dropped our pins, a changed import
+  left the Insights sidebar broken at runtime, and an image or commit bump alone
+  passed CI while mounting our old copy over the new upstream files (register
+  entries BUILD-1, INSIGHTS-1, OFFICE-1, WEBMAIL-1). The generated build files are
+  byte-identical before and after this change.
+- **Where:** `tools/prepare_erp_image.py`, `integrations/insights/patch_session.py`,
+  `tools/prepare_mail.py`, the two refresh tools, `tools/upstream_watch.py`,
+  `deployment/upstream-watch.json`, their tests and module READMEs. AI-assisted by
+  Claude Code.

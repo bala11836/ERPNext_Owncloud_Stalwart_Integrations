@@ -185,6 +185,8 @@ def inventory(source, profile):
 
     files = sorted((source / 'deployment/stacks').glob('*.json')) + [source / 'deployment/build-lock.json']
     files += sorted(p for d in ('deployment', 'integrations') for p in (source / d).rglob('Dockerfile*'))
+    # Module compose files (monitoring, identity support): pinned images run there too (P91).
+    files += sorted(p for p in (source / 'integrations').rglob('*') if p.is_file() and re.fullmatch(r'compose[\w.-]*\.ya?ml', p.name))
     used = {}
     for path in files:
         for name, digest in IMAGE.findall(path.read_text()):

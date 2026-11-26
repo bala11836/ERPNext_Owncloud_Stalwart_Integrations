@@ -13,7 +13,7 @@ app_include_js = ["/assets/erpnext_drive_integrations/custom_hr/launcher.js?v=01
 web_include_js = ["/assets/erpnext_drive_integrations/custom_hr/launcher.js?v=013"]
 boot_session = "erpnext_drive_integrations.custom_hr.web.boot_session"
 doc_events = {
-    "Employee": {"validate": "erpnext_drive_integrations.custom_hr.guards.validate_employee", "after_insert": "erpnext_drive_integrations.custom_hr.guards.after_employee_insert", "on_update": "erpnext_drive_integrations.custom_hr.guards.on_employee_update"},
+    "Employee": {"validate": "erpnext_drive_integrations.custom_hr.guards.validate_employee", "after_insert": "erpnext_drive_integrations.custom_hr.guards.after_employee_insert", "on_update": ["erpnext_drive_integrations.custom_hr.guards.on_employee_update", "erpnext_drive_integrations.custom_hr.face_service.on_employee_update"], "on_trash": "erpnext_drive_integrations.custom_hr.face_service.on_employee_trash"},
     "User": {"validate": "erpnext_drive_integrations.custom_hr.guards.validate_user", "on_trash": "erpnext_drive_integrations.custom_hr.guards.validate_user"},
     "File": {"validate": "erpnext_drive_integrations.custom_hr.guards.protect_file", "on_trash": "erpnext_drive_integrations.custom_hr.guards.protect_file"},
     "Employee Checkin": {"validate": "erpnext_drive_integrations.custom_hr.guards.block_frappe_hr_checkin"},

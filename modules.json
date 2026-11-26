@@ -133,20 +133,22 @@
     {
       "id": "custom-hr",
       "title": "Custom HR",
-      "summary": "Our HR additions to Frappe HR: field sites and members, supervisor-recorded team attendance with photo and location, PM approval, checkout, and the functions the mobile app uses.",
+      "summary": "Our HR additions to Frappe HR: field sites and members, supervisor-recorded team attendance with photo and location, PM approval, checkout, face attendance for field teams (P95), and the functions the mobile app uses.",
       "readme": "erpnext_drive_integrations/custom_hr/README.md",
       "paths": [
         "erpnext_drive_integrations/custom_hr/**",
         "erpnext_drive_integrations/public/custom_hr/**",
         "erpnext_drive_integrations/www/field_team.*",
-        "tests/test_custom_hr.py"
+        "tests/test_custom_hr.py",
+        "tests/test_custom_hr_face.py"
       ],
       "depends_on": [
         "erp-addon-shell"
       ],
       "tests": [
         "erpnext_drive_integrations/custom_hr/test_checkout.py",
-        "tests/test_custom_hr.py"
+        "tests/test_custom_hr.py",
+        "tests/test_custom_hr_face.py"
       ],
       "upstream": [
         {
@@ -458,6 +460,8 @@
         "tests/test_host_checks.py",
         "tools/upstream_watch.py",
         "tests/test_upstream_watch.py",
+        "tools/open_source.py",
+        "tests/test_open_source.py",
         "tools/upstream_posts.py",
         "tests/test_upstream_posts.py"
       ],
@@ -489,6 +493,7 @@
         "tests/test_reboot_resilience.py",
         "tests/test_host_checks.py",
         "tests/test_upstream_watch.py",
+        "tests/test_open_source.py",
         "tests/test_upstream_posts.py"
       ],
       "upstream": [

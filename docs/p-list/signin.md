@@ -227,7 +227,8 @@ every service behind it (not in ERPNext).
 **What (owner decisions, 25 November 2026):**
 - **ERP Mobile holds the keys.** The app becomes a passkey provider on the phone. Each key is
   created in the phone's secure hardware, never synced or exported, and locked to the
-  fingerprints/face enrolled at sign-up (adding or removing one destroys the key; Android
+  fingerprints/face enrolled at sign-up (adding one destroys the key; removing one does not, as the P82 trial
+  found on two phones, wording corrected with the owner's yes on 26 November 2026; Android
   `setInvalidatedByBiometricEnrollment`, iOS `biometryCurrentSet`); no PIN fallback for the key.
 - **Computers sign in only by QR from the phone** (standard WebAuthn cross-device sign-in: the
   phone scans, Bluetooth checks it is nearby). Because ERP Mobile keys exist only on phones, a
@@ -472,6 +473,24 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
 - **Leavers (owner, 26 November 2026, late evening):** the exit procedure in Frappe HR (the employee's separation,
   status Left) triggers removal of the person's keys, devices and sessions in authentik and purges all their data
   in the app on the phone; the face templates go too (P95). SOP A14 (P96).
+- **Usual places and unusual sign-ins (owner, 26 November 2026, late evening):** the sign-in server learns where
+  each person usually signs in from: their usual IP addresses and networks, and the approximate location an IP
+  address gives (city and country, not GPS). A sign-in from somewhere unusual (a new country or city, a new
+  network, or two sign-ins too far apart for the time between them) sends an alert to the admin: on the Desk
+  widget (P53), by mail, or both (P72).
+  - **Free tools, to verify on test:** authentik already records the client address, location and network operator
+    with every sign-in event, and has a free GeoIP policy (country, distance and "impossible travel" checks) and
+    notification rules that can send mail or call a webhook for our widget. Location needs a free IP database:
+    MaxMind GeoLite2 (free account, its own licence) or DB-IP Lite (CC BY 4.0); to choose, and to list in the
+    open-source file (P35).
+  - **Alert only, at first:** an unusual sign-in is reported, not blocked, until the rules have proven themselves
+    on real use. Blocking or asking for an extra check can follow as a separate owner decision.
+  - **Personal data (DPDP):** sign-in addresses and approximate locations of employees are personal data. They go in
+    the staff notice, are kept for a fixed period (**owner, 26 November 2026: 90 days of history**, then only the
+    learned usual places),
+    and are shown only to the sign-in admin. The SOP inventory (P96) gets the admin's handling of these alerts.
+  - **Office and site networks:** the admin can mark known office and site addresses as usual for everyone, so
+    shared office connections do not raise alerts.
 - **Alerts and exceptions to the admin (owner, same evening):** the sign-in admin receives the alerts and exceptions
   of this item (keys removed for no use, erases after wrong attempts, refused or pending onboardings, unknown
   computers, failed certificate checks), and the person with authentik admin rights sees them in a widget on their

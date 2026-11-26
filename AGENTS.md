@@ -98,7 +98,12 @@ These are nonnegotiable and apply to this and all future projects:
    since 19 November 2026 under AGPL-3.0-or-later; operations records stay in
    a private repository).
 4. **Acknowledge the open-source stack** we use, integrate or configure (see
-   the README acknowledgements).
+   the README acknowledgements). Every project is in `docs/open-source.json` (owner, 26 November 2026; P35):
+   add it when it is evaluated (status `evaluating`, with the item and what is checked), and credit and track it
+   in the same pull request that adopts it or copies its code (status `adopted` or `borrowed`, its daily-watch
+   key or the reason it is not watched, the licence, and a notice for copied files). Then
+   `python3 tools/open_source.py render`; `check` (in the tests) fails when the list, the upstream watch,
+   `modules.json` and the README disagree.
 5. **Disclose AI assistance.** Development is assisted by AI agents; say so in
    the README, user-facing notes and public posts. Contributors remain
    responsible for understanding, testing and standing behind every change.

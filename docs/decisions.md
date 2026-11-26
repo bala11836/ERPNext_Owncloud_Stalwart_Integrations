@@ -6,6 +6,56 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Correction: removing a fingerprint does not destroy an ERP Mobile key (P82)
+
+- **Correction:** P82 said that adding **or removing** a fingerprint or face destroys the key. The P82 trial (PR #98,
+  two phones) found that Android destroys it only when one is **added**; removing one leaves the key working. The
+  record now says so (owner's yes, 26 November 2026). This changes nothing in the design: the onboarding check
+  that only the person's own fingerprints are enrolled (P96) still covers the fingerprints that were there before.
+
+### Sign-ins from unusual places alert the admin (P82)
+
+- **Decision:** the sign-in server learns each person's usual IP addresses, networks and approximate locations
+  (city and country from the IP address, not GPS). A sign-in from somewhere unusual, or two sign-ins too far apart
+  for the time between them, alerts the admin on the Desk widget and/or by mail. It alerts and does not block at
+  first. The admin can mark office and site networks as usual for everyone.
+- **Why:** owner, 26 November 2026: a stolen or shared sign-in usually shows up as a new place. authentik already
+  records address and location with each sign-in event, and has a free GeoIP policy and notification rules, so no
+  paid feature is needed (to verify on test). Sign-in locations of employees are personal data: they go in the
+  staff notice, are kept for 90 days (then only the learned usual places remain; owner), and only the sign-in admin
+  sees them.
+- **Where:** P82 in the P list (also P53, P72); not built.
+
+### Face attendance, first part: templates encrypted on the server, readable by no role, deleted for good (P95)
+
+- **Decision:** a worker's face is kept only as encrypted templates (site encryption key) in **Field Face
+  Enrolment**, one record per worker, in a field no role can read and with no version history; photographs taken
+  for enrolment are not stored. Consent is a separate **Biometric Consent** record that stays as evidence.
+  Identification compares one photograph only with the workers the requesting supervisor may record on that site
+  and shift, and decides alone only above a threshold with a clear margin over the next worker. Templates are
+  deleted permanently on withdrawal, when a worker leaves, or when the employee record is deleted. The face model
+  is a separate slot that stays off until a model passes the adoption check.
+- **Why:** owner, 26 November 2026: faces of field workers live on our server, not on supervisors' phones, and the
+  owner asked to build now without waiting for the lawyer's opinion. Keeping templates out of every role's view,
+  out of version history and out of Deleted Documents limits who and what can ever copy them; the margin rule
+  keeps look-alikes for a person to decide.
+- **Where:** `erpnext_drive_integrations/custom_hr/face.py`, `face_service.py`, `face_engine.py`, the two DocTypes,
+  `api.py` (`face_enrol`, `face_identify`, `face_withdraw`), `tests/test_custom_hr_face.py`, the module README.
+
+### One list of the open-source projects we use, credited and tracked in step (P35)
+
+- **Decision:** every open-source project we use, borrow code from or evaluate is in `docs/open-source.json` with
+  its repository, licence, where we use it and how we track it. The README acknowledgements and
+  `docs/open-source.md` are generated from it, and a test fails when a component the upstream watch follows, or an
+  upstream named in `modules.json`, is missing from the list (or the other way round). Projects under evaluation
+  are listed but not credited as used; they are credited and tracked in the pull request that adopts them.
+- **Why:** owner, 26 November 2026: we rely on many open-source projects (microG is being evaluated now) and must
+  credit them and follow their repositories. The README thanks had fallen behind the daily watch (the monitoring
+  stack, backup tools, CoreDNS, frappe_docker, the hosts' software), because the two lists were kept apart. The
+  first list also found that ownCloud Web's repository was archived on 23 November 2026 and that ocis-konnectd has
+  been archived since 2020.
+- **Where:** `docs/open-source.json`, `tools/open_source.py`, `tests/test_open_source.py`, `README.md`, `AGENTS.md`.
+
 ### Every upstream post is listed and checked for replies until we stop using that project (P35)
 
 - **Decision:** our bug reports, feature requests, comments and workarounds on other projects are listed in

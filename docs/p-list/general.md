@@ -622,7 +622,8 @@ this repository as a module (stack files, config, README), branch, test, owner g
 
 **Alert delivery (owner, 26 November 2026, late evening):** the **admin** receives the alerts (no longer only the
 owner; phone delivery as decided above), and the person with authentik admin rights also sees alerts and exceptions
-in a widget on their Desk (scope added to P53). Who watches daily: the admin (P96, SOP F5).
+in a widget on their Desk (scope added to P53). Who watches daily: the admin (P96, SOP F5). Sign-ins from unusual
+places or networks (P82) reach the admin the same way: on the widget, by mail, or both.
 
 ### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 

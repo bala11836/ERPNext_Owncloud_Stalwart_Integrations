@@ -423,6 +423,10 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   - **So that retiring is a switch, not a new project (agent):** keep our QR route a separate, removable part of the
     app. Have the Android trial prove Android's own route on an Android 14 phone as well, so it is known to work
     when the add-on goes.
+- **microG (being evaluated by the colleague, 26 November 2026):** listed as "evaluating" in public
+  `docs/open-source.json` (P35). Record the adoption check here (licence: Apache-2.0 per its repository; maintenance;
+  security history; how fixes are published) and in the decision log, whether adopted or not; if adopted, credit
+  and track it in the same pull request (working agreements).
 - **Unused keys expire after 7 days** (owner, 26 November 2026, evening, from the P82 discussion with the
   colleague's agent): the **sign-in server** removes a person's ERP Mobile key when it has not been used for 7 days
   (the server knows the last use; a phone that is switched off cannot delete its own key). The person then onboards

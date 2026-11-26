@@ -121,6 +121,15 @@ advisory) is in `docs/upstream-posts-private.md` here. First check, 26 November:
 waiting. **Open (owner):** Collabora, which we no longer use (P42): a one-line thank-you and stop watching, or stop
 watching without a post.
 
+**Open-source list (owner, 26 November 2026, go):** every open-source project we use, borrow from or evaluate is in
+public `docs/open-source.json` (62: 47 in use, 14 being evaluated, 1 retired; licences read from GitHub the same day).
+The README acknowledgements are generated from it, and a test keeps it in step with the upstream watch and
+`modules.json` (public PR #97, branch `p35/open-source-list`; working-agreements rule on PR #3). Found: the README
+thanks had fallen behind (the monitoring stack, backup tools, CoreDNS, frappe_docker, the hosts' software were
+missing); `owncloud/web` was archived upstream on 23 November 2026 (ocis carries the web client; where development
+continues: to verify); `ocis-konnectd` archived since 2020. Gap kept visible: the mobile app's dependencies are
+credited but not in the daily watch.
+
 ### P40 — Backup hardening against ransomware
 
 **App:** general · **Also touches:** none · **State:** in progress

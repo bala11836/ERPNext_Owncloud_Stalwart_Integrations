@@ -73,9 +73,13 @@
 | [KeePassDX](https://github.com/Kunzisoft/KeePassDX) | GPL-3.0 | P82 | — | reference passkey provider; GPL code only in the public mobile module |
 | [Password Store, Passkey Edition](https://github.com/pando85/Android-Password-Store) | GPL-3.0 | P82 | — | reference passkey provider (fork of the archived Android-Password-Store) |
 | [React Native VisionCamera](https://github.com/margelo/react-native-vision-camera) | MIT | P95 | — | camera frames for our own MediaPipe plugin |
-| [microG (GmsCore)](https://github.com/microg/GmsCore) | Apache-2.0 | P82 | — | being evaluated by the colleague for P82 (26 November 2026); the adoption check is to be recorded in P82 |
+| [microG (GmsCore)](https://github.com/microg/GmsCore) | Apache-2.0 | P82 | — | reference for the message layouts of the own QR route in the P82 trial app (mobile/trials/passkey-android; written from the public standard, no file copied); its adoption check as a component is still to be recorded in P82 |
 | [DB-IP Lite (IP to city database)](https://db-ip.com/db/lite.php) | CC BY 4.0 | P82 | — | one of two free IP location databases for unusual-sign-in alerts; attribution required |
 | [MaxMind GeoLite2](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) | GeoLite2 End User Licence Agreement (free, not an open-source licence) | P82 | — | the other candidate; the format authentik reads natively; needs a free account |
+| [AndroidX Credentials and Biometric](https://github.com/androidx/androidx) | Apache-2.0 | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; credentials 1.6.0 and biometric 1.1.0, no open advisories (OSV, 26 November 2026) |
+| [OkHttp](https://github.com/square/okhttp) | Apache-2.0 | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 4.12.0 for the relay connection, no open advisories (OSV, 26 November 2026) |
+| [JUnit 4](https://github.com/junit-team/junit4) | EPL-1.0 | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 4.13.2, tests only |
+| [Google code scanner (play-services-code-scanner)](https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner) | Android Software Development Kit licence (not open source) | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 16.1.0 reads the QR code; needs Google Play services, so the real app needs another reader for phones without them |
 
 ## Used before
 

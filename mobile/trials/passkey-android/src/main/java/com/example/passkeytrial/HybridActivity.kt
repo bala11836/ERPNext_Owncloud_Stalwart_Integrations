@@ -32,7 +32,7 @@ import okio.ByteString.Companion.toByteString
  * fingerprint match. Nothing here is paired, and the relay only ever sees encrypted bytes.
  */
 class HybridActivity : FragmentActivity() {
-    // TRIAL ONLY: the public relay the standard assigns number 0 (run by Google). The real app's relay is an open decision.
+    // TRIAL ONLY: the public relay the standard assigns number 0 (run by Google). Owner (26 Nov 2026): the real app uses it too, until the own QR route is retired.
     private val relayId = 0
     private val fidoUuid = ParcelUuid.fromString("0000fff9-0000-1000-8000-00805f9b34fb")
     private val random = SecureRandom()

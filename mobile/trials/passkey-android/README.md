@@ -32,8 +32,10 @@ answers the three open questions of P82 before anything is built into the real a
   trial can show who calls during the QR route. The real app must refuse it.
 - The browser list is fetched from Google at start and not pinned.
 - The own QR route uses the public relay the standard assigns number 0 (run by Google), without any agreement
-  with its operator; the relay sees only encrypted bytes. Which relay the real app uses is an open decision.
-- The own QR route is not reviewed by an outside security reviewer; it must be before any real use.
+  with its operator; the relay sees only encrypted bytes. Owner's decision (26 November 2026): the real app
+  uses this relay too, until the own QR route is retired (when no phone below Android 14 is left).
+- The own QR route is not security-reviewed. Owner's decision (26 November 2026): Codex reviews it, in the role
+  of a senior security analyst, before any real sign-in (planned for the week of 30 November 2026; P82).
 - No check of `excludeCredentials`, no sign counter, one fixed test identity (AAGUID), debug signing.
 - Library checksums are not pinned (the real app pins them).
 

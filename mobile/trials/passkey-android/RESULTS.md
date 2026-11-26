@@ -75,14 +75,14 @@ sign-in cannot reach that key through Android. The own route is researched below
   - kanidm webauthn-rs (MPL-2.0, active): both sides in Rust and a relay server (`cable-tunnel-server`).
   - LibreCaBLE and fidont (GPL-3.0, each about a month old, a dozen stars, self-described as experimental and
     not audited): proof that a third-party app can do it; not a base to build on.
-- **The relay server is the open decision.** The phone names the relay. Either Google's public one (works
+- **The relay server** (decided on 26 November 2026, see "Owner's decisions" below). The phone names the relay. Either Google's public one (works
   today according to these projects, but we have no agreement with Google and it could be closed to us), or
   our own relay on a domain name that the standard derives from a number (must be registered and run by us;
   code exists in webauthn-rs).
 - **Cost and risk:** estimated 4 to 6 weeks including tests, plus an outside security review, because it is
   encryption protocol code where a mistake breaks sign-in security. None of the open implementations is
   certified.
-- **Options for the owner:**
+- **Options for the owner** (the owner chose option 2 on 26 November 2026):
   1. Older phones use the app only; signing in on a computer needs a phone with Android 14 or newer.
   2. Build the own QR route (above), for all phones.
   3. Decide after counting how many people need computer sign-in and carry a phone below Android 14.
@@ -105,8 +105,8 @@ passkey demo website, through the standard's public relay number 0.
 
 Notes: after its answer was accepted, the computer sent one more request with command number 0, which the app
 refused as unknown; harmless here, to be understood before real use. The code is a trial: written in one
-sitting, covered by unit tests, not reviewed by an outside security reviewer, and it uses a relay we have no
-agreement with. All of that must change before real sign-ins (see the README's trial-only shortcuts).
+sitting, covered by unit tests, not security-reviewed, and it uses a relay we have no agreement with. The
+review comes before real sign-ins; the relay stays by the owner's decision (see "Owner's decisions" below).
 
 **Answer to question 2:** phones with Android 9 to 13 can sign in on a computer by QR code when the app runs
 the route itself. Tested on Android 13 only; Android 9 to 12 are not tested.
@@ -135,7 +135,7 @@ route, are not tested with attestation.
   Android's documented behaviour of `setInvalidatedByBiometricEnrollment`, not a fault of the app, and an app
   cannot change it.
 - **Risk:** small on its own. Removing never lets a new person in; adding does, and adding destroys the key.
-- **To do:** correct the wording in the P82 record.
+- **Done (26 November 2026):** the P82 record and the decision log now say that only adding destroys the key.
 
 ### 2. A strong face unlock already on the phone can open the key, also after all fingerprints are removed
 
@@ -175,7 +175,19 @@ route, are not tested with attestation.
   server (its record of each key's last use), because a phone that is switched off cannot remove its own key.
 - **Cost to weigh:** anyone away for more than 7 days (leave, illness, a site without signal) needs a project
   manager visit and an admin approval again.
-- **Status:** proposal, not built; to be decided and recorded in P82.
+- **Status:** decided by the owner on 26 November 2026 and recorded in P82; the admin sets the number of days
+  per sign-in group (7 when none is set). Not built.
+
+## Owner's decisions on these results (26 November 2026, recorded in P82 and `docs/decisions.md`)
+
+- **Own QR route:** built for all phones, as a temporary add-on. The app reports each phone's Android version, and
+  the route is retired when no active phone is below Android 14. It stays a separate, removable part.
+- **Relay:** the standard's public relay number 0 (run by Google), for the trial and for real sign-ins until the
+  route is retired. No relay of our own. Accepted: no agreement with its operator.
+- **Security review:** Codex, in the role of a senior security analyst, before any real sign-in; planned for the
+  week of 30 November 2026.
+- **Unused keys:** removed by the sign-in server after 7 days, the number of days set per group by the admin.
+- **Wording:** the record now says that only adding a fingerprint or face destroys the key.
 
 ## Notes for the real app
 

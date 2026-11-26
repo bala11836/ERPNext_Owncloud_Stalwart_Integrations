@@ -113,7 +113,17 @@ Made against: frappe_docker `0ad1a11`, bench 5.31.1, Node 24.22.1, Yarn 1.22.22
   since our pin, so the next bump must start from upstream's new file. Our fix
   has only static tests; "Invalid origin" is still listed as open in
   `docs/rebuild-verification.md`, so check realtime on test after any change.
-- **Tests:** `tests/test_realtime_origin.py`.
+- **Upstream security fixes carried by hand:** because our copy replaces theirs,
+  a fix upstream makes in this template does not reach us through a
+  frappe_docker bump. Carried so far: the forced-download rule for `/files/`
+  (advisory GHSA-94mh-qq29-qwrf, high: the old rule matched lower-case
+  extensions only, so an uploaded `poc.SVG` or `poc.HTML` opened in the browser
+  and could run script in another user's session). Our copy has upstream's
+  v4.3.0 rule word for word since 26 November 2026 (P97): any case, 14 file
+  types. **Re-check** on every bump and whenever the daily watch reports a
+  frappe_docker advisory: compare this rule and the rest of the file with
+  upstream's.
+- **Tests:** `tests/test_realtime_origin.py`, `tests/test_files_forced_download.py`.
 - **Upstream:** reported privately to frappe_docker on 26 November 2026 (the Origin
   overwrite also switches off Frappe's own Origin check). Workaround to retire if
   upstream stops overwriting Origin.

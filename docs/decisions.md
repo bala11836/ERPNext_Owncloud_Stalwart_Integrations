@@ -6,6 +6,21 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Recovery only after the project manager checks the phone in person; leavers' files stay; 30 days for rejected captures
+
+- **Decision (owner, 26 November 2026):**
+  - **Lost passkey or replacement phone:** the project manager verifies the person's phone in person and confirms
+    the request in their own app (P82); until the app does this, they confirm it to the admin themselves. Nothing
+    is re-issued on a message, mail or call.
+  - **Leavers:** their personal business files stay in place and are not deleted. Mailboxes are shared in the
+    present setup, so there is no personal mailbox to close or redirect; the person is removed from the shared ones.
+  - **Rejected face captures** keep their photograph for 30 days, then only the record and the reason remain (P95).
+- **Why:** recovery is the easiest way around a strong sign-in, so it gets the same in-person check as onboarding.
+  Files a person made for the business belong to the business. Thirty days is long enough to answer a dispute
+  about a rejected capture and short enough not to keep faces without a purpose.
+- **Where:** `docs/sop/invite-a-user.md`, `onboarding-identity-and-biometrics.md`, `leaver-offboarding.md`,
+  `attendance-approval.md`; P82, P86, P95 and P96 in the P list; `custom_hr/face_queue_rules.py` (30 days).
+
 ### Correction: removing a fingerprint does not destroy an ERP Mobile key (P82)
 
 - **Correction:** P82 said that adding **or removing** a fingerprint or face destroys the key. The P82 trial (PR #98,

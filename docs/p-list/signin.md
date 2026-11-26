@@ -473,6 +473,10 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
 - **Leavers (owner, 26 November 2026, late evening):** the exit procedure in Frappe HR (the employee's separation,
   status Left) triggers removal of the person's keys, devices and sessions in authentik and purges all their data
   in the app on the phone; the face templates go too (P95). SOP A14 (P96).
+- **Lost passkey or replacement phone (owner, 26 November 2026, night):** the project manager verifies the
+  person's phone in person and confirms the request **in their own app**; only then is a key issued again (the admin's
+  approval follows as for onboarding). Nothing is re-issued on a message, mail or call. Until the app does this, the
+  project manager confirms to the admin themselves before a recovery invitation (SOP: invite a user).
 - **Usual places and unusual sign-ins (owner, 26 November 2026, late evening):** the sign-in server learns where
   each person usually signs in from: their usual IP addresses and networks, and the approximate location an IP
   address gives (city and country, not GPS). A sign-in from somewhere unusual (a new country or city, a new

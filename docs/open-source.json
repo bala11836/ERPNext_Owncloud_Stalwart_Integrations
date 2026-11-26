@@ -735,6 +735,26 @@
       ],
       "status": "evaluating",
       "note": "being evaluated by the colleague for P82 (26 November 2026); the adoption check is to be recorded in P82"
+    },
+    {
+      "name": "DB-IP Lite (IP to city database)",
+      "repo": "https://db-ip.com/db/lite.php",
+      "licence": "CC BY 4.0",
+      "used_in": [
+        "P82"
+      ],
+      "status": "evaluating",
+      "note": "one of two free IP location databases for unusual-sign-in alerts; attribution required"
+    },
+    {
+      "name": "MaxMind GeoLite2",
+      "repo": "https://dev.maxmind.com/geoip/geolite2-free-geolocation-data",
+      "licence": "GeoLite2 End User Licence Agreement (free, not an open-source licence)",
+      "used_in": [
+        "P82"
+      ],
+      "status": "evaluating",
+      "note": "the other candidate; the format authentik reads natively; needs a free account"
     }
   ]
 }

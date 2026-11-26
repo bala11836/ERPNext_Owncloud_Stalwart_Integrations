@@ -6,6 +6,26 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Correction: removing a fingerprint does not destroy an ERP Mobile key (P82)
+
+- **Correction:** P82 said that adding **or removing** a fingerprint or face destroys the key. The P82 trial (PR #98,
+  two phones) found that Android destroys it only when one is **added**; removing one leaves the key working. The
+  record now says so (owner's yes, 26 November 2026). This changes nothing in the design: the onboarding check
+  that only the person's own fingerprints are enrolled (P96) still covers the fingerprints that were there before.
+
+### Sign-ins from unusual places alert the admin (P82)
+
+- **Decision:** the sign-in server learns each person's usual IP addresses, networks and approximate locations
+  (city and country from the IP address, not GPS). A sign-in from somewhere unusual, or two sign-ins too far apart
+  for the time between them, alerts the admin on the Desk widget and/or by mail. It alerts and does not block at
+  first. The admin can mark office and site networks as usual for everyone.
+- **Why:** owner, 26 November 2026: a stolen or shared sign-in usually shows up as a new place. authentik already
+  records address and location with each sign-in event, and has a free GeoIP policy and notification rules, so no
+  paid feature is needed (to verify on test). Sign-in locations of employees are personal data: they go in the
+  staff notice, are kept for 90 days (then only the learned usual places remain; owner), and only the sign-in admin
+  sees them.
+- **Where:** P82 in the P list (also P53, P72); not built.
+
 ### Face attendance, first part: templates encrypted on the server, readable by no role, deleted for good (P95)
 
 - **Decision:** a worker's face is kept only as encrypted templates (site encryption key) in **Field Face

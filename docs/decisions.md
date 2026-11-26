@@ -1028,3 +1028,21 @@ check themselves in keep their existing workflows.
 - **Where:** `integrations/drive/README.md`, `deployment/README.md`,
   `tools/prepare_ingress.py`, `.client-identity-fingerprints`, `docs/retained.md`,
   register entry OFFICE-7. AI-assisted by Claude Code.
+
+### Trial app for passkeys held by the mobile app (P82, first step)
+
+- **Decision:** Before anything is built into the mobile app, a small throw-away Kotlin test app answers the
+  open questions of P82 on real phones: whether a computer's QR sign-in accepts a third-party passkey service's
+  keys, what works on Android 9 to 13, and whether the fingerprint lock (strong biometrics only, no PIN, key
+  destroyed when a fingerprint or face is added) holds on the phone brands in use. The app reads back what the
+  phone really did and refuses a key that is weaker than asked. It is never shipped.
+- **Why:** The whole P82 design rests on these three points and none is documented by Google or the phone
+  makers; a trial costs days, a wrong assumption costs the design.
+- **Dependency review:** On 26 November 2026, `androidx.credentials` 1.6.0 and `androidx.biometric` 1.1.0
+  (Apache-2.0, Google, both the latest stable releases) and JUnit 4.13.2 (EPL-1.0, tests only) were checked in
+  OSV: none open for the two AndroidX libraries; JUnit's GHSA-269g-pwp5-87pp is fixed since 4.13.1. Built with
+  the Android Gradle plugin 9.2.1 and its built-in Kotlin. Library checksums are not pinned in the trial.
+  For the own QR route (owner's go, 26 November): OkHttp 4.12.0 (Apache-2.0, Square) and Google's
+  `play-services-code-scanner` 16.1.0, both checked in OSV on 26 November 2026: none open. The route's reference
+  is the hybrid authenticator in microG GmsCore (Apache-2.0, active); no file was copied.
+- **Where:** `mobile/trials/passkey-android/` (its README lists the trial-only shortcuts). AI-assisted by Claude Code.

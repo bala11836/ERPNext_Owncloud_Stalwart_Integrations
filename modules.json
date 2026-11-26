@@ -499,6 +499,23 @@
       ]
     },
     {
+      "id": "branding",
+      "title": "Default brand (Unformat)",
+      "summary": "Unformat logo, favicons and brand file: the default look, replaced per deployment through the private profile; guide, copyright and trademark note.",
+      "readme": "branding/README.md",
+      "paths": [
+        "branding/**",
+        "tests/test_branding.py"
+      ],
+      "tests": [
+        "tests/test_branding.py"
+      ],
+      "depends_on": [
+        "deployment"
+      ],
+      "upstream": []
+    },
+    {
       "id": "test-refresh",
       "title": "Permanent test site and one-way refresh",
       "summary": "Restricted production snapshot export, test-side restore with quarantine of outbound integrations and credentials, refresh button and progress, test profiles, egress policy and the verification tools used for acceptance.",

@@ -6,6 +6,20 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Unformat is the default brand, public and replaceable (P85)
+
+- **Decision:** our own brand, Unformat (the "UN / format" logo, favicons, name and colours), is published in
+  `branding/unformat/` and is the default look: the ERP's logo and favicons and the front page's title and name.
+  A deployment replaces it through its private profile (`company_logo`, `company_favicon_dir`, `website_title`,
+  `website_name`), as before. The copyright notice reads "Copyright © 2026 unformat.in"; the name and logo are
+  trademarks of unformat.in, free to use to run, test and show the software, replaced by anyone shipping it as
+  their own product. The mobile app's name, app ID and icons follow in a later step with the app's maintainers.
+- **Why:** the owner aims to keep about 95% of the work public; our brand is part of it, and users always keep the
+  choice of replacing it. Clients' brands stay private (P84). Deployments that supply their own branding, such as
+  production and the test site, see no change.
+- **Where:** `branding/`, `erpnext_drive_integrations/public/company-*`, `tools/prepare_runtime.py`, `README.md`,
+  `LICENSES.md`, `tests/test_branding.py`.
+
 ### Client identity stays out of the public repository, checked by fingerprints (P84)
 
 - **Decision:** a client's name in every form, logo, domains, mail addresses and people never appear in this

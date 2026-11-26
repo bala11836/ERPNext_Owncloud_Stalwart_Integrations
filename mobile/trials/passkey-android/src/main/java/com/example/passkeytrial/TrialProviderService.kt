@@ -63,7 +63,7 @@ class TrialProviderService : CredentialProviderService() {
             val rpId = json.optString("rpId")
             val allowed = json.optJSONArray("allowCredentials")?.let { list -> (0 until list.length()).map { list.getJSONObject(it).getString("id") } }.orEmpty()
             val held = Store.passkeys(this).filter { it.rpId == rpId && (allowed.isEmpty() || it.id in allowed) }
-            Store.log(this, "begin get: site=$rpId caller=${request.callingAppInfo?.packageName} named=${allowed.size} offered=${held.size}")
+            Store.log(this, "begin get: caller=${request.callingAppInfo?.packageName} named=${allowed.size} offered=${held.size}")
             held.forEach { entries += PublicKeyCredentialEntry.Builder(this, it.userName, pending(GetActivity::class.java, it.id), option).build() }
         }
         callback.onResult(BeginGetCredentialResponse.Builder().setCredentialEntries(entries).build())

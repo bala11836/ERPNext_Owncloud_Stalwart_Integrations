@@ -61,10 +61,17 @@ object Cbor {
             return when (first shr 5) {
                 0 -> length(low)
                 1 -> -1 - length(low)
-                2 -> take(length(low).toInt())
-                3 -> String(take(length(low).toInt()))
+                2 -> take(count(low))
+                3 -> String(take(count(low)))
                 4 -> List(count(low)) { value(depth + 1) }
-                5 -> LinkedHashMap<Any?, Any?>().apply { repeat(count(low)) { put(value(depth + 1), value(depth + 1)) } }
+                5 -> LinkedHashMap<Any?, Any?>().apply {
+                    repeat(count(low)) {
+                        val key = value(depth + 1)
+                        require(key is Long || key is String) { "CBOR: unsupported map key" }
+                        require(!containsKey(key)) { "CBOR: duplicate map key" }
+                        put(key, value(depth + 1))
+                    }
+                }
                 else -> when (first) {
                     0xf4 -> false
                     0xf5 -> true
@@ -74,7 +81,8 @@ object Cbor {
             }
         }
 
-        private fun count(low: Int): Int = length(low).also { require(it <= bytes.size) { "CBOR: impossible count" } }.toInt()
+        /** A length or item count can never exceed the bytes that are left; checked before it is narrowed to Int. */
+        private fun count(low: Int): Int = length(low).also { require(it <= bytes.size - at) { "CBOR: impossible length" } }.toInt()
     }
 }
 
@@ -131,7 +139,21 @@ object WebAuthn {
             ),
         )
 
-    /** A website may use a key only for its own host or a parent of it: login.example.org may use example.org. */
+    /**
+     * A website may use a key only for its own host or a parent of it: login.example.org may use example.org.
+     * A name without a dot (a bare ending such as "com") is never a site. Two-part public endings such as "co.uk"
+     * are not known here: the verified browser has already refused them before it calls (it holds the full list).
+     */
     fun siteMayUse(host: String, rpId: String): Boolean =
-        rpId.isNotEmpty() && (host == rpId || host.endsWith(".$rpId"))
+        rpId.contains('.') && !rpId.startsWith(".") && !rpId.endsWith(".") && (host == rpId || host.endsWith(".$rpId"))
+
+    /**
+     * Who may ask for a key or a signature:
+     * - a caller whose website claim Android verified against the list of real browsers (this includes Google
+     *   Play services on the QR route); only such a caller's client-data hash is ever signed;
+     * - our own app, which names no website and whose client data we write ourselves.
+     * A caller that claims a website without being verified, and every other app, is refused.
+     */
+    fun callerAllowed(verifiedOrigin: String?, statesWebsite: Boolean, ownApp: Boolean): Boolean =
+        verifiedOrigin != null || (!statesWebsite && ownApp)
 }

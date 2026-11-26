@@ -178,6 +178,27 @@ route, are not tested with attestation.
 - **Status:** decided by the owner on 26 November 2026 and recorded in P82; the admin sets the number of days
   per sign-in group (7 when none is set). Not built.
 
+## After the review fixes (26 November 2026, evening): the routes still work
+
+The review of this pull request found that the passkey service answered callers it had not verified. The app now
+answers only a verified browser or itself (see the README, "Who the app answers"); the channel is locked against
+two writers; incoming points are checked explicitly; the data reader is stricter; site and user names are out of
+the log. Re-test on the Oppo CPH2525 (Android 15) with the fixed build, from the app's own log:
+
+| Route | Result |
+|:--|:--|
+| Own QR route: make a passkey asked by the computer | Done (a first try was cancelled at the fingerprint prompt and correctly refused) |
+| Own QR route: sign in on the computer | Done |
+| Android's route (computer QR through the phone's camera) | Done twice; caller Google Play services, `verified=true allowed=true` |
+| A sign-in asked when the phone held no passkey for the site | Refused ("no passkey here"), the computer showed an error |
+
+Not tested on a phone: the refusal of an unverified caller itself (it needs a second, hostile app on the phone);
+it is covered by the unit test `onlyAVerifiedBrowserOrOurOwnAppIsServed`. The tester also reported a sign-in in
+the phone's own Chrome as working; that line was no longer in the part of the log that was read.
+
+Still unexplained: after each accepted answer the computer sends a two-byte message (message type 1, command
+number 0, nothing after it), which the app refuses as unknown.
+
 ## Owner's decisions on these results (26 November 2026, recorded in P82 and `docs/decisions.md`)
 
 - **Own QR route:** built for all phones, as a temporary add-on. The app reports each phone's Android version, and

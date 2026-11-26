@@ -21,12 +21,13 @@ class GetActivity : FragmentActivity() {
         val option = request?.credentialOptions?.filterIsInstance<GetPublicKeyCredentialOption>()?.firstOrNull() ?: return fail("no passkey request")
         val caller = Caller(this, request.callingAppInfo, option.clientDataHash)
         Store.log(this, "get: ${caller.summary}")
+        if (!caller.allowed) return fail("caller not verified")
 
         val json = JSONObject(option.requestJson)
         val rpId = json.optString("rpId")
         val passkey = Store.passkeys(this).firstOrNull { it.id == intent.getStringExtra(TrialProviderService.EXTRA_ID) && it.rpId == rpId }
-            ?: return fail("no such passkey for $rpId")
-        if (!caller.mayUse(rpId)) return fail("site ${caller.origin} may not use the key of $rpId")
+            ?: return fail("no such passkey for the named site")
+        if (!caller.mayUse(rpId)) return fail("the calling site may not use the key of the site it names")
 
         val (clientData, hash) = caller.clientData("webauthn.get", json.getString("challenge"))
         val authData = WebAuthn.authData(rpId, WebAuthn.GET_FLAGS)
@@ -46,7 +47,7 @@ class GetActivity : FragmentActivity() {
                 .put("authenticatorAttachment", "platform")
                 .put("response", response)
                 .put("clientExtensionResults", JSONObject())
-            Store.log(this, "get: DONE site=$rpId")
+            Store.log(this, "get: DONE")
             val result = Intent()
             PendingIntentHandler.setGetCredentialResponse(result, GetCredentialResponse(PublicKeyCredential(credential.toString())))
             setResult(RESULT_OK, result)

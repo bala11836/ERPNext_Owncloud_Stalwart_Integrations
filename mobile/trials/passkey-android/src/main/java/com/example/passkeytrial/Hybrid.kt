@@ -70,12 +70,19 @@ object Hybrid {
     fun decompress(point: ByteArray): ECPublicKey {
         require(point.size == 33 && (point[0] == 2.toByte() || point[0] == 3.toByte())) { "not a compressed P-256 point" }
         val x = BigInteger(1, point.copyOfRange(1, 33))
+        require(x < PRIME) { "point is not on the curve" }
         val square = x.modPow(BigInteger.valueOf(3), PRIME).subtract(x.multiply(BigInteger.valueOf(3))).add(P256.curve.b).mod(PRIME)
         var y = square.modPow(PRIME.add(BigInteger.ONE).shiftRight(2), PRIME)
         require(y.modPow(BigInteger.TWO, PRIME) == square) { "point is not on the curve" }
         if (y.testBit(0) != (point[0] == 3.toByte())) y = PRIME.subtract(y)
+        require(onCurve(x, y)) { "point is not on the curve" }
         return KeyFactory.getInstance("EC").generatePublic(ECPublicKeySpec(ECPoint(x, y), P256)) as ECPublicKey
     }
+
+    /** True only for a real point of P-256: both numbers below the prime and y^2 = x^3 - 3x + b. Never left to the platform. */
+    fun onCurve(x: BigInteger, y: BigInteger): Boolean =
+        x.signum() >= 0 && y.signum() >= 0 && x < PRIME && y < PRIME &&
+            y.modPow(BigInteger.TWO, PRIME) == x.modPow(BigInteger.valueOf(3), PRIME).subtract(x.multiply(BigInteger.valueOf(3))).add(P256.curve.b).mod(PRIME)
 
     /** The 65-byte form 04 | x | y. */
     fun uncompressed(key: ECPublicKey): ByteArray = byteArrayOf(4) + WebAuthn.fixed32(key.w.affineX) + WebAuthn.fixed32(key.w.affineY)
@@ -83,6 +90,7 @@ object Hybrid {
     fun fromUncompressed(bytes: ByteArray): ECPublicKey {
         require(bytes.size == 65 && bytes[0] == 4.toByte()) { "not an uncompressed P-256 point" }
         val point = ECPoint(BigInteger(1, bytes.copyOfRange(1, 33)), BigInteger(1, bytes.copyOfRange(33, 65)))
+        require(onCurve(point.affineX, point.affineY)) { "point is not on the curve" }
         return KeyFactory.getInstance("EC").generatePublic(ECPublicKeySpec(point, P256)) as ECPublicKey
     }
 
@@ -245,19 +253,27 @@ object Hybrid {
             init(mode, SecretKeySpec(key, "AES"), GCMParameterSpec(128, ByteBuffer.allocate(12).putInt(8, count).array()))
         }
 
+        /** Locked: replies come from two threads, and a counter used twice would repeat an AES-GCM nonce. */
+        @Synchronized
         fun seal(message: ByteArray): ByteArray {
+            check(writeCount < MAX_MESSAGES) { "channel used up" }
             val padding = 32 - message.size % 32
             val padded = message.copyOf(message.size + padding).also { it[it.lastIndex] = (padding - 1).toByte() }
             return cipher(Cipher.ENCRYPT_MODE, write, writeCount++).doFinal(padded)
         }
 
+        @Synchronized
         fun open(sealed: ByteArray): ByteArray {
+            check(readCount < MAX_MESSAGES) { "channel used up" }
             val padded = cipher(Cipher.DECRYPT_MODE, read, readCount++).doFinal(sealed)
             val padding = (padded.last().toInt() and 0xff) + 1
             require(padding <= padded.size) { "bad padding" }
             return padded.copyOf(padded.size - padding)
         }
     }
+
+    /** A sign-in needs a handful of messages; far below the point where a counter could wrap. */
+    const val MAX_MESSAGES = 1 shl 16
 
     // ---- the requests inside the channel (CTAP2) -----------------------------------------------------------
 
@@ -268,6 +284,7 @@ object Hybrid {
     const val CMD_GET_INFO = 4
     const val STATUS_OK = 0
     const val STATUS_INVALID_COMMAND = 0x01
+    const val STATUS_CREDENTIAL_EXCLUDED = 0x19
     const val STATUS_OPERATION_DENIED = 0x27
     const val STATUS_NO_CREDENTIALS = 0x2e
 
@@ -292,13 +309,21 @@ object Hybrid {
         return SignIn(map[1L] as String, map[2L] as ByteArray, allowed)
     }
 
-    class Create(val clientDataHash: ByteArray, val rpId: String, val userId: ByteArray, val userName: String, val algorithms: List<Long>)
+    class Create(
+        val clientDataHash: ByteArray,
+        val rpId: String,
+        val userId: ByteArray,
+        val userName: String,
+        val algorithms: List<Long>,
+        val excluded: List<ByteArray>,
+    )
 
     fun parseCreate(parameters: ByteArray): Create {
         val map = Cbor.decode(parameters) as? Map<*, *> ?: throw IllegalArgumentException("request is not a map")
         val user = map[3L] as Map<*, *>
         val algorithms = (map[4L] as? List<*>).orEmpty().mapNotNull { (it as? Map<*, *>)?.get("alg") as? Long }
-        return Create(map[1L] as ByteArray, (map[2L] as Map<*, *>)["id"] as String, user["id"] as ByteArray, user["name"] as? String ?: "user", algorithms)
+        val excluded = (map[5L] as? List<*>).orEmpty().mapNotNull { (it as? Map<*, *>)?.get("id") as? ByteArray }
+        return Create(map[1L] as ByteArray, (map[2L] as Map<*, *>)["id"] as String, user["id"] as ByteArray, user["name"] as? String ?: "user", algorithms, excluded)
     }
 
     /** A new key's answer: without a signature no attestation ("none"), with one Android key attestation. */

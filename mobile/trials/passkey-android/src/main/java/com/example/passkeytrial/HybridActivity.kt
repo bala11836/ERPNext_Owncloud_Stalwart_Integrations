@@ -57,9 +57,10 @@ class HybridActivity : FragmentActivity() {
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) scan() else stop("Bluetooth permission refused")
     }
 
-    private fun say(line: String) {
+    /** [line] goes to the log; [detail] (site and user names) is shown on the screen only. */
+    private fun say(line: String, detail: String = "") {
         Store.log(this, "qr: $line")
-        runOnUiThread { status.text = line }
+        runOnUiThread { status.text = if (detail.isEmpty()) line else "$line\n$detail" }
     }
 
     private fun stop(reason: String) {
@@ -178,15 +179,15 @@ class HybridActivity : FragmentActivity() {
             Hybrid.CMD_GET_INFO -> reply(webSocket, open, byteArrayOf(Hybrid.STATUS_OK.toByte()) + Hybrid.info())
             Hybrid.CMD_GET_ASSERTION -> signIn(webSocket, open, Hybrid.parseSignIn(parameters))
             Hybrid.CMD_MAKE_CREDENTIAL -> create(webSocket, open, Hybrid.parseCreate(parameters))
-            else -> refuse(webSocket, open, Hybrid.STATUS_INVALID_COMMAND, "unknown command $command")
+            else -> refuse(webSocket, open, Hybrid.STATUS_INVALID_COMMAND, "unknown command $command (${parameters.size} more bytes)")
         }
     }
 
     private fun signIn(webSocket: WebSocket, open: Hybrid.Channel, ask: Hybrid.SignIn) {
         val named = ask.allowed.map(WebAuthn::b64)
         val passkey = Store.passkeys(this).firstOrNull { it.rpId == ask.rpId && (named.isEmpty() || it.id in named) }
-            ?: return refuse(webSocket, open, Hybrid.STATUS_NO_CREDENTIALS, "no passkey here for ${ask.rpId}")
-        say("the computer asks to sign in to ${ask.rpId} as ${passkey.userName}")
+            ?: return refuse(webSocket, open, Hybrid.STATUS_NO_CREDENTIALS, "no passkey here for the site the computer names")
+        say("the computer asks to sign in", "${passkey.userName} at ${ask.rpId}")
         val authData = WebAuthn.authData(ask.rpId, WebAuthn.GET_FLAGS)
         runOnUiThread {
             Biometric.sign(this, passkey.alias, authData + ask.clientDataHash, "Sign in to ${ask.rpId} on the computer") { signed ->
@@ -195,13 +196,17 @@ class HybridActivity : FragmentActivity() {
                     return@sign refuse(webSocket, open, Hybrid.STATUS_OPERATION_DENIED, why)
                 }
                 reply(webSocket, open, Hybrid.signInAnswer(WebAuthn.unb64(passkey.id), authData, signature, WebAuthn.unb64(passkey.userHandle)))
-                say("DONE: signed in to ${ask.rpId} on the computer")
+                say("DONE: signed in on the computer", "${passkey.userName} at ${ask.rpId}")
             }
         }
     }
 
     private fun create(webSocket: WebSocket, open: Hybrid.Channel, ask: Hybrid.Create) {
         if (-7L !in ask.algorithms) return refuse(webSocket, open, Hybrid.STATUS_OPERATION_DENIED, "the site does not accept ES256 keys")
+        val excluded = ask.excluded.map(WebAuthn::b64)
+        if (Store.passkeys(this).any { it.rpId == ask.rpId && it.id in excluded }) {
+            return refuse(webSocket, open, Hybrid.STATUS_CREDENTIAL_EXCLUDED, "this phone already holds a passkey the site excludes")
+        }
         val id = ByteArray(16).also(random::nextBytes)
         val passkey = Store.Passkey(WebAuthn.b64(id), ask.rpId, WebAuthn.b64(ask.userId), ask.userName)
         val made = try {
@@ -209,7 +214,7 @@ class HybridActivity : FragmentActivity() {
         } catch (e: Exception) {
             return refuse(webSocket, open, Hybrid.STATUS_OPERATION_DENIED, "key not made: $e")
         }
-        say("the computer asks to make a passkey for ${ask.rpId}; key made, ${made.report}")
+        say("the computer asks to make a passkey; key made, ${made.report}", "${ask.userName} at ${ask.rpId}")
         val authData = WebAuthn.authData(ask.rpId, WebAuthn.CREATE_FLAGS, id, WebAuthn.coseKey(made.publicKey.w.affineX, made.publicKey.w.affineY))
         runOnUiThread {
             Biometric.sign(this, passkey.alias, authData + ask.clientDataHash, "Create a passkey for ${ask.rpId}") { signed ->
@@ -220,7 +225,7 @@ class HybridActivity : FragmentActivity() {
                 Store.add(this, passkey)
                 val attest = Store.attest(this)
                 reply(webSocket, open, if (attest) Hybrid.createAnswer(authData, signed.getOrThrow(), made.certificates) else Hybrid.createAnswer(authData))
-                say("DONE: passkey made for ${ask.rpId} (${ask.userName}) attestation=${if (attest) "android-key, ${made.chain}" else "none"}")
+                say("DONE: passkey made, attestation=${if (attest) "android-key, ${made.chain}" else "none"}", "${ask.userName} at ${ask.rpId}")
             }
         }
     }

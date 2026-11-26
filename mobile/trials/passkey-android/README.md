@@ -23,20 +23,35 @@ answers the three open questions of P82 before anything is built into the real a
   transport) and answers the request after a fingerprint match with the same hardware key. It can make a
   passkey and sign in. It does not use Android 14's passkey services, so it also runs on Android 9 to 13.
 - **Log** on the screen and in `adb logcat -s PasskeyTrial`: who called (browser, Google Play services for the QR
-  route, or an app), which website, and the result. The log holds no secrets: private keys stay in the secure
-  hardware, and the trial is used against a public passkey demo website only.
+  route, or an app), whether Android verified it, and the result. The log holds no secrets and no site or user
+  names (those are shown on the screen only): private keys stay in the secure hardware, and the trial is used
+  against a public passkey demo website only.
+
+## Who the app answers (fixed after the review of 26 November 2026)
+
+- **A verified browser** (Android checked the caller against Google's public list of browsers; Google Play
+  services, which carries a computer's QR sign-in on Android 14+, is on it). Only such a caller's client-data
+  hash is ever signed, and only for its own website's key.
+- **The app itself.** It names no website, and the app writes the client data itself.
+- **Nobody else.** An app that claims a website without being verified, and every other app on the phone, is
+  refused before any key is made or any fingerprint is asked (`WebAuthn.callerAllowed`, `Caller.kt`). Without the
+  browser list (no internet at first start) every caller is refused.
 
 ## Trial-only shortcuts (do not copy into the real app)
 
-- A caller that states a website but is not on Google's public browser list is **logged and let through**, so the
-  trial can show who calls during the QR route. The real app must refuse it.
 - The browser list is fetched from Google at start and not pinned.
+- A website's key name is checked against its host, but two-part public endings (such as `co.uk`) are not known
+  to the app; it relies on the verified browser, which refuses them before it calls.
+- The encryption building blocks of the own QR route (key derivation, the handshake, point decoding, the data
+  reader) are written by hand and unit-tested, not taken from reviewed libraries. The real build replaces them
+  where a reviewed library exists.
+- The QR reader is Google's and needs Google Play services.
 - The own QR route uses the public relay the standard assigns number 0 (run by Google), without any agreement
   with its operator; the relay sees only encrypted bytes. Owner's decision (26 November 2026): the real app
   uses this relay too, until the own QR route is retired (when no phone below Android 14 is left).
 - The own QR route is not security-reviewed. Owner's decision (26 November 2026): Codex reviews it, in the role
   of a senior security analyst, before any real sign-in (planned for the week of 30 November 2026; P82).
-- No check of `excludeCredentials`, no sign counter, one fixed test identity (AAGUID), debug signing.
+- No sign counter, one fixed test identity (AAGUID), debug signing.
 - Library checksums are not pinned (the real app pins them).
 
 ## Build and run

@@ -45,6 +45,9 @@ class HybridTest {
         assertThrows(IllegalArgumentException::class.java) { Cbor.decode(WebAuthn.hex("0000")) } // extra bytes
         assertThrows(IllegalArgumentException::class.java) { Cbor.decode(WebAuthn.hex("9b7fffffffffffffff")) } // impossible list size
         assertThrows(IllegalArgumentException::class.java) { Cbor.decode(ByteArray(20) { 0x81.toByte() }) } // nested too deep
+        assertThrows(IllegalArgumentException::class.java) { Cbor.decode(WebAuthn.hex("5b0000000100000001" + "00")) } // length above 2^31 must not shrink to 1
+        assertThrows(IllegalArgumentException::class.java) { Cbor.decode(WebAuthn.hex("a2" + "0101" + "0102")) } // the same key twice
+        assertThrows(IllegalArgumentException::class.java) { Cbor.decode(WebAuthn.hex("a1" + "4100" + "01")) } // bytes as a map key
     }
 
     @Test
@@ -77,6 +80,29 @@ class HybridTest {
             assertEquals(key.w, Hybrid.fromUncompressed(Hybrid.uncompressed(key)).w)
         }
         assertThrows(IllegalArgumentException::class.java) { Hybrid.decompress(ByteArray(33)) }
+    }
+
+    @Test
+    fun pointsThatAreNotOnTheCurveAreRefused() {
+        val good = Hybrid.uncompressed(Hybrid.newKeyPair().public as ECPublicKey)
+        Hybrid.fromUncompressed(good)
+        val bad = good.clone().also { it[64] = (it[64].toInt() xor 1).toByte() } // y changed by one bit
+        assertThrows(IllegalArgumentException::class.java) { Hybrid.fromUncompressed(bad) }
+        val tooBig = byteArrayOf(4) + ByteArray(64) { 0xff.toByte() } // both numbers above the prime
+        assertThrows(IllegalArgumentException::class.java) { Hybrid.fromUncompressed(tooBig) }
+        assertThrows(IllegalArgumentException::class.java) { Hybrid.fromUncompressed(byteArrayOf(4) + ByteArray(64)) } // (0, 0)
+        assertThrows(IllegalArgumentException::class.java) { Hybrid.decompress(byteArrayOf(2) + ByteArray(32) { 0xff.toByte() }) }
+    }
+
+    @Test
+    fun channelGivesEveryMessageItsOwnNonceAlsoFromManyThreads() {
+        val a = Hybrid.Channel(read = ByteArray(32) { 1 }, write = ByteArray(32) { 2 })
+        val sealed = java.util.Collections.synchronizedList(mutableListOf<ByteArray>())
+        val threads = List(8) { Thread { repeat(200) { sealed += a.seal(ByteArray(0)) } } }
+        threads.forEach(Thread::start)
+        threads.forEach(Thread::join)
+        // The same empty message under the same key: equal bytes would mean a nonce was used twice.
+        assertEquals(1600, sealed.map { it.joinToString("") { b -> "%02x".format(b) } }.toSet().size)
     }
 
     @Test
@@ -159,6 +185,7 @@ class HybridTest {
                     2 to linkedMapOf("id" to "example.org", "name" to "Example"),
                     3 to linkedMapOf("id" to byteArrayOf(5, 5), "name" to "trial-user"),
                     4 to listOf(linkedMapOf("alg" to -7, "type" to "public-key"), linkedMapOf("alg" to -257, "type" to "public-key")),
+                    5 to listOf(linkedMapOf("id" to id, "type" to "public-key")),
                 ),
             ),
         )
@@ -166,6 +193,7 @@ class HybridTest {
         assertEquals("trial-user", create.userName)
         assertArrayEquals(byteArrayOf(5, 5), create.userId)
         assertEquals(listOf(-7L, -257L), create.algorithms)
+        assertArrayEquals(id, create.excluded.single())
         val made = Cbor.decode(Hybrid.createAnswer(ByteArray(148)).drop(1).toByteArray()) as Map<*, *>
         assertEquals("none", made[1L])
         assertEquals(148, (made[2L] as ByteArray).size)

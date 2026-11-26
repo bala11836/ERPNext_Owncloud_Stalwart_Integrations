@@ -81,6 +81,18 @@ class WebAuthnTest {
         assertFalse(WebAuthn.siteMayUse("evilexample.org", "example.org"))
         assertFalse(WebAuthn.siteMayUse("example.org", "login.example.org"))
         assertFalse(WebAuthn.siteMayUse("example.org", ""))
+        assertFalse(WebAuthn.siteMayUse("example.org", "org")) // a bare ending is never a site
+        assertFalse(WebAuthn.siteMayUse("example.org", ".org"))
+    }
+
+    @Test
+    fun onlyAVerifiedBrowserOrOurOwnAppIsServed() {
+        assertTrue(WebAuthn.callerAllowed("https://example.org", statesWebsite = true, ownApp = false)) // verified browser
+        assertTrue(WebAuthn.callerAllowed(null, statesWebsite = false, ownApp = true)) // our own app, names no website
+        // The reviewed hole: an app that claims a website without being a verified browser, with or without a hash.
+        assertFalse(WebAuthn.callerAllowed(null, statesWebsite = true, ownApp = false))
+        assertFalse(WebAuthn.callerAllowed(null, statesWebsite = true, ownApp = true))
+        assertFalse(WebAuthn.callerAllowed(null, statesWebsite = false, ownApp = false)) // any other app on the phone
     }
 
     @Test

@@ -13,8 +13,11 @@ import org.json.JSONObject
  */
 @RequiresApi(34)
 class Caller(context: Context, private val info: CallingAppInfo, private val suppliedHash: ByteArray?) {
+    /** The website, only when Android verified the caller against the list of real browsers. */
     val origin: String?
-    val verified: Boolean
+
+    /** False for every caller we must not serve (see [WebAuthn.callerAllowed]). */
+    val allowed: Boolean
     val summary: String
 
     init {
@@ -29,19 +32,24 @@ class Caller(context: Context, private val info: CallingAppInfo, private val sup
             }
         }
         origin = seen
-        verified = seen != null || !info.isOriginPopulated()
-        summary = "caller=${info.packageName} statesWebsite=${info.isOriginPopulated()} website=$seen hashSupplied=${suppliedHash != null} ($note)"
+        allowed = WebAuthn.callerAllowed(seen, info.isOriginPopulated(), info.packageName == context.packageName)
+        summary = "caller=${info.packageName} statesWebsite=${info.isOriginPopulated()} verified=${seen != null} hashSupplied=${suppliedHash != null} allowed=$allowed ($note)"
     }
 
-    /** Refuses a website asking for another site's key. An unverified caller is logged and let through: TRIAL ONLY. */
+    /** A verified website may use only its own site's key. Our own app (no website) decides the site itself. */
     fun mayUse(rpId: String): Boolean {
+        if (!allowed) return false
         val host = origin?.let { Uri.parse(it).host } ?: return true
         return WebAuthn.siteMayUse(host, rpId)
     }
 
-    /** Browsers send the hash of their own client data. For an ordinary app we write the client data ourselves. */
+    /**
+     * A verified browser sends the hash of its own client data, and only then is a supplied hash signed.
+     * For our own app we write the client data ourselves, so the signature always names who really asked.
+     */
     fun clientData(type: String, challenge: String): Pair<String, ByteArray> {
-        if (suppliedHash != null) return "{}" to suppliedHash
+        check(allowed) { "caller not allowed" }
+        if (origin != null && suppliedHash != null) return "{}" to suppliedHash
         val certificate = info.signingInfo.apkContentsSigners[0].toByteArray()
         val json = JSONObject()
             .put("type", type)

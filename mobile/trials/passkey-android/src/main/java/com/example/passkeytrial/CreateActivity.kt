@@ -21,13 +21,16 @@ class CreateActivity : FragmentActivity() {
         val call = request?.callingRequest as? CreatePublicKeyCredentialRequest ?: return fail("no passkey request")
         val caller = Caller(this, request.callingAppInfo, call.clientDataHash)
         Store.log(this, "create: ${caller.summary}")
+        if (!caller.allowed) return fail("caller not verified")
 
         val json = JSONObject(call.requestJson)
         val rpId = json.getJSONObject("rp").optString("id").ifEmpty { return fail("the request names no site") }
-        if (!caller.mayUse(rpId)) return fail("site ${caller.origin} may not make a key for $rpId")
+        if (!caller.mayUse(rpId)) return fail("the calling site may not make a key for the site it names")
         val algorithms = json.getJSONArray("pubKeyCredParams").let { list -> (0 until list.length()).map { list.getJSONObject(it).getInt("alg") } }
         if (-7 !in algorithms) return fail("the site does not accept ES256 keys")
         val user = json.getJSONObject("user")
+        val excluded = json.optJSONArray("excludeCredentials")?.let { list -> (0 until list.length()).map { list.getJSONObject(it).getString("id") } }.orEmpty()
+        if (Store.passkeys(this).any { it.rpId == rpId && it.id in excluded }) return fail("this phone already holds a passkey the site excludes")
 
         val id = ByteArray(16).also { SecureRandom().nextBytes(it) }
         val passkey = Store.Passkey(WebAuthn.b64(id), rpId, user.getString("id"), user.optString("name", "user"))
@@ -63,7 +66,7 @@ class CreateActivity : FragmentActivity() {
                 .put("response", response)
                 .put("clientExtensionResults", JSONObject())
             Store.add(this, passkey)
-            Store.log(this, "create: DONE site=$rpId attestation=${if (attest) "android-key, ${made.chain}" else "none"}")
+            Store.log(this, "create: DONE attestation=${if (attest) "android-key, ${made.chain}" else "none"}")
             val result = Intent()
             PendingIntentHandler.setCreateCredentialResponse(result, CreatePublicKeyCredentialResponse(credential.toString()))
             setResult(RESULT_OK, result)

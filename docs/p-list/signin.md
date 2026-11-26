@@ -318,5 +318,94 @@ merge and a rollback point; then the Apple part.
 **Related:** P50 (the app, per-brand builds), P53 (Desk sign-out icons stay there), P56 and P08
 (global logout), P78 (invitation attempts), P79 (approved providers), P14 (push for approvals).
 
-**Status:** open, discussed and decided 25 November 2026; nothing built. The owner starts the
-work in another session.
+**Started (owner, 25 November 2026, evening):** go for research, a trial branch
+`p82/android-passkey-trial` in the public `mobile/` module, the upstream feature requests and these records.
+Trial phone: Android 14 or newer (model not yet named). Builds: Expo's cloud build (EAS), APK profile.
+Android ID: owner chose `in.unformat.erp` (the app's web address written reversed, as Android requires).
+
+**Research results (25 November 2026, read-only, public sources; agent research, partly unverified):**
+- *Android:* third-party passkey providers work from Android 14 (`androidx.credentials` 1.6.0 stable,
+  its credential provider service class in `androidx.credentials.provider`); the service, activities and XML go in a local Expo module, no config plugin
+  needed; EAS builds an installable APK. `in.unformat.erp` works: Expo writes ``package `in`.unformat.erp``
+  since SDK 51 (expo#26910); our own Kotlin files must use the backticks; open SDK 58 bug expo#53158, so
+  always prebuild with `--clean`. No security advisories (OSV) for `androidx.credentials`,
+  `androidx.biometric`, `expo-modules-core`.
+- *Biggest unknown:* Google publishes no statement that the computer QR sign-in offers a third-party
+  provider's keys; community reports (OneKeePass, Bitwarden) say it works on phones with Google Play
+  services, and it fails on microG. The trial tests this first.
+- *Phone makers:* some Android 14 builds have no third-party provider setting; Xiaomi/Oppo reportedly reject
+  the fingerprint-lock flag (single source); Samsung Pass conflicts reported. Pixel or recent Samsung for the trial.
+- *Google MyVault sample* (Apache-2.0, active): demonstration only; it stores private keys in its database,
+  allows PIN fallback and gives no attestation, so only its structure is borrowed; key handling is our own
+  (Keystore, StrongBox when present, fingerprint/face only, invalidated on enrolment change).
+- *Website link:* a provider serving websites through the browser gets the origin from the browser
+  (`CallingAppInfo.getOrigin` with Google's privileged-browser list); `assetlinks.json` on the sign-in host is
+  not needed for that (only when a native app calls). The earlier "to settle" point is answered.
+- *Attestation:* the app can give Android key attestation (package name and signing-certificate digest in the
+  certificate). authentik 2026.8.5 checks `android-key` signatures against Google's roots and stores the
+  certificate, but also accepts "none". Whether attestation survives the QR route: unverified, trial.
+- *authentik 2026.8.5 gaps:* (1) our app's AAGUID cannot be added to the device-type list (read-only, not in
+  blueprints); only "Unknown devices" (opens every unlisted one). Plan: an expression policy after the passkey
+  stages checks the key's AAGUID and attestation certificate. (2) authentik never sees whether the QR route
+  was used (`authenticatorAttachment` is not sent; confirmed in source); keys that exist only in the phone app
+  achieve the "computers only by QR" rule in practice. (3) No per-user session limit, no idle timeout (absolute
+  duration only), and browser-close and a fixed duration cannot both be set in one login stage. Plan: a small
+  service of ours, fed by login events, using `/api/v3/core/authenticated_sessions/` to end the older session
+  of the same kind; deleting a session sends back-channel logout (OIDC since 2025.8, SAML since 2025.10).
+  (4) App sign-out of everything: `bulk_delete` of the user's sessions plus revoking refresh tokens; works.
+  (5) Endpoint Devices: early preview, "not recommended for production", needs the authentik Agent on every
+  computer and a browser extension; local device login and advanced compliance are Enterprise (paid in
+  production); checks the device only at sign-in. Owner decision pending (see handover 25 Nov).
+- *Upstream:* existing requests to add to: authentik #16049 (AAGUID management), discussion #10104, #14304
+  (session refresh/idle). New requests needed: expose `authenticatorAttachment`/transports to policies;
+  per-user concurrent session limits. Not yet posted.
+- *Conflict with an owner decision:* the app's minimum is Android 9 (build guide, 22 Nov); passkeys in the app
+  need Android 14. Answered by the owner on 26 November (older phones, below): the minimum stays Android 9.
+
+**Owner decisions, 26 November 2026 (discussion with the agent; they amend the points above where they differ):**
+- **Onboarding in the app:** the person enters their mail address, mobile number and a face photo and sends
+  "Request access". The **project manager approves the person's identity** (in person, against an ID), then the
+  **admin approves** in authentik (invite). The app then creates the key in the phone's secure hardware; authentik
+  stores only its public half; the person is signed into the app automatically. The face photo serves only the
+  project manager's identity check and is not kept after the request is decided (owner: the face is not stored in
+  our database). A new key (new or replacement phone, or after an erase) goes through both approvals again; the
+  old key is removed in authentik at the same time.
+- **Biometrics stay with the phone:** fingerprints and face are enrolled in the phone's own settings and held by
+  its secure hardware; the app only learns "matched / not matched"; nothing biometric goes into the app's storage
+  or to our server. The key accepts **every** fingerprint enrolled on that phone, so at onboarding the project
+  manager asks, and the person confirms in writing, that only their own fingerprints and face are enrolled
+  (removing family members' first; SOP in P96). Enrolling another one afterwards destroys the key (unchanged).
+- **Strong sensors only:** the key unlocks only with Android's "strong" (Class 3) biometrics. Weak camera face
+  unlock, which most Android phones have, is never offered, so on those phones only the fingerprint works. Strong
+  face unlock (for example recent Pixels) is accepted: Android does not let an app choose fingerprint over a strong
+  face. A phone with neither is refused at onboarding with a clear message.
+- **Every sign-in needs the biometric,** no PIN fallback (unchanged). Signing in to the ERP and the other services
+  needs internet, because authentik checks the signature; without internet the app opens with the biometric for a
+  limited time and queues its captures (P50 offline). Computer sign-in by QR needs internet on both devices and
+  Bluetooth.
+- **Wrong attempts:** the app counts misses **in a row** (reset after a successful sign-in), shows how many tries
+  are left and makes the wait grow between tries; after **5** misses in a row it erases the key, and the person
+  onboards again (project manager, then admin). The phone's own 30-second sensor pause after 5 misses still
+  applies. Reason for counting only misses in a row: wet, dusty or cut fingers on site fail often, and every erase
+  costs a project manager visit and an admin approval.
+- **Self check-in without a selfie:** the biometric at each check-in plus the site's location fence proves the
+  person was there; this replaces the selfie of the 22 November decision (decision log, 26 November). The location
+  check is already built and free (our own server compares the distance and GPS accuracy; the app refuses
+  fake-location apps); nothing is paid unless the app shows Google maps. Field team attendance by face: **P95**.
+- **Older phones (Android 9–13):** owner: Android's limits must not lock these users out. The fingerprint-locked
+  key works from Android 9, and signing in to the app itself is done by the app. Only computer sign-in by QR
+  normally goes through Android 14's passkey-provider service; the trial tests whether the app can run the
+  QR-and-Bluetooth step (FIDO hybrid) itself on Android 9–13. Unverified until the trial.
+- **Apple exception group:** forcing Face ID does not close the gap: Apple passkeys copy to every device on the
+  same Apple ID, where that person's own Face ID unlocks them, and a website cannot demand Face ID over the phone's
+  passcode. The real fix is the Apple version of ERP Mobile (key kept in one iPhone, not copied), the Apple part of
+  this item. Until then the group stays small and the risk stays accepted (owner, 25 November).
+- **Daily face check of the phone owner** (owner question): not taken up; the biometric at every sign-in covers
+  most of it (agent).
+- **SOPs:** every manual step of this item (identity check, fingerprint confirmation, re-onboarding after an erase,
+  new or lost phone, exception group membership, admin approvals) gets an SOP under **P96**, written alongside the
+  build.
+
+**Status:** in progress; research done, decisions amended 26 November; nothing built. A local branch
+`p82/android-trial` (no commits, not pushed) exists in a worktree on the owner's PC; the colleague taking up P82
+picks the trial branch name.

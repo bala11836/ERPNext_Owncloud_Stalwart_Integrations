@@ -739,7 +739,7 @@
         "P82"
       ],
       "status": "evaluating",
-      "note": "being evaluated by the colleague for P82 (26 November 2026); the adoption check is to be recorded in P82"
+      "note": "reference for the message layouts of the own QR route in the P82 trial app (mobile/trials/passkey-android; written from the public standard, no file copied); its adoption check as a component is still to be recorded in P82"
     },
     {
       "name": "DB-IP Lite (IP to city database)",
@@ -760,6 +760,46 @@
       ],
       "status": "evaluating",
       "note": "the other candidate; the format authentik reads natively; needs a free account"
+    },
+    {
+      "name": "AndroidX Credentials and Biometric",
+      "repo": "https://github.com/androidx/androidx",
+      "licence": "Apache-2.0",
+      "used_in": [
+        "P82"
+      ],
+      "status": "evaluating",
+      "note": "P82 trial app (mobile/trials/passkey-android), never shipped; credentials 1.6.0 and biometric 1.1.0, no open advisories (OSV, 26 November 2026)"
+    },
+    {
+      "name": "OkHttp",
+      "repo": "https://github.com/square/okhttp",
+      "licence": "Apache-2.0",
+      "used_in": [
+        "P82"
+      ],
+      "status": "evaluating",
+      "note": "P82 trial app (mobile/trials/passkey-android), never shipped; 4.12.0 for the relay connection, no open advisories (OSV, 26 November 2026)"
+    },
+    {
+      "name": "JUnit 4",
+      "repo": "https://github.com/junit-team/junit4",
+      "licence": "EPL-1.0",
+      "used_in": [
+        "P82"
+      ],
+      "status": "evaluating",
+      "note": "P82 trial app (mobile/trials/passkey-android), never shipped; 4.13.2, tests only"
+    },
+    {
+      "name": "Google code scanner (play-services-code-scanner)",
+      "repo": "https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner",
+      "licence": "Android Software Development Kit licence (not open source)",
+      "used_in": [
+        "P82"
+      ],
+      "status": "evaluating",
+      "note": "P82 trial app (mobile/trials/passkey-android), never shipped; 16.1.0 reads the QR code; needs Google Play services, so the real app needs another reader for phones without them"
     }
   ]
 }

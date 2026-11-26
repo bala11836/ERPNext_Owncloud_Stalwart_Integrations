@@ -420,7 +420,27 @@ release record.
   Limits: checked directly against nginx in the container, not through the ERP upload screen or a signed-in browser.
 - **Production look for existing files: not done.** The owner said yes, but the session's permission check refused
   the production connection from this PC; nothing ran on production.
-- Not done: owner's browser check on test (optional), merge, production.
+- **Merged, not deployed (26 November 2026, owner's go):** public #103 at `bf8d5c8` (head `af3e6b9`, brought up to date
+  with main, CI passed; the template is byte-identical to the tested `95f25b9`), private #10 at `66d0b9f`.
+  **Reaches:** the erp stack on production (one mounted file, restart of the web container). The test ERP already
+  runs the file.
+- **Production look done (read-only, 15:46 UTC):** production runs the old rule (mounted file equal to the template
+  before P97). The site has **no public files at all** (0 public, 49 private), so no file with an affected extension
+  exists and nothing points to the flaw having been used through a stored file. Until production has the fix, a
+  signed-in user could still upload one.
+- **Production not changed: stopped.** The look showed the production server had rebooted at 15:30 UTC (16 minutes
+  earlier, new kernel) and another key signed in a minute after: another session or the owner is at work there.
+  Raised to the owner, who confirmed it and gave the word to continue. One monitoring container (Prometheus, P72) had not come back
+  after the reboot (seen 15:46 UTC; not touched).
+- **On production since 26 November 2026, 15:51 UTC (owner's go, after the owner confirmed the reboot):** the
+  template of main (`bf8d5c8`) replaced the mounted file; web container restarted (11 s); image unchanged
+  (`059f8bf`). Flaw confirmed before with harmless files, every header check passed after, test files removed.
+  Receipt `p97-production-erp-files-forced-download-bf8d5c8`; release log entry; rollback copy on the VPS.
+- **Drift check:** erp is reported behind main (30 files). The check reads the image tag and cannot see a mounted
+  file, so it still lists this template; the other 29 files are P95 and P93 (merged, not deployed).
+- **Acceptance:** 1, 2 and 4 met; 3 met for the header check, not for "drift check clean" (reason above).
+- **Left:** owner's signed-in browser check (a download, realtime); owner decides when P97 is closed. Proposal, no
+  item yet: the drift check compares mounted runtime files by checksum.
 
 **Related:** P89 (register BUILD-2), P91 (upgrade checks), P62 (daily watch finding
 `advisory:frappe_docker@0ad1a1152f93:GHSA-94mh-qq29-qwrf`).

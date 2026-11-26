@@ -1,6 +1,6 @@
 # Test site: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 27 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -211,3 +211,39 @@ flushes; the business scheduler is deliberately off on the test copy, so every e
 the queue by hand. **Fix:** flush the deferred inserts on test on a short timer (only that job, not the business
 scheduler), or a small read tool; plus an alarm on new error records (with P61's alarms). Check whether production
 flushes them (its scheduler runs).
+
+### P101 — Test Drive, test Paperless, test mail and the test editor sign in through the test sign-in server
+
+**App:** test-site · **Also touches:** signin, drive, dms, mail, editor · **State:** open
+
+**Why (found 27 November 2026, during the P98 browser check; owner chose this fix):** on 23 November only the test
+ERP moved to the separate test sign-in server (`test-sso.example.com`). Test Drive (production client `test-office`)
+and test mail (`test-office-mail`), and with Drive the test editor, still sign in through the production sign-in
+server. Their production entries admit only `Testers`; the owner's account left that group on 24 November (owner:
+use the native test administrator on the test server), so production now refuses the owner for test Drive
+("Permission denied", policy binding result False). Inside the ERP portal the Drive panel then stays empty, because
+the sign-in page refuses to be shown in a frame. **Test Paperless too** (owner, 27 November 2026: "paperless and
+owncloud doesn't work from test.example.com"): checked read-only, its only sign-in is OpenID through
+`sso.example.com` (regular login switched off, redirect to the sign-in server on), so the same refusal applies. It also means testing still depends on production sign-in, against
+the owner's decision that testing uses no production data.
+
+**What (proposal, owner to confirm before work):**
+1. Read-only inventory: every test app's issuer and client (Drive web, desktop and mobile clients; Paperless; webmail; the
+   editor through Drive; anything else on test still pointing at production), and what each production test entry is bound
+   to.
+2. Create the matching clients on the test sign-in server from the repository (blueprints or tools, not by hand),
+   with the same rules as the ERP: who may sign in, passkey flow.
+3. Point test Drive, test Paperless, test webmail and the test editor at the test server through the test profiles;
+   deploy on test; check sign-in, the portal's Drive and Paperless panels, opening an office document, webmail.
+4. Then retire the production entries for those test apps (`test-office`, `test-office-mail` and any others found)
+   with the existing fail-closed retirement procedure (23 November, `0c8544d`), on the owner's go.
+
+**Not decided:** whether test Drive's existing users and shares (linked to production identities) must be mapped
+to the test server's users, or the test Drive data is reset with the next test refresh; whether the Drive desktop and
+phone clients are covered now or later; order with P63 (demo mode) and P70 (domain split).
+
+**Acceptance:** the owner signs in to test Drive, test Paperless, test webmail and a test office document with the test
+administrator account through `test-sso`, and the portal's Drive and Paperless panels load; no test app trusts the production
+sign-in server; the production test entries are retired.
+
+**Related:** P76 and P77 (test sign-in server), P63, P70, P25, P69 (test webmail reader), P98 (where it was found).

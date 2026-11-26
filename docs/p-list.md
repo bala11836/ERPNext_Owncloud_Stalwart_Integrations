@@ -2,7 +2,7 @@
 
 > **Generated file: do not edit by hand.** This is the project's work list (every "P" number used in
 > commits, pull requests, READMEs and `docs/decisions.md`) published from the maintainers' private
-> list on 26 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
+> list on 27 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
 > deploying organisation's name (`<tenant>`), host names (`example.com`), IP addresses
 > (documentation ranges), server file paths and rollback folders, mail addresses, names of people and
 > of third parties' internal products, business file names, and links to private records
@@ -158,13 +158,13 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
-| ERP | [pending/erp.md](p-list/erp.md) | 14 | 14 |
+| ERP | [pending/erp.md](p-list/erp.md) | 13 | 13 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
 | Mobile | [pending/mobile.md](p-list/mobile.md) | 7 | 7 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
-| Test site | [pending/test-site.md](p-list/test-site.md) | 4 | 4 |
+| Test site | [pending/test-site.md](p-list/test-site.md) | 5 | 5 |
 
 ## All P items (index)
 
@@ -244,6 +244,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P94 | Bring production stacks back in line with main | [General](p-list/general.md) | editor, signin, portal, test-site · **State:** open | open |
 | P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** in progress | in progress |
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
-| P98 | ERP web server template: take up upstream's trusted-HTTPS forwarding changes | [ERP](p-list/erp.md) | signin, general · **State:** open | open |
 | P100 | Mobile app checks in CI, and the app's dependencies in the daily watch | [Mobile](p-list/mobile.md) | general · **State:** open | open |
+| P101 | Test Drive, test Paperless, test mail and the test editor sign in through the test sign-in server | [Test site](p-list/test-site.md) | signin, drive, dms, mail, editor · **State:** open | open |
 <!-- APP-INDEX-END -->

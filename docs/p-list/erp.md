@@ -1,6 +1,6 @@
 # ERP: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 27 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -374,33 +374,3 @@ public PR #101 (`p95/pm-queue`).
 - Not built: the mobile app's capture screen and the liveness check on the phone.
 
 **Status:** in progress.
-
-### P98 — ERP web server template: take up upstream's trusted-HTTPS forwarding changes
-
-**App:** erp · **Also touches:** signin, general · **State:** open
-
-**Why (found 26 November 2026, P89 and P97; owner: open an item):** our ERP web server template is a full copy
-that replaces frappe_docker's (register BUILD-2), so upstream's changes to it do not reach us. After P97, two
-differences from upstream `main` remain besides our own Origin change:
-1. **Trusted HTTPS forwarding** (frappe_docker `280fc962eb`, 11 November 2026, "configure trusted HTTPS forwarding for
-   OAuth redirects"): the forwarded "https" header is believed only when a new setting
-   `TRUST_UPSTREAM_FORWARDED_PROTO` is `on`. Ours believes it from anyone who can reach the web container. The
-   commit also changes upstream's entrypoint and compose files, so it is not a one-line copy.
-2. **Clearing two forwarded headers** (`X-Forwarded-SSL`, `X-Forwarded-Protocol`) before requests go to the backend
-   and to socket.io, so a client cannot set them.
-
-**Not decided, to check first:** whether either difference can be used against us (the web container is reached
-only through our proxy; what the proxy strips or sets is not verified); what the setting must be on test and
-production so sign-in redirects keep using https; how it interacts with our Origin change and the private report
-still in triage (private companion, BUILD-2). No published advisory names these two differences (checked
-26 November 2026).
-
-**What (proposal, owner to confirm before work):** read-only check of what reaches the web container on test;
-then carry both changes with the right setting in the test and production profiles; tests; register BUILD-2;
-through the test site with a sign-in and realtime check; production from main.
-
-**Acceptance:** our template differs from upstream's only by the Origin change; sign-in (redirects stay https),
-realtime and file downloads work on test and production; a forged forwarded header from a client is ignored.
-
-**Related:** P97 (same file), P89 (BUILD-2), P91 (upgrade checks: a check that compares this template with
-upstream's at the pinned commit would catch the next silent difference), P49 and P82 (sign-in redirects).

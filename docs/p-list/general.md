@@ -1,6 +1,6 @@
 # General: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 27 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -354,6 +354,29 @@ another start-at-boot guarantee), then reproduce with a reboot of the test VM to
 back, on test and production, with an alert that does not depend on Prometheus;
 (8) check the other stacks for services that stop as fast (same risk); (9) the reboot drill list names the
 monitoring stack.
+
+**Follow-ups 6 to 9 built and tested on the test VM (owner's go, 26 November 2026, night; public PR #112, receipt
+`p57-test-boot-counts-containers-f971f54`):**
+- **Cause:** not reproduced. A reboot of the test VM brought back throwaway copies of Prometheus with
+  `unless-stopped`, `always`, and `unless-stopped` with a slow stop. Production could not be read from this session.
+  So the fix does not depend on the cause.
+- **Fix:**
+  - The watch saves the running containers. After a reboot the boot check starts each one that ran before
+    (`always` or `unless-stopped`) and is still down after a minute, once, and fails on anything still down.
+  - It mails the admin through a dedicated sender when it repaired or failed something.
+  - The monitoring stack uses `restart: always`.
+  - Exporter-only hosts remove the central containers instead of keeping them stopped. On the test VM the four
+    pilot leftovers were removed; their volumes are kept.
+- **Second reboot with the fix:** the boot check started a deliberately lost container once (76 s after boot) and
+  passed.
+- **Follow-up 8 (other stacks):** on test every container with a restart policy came back. The boot check's start
+  now covers any stack that does not.
+- **Follow-up 9:** the reboot checklist names the monitoring stack.
+- **Open:**
+  - Production promotion (host check, monitoring policy) and the dedicated SMTP-only alert sender on production
+    mail with the admin as recipient. Both need production access and the owner's go.
+  - The restart watch reports the editor bridge's normal start-up retries after every boot (small follow-up).
+- **Merged** as `f5ac9ec` (PR #112, 26 November 2026, 18:30 UTC). **Merged, not deployed** to production.
 
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions
 

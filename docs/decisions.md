@@ -6,6 +6,20 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### One list of the open-source projects we use, credited and tracked in step (P35)
+
+- **Decision:** every open-source project we use, borrow code from or evaluate is in `docs/open-source.json` with
+  its repository, licence, where we use it and how we track it. The README acknowledgements and
+  `docs/open-source.md` are generated from it, and a test fails when a component the upstream watch follows, or an
+  upstream named in `modules.json`, is missing from the list (or the other way round). Projects under evaluation
+  are listed but not credited as used; they are credited and tracked in the pull request that adopts them.
+- **Why:** owner, 26 November 2026: we rely on many open-source projects (microG is being evaluated now) and must
+  credit them and follow their repositories. The README thanks had fallen behind the daily watch (the monitoring
+  stack, backup tools, CoreDNS, frappe_docker, the hosts' software), because the two lists were kept apart. The
+  first list also found that ownCloud Web's repository was archived on 23 November 2026 and that ocis-konnectd has
+  been archived since 2020.
+- **Where:** `docs/open-source.json`, `tools/open_source.py`, `tests/test_open_source.py`, `README.md`, `AGENTS.md`.
+
 ### Every upstream post is listed and checked for replies until we stop using that project (P35)
 
 - **Decision:** our bug reports, feature requests, comments and workarounds on other projects are listed in

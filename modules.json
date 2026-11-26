@@ -458,6 +458,8 @@
         "tests/test_host_checks.py",
         "tools/upstream_watch.py",
         "tests/test_upstream_watch.py",
+        "tools/open_source.py",
+        "tests/test_open_source.py",
         "tools/upstream_posts.py",
         "tests/test_upstream_posts.py"
       ],
@@ -489,6 +491,7 @@
         "tests/test_reboot_resilience.py",
         "tests/test_host_checks.py",
         "tests/test_upstream_watch.py",
+        "tests/test_open_source.py",
         "tests/test_upstream_posts.py"
       ],
       "upstream": [

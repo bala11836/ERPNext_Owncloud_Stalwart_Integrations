@@ -36,6 +36,7 @@ private companion.
 | A11 | Re-onboarding after a 5-miss erase, or a new, lost or replacement phone (P82) | employee, project manager, admin | lockout, phone change | designed | [onboarding](onboarding-identity-and-biometrics.md) | no |
 | A12 | Device and session review (phones and computers); unused-key grace days per group (P82) | admin | periodic, leavers | designed | — | no |
 | A13 | Dual approval for super-administrator access (P28) | two approvers | before privileged sessions | designed | — | yes |
+| A15 | Handling alerts about sign-ins from unusual places or networks; marking office and site networks as usual (P82) | admin | on each alert | designed | — | yes |
 | A14 | Leaver offboarding across every app; the Frappe HR exit procedure triggers key removal and purges the app data (owner, 26 Nov) | HR, admin | person leaves | designed | — | yes |
 
 ### B. Mobile app and devices

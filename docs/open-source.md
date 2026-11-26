@@ -74,6 +74,8 @@
 | [Password Store, Passkey Edition](https://github.com/pando85/Android-Password-Store) | GPL-3.0 | P82 | — | reference passkey provider (fork of the archived Android-Password-Store) |
 | [React Native VisionCamera](https://github.com/margelo/react-native-vision-camera) | MIT | P95 | — | camera frames for our own MediaPipe plugin |
 | [microG (GmsCore)](https://github.com/microg/GmsCore) | Apache-2.0 | P82 | — | being evaluated by the colleague for P82 (26 November 2026); the adoption check is to be recorded in P82 |
+| [DB-IP Lite (IP to city database)](https://db-ip.com/db/lite.php) | CC BY 4.0 | P82 | — | one of two free IP location databases for unusual-sign-in alerts; attribution required |
+| [MaxMind GeoLite2](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data) | GeoLite2 End User Licence Agreement (free, not an open-source licence) | P82 | — | the other candidate; the format authentik reads natively; needs a free account |
 
 ## Used before
 

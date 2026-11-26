@@ -376,7 +376,17 @@ monitoring stack.
   - Production promotion (host check, monitoring policy) and the dedicated SMTP-only alert sender on production
     mail with the admin as recipient. Both need production access and the owner's go.
   - The restart watch reports the editor bridge's normal start-up retries after every boot (small follow-up).
-- **Merged** as `f5ac9ec` (PR #112, 26 November 2026, 18:30 UTC). **Merged, not deployed** to production.
+- **Merged** as `f5ac9ec` (PR #112, 26 November 2026, 18:30 UTC). **On production** since 26 November 19:07 UTC (owner's go, 27 November IST).
+
+**Production (owner's go, 27 November 2026, IST; release log of that night):**
+- Boot check from `f5ac9ec` installed; monitoring stack on `restart: always` without a restart; boot check by hand passed.
+- Dedicated SMTP-only alert sender `smtp-host-alerts` created on production mail (send-as `noreply`, allowed only from
+  the VPS's tailnet address); recipient: the owner's mailbox (owner's choice). No mail sent yet.
+- **Follow-up 10 (found during the promotion; owner chose the repository fix):** the VPS cannot reach its own mail
+  server under the certificate's name. Public PR **#117** adds `host_checks.alert.address` (connect to the tailnet
+  address, certificate still verified for the name); on the test VM at `84c578e`, CI passed. **Open:** owner merges
+  #117; then install from main, alert section in the ERP profile, one test alert.
+- Not covered: a production reboot with the new check (proven on the test VM).
 
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions
 

@@ -365,3 +365,92 @@ public PR #101 (`p95/pm-queue`).
 - Not built: the mobile app's capture screen and the liveness check on the phone.
 
 **Status:** in progress.
+
+### P97 — Uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf)
+
+**App:** erp · **Also touches:** general · **State:** in progress
+
+**Why (found 26 November 2026 by the P91 to P93 session; daily watch baseline, "schedule"):** public attachments are
+served from disk under `/files/`. Our ERP web server config (`deployment/erp/frappe.conf.template:68`) forces HTML,
+SVG and XML uploads to download, but the rule matched lower-case extensions only. A file named `poc.SVG` or
+`poc.HTML` opened in the browser, so any signed-in user who can attach a public file could plant a page that runs
+script in the session of whoever opens the link (an administrator included). Published frappe_docker advisory
+GHSA-94mh-qq29-qwrf, high, fixed upstream in v4.3.0 (`d34f0f92a1`). Our template replaces upstream's (register
+BUILD-2), so a frappe_docker bump alone does not fix it.
+
+**What (owner go 26 November 2026):** carry upstream's rule word for word (any case; 14 file types instead of 4;
+anchored at the end of the name); a unit test that fails if the rule becomes case-sensitive again or loses a type;
+register BUILD-2 says upstream security fixes in this template are carried by hand and re-checked on every bump.
+
+**Scope decisions (owner go 26 November 2026):** only this rule. Upstream's other template changes since our pin
+(trusted HTTPS forwarding, `280fc962eb`; clearing `X-Forwarded-SSL` / `X-Forwarded-Protocol`) stay out: they touch
+how proxy headers are trusted and relate to the Origin report still in triage (private companion, BUILD-2). They
+have no item yet.
+
+**Release:** an "ERP runtime files" change (promotion map): render the ERP stack and redeploy; no image rebuild, no
+migration. Branch, test site, merge, main, production, with a rollback point (the previous mounted file) and a
+release record.
+
+**Acceptance:**
+1. On test, public uploads `poc.SVG`, `poc.HTML`, `poc.Xml` and their lower-case forms answer with
+   `Content-Disposition: attachment`; a `.PNG` and a `.pdf` open as before; private files behave as before.
+2. nginx starts with the rendered config; the realtime socket still connects (register BUILD-2).
+3. The same header check on production right after promotion; drift check clean for erp.
+4. Read-only look on production for existing public files with these extensions in upper or mixed case (file names
+   only), result recorded.
+
+**Progress (26 November 2026):**
+- Public PR **#103** (`p97/files-forced-download`, fix commit `b7e0b7c`): the rule, `tests/test_files_forced_download.py`
+  (6 tests; fails on the old rule), register BUILD-2. Repository check and client identity check passed locally; the
+  full unit run cannot run on the Windows PC, CI is the evidence. Advisories checked 26 November 2026: frappe_docker
+  advisories and releases against pin `0ad1a1152f93`; one published advisory (this one), fixed by the change;
+  latest release v4.3.0.
+- Read-only check on the test VM (26 November 2026): the ERP web container mounts the template read-only from
+  `<server path>` and renders it at start; the running config has the old
+  case-sensitive rule; nginx 1.26.3 with PCRE2 (supports the new pattern); no public file on test has one of these
+  extensions in upper or mixed case. The test ERP runs the colleague's PR #77 image (`2a9f149`), used by the P74
+  phone test: the fix needs only the mounted file replaced and the web container recreated (seconds), not a new
+  image. Not done; waits for the owner's go for the test slot.
+- **On test since 26 November 2026, 15:35 UTC (owner's go):** the template of `95f25b9` replaced the mounted file and
+  the web container was restarted (about 10 s; image unchanged, `2a9f149`). Before: `.SVG`, `.HTML`, `.Xml` test
+  files opened inline (flaw confirmed). After: `.SVG`, `.svg`, `.HTML`, `.html`, `.Xml`, `.xml`, `.MHT` answer
+  `Content-Disposition: attachment`; `.PNG` and `.pdf` unchanged; `.html.txt` no longer forced; private files 403
+  without a session as before; realtime handshake 200 as before; nginx syntax test passed first; test files removed.
+  Receipt `p97-test-erp-files-forced-download-95f25b9`; rollback copy kept on the test VM (in the receipt).
+  Limits: checked directly against nginx in the container, not through the ERP upload screen or a signed-in browser.
+- **Production look for existing files: not done.** The owner said yes, but the session's permission check refused
+  the production connection from this PC; nothing ran on production.
+- Not done: owner's browser check on test (optional), merge, production.
+
+**Related:** P89 (register BUILD-2), P91 (upgrade checks), P62 (daily watch finding
+`advisory:frappe_docker@0ad1a1152f93:GHSA-94mh-qq29-qwrf`).
+
+### P98 — ERP web server template: take up upstream's trusted-HTTPS forwarding changes
+
+**App:** erp · **Also touches:** signin, general · **State:** open
+
+**Why (found 26 November 2026, P89 and P97; owner: open an item):** our ERP web server template is a full copy
+that replaces frappe_docker's (register BUILD-2), so upstream's changes to it do not reach us. After P97, two
+differences from upstream `main` remain besides our own Origin change:
+1. **Trusted HTTPS forwarding** (frappe_docker `280fc962eb`, 11 November 2026, "configure trusted HTTPS forwarding for
+   OAuth redirects"): the forwarded "https" header is believed only when a new setting
+   `TRUST_UPSTREAM_FORWARDED_PROTO` is `on`. Ours believes it from anyone who can reach the web container. The
+   commit also changes upstream's entrypoint and compose files, so it is not a one-line copy.
+2. **Clearing two forwarded headers** (`X-Forwarded-SSL`, `X-Forwarded-Protocol`) before requests go to the backend
+   and to socket.io, so a client cannot set them.
+
+**Not decided, to check first:** whether either difference can be used against us (the web container is reached
+only through our proxy; what the proxy strips or sets is not verified); what the setting must be on test and
+production so sign-in redirects keep using https; how it interacts with our Origin change and the private report
+still in triage (private companion, BUILD-2). No published advisory names these two differences (checked
+26 November 2026).
+
+**What (proposal, owner to confirm before work):** read-only check of what reaches the web container on test;
+then carry both changes with the right setting in the test and production profiles; tests; register BUILD-2;
+through the test site with a sign-in and realtime check; production from main.
+
+**Acceptance:** our template differs from upstream's only by the Origin change; sign-in (redirects stay https),
+realtime and file downloads work on test and production; a forged forwarded header from a client is ignored.
+
+**Related:** P97 (same file), P89 (BUILD-2), P91 (upgrade checks: a check that compares this template with
+upstream's at the pinned commit would catch the next silent difference), P49 and P82 (sign-in redirects).

@@ -781,3 +781,35 @@ per project at each site survey, which then gives that project's parts list.
 the kit survives a hot day in its box (temperature logged).
 
 **Related:** P46 (NVR), P48 (gateway box), P29 (Headscale), P87 (videos in the app), P72 (monitoring).
+
+### P89 — Register of our changes to upstream apps, and an upgrade checklist
+
+**App:** general · **Also touches:** erp, portal, signin, drive, editor, mail, dms, raven, mobile · **State:** in progress
+
+**Why (owner, 26 November 2026):** we customise many upstream apps (build-time patches, hook overrides, menu and
+style overlays on their screens, proxy rules, objects created in admin screens, workarounds for their bugs). The
+records are spread over the decision log, the retained record, handovers and the code, so nobody can see in one place
+what must be re-applied or re-checked when an app is upgraded. Changes easily get lost, especially settings made by
+hand that no code reproduces.
+
+**What (owner go 26 November 2026):**
+- Public `docs/upstream-customizations.md`: an upgrade checklist, then one entry per change grouped by upstream app:
+  what and why, how it is applied, files, the version it was made against, the upgrade action (**re-apply**,
+  **re-check** or **none**), how to test it, the upstream issue link and whether it is a workaround to retire.
+- Private companion `docs/upstream-customizations-private.md` here: the parts that need host names, server paths,
+  client identity or live object names (manual live settings, the client brand). It links to the public entries and
+  does not repeat them.
+- Rule in the public `AGENTS.md`: a pull request that changes or starts depending on upstream behaviour updates the
+  register in the same pull request; an upgrade (a version change in `deployment/upstream-lock.json` or an image pin
+  in `deployment/upstream-watch.json`) walks that app's entries and records the result in the pull request.
+- Same rule for every project in the working agreements.
+- First version built from the code, the decision log, the retained record and the private records; anything not
+  confirmed from them is marked "to verify", not guessed.
+- Not now (owner agreed with the recommendation): a CI check that warns when a pull request touches the patch or
+  override files without the register; take it up once the register has settled.
+
+**Acceptance:** every build-time patch, hook override, screen overlay and known manual live setting has an entry with
+an upgrade action; the next upgrade pull request uses the checklist; the rule is in both instruction files.
+
+**Related:** P62 (upstream watch: its `workaround` fields point to register entries), P59 (promotion plan and drift
+check), P84 (no client identity in the public register).

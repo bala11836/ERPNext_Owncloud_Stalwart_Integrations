@@ -787,3 +787,19 @@ check themselves in keep their existing workflows.
   or the image renderer here. Prometheus 3.16.0 is newer than the listed
   fixes in 3.11.3. No OSV commit match was returned for the six pins.
 - **Where:** `integrations/monitoring/observability/`. AI-assisted by Codex.
+
+### One register of our changes to upstream apps, walked on every upgrade (P89)
+
+- **Decision:** Keep every change we make to software we did not write in
+  `docs/upstream-customizations.md`: build-time patches, overrides, overlays on
+  their screens, proxy rules, objects and settings made in their admin screens,
+  and workarounds for their bugs. Each entry names the upgrade action
+  (re-apply, re-check or none), how to test it and the upstream issue. A pull
+  request that changes or starts relying on upstream behaviour updates the
+  register; an upgrade walks the entries for that app on the test site. What
+  cannot be public stays in a private companion in the operations repository.
+- **Why:** These changes were spread over this log, the retained record, the
+  handovers and the code, so an upgrade could silently undo one, above all a
+  setting made by hand that no code reproduces. A CI check that the register
+  is updated is deferred until the register has settled.
+- **Where:** `docs/upstream-customizations.md`, `AGENTS.md`. AI-assisted by Claude Code.

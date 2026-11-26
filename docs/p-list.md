@@ -153,7 +153,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 23 | 23 |
+| General | [pending/general.md](p-list/general.md) | 24 | 24 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
@@ -237,4 +237,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P86 | Personal business files in the app, with a quota per user | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** open | open |
 | P87 | Camera videos in the mobile app (Frigate) | [Mobile](p-list/mobile.md) | general, signin · **State:** open | open |
 | P88 | Project camera sites connected to the NVR over the mesh | [General](p-list/general.md) | mobile · **State:** open | open |
+| P89 | Register of our changes to upstream apps, and an upgrade checklist | [General](p-list/general.md) | erp, portal, signin, drive, editor, mail, dms, raven, mobile · **State:** in progress | in progress |
 <!-- APP-INDEX-END -->

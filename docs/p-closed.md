@@ -54,3 +54,4 @@ Only the current retained requests are included here; superseded historical prop
 | P75 | Stalwart 1.1.0 to 1.1.1 (security fixes) before P69 | mail | completed | 2026-11-24 | Released to production 24 Nov (bb546d7) |
 | P83 | authentik 2026.8.7 security fixes | signin | completed | 2026-11-26 | authentik 2026.8.7 on test and production 26 Nov; owner browser check passed |
 | P23 | PWA offline and poor-connectivity behavior | mobile | superseded | 2026-11-26 | Owner 26 Nov 2026: no PWA offline work; offline capture is built in the native app (P50, with P14, P64, P74, P82) |
+| P84 | Client identity out of the public repository, and a check that keeps it out | general | completed | 2026-11-26 | Fingerprint check in CI (PR #84, merge 3fbdd9f); client name removed from the public code; test worker profile reads the client's mail domain privately |

@@ -746,6 +746,117 @@ compose differs only in the image line (receipt `p90-production-traefik-3-7-20-4
 **Remaining:** owner's browser check of the main sites; then move to the 3.8 line once it has a patch release (3.7
 reached end of life 23 November).
 
+### P89 — Register of our changes to upstream apps, and an upgrade checklist
+
+**App:** general · **Also touches:** erp, portal, signin, drive, editor, mail, dms, raven, mobile · **State:** in progress
+
+**Why (owner, 26 November 2026):** we customise many upstream apps (build-time patches, hook overrides, menu and
+style overlays on their screens, proxy rules, objects created in admin screens, workarounds for their bugs). The
+records are spread over the decision log, the retained record, handovers and the code, so nobody can see in one place
+what must be re-applied or re-checked when an app is upgraded. Changes easily get lost, especially settings made by
+hand that no code reproduces.
+
+**What (owner go 26 November 2026):**
+- Public `docs/upstream-customizations.md`: an upgrade checklist, then one entry per change grouped by upstream app:
+  what and why, how it is applied, files, the version it was made against, the upgrade action (**re-apply**,
+  **re-check** or **none**), how to test it, the upstream issue link and whether it is a workaround to retire.
+- Private companion `docs/upstream-customizations-private.md` here: the parts that need host names, server paths,
+  client identity or live object names (manual live settings, the client brand). It links to the public entries and
+  does not repeat them.
+- Rule in the public `AGENTS.md`: a pull request that changes or starts depending on upstream behaviour updates the
+  register in the same pull request; an upgrade (a version change in `deployment/upstream-lock.json` or an image pin
+  in `deployment/upstream-watch.json`) walks that app's entries and records the result in the pull request.
+- Same rule for every project in the working agreements.
+- First version built from the code, the decision log, the retained record and the private records; anything not
+  confirmed from them is marked "to verify", not guessed.
+- Not now (owner agreed with the recommendation): a CI check that warns when a pull request touches the patch or
+  override files without the register; take it up once the register has settled.
+
+**Acceptance:** every build-time patch, hook override, screen overlay and known manual live setting has an entry with
+an upgrade action; the next upgrade pull request uses the checklist; the rule is in both instruction files.
+
+**Related:** P62 (upstream watch: its `workaround` fields point to register entries), P59 (promotion plan and drift
+check), P84 (no client identity in the public register).
+
+**Upstream posts (26 November 2026, owner go; account rdavuluri44):**
+- owncloud/ocis#3832 comment: https://github.com/owncloud/ocis/issues/3832#issuecomment-7186892628
+- ONLYOFFICE/DocumentServer#3954: https://github.com/ONLYOFFICE/DocumentServer/issues/3954
+- coollabsio/coolify#12667: https://github.com/coollabsio/coolify/issues/12667
+- frappe/frappe#48437 comment (`?cmd=` on any path; not a Frappe vulnerability, hardening): https://github.com/frappe/frappe/pull/48437#issuecomment-7186893154
+- shridarpatil/frappe_whatsapp#257 comment (already public with an open fix): https://github.com/shridarpatil/frappe_whatsapp/pull/257#issuecomment-7186893657
+- goauthentik/authentik#16049 comment: https://github.com/goauthentik/authentik/issues/16049#issuecomment-7186894135
+- goauthentik/authentik#14304 comment: https://github.com/goauthentik/authentik/issues/14304#issuecomment-7186894885
+- goauthentik/authentik#28187 (authenticatorAttachment to policies): https://github.com/goauthentik/authentik/issues/28187
+- goauthentik/authentik#28188 (per-user session limit): https://github.com/goauthentik/authentik/issues/28188
+- **Private** frappe_docker advisory report GHSA-2qf7-29hw-ch4q (Origin overwrite disables Frappe's realtime Origin
+  check; severity low; state triage): https://github.com/frappe/frappe_docker/security/advisories/GHSA-2qf7-29hw-ch4q
+  (do not link from public files).
+
+**Progress (26 November 2026):** first version written, 102 public entries and the private companion; rule added to
+both instruction files. Public PR #86 (branch `p89/upstream-customizations`), private PR on the branch of the same name,
+working-agreements PR on `upstream-customization-register`. Open questions found are listed at the end of the public
+register and in the handover; none of them is changed by P89.
+
+### P91 — Upgrade checks that cannot miss a changed upstream file; upstream watch gaps
+
+**App:** general · **Also touches:** erp, editor, mail, signin, drive, dms · **State:** in progress
+
+**Why (found 26 November 2026, P89):** some of our patches are applied in a way that an upgrade can silently
+undo: six of the seven text replacements on frappe_docker's Containerfile and two replacements in the Insights
+patch do nothing when the upstream text changes; the ONLYOFFICE patched start page is checked only against our stored
+copy of the original, not against the file in a newly pinned image, so an image bump alone passes CI; the webmail
+overlay is not tied to its base commit. The upstream watch has `workaround` notes only for Insights, Bulwark and
+ONLYOFFICE, and does not watch the six monitoring images.
+
+**What (owner go 26 November 2026):**
+- Every Containerfile replacement and every Insights replacement must find its target or stop the build.
+- ONLYOFFICE: a record ties the stored original start page to the image digest; CI fails when the digest changes
+  without the record; a tool extracts the original from a new image during an upgrade.
+- Webmail: the upstream checksum of every file we replace is recorded against the pinned commit; CI fails when the
+  commit changes without the record; a tool refreshes it from a clone.
+- Upstream watch: `workaround` notes for authentik, oCIS, Stalwart, Paperless, Coolify, Traefik and Tailscale
+  pointing at register IDs; the monitoring images added.
+- Register entries updated in the same pull request.
+
+**Release (owner, 26 November 2026):** the generated build files are shown byte-identical before and after, instead
+of a test-site rebuild; nothing that runs changes.
+
+**Acceptance:** each check fails on a deliberately changed upstream text, digest or commit and passes on the pinned
+one; build output byte-identical; watch tests pass.
+
+**Related:** P89 (register: BUILD-1, INSIGHTS-1, OFFICE-1, WEBMAIL-1), P62 (upstream watch).
+
+**Progress (26 November 2026):** built in public PR #88 (`p91/upgrade-checks`, `78e0142`), CI passed. Byte-identical
+proof: generated Containerfile sha256 `8c97d70cdb34` before and after; patched Insights 3.50.3 sources identical; the
+ONLYOFFICE original equals the start page extracted from the pinned image on the test VM (stopped container, removed);
+the webmail base check passes on a clone of the pinned commit. The ONLYOFFICE version (P92's item) was corrected here.
+Waiting for the owner's merge (after #86).
+
+### P92 — Out-of-date Collabora material, ONLYOFFICE version, WhatsApp entry, hosting provider's name
+
+**App:** general · **Also touches:** editor, drive · **State:** in progress
+
+**Why (found 26 November 2026, P89):** Collabora was retired with P42, but the Drive and deployment READMEs still
+tell readers to deploy it and the office ingress still guards Collabora admin paths; the ONLYOFFICE version is
+written three ways; the decision log describes a WhatsApp wrapper that was never built; public `docs/retained.md`
+names the hosting provider, which the P list rules treat as private.
+
+**What (owner go 26 November 2026):** remove the Collabora instructions; guard ONLYOFFICE's own admin paths if
+version 10 has any, otherwise remove the old rule (ingress change: through the test site); one verified ONLYOFFICE
+version everywhere; a correction note in the decision log (the wrapper is planned under P04, not built); replace the
+provider's name in `docs/retained.md` and add it to the automatic identity check. Git history left as it is (owner).
+
+**Acceptance:** no Collabora deployment instructions remain; office admin paths refused on test; one version string;
+the identity check fails on the provider's name.
+
+**Related:** P89, P84 (identity check), P42 (editor change), P04 (WhatsApp).
+
+**Progress (26 November 2026):** public PR #90 (`p92/stale-material`), CI passed. On the test VM (read-only): ONLYOFFICE 10
+has no admin panel; `/info` and `/internal` return 403 through the test proxy (ONLYOFFICE's own localhost rule; no
+real-IP trust), `/welcome/` returns 200. The provider's name is in `tools/client-identity-terms.private.txt` and its
+fingerprint in the public `.client-identity-fingerprints`. Still to do: deploy the test ingress from the branch and run
+the checks in the PR (needs a test-site slot, owner).
+
 ### P94 — Bring production stacks back in line with main
 
 **App:** general · **Also touches:** editor, signin, portal, test-site · **State:** open

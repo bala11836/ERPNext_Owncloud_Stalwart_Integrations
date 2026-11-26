@@ -123,3 +123,21 @@ document; never give production the ability to delete protected backups.
 Record every adopted plan change in `docs/decisions.md` in the same change
 that implements it: what was decided and why (not the discussion), so others
 can build a similar setup from scratch.
+
+# Our changes to upstream apps (owner, 26 November 2026)
+
+`docs/upstream-customizations.md` lists every change we make to software we did not write
+(Frappe and its apps, authentik, ownCloud, ONLYOFFICE, Stalwart, Paperless-ngx and the rest):
+build-time patches, overrides, overlays on their screens, proxy rules, objects and settings made
+in their admin screens, and workarounds for their bugs. Each entry says what must be done on an
+upgrade: **re-apply**, **re-check** or **none**. Details that cannot be public (host names, live
+object names, the client brand) are in the private companion in the operations repository.
+
+1. A pull request that changes or starts relying on an upstream app's behaviour updates the
+   register in the same pull request.
+2. An upgrade (a version in `deployment/upstream-lock.json` or `deployment/build-lock.json`, or
+   an image pin in `deployment/upstream-watch.json`) follows the checklist at the top of the register: every entry
+   for that app is re-applied or re-checked on the test site, and the result is recorded in the
+   pull request and the release record.
+3. When upstream fixes something we worked around, remove the workaround, update the entry and its
+   `workaround` note in `deployment/upstream-watch.json`, and say so on the upstream issue.

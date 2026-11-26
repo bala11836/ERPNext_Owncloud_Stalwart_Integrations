@@ -233,6 +233,32 @@ business transactions or later independent changes. Validate on permanent test
 before promoting the same revision to production.
 Reference: https://docs.frappe.io/framework/user/en/python-api/hooks
 
+### P93 — "Request response" button missing on Job Offer
+
+**App:** erp · **Also touches:** general · **State:** in progress
+
+**Why (found 26 November 2026, P89):** `onboarding/hooks.py` loads the "Request response" script on Job Offer from
+`client/request_response.js`, which does not exist; Purchase Order uses the real path
+`onboarding/client/request_response.js`. Frappe skips a missing file without an error, so the Job Offer button
+probably never loads. The script itself already handles Job Offer.
+
+**What (owner go 26 November 2026):** point Job Offer at the real file; add a unit test that fails when any
+`doctype_js`, `doctype_list_js` or include hook names a file that does not exist; update the register (HRMS-4).
+
+**Release:** ERP app change: branch, rebuild, test site, owner's browser check (open a Job Offer, the button is
+there and opens the request), merge, production. Waits for a free test-site slot (the owner decides when).
+
+**Acceptance:** the button shows on Job Offer on test and production; the new test fails on a wrong path.
+
+**Related:** P89 (register entry HRMS-4).
+
+**Number (26 November 2026):** opened as P90 in this session, but another session had already
+recorded P90 (Traefik) on `main`; renumbered P93. Public PR #89, its branch `p90/job-offer-button` and its first
+commit still carry the old number.
+
+**Progress (26 November 2026):** public PR #89 (`p90/job-offer-button`), CI passed; the new test fails on the old path.
+Waiting for a test-site slot (test ERP runs #77, used by the P74 phone test; owner decides).
+
 ### P95 — Face recognition for field team attendance
 
 **App:** erp · **Also touches:** mobile, signin, test-site · **State:** open

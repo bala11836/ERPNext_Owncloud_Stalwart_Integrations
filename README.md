@@ -100,4 +100,4 @@ by them.
 Fork, branch from `main`, open a pull request; see [CONTRIBUTING.md](CONTRIBUTING.md).
 No production upgrade or destructive removal is implied by a source checkout.
 
-See [docs/decisions.md](docs/decisions.md) for the decisions behind this setup and [docs/disaster-recovery.md](docs/disaster-recovery.md) for recovery and ransomware protection.
+See [docs/decisions.md](docs/decisions.md) for the decisions behind this setup, [docs/upstream-customizations.md](docs/upstream-customizations.md) for our changes to upstream apps and what to redo when they are upgraded, and [docs/disaster-recovery.md](docs/disaster-recovery.md) for recovery and ransomware protection.

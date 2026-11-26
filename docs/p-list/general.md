@@ -384,8 +384,9 @@ monitoring stack.
   the VPS's tailnet address); recipient: the owner's mailbox (owner's choice). No mail sent yet.
 - **Follow-up 10 (found during the promotion; owner chose the repository fix):** the VPS cannot reach its own mail
   server under the certificate's name. Public PR **#117** adds `host_checks.alert.address` (connect to the tailnet
-  address, certificate still verified for the name); on the test VM at `84c578e`, CI passed. **Open:** owner merges
-  #117; then install from main, alert section in the ERP profile, one test alert.
+  address, certificate still verified for the name); on the test VM at `84c578e`, CI passed. **Done:** merged as
+  `e82f0f2`; on production from main `b4fdae5` (26 November 19:19 UTC): alert section and Prometheus (owner: yes) in
+  the boot check, one test alert mailed to the owner. **Open:** the owner confirms the test mail arrived.
 - Not covered: a production reboot with the new check (proven on the test VM).
 
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions

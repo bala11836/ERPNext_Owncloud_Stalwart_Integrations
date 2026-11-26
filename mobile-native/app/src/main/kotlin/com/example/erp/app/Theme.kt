@@ -2,57 +2,79 @@ package com.example.erp.app
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.erp.core.Palette
+import com.example.erp.core.Palettes
+
+private val LocalPalette = staticCompositionLocalOf { Palettes.LIGHT }
+
+private val Long.color: Color get() = Color(0xFF000000L or this)
 
 /**
- * Sunlight-first look: white ground, near-black text (contrast above 7:1), one deep blue accent, large type.
- * Status is always an icon or a word plus colour, never colour alone (see [Status]).
+ * The colours of the look in use. Screens name a colour only by its job, so they follow the phone's day or night
+ * mode and Outdoor mode without knowing about them. The values and their contrast are tested in the rules module.
+ * Status is always a mark and a word as well as a colour (see [Status]).
  */
 object Look {
-    val Ink = Color(0xFF111827)
-    val Muted = Color(0xFF374151)
-    val Accent = Color(0xFF0B4F9E)
-    val Ok = Color(0xFF116B35)
-    val Warn = Color(0xFF8A4B00)
-    val Bad = Color(0xFFA61B1B)
-    val Line = Color(0xFF9CA3AF)
-    val Soft = Color(0xFFE8F0FA)
+    val Ground: Color @Composable get() = LocalPalette.current.ground.color
+    val Surface: Color @Composable get() = LocalPalette.current.surface.color
+    val Ink: Color @Composable get() = LocalPalette.current.text.color
+    val Muted: Color @Composable get() = LocalPalette.current.muted.color
+    val Accent: Color @Composable get() = LocalPalette.current.accent.color
+    val Line: Color @Composable get() = LocalPalette.current.line.color
+    val Soft: Color @Composable get() = LocalPalette.current.soft.color
+    val Ok: Color @Composable get() = LocalPalette.current.ok.color
+    val Warn: Color @Composable get() = LocalPalette.current.warn.color
+    val Bad: Color @Composable get() = LocalPalette.current.bad.color
 
     /** Touch targets are at least this tall (gloves, one hand). */
     val Touch = 56.dp
     val Gap = 16.dp
 }
 
-private val Colors = lightColorScheme(
-    primary = Look.Accent,
-    onPrimary = Color.White,
-    secondaryContainer = Look.Soft,
-    onSecondaryContainer = Look.Ink,
-    background = Color.White,
-    onBackground = Look.Ink,
-    surface = Color.White,
-    onSurface = Look.Ink,
-    surfaceVariant = Color(0xFFF1F4F8),
-    onSurfaceVariant = Look.Muted,
-    outline = Look.Line,
-    error = Look.Bad,
-    onError = Color.White,
-)
+/** Sizes in sp, so every text also follows the font size the person set on the phone. Outdoor is a step larger and heavier. */
+private fun type(outdoor: Boolean): Typography {
+    val more = if (outdoor) 2 else 0
+    val body = if (outdoor) FontWeight.Medium else FontWeight.Normal
+    return Typography(
+        headlineMedium = TextStyle(fontSize = (28 + more).sp, lineHeight = (34 + more).sp, fontWeight = FontWeight.Bold),
+        titleMedium = TextStyle(fontSize = (19 + more).sp, lineHeight = (26 + more).sp, fontWeight = FontWeight.SemiBold),
+        bodyLarge = TextStyle(fontSize = (17 + more).sp, lineHeight = (25 + more).sp, fontWeight = body),
+        bodyMedium = TextStyle(fontSize = (15 + more).sp, lineHeight = (22 + more).sp, fontWeight = body),
+        labelLarge = TextStyle(fontSize = (18 + more).sp, lineHeight = (24 + more).sp, fontWeight = FontWeight.SemiBold),
+        labelMedium = TextStyle(fontSize = (15 + more).sp, lineHeight = (20 + more).sp, fontWeight = FontWeight.SemiBold),
+    )
+}
 
-private val Type = Typography(
-    headlineMedium = TextStyle(fontSize = 28.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 19.sp, lineHeight = 26.sp, fontWeight = FontWeight.SemiBold),
-    bodyLarge = TextStyle(fontSize = 17.sp, lineHeight = 25.sp),
-    bodyMedium = TextStyle(fontSize = 15.sp, lineHeight = 22.sp),
-    labelLarge = TextStyle(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold),
-    labelMedium = TextStyle(fontSize = 15.sp, lineHeight = 20.sp, fontWeight = FontWeight.SemiBold),
-)
-
+/** Wallpaper colours are deliberately not used: a status colour must mean the same, with the same contrast, on every phone. */
 @Composable
-fun ErpTheme(content: @Composable () -> Unit) = MaterialTheme(colorScheme = Colors, typography = Type, content = content)
+fun ErpTheme(palette: Palette, content: @Composable () -> Unit) {
+    val scheme = (if (palette == Palettes.DARK) darkColorScheme() else lightColorScheme()).copy(
+        primary = palette.accent.color,
+        onPrimary = palette.onAccent.color,
+        secondaryContainer = palette.soft.color,
+        onSecondaryContainer = palette.text.color,
+        background = palette.ground.color,
+        onBackground = palette.text.color,
+        surface = palette.ground.color,
+        onSurface = palette.text.color,
+        surfaceVariant = palette.surface.color,
+        onSurfaceVariant = palette.muted.color,
+        surfaceContainer = palette.surface.color,
+        outline = palette.line.color,
+        error = palette.bad.color,
+        onError = palette.ground.color,
+    )
+    CompositionLocalProvider(LocalPalette provides palette) {
+        MaterialTheme(colorScheme = scheme, typography = type(palette == Palettes.OUTDOOR), content = content)
+    }
+}

@@ -52,6 +52,27 @@ class MobileNativeTests(unittest.TestCase):
         for place in places:
             self.assertRegex(main, rf'Place\.{place} -> \w+Screen\(', f'{place} has no screen')
 
+    def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
+        kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
+        self.assertIn('isSystemInDarkTheme()', kotlin, 'day and night follow the phone')
+        self.assertIn('Sensor.TYPE_LIGHT', kotlin, 'Outdoor mode follows bright light')
+        self.assertIn('"outdoor-automatic", true', kotlin, 'automatic by default; the person can switch it off')
+        self.assertNotRegex(kotlin, r'dynamic(Light|Dark)ColorScheme', 'status colours must not change with the wallpaper')
+        # Screens name colours by their job only; raw colour numbers live in the tested palette.
+        for path in KOTLIN.glob('*.kt'):
+            if path.name != 'Theme.kt':
+                self.assertNotRegex(path.read_text(encoding='utf-8'), r'Color\(0x|Color\.(White|Black|Red|Green|Gray)', path.name)
+        night = (APP / 'res/values-night/themes.xml').read_text(encoding='utf-8')
+        self.assertIn('#0F141A', night, 'no white flash at start in night mode')
+        palette = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Palette.kt').read_text(encoding='utf-8')
+        self.assertIn('0x0F141A', palette, 'the start colour is the page colour of the dark look')
+
+    def test_text_sizes_scale_with_the_phone(self):
+        theme = (KOTLIN / 'Theme.kt').read_text(encoding='utf-8')
+        self.assertNotRegex(theme, r'fontSize = [^,]*\.dp', 'text sizes are in sp so they follow the font size set on the phone')
+        sizes = [int(n) for n in re.findall(r'fontSize = \((\d+) \+ more\)\.sp', theme)]
+        self.assertTrue(sizes and min(sizes) >= 15, 'no text smaller than 15')
+
     def test_reports_leave_values_out_by_default(self):
         trace = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Trace.kt').read_text(encoding='utf-8')
         self.assertIn('fun report(withValues: Boolean = false)', trace)

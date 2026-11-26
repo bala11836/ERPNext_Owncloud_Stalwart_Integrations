@@ -42,8 +42,8 @@ fun PhoneScreen(check: PhoneCheck, model: String, version: String) {
     // One centred column, so text lines stay readable on a tablet.
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.widthIn(max = 640.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("This phone", style = MaterialTheme.typography.headlineMedium)
-            Text(model, style = MaterialTheme.typography.bodyLarge)
+            Text("This phone", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
+            Text(model, style = MaterialTheme.typography.bodyLarge, color = Look.Ink)
             Panel { check.lines.forEach { (kind, text) -> Status(kind, text) } }
             Status(
                 if (check.usable) StatusKind.OK else StatusKind.WARN,

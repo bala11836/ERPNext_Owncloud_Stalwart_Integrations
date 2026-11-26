@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only what shows for the instant before the app draws: the page colour of the day look. -->
+    <style name="AppStart" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/start_ground</item>
+    </style>
+    <color name="start_ground">#FFFFFF</color>
+</resources>

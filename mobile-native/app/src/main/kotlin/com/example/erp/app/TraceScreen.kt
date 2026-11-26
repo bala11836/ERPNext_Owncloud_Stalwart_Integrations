@@ -22,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -58,7 +57,7 @@ fun TraceScreen(traces: List<Trace>, showValues: Boolean, onAddSample: (() -> Un
 @Composable
 private fun TraceList(traces: List<Trace>, selected: String?, onAddSample: (() -> Unit)?, modifier: Modifier, onOpen: (String) -> Unit) {
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Data trace", style = MaterialTheme.typography.headlineMedium)
+        Text("Data trace", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
         if (traces.isEmpty()) {
             Text("No actions yet. Each save you make in the app appears here with the points its data passed.", style = MaterialTheme.typography.bodyLarge, color = Look.Muted)
         }
@@ -68,7 +67,8 @@ private fun TraceList(traces: List<Trace>, selected: String?, onAddSample: (() -
                 Modifier.fillMaxWidth().heightIn(min = Look.Touch).clickable { onOpen(trace.id) },
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(2.dp, if (trace.id == selected) Look.Accent else Look.Line),
-                color = if (trace.id == selected) Look.Soft else Color.White,
+                color = if (trace.id == selected) Look.Soft else Look.Surface,
+                contentColor = Look.Ink,
             ) {
                 Column(Modifier.padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(trace.action, style = MaterialTheme.typography.titleMedium)
@@ -88,7 +88,7 @@ private fun TraceList(traces: List<Trace>, selected: String?, onAddSample: (() -
 private fun TraceDetail(trace: Trace, showValues: Boolean, onBack: (() -> Unit)?) {
     val clipboard = LocalClipboardManager.current
     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(trace.action, style = MaterialTheme.typography.headlineMedium)
+        Text(trace.action, style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
         Panel {
             for (point in Point.entries) {
                 val mark = trace.marks.lastOrNull { it.point == point }

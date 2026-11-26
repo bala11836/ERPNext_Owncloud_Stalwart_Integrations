@@ -8,24 +8,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /** The shared building blocks. Screens are made only from these, so every screen keeps the same rules. */
 
-enum class StatusKind(val mark: String, val word: String, val color: Color) {
-    OK("✓", "OK", Look.Ok),
-    WARN("!", "Check", Look.Warn),
-    BAD("✕", "Failed", Look.Bad),
-    NONE("–", "Not reached", Look.Muted),
+enum class StatusKind(val mark: String, val word: String) {
+    OK("✓", "OK"),
+    WARN("!", "Check"),
+    BAD("✕", "Failed"),
+    NONE("–", "Not reached"),
+}
+
+@Composable
+private fun StatusKind.color(): Color = when (this) {
+    StatusKind.OK -> Look.Ok
+    StatusKind.WARN -> Look.Warn
+    StatusKind.BAD -> Look.Bad
+    StatusKind.NONE -> Look.Muted
 }
 
 /**
@@ -35,8 +46,8 @@ enum class StatusKind(val mark: String, val word: String, val color: Color) {
 @Composable
 fun Status(kind: StatusKind, text: String, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
-        Text(kind.mark, color = kind.color, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-        Text(text, color = kind.color, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+        Text(kind.mark, color = kind.color(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+        Text(text, color = kind.color(), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -54,7 +65,7 @@ fun ActionMessage(kind: StatusKind, text: String, actionLabel: String, onAct: ()
 
 @Composable
 fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(2.dp, Look.Line), color = Color.White) {
+    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(2.dp, Look.Line), color = Look.Surface, contentColor = Look.Ink) {
         Column(Modifier.padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(10.dp)) { content() }
     }
 }
@@ -63,5 +74,21 @@ fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 fun MainButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Button(onClick, modifier.fillMaxWidth().heightIn(min = Look.Touch), shape = RoundedCornerShape(14.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** A setting with its explanation. The whole row is the switch, so it is easy to hit and is read out as one thing. */
+@Composable
+fun SwitchRow(title: String, explanation: String, checked: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier.fillMaxWidth().heightIn(min = Look.Touch).toggleable(checked, role = Role.Switch, onValueChange = onChange),
+        horizontalArrangement = Arrangement.spacedBy(Look.Gap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
+            Text(explanation, style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+        }
+        Switch(checked, onCheckedChange = null)
     }
 }

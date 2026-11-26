@@ -518,7 +518,8 @@
         "deployment/native-clients-lock.json",
         "deployment/scope-mappings.example.json",
         "deployment/test-refresh-worker.*",
-        "deployment/test-runtime.example.json"
+        "deployment/test-runtime.example.json",
+        "deployment/face-models.json"
       ],
       "depends_on": [],
       "tests": [

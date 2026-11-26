@@ -81,7 +81,7 @@ until the owner says; the table only fixes the order to take them up.
 | 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
 | 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50; amended 26 Nov (PM then admin approval, strong sensors only, 5-miss erase, no selfie, Android 9–13 kept); P95 face attendance and P96 SOPs alongside (not yet ranked) |
 | 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the trademark owner |
-| 4c | **P97** uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf, high) | **owner** 26 Nov: security fix ahead of features; a signed-in user could plant a script file that runs in an administrator's session | on test since 26 Nov (`95f25b9`, checks passed); public PR #103 waits for the owner's merge, then production; P98 (rest of upstream's template changes) opened, not ranked |
+| 4c | **P97** uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf, high) | **owner** 26 Nov: security fix ahead of features; a signed-in user could plant a script file that runs in an administrator's session | **on production since 26 Nov** (main `bf8d5c8`, one mounted file; checks passed); left: owner's browser check, then close; P98 (rest of upstream's template changes) opened, not ranked |
 
 **Tier 1: high (business-critical, next)**
 
@@ -154,7 +154,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 27 | 27 |
+| General | [pending/general.md](p-list/general.md) | 28 | 28 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
@@ -246,4 +246,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
 | P97 | Uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf) | [ERP](p-list/erp.md) | general · **State:** in progress | in progress |
 | P98 | ERP web server template: take up upstream's trusted-HTTPS forwarding changes | [ERP](p-list/erp.md) | signin, general · **State:** open | open |
+| P99 | Drift check sees mounted runtime files, not only image tags and notes | [General](p-list/general.md) | erp · **State:** open | open |
 <!-- APP-INDEX-END -->

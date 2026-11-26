@@ -386,7 +386,7 @@ monitoring stack.
   server under the certificate's name. Public PR **#117** adds `host_checks.alert.address` (connect to the tailnet
   address, certificate still verified for the name); on the test VM at `84c578e`, CI passed. **Done:** merged as
   `e82f0f2`; on production from main `b4fdae5` (26 November 19:19 UTC): alert section and Prometheus (owner: yes) in
-  the boot check, one test alert mailed to the owner. **Open:** the owner confirms the test mail arrived.
+  the boot check, one test alert mailed to the owner; **the owner confirmed it arrived** (27 November).
 - Not covered: a production reboot with the new check (proven on the test VM).
 
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions

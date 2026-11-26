@@ -122,8 +122,22 @@ Made against: frappe_docker `0ad1a11`, bench 5.31.1, Node 24.22.1, Yarn 1.22.22
   v4.3.0 rule word for word since 26 November 2026 (P97): any case, 14 file
   types. **Re-check** on every bump and whenever the daily watch reports a
   frappe_docker advisory: compare this rule and the rest of the file with
-  upstream's.
-- **Tests:** `tests/test_realtime_origin.py`, `tests/test_files_forced_download.py`.
+  upstream's. Also carried (P98, 26 November 2026): upstream's clearing of
+  `X-Forwarded-SSL` and `X-Forwarded-Protocol` in the socket.io and backend
+  locations, so the backend sees only the `X-Forwarded-Proto` this template sets.
+- **Not carried yet, re-apply at the next frappe_docker bump (P98):** upstream's
+  trusted-forwarding map (`TRUST_UPSTREAM_FORWARDED_PROTO`, frappe_docker
+  `280fc962eb`). The nginx entrypoint in our pinned image does not fill in that
+  variable, so the map would stay literal and every request would look like plain
+  http. At the bump: take upstream's map together with their newer entrypoint, set
+  `TRUST_UPSTREAM_FORWARDED_PROTO=on` for the frontend in `deployment/stacks/`,
+  and change the test that guards this
+  (`tests/test_realtime_origin.py`, `ForwardedHeaderTests`). Until then our map
+  trusts `X-Forwarded-Proto: https` as upstream's "on" does; that is safe here
+  because the public proxy trusts no forwarded headers from outside on its https
+  entry point, the frontend is published only on the server's loopback address,
+  and Gunicorn trusts only the frontend's own address.
+- **Tests:** `tests/test_realtime_origin.py` (Origin; forwarded headers, P98), `tests/test_files_forced_download.py`.
 - **Upstream:** reported privately to frappe_docker on 26 November 2026 (the Origin
   overwrite also switches off Frappe's own Origin check). Workaround to retire if
   upstream stops overwriting Origin.

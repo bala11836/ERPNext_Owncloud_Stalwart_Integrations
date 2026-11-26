@@ -6,6 +6,20 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### The ERP web server clears two forwarded headers now; trusted forwarding waits for the frappe_docker bump (P98)
+
+- **Decision:** our ERP web server template clears `X-Forwarded-SSL` and `X-Forwarded-Protocol` before requests go
+  to the backend and to realtime, as upstream does. Upstream's switch for trusting `X-Forwarded-Proto`
+  (`TRUST_UPSTREAM_FORWARDED_PROTO`) is taken at the next frappe_docker bump, set to "on"; until then our existing
+  map, which behaves like "on", stays.
+- **Why:** a browser's copy of those two headers reached Gunicorn, which trusts the frontend and reads them, so the
+  backend could see two protocol indications. The switch needs upstream's newer nginx entrypoint: with our pinned
+  image the variable would stay unfilled and every request would look like plain http, which can break sign-in
+  redirects. Our current behaviour is safe because the public proxy replaces forwarded headers from outside, the
+  frontend is published only on the server's loopback address, and Gunicorn trusts only the frontend (owner,
+  26 November 2026: the recommended options).
+- **Where:** `deployment/erp/frappe.conf.template`, register entry BUILD-2, `tests/test_realtime_origin.py`.
+
 ### The drift check compares mounted runtime files, and runs its own code from main (P99)
 
 - **Decision:** the drift check also compares every read-only runtime file the containers mount from the

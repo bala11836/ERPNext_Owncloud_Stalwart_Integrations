@@ -74,7 +74,9 @@ running containers (`running-containers.json`). After a reboot the boot check co
 container that ran before (restart policy `always` or `unless-stopped`) and is not running a minute after Docker
 started is **started once**, and anything that still stays down fails the check. When the check repaired or
 failed something it **mails the admin** through the dedicated alert sender (`host_checks.alert` in the private
-profile; without it the result is only in the status file and the journal). Verify by hand only when the check
+profile; without it the result is only in the status file and the journal; set `host_checks.alert.address` to
+the mail server's tailnet address when the server cannot reach its own public mail name, the certificate is still
+verified for `smtp_host`). Verify by hand only when the check
 reports a problem:
 
 1. `systemctl status cloud-boot-check` is `active (exited)`; otherwise read its

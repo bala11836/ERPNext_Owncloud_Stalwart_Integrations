@@ -4,6 +4,21 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-27
+
+### The boot check's alert mail may connect to the mail server's private address (P57)
+
+- **Decision:** the alert sender's settings take an optional `address` (an IP address). The boot check then connects
+  there instead of to `smtp_host`, and still verifies the server certificate for `smtp_host`; certificate checks are
+  never switched off. Without `address` nothing changes.
+- **Why:** owner, 27 November 2026. On the production server the mail server's public name resolves to the public
+  address, where the submission port is closed; it answers only on the server's tailnet address, whose certificate
+  carries the public name. The options were a line in the server's hosts file (a hand patch outside the
+  repository that also changes the name for everything else on the server) or this setting; the owner chose the
+  setting. The onboarding form mail already uses the same pattern (`address` in `test_form_smtp`).
+- **Where:** `tools/host_check.py` (`verified_smtp`), `tools/render_host_checks.py`,
+  `deployment/host-checks.example.json`, `docs/production-moves.md`, `tests/test_host_checks.py`.
+
 ## 2026-11-26
 
 ### After a reboot every container that ran before must run again; the admin is mailed (P57)

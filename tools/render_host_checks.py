@@ -11,6 +11,7 @@ Nothing is installed; docs/production-moves.md lists the copy commands.
 No host name, address or tenant detail lives in Git: they come from the profile.
 """
 import argparse
+import ipaddress
 import json
 import re
 from pathlib import Path
@@ -81,9 +82,16 @@ def alert_config(alert):
     addresses = [alert.get('username'), alert.get('sender')] + (to if isinstance(to, list) else [None])
     if not to or not all(isinstance(a, str) and re.fullmatch(r'[^@\s]+@[A-Za-z0-9.-]+', a) for a in addresses):
         raise ValueError('host_checks.alert needs username, sender and a list of recipient addresses')
-    return {'smtp_host': host, 'smtp_port': port, 'security': alert.get('security', 'ssl'),
-            'username': alert['username'], 'password_file': alert['password_file'], 'sender': alert['sender'],
-            'to': list(to)}
+    rendered = {'smtp_host': host, 'smtp_port': port, 'security': alert.get('security', 'ssl'),
+                'username': alert['username'], 'password_file': alert['password_file'], 'sender': alert['sender'],
+                'to': list(to)}
+    if alert.get('address') is not None:
+        # Connect here (e.g. the mail server's tailnet address); the certificate is still checked for smtp_host.
+        try:
+            rendered['address'] = str(ipaddress.ip_address(str(alert['address'])))
+        except ValueError:
+            raise ValueError('host_checks.alert.address must be an IP address') from None
+    return rendered
 
 
 BOOT_SERVICE = """[Unit]

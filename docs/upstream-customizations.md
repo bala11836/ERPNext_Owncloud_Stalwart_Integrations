@@ -459,6 +459,23 @@ Made against: v16.60.2 (`2df0425`).
 - **What:** `bench uninstall-app` drops the doctypes the app owns (`docs/deployment.md`).
 - **Upgrade:** none; a standing rule.
 
+### FRAPPE-27 Face templates rely on Frappe's encryption, field levels and permanent deletion (P95)
+
+- **What:** face templates of field workers are stored encrypted with `frappe.utils.password.encrypt` (the site's
+  `encryption_key`), in a field at permission level 1 that no role is granted, with `track_changes` off; they are
+  deleted with `frappe.delete_doc(..., delete_permanently=True)` so no copy goes to Deleted Documents.
+- **How:** our code and DocType definitions (`custom_hr/face_service.py`, `field_face_enrolment.json`); nothing
+  of Frappe's is patched.
+- **Files:** `erpnext_drive_integrations/custom_hr/face_service.py`, `custom_hr/doctype/field_face_enrolment/`.
+- **Upgrade:** **re-check** that `encrypt`/`decrypt` keep their signature and key, that level-1 fields stay out of
+  the form, the list, reports and the REST API for every role, that versions are not written with
+  `track_changes` off, and that `delete_permanently` still skips Deleted Documents. Losing the site's
+  `encryption_key` makes every template unreadable (workers must enrol again).
+- **Test:** `tests/test_custom_hr_face.py` (definitions); on the test site, read a Field Face Enrolment as HR
+  Manager through the form and `/api/resource` and confirm `templates` is absent; delete one and confirm no Deleted
+  Document row.
+- **Workaround to retire:** no.
+
 ## ERPNext
 
 Made against: v16.60.0 (`886ab6a`). See also FRAPPE-5, -7, -8, -18.

@@ -174,8 +174,11 @@ def notify_approvers(doc,user,title='Attendance ready for review'):
         if approver!=user:notify(approver,title,doc)
 
 
-def capture(data):
-    user=require_user()
+def capture(data,actor=None,evidence=None):
+    """Record one worker's attendance. `actor` and `evidence` are for the face capture queue (face_queue.py) only:
+    the capture is recorded in the name of the supervisor who took the photograph, with the photograph, place and
+    time that were validated when the capture reached the server."""
+    user=actor or require_user()
     site=require_site(data.get('site'))
     supervisor_access = site_access(site.name, 'Supervisor', user)
     verifier_access = site_access(site.name, 'Verifier', user)
@@ -183,7 +186,7 @@ def capture(data):
         frappe.throw('You cannot record attendance at this site.', frappe.PermissionError)
     employee=data.get('employee');worker=lock_employee(employee)
     if worker.user_id==user:frappe.throw('Use your own check-in to record your attendance.')
-    details=shift_details(site,data.get('shift'),moment(data));day=details['attendance_date']
+    details=shift_details(site,data.get('shift'),evidence['captured_at'] if evidence else moment(data));day=details['attendance_date']
     base,extra,effective=assignment(employee,site.name,day,details['name'],lock=True)
     supervisor = effective['supervisor']
     can_capture_own_team = supervisor_access and supervisor == user
@@ -225,9 +228,12 @@ def capture(data):
     remarks=str(data.get('remarks') or '').strip()
     if len(remarks)>2000:frappe.throw('Keep remarks under 2,000 characters.')
     if status=='Absent' and not remarks:frappe.throw('Add a reason when marking a worker absent.')
-    photo=decode_photo(data['photo']) if data.get('photo') else None
+    photo=evidence['photo'] if evidence else decode_photo(data['photo']) if data.get('photo') else None
     if status=='Present' and not (photo or doc.photo):frappe.throw('Capture the worker’s photograph.')
-    if photo or not existing:
+    if evidence:
+        for field in ('latitude','longitude','accuracy_m','gps_captured_at','captured_at','captured_offline','device_captured_at','clock_offset_s'):
+            doc.set(field,evidence[field])
+    elif photo or not existing:
         lat,lon,accuracy=fail_rule(domain.validate_location,data.get('latitude'),data.get('longitude'),data.get('accuracy_m'),
             site.latitude,site.longitude,float(site.radius_m or 0),float(site.maximum_accuracy_m or 200))
         captured_at,gps_time=moment(data,with_gps=True)
@@ -255,8 +261,8 @@ def lock_entry_for_submission(name):
     return lock_doc('Field Attendance Entry', name)
 
 
-def submit_entry(name):
-    user = require_user()
+def submit_entry(name, actor=None):
+    user = actor or require_user()  # `actor`: the face capture queue submits in the capturing supervisor's name
     doc = lock_entry_for_submission(name)
     engineer_capture = doc.captured_by != doc.responsible_supervisor
     role = 'Verifier' if engineer_capture else 'Supervisor'

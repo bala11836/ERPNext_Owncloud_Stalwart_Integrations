@@ -6,6 +6,22 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Face capture queue: recorded in the supervisor's name, decided by another approver (P95)
+
+- **Decision:** a team photograph sent without choosing the worker is validated once on arrival (place, time,
+  photograph) and kept privately in a queue. A confident face match is recorded and submitted at once in the
+  capturing supervisor's name, through the same capture rules as before, and then needs the usual approval.
+  Everything else waits for the site's approvers, who pick the worker or reject with a reason. An approver cannot
+  decide their own capture or record themselves, and the chosen worker must be on the capturing supervisor's team.
+  The queue's copy of the photograph is deleted when the capture is recorded; a rejected capture keeps it for 30
+  days (confirmed by the owner the same day).
+- **Why:** owner, 26 November 2026: the supervisor only takes photographs, also without connection; the project
+  manager clears what the server cannot settle. Validating on arrival keeps the one-day limit for offline captures
+  meaningful even when the project manager decides later. Recording through the existing capture and submit
+  functions, with an explicit actor that no request can set, keeps one set of attendance rules.
+- **Where:** `custom_hr/face_queue.py`, `face_queue_rules.py`, the Field Face Capture DocType, `service.capture`
+  and `service.submit_entry` (`actor`, `evidence`), `api.py`, the field team page, `tests/test_custom_hr_face_queue.py`.
+
 ### Face engine: OpenCV Zoo's YuNet and SFace in the ERP image, pinned by commit and checksum (P95)
 
 - **Decision:** the face engine uses YuNet (detection) and SFace fp32 (128 numbers per face) from OpenCV Zoo at

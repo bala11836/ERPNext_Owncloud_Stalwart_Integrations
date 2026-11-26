@@ -50,11 +50,13 @@
         "erpnext_drive_integrations/public/company-logo-*",
         "erpnext_drive_integrations/public/company-favicon*",
         "erpnext_drive_integrations/public/plain-background.svg",
-        "tests/test_hook_composition.py"
+        "tests/test_hook_composition.py",
+        "tests/test_hook_asset_paths.py"
       ],
       "depends_on": [],
       "tests": [
-        "tests/test_hook_composition.py"
+        "tests/test_hook_composition.py",
+        "tests/test_hook_asset_paths.py"
       ],
       "upstream": [
         {

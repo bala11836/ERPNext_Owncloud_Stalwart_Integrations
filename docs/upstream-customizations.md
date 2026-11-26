@@ -515,10 +515,14 @@ Made against: v16.60.0 (`1b2d7e0`). See also FRAPPE-5, -7, -8.
 ### HRMS-4 "Request response" button on Job Offer
 
 - **What:** a `doctype_js` script reading `applicant_name`, `applicant_email`.
-- **How:** `onboarding/hooks.py` points to `client/request_response.js`.
-- **Upgrade:** **re-check.** **Found 26 November 2026:** that path does not exist (the
-  Purchase Order entry uses `onboarding/client/request_response.js`), so the Job
-  Offer button probably does not load. Reported to the owner; not fixed here.
+- **How:** `onboarding/hooks.py` loads `onboarding/client/request_response.js`, the
+  same script as Purchase Order. The button shows only when a response rule for
+  Job Offer is enabled.
+- **Upgrade:** **re-check** the button on a Job Offer.
+- **Tests:** `tests/test_hook_asset_paths.py` (every script a hook names must exist).
+- **Fixed in P90:** the hook pointed at `client/request_response.js`, which does not
+  exist, and Frappe skips a missing file without an error, so the button never
+  loaded.
 
 ### HRMS-5 Script injected into the HRMS mobile pages
 
@@ -1268,8 +1272,7 @@ Made against: 3.4.2.
 
 Found on 26 November 2026 and reported to the owner; none of them is changed by P89.
 
-- **HRMS-4:** the Job Offer "Request response" button points at a file that does not
-  exist (probable bug).
+- **HRMS-4:** fixed in P90.
 - **OFFICE-1, WEBMAIL-1, BUILD-1, INSIGHTS-1:** fixed in P91 (each check now fails
   loudly on a changed upstream file, image or commit).
 - **Upstream watch:** fixed in P91 (`workaround` notes for every app with entries here;

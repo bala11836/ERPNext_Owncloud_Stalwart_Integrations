@@ -893,7 +893,7 @@ Follow-up: release steps must update the Coolify "Source commit" note automatica
 
 ### P96 — SOPs for every manual procedure, written alongside the build
 
-**App:** general · **Also touches:** signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** open
+**App:** general · **Also touches:** signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress
 
 **Why (owner, 26 November 2026):** the systems we are designing rely on people doing checks that no code enforces
 (for example removing a family member's fingerprint from a phone, or bulk onboarding a field team with one good
@@ -921,4 +921,10 @@ the owner reviews the first set.
 
 **Related:** P82, P95, P24, P50.
 
-**Status:** open; decided 26 November 2026; study not started.
+**Progress (26 November 2026):** study done (decision log, P list, READMEs, runbooks, private records): 69
+procedures in ten areas and 18 gaps, published as the inventory in public `docs/sop/README.md` (PR on branch
+`p96/sop-first-set`), with the template and the first two SOPs (ERP Mobile onboarding; face enrolment and consent),
+both drafts that apply when built. Next: the gaps that need owner decisions (leavers, where the biometric
+confirmation is kept, consent text and languages, who watches monitoring), then the in-use procedures.
+
+**Status:** in progress.

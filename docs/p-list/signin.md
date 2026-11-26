@@ -406,6 +406,24 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   new or lost phone, exception group membership, admin approvals) gets an SOP under **P96**, written alongside the
   build.
 
+**Binding office computers with free tools (owner, 26 November 2026: no paid or preview parts; build the missing
+piece or find another free tool). Agent research, primary sources; owner decision pending:**
+- authentik's own client-certificate stage is Enterprise; Endpoint Devices is a preview (Agent and compliance)
+  with Enterprise connectors. Free authentik can read the client address and request in expression policies and can
+  restrict a passkey step to certain authenticator types.
+- **Recommended: company certificates.** Our own certificate authority (smallstep step-ca, Apache-2.0) issues a
+  certificate per computer (on Windows the key in the TPM, not exportable; Mac Keychain); Traefik requires it on
+  the host names computers use and passes it on; a free authentik expression policy checks it against an
+  admin-managed allow-list (list and remove computers). Binds every request, not only the sign-in. Effort medium.
+  To verify on test: Traefik must strip a forged certificate header; the app's and the QR sign-in's host names
+  stay certificate-free; shared PCs (machine or per-user certificate); renewal; browsers; no revocation list in
+  Traefik (the allow-list does the removal); advisories of step-ca and our Traefik.
+- **Complement later:** Headscale (BSD-3, already planned): apps reachable only over the mesh from admin-approved
+  computers (binds the network path, not the browser).
+- **Rejected:** a second Windows Hello passkey step (self-reported type, Windows can now sync passkeys, nothing
+  dependable on Mac); Pomerium Core (device approval is Enterprise); Teleport device trust and NetBird peer approval
+  (paid); our own browser extension (rebuilds the preview Agent).
+
 **Status:** in progress; research done, decisions amended 26 November; nothing built. A local branch
 `p82/android-trial` (no commits, not pushed) exists in a worktree on the owner's PC; the colleague taking up P82
 picks the trial branch name.

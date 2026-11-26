@@ -6,6 +6,18 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Keep logs and images across releases: archive container logs, no forced image cleanup (P59)
+
+- **Decision:** before any stack is recreated, `tools/archive_container_logs.py` saves every container's logs on the
+  host (root-only, compressed, 30 days); the promotion plan lists it first. Coolify's forced nightly Docker cleanup
+  is off on production (it was on; the test VM already had it off); Coolify still cleans above 80 percent disk use.
+- **Why:** a recreate deletes container logs (the 20 November failed save could not be diagnosed), and the forced
+  cleanup deleted the unused ERP core and prepared release images three times (each core rebuild about 20 minutes;
+  a 25 November release start had to stop). Production disk use is 23 percent of 394 GB; disk space is monitored
+  (P72). Switching Docker's log driver was not chosen: it restarts every container.
+- **Where:** `tools/archive_container_logs.py`, `tools/promotion_plan.py`, `deployment/README.md`; Coolify server
+  setting on production (live change, private record).
+
 ### Coolify's proxy runs a pinned Traefik image: 3.7.20 (P90)
 
 - **Decision:** the proxy image is pinned by tag and digest in `deployment/coolify-proxy.json` and applied with

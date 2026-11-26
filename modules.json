@@ -423,6 +423,8 @@
         "tools/test_host_aliases.py",
         "tools/coolify_native.py",
         "tools/promotion_plan.py",
+        "tools/archive_container_logs.py",
+        "tests/test_archive_container_logs.py",
         "tools/drift_check.py",
         "tests/test_promotion_plan.py",
         "tools/initialize_erp.py",

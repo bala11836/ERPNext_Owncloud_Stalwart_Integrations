@@ -337,6 +337,24 @@ editor-bridge check on production~~ done 22 Nov (PR #23, `85c3f01`);
 (2) ~~port 587~~ removed 22 Nov; (3) ~~worker settings drift~~ not drift (the file is written once and kept by design;
 release log 22 Nov); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
 
+**Reboot of 26 November 2026, 15:30 UTC: one container did not come back (owner: record it here).** After an
+operator's reboot of production (new kernel), `p72-observability-prometheus-1` stayed down: clean exit 0 at
+15:30:05 UTC, not out of memory, restart policy `unless-stopped`. Its five siblings in the monitoring stack (same
+policy) and the other 33 containers came back. Found 16 minutes later by chance (P97 session); started by hand at
+15:56:02 UTC on the owner's yes (receipt `production-prometheus-started-after-reboot-20261126`); metrics from 15:30
+to 15:56 UTC are missing and no metric alert could fire in that time. The monitoring stack (P72) was added on
+24 November, after the reboot drills, so it has never been through one.
+**Likely cause, not proven:** Prometheus stops within half a second of the stop signal, so Docker recorded it as
+exited before the Docker service itself stopped, and `unless-stopped` does not start a container recorded as
+stopped when Docker starts again.
+**Open follow-ups (nothing started; owner's go needed):**
+(6) lasting fix through the repository and the test site: restart policy `always` for the monitoring stack (or
+another start-at-boot guarantee), then reproduce with a reboot of the test VM to prove the cause and the fix;
+(7) the boot check counts the containers that were running before the reboot and reports any that did not come
+back, on test and production, with an alert that does not depend on Prometheus;
+(8) check the other stacks for services that stop as fast (same risk); (9) the reboot drill list names the
+monitoring stack.
+
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions
 
 **App:** general · **Also touches:** none · **State:** in progress

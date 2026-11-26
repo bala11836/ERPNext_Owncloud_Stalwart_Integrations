@@ -246,5 +246,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
 | P98 | ERP web server template: take up upstream's trusted-HTTPS forwarding changes | [ERP](p-list/erp.md) | signin, general · **State:** in progress | in progress |
 | P100 | Mobile app checks in CI, and the app's dependencies in the daily watch | [Mobile](p-list/mobile.md) | general · **State:** open | open |
-| P101 | Test Drive, test mail and the test editor sign in through the test sign-in server | [Test site](p-list/test-site.md) | signin, drive, mail, editor · **State:** open | open |
+| P101 | Test Drive, test Paperless, test mail and the test editor sign in through the test sign-in server | [Test site](p-list/test-site.md) | signin, drive, dms, mail, editor · **State:** open | open |
 <!-- APP-INDEX-END -->

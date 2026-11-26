@@ -78,10 +78,9 @@ until the owner says; the table only fixes the order to take them up.
 | 1 | **P74** document and photo store in the mobile app (Drive) | server part on production 25 Nov (`059f8bf`); next: phone test | app #66 needs #64 |
 | 2 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
 | 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
+| 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | **26 Nov: Prometheus did not come back after a production reboot** (started by hand after 26 minutes) | remaining: lasting fix and a boot check that counts containers (follow-ups 6 to 9, owner's go needed); repeat the reboot drill on the test VPS after the move |
 | 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50; amended 26 Nov (PM then admin approval, strong sensors only, 5-miss erase, no selfie, Android 9–13 kept); P95 face attendance and P96 SOPs alongside (not yet ranked) |
 | 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the trademark owner |
-| 4c | **P97** uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf, high) | **owner** 26 Nov: security fix ahead of features; a signed-in user could plant a script file that runs in an administrator's session | **on production since 26 Nov** (main `bf8d5c8`, one mounted file; checks passed); left: owner's browser check, then close; P98 (rest of upstream's template changes) opened, not ranked |
 
 **Tier 1: high (business-critical, next)**
 
@@ -158,7 +157,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
-| ERP | [pending/erp.md](p-list/erp.md) | 15 | 15 |
+| ERP | [pending/erp.md](p-list/erp.md) | 14 | 14 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
 | Mobile | [pending/mobile.md](p-list/mobile.md) | 6 | 6 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
@@ -244,7 +243,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P94 | Bring production stacks back in line with main | [General](p-list/general.md) | editor, signin, portal, test-site · **State:** open | open |
 | P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** in progress | in progress |
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
-| P97 | Uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf) | [ERP](p-list/erp.md) | general · **State:** in progress | in progress |
 | P98 | ERP web server template: take up upstream's trusted-HTTPS forwarding changes | [ERP](p-list/erp.md) | signin, general · **State:** open | open |
 | P99 | Drift check sees mounted runtime files, not only image tags and notes | [General](p-list/general.md) | erp · **State:** open | open |
 <!-- APP-INDEX-END -->

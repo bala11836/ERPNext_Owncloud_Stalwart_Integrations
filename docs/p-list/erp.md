@@ -87,7 +87,6 @@ Agree pilot project reports, approvals and attendance summaries; evaluate instal
   item (business data must not go to an AI provider before that); test-site messages follow the demo safeguards
   (allow list and test marker); every workflow names an owner and has a way to switch it off.
 
-
 ### P24 — Field attendance pilot and correction acceptance
 
 **App:** erp · **Also touches:** none · **State:** open
@@ -365,85 +364,6 @@ public PR #101 (`p95/pm-queue`).
 - Not built: the mobile app's capture screen and the liveness check on the phone.
 
 **Status:** in progress.
-
-### P97 — Uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf)
-
-**App:** erp · **Also touches:** general · **State:** in progress
-
-**Why (found 26 November 2026 by the P91 to P93 session; daily watch baseline, "schedule"):** public attachments are
-served from disk under `/files/`. Our ERP web server config (`deployment/erp/frappe.conf.template:68`) forces HTML,
-SVG and XML uploads to download, but the rule matched lower-case extensions only. A file named `poc.SVG` or
-`poc.HTML` opened in the browser, so any signed-in user who can attach a public file could plant a page that runs
-script in the session of whoever opens the link (an administrator included). Published frappe_docker advisory
-GHSA-94mh-qq29-qwrf, high, fixed upstream in v4.3.0 (`d34f0f92a1`). Our template replaces upstream's (register
-BUILD-2), so a frappe_docker bump alone does not fix it.
-
-**What (owner go 26 November 2026):** carry upstream's rule word for word (any case; 14 file types instead of 4;
-anchored at the end of the name); a unit test that fails if the rule becomes case-sensitive again or loses a type;
-register BUILD-2 says upstream security fixes in this template are carried by hand and re-checked on every bump.
-
-**Scope decisions (owner go 26 November 2026):** only this rule. Upstream's other template changes since our pin
-(trusted HTTPS forwarding, `280fc962eb`; clearing `X-Forwarded-SSL` / `X-Forwarded-Protocol`) stay out: they touch
-how proxy headers are trusted and relate to the Origin report still in triage (private companion, BUILD-2). They
-have no item yet.
-
-**Release:** an "ERP runtime files" change (promotion map): render the ERP stack and redeploy; no image rebuild, no
-migration. Branch, test site, merge, main, production, with a rollback point (the previous mounted file) and a
-release record.
-
-**Acceptance:**
-1. On test, public uploads `poc.SVG`, `poc.HTML`, `poc.Xml` and their lower-case forms answer with
-   `Content-Disposition: attachment`; a `.PNG` and a `.pdf` open as before; private files behave as before.
-2. nginx starts with the rendered config; the realtime socket still connects (register BUILD-2).
-3. The same header check on production right after promotion; drift check clean for erp.
-4. Read-only look on production for existing public files with these extensions in upper or mixed case (file names
-   only), result recorded.
-
-**Progress (26 November 2026):**
-- Public PR **#103** (`p97/files-forced-download`, fix commit `b7e0b7c`): the rule, `tests/test_files_forced_download.py`
-  (6 tests; fails on the old rule), register BUILD-2. Repository check and client identity check passed locally; the
-  full unit run cannot run on the Windows PC, CI is the evidence. Advisories checked 26 November 2026: frappe_docker
-  advisories and releases against pin `0ad1a1152f93`; one published advisory (this one), fixed by the change;
-  latest release v4.3.0.
-- Read-only check on the test VM (26 November 2026): the ERP web container mounts the template read-only from
-  `<server path>` and renders it at start; the running config has the old
-  case-sensitive rule; nginx 1.26.3 with PCRE2 (supports the new pattern); no public file on test has one of these
-  extensions in upper or mixed case. The test ERP runs the colleague's PR #77 image (`2a9f149`), used by the P74
-  phone test: the fix needs only the mounted file replaced and the web container recreated (seconds), not a new
-  image. Not done; waits for the owner's go for the test slot.
-- **On test since 26 November 2026, 15:35 UTC (owner's go):** the template of `95f25b9` replaced the mounted file and
-  the web container was restarted (about 10 s; image unchanged, `2a9f149`). Before: `.SVG`, `.HTML`, `.Xml` test
-  files opened inline (flaw confirmed). After: `.SVG`, `.svg`, `.HTML`, `.html`, `.Xml`, `.xml`, `.MHT` answer
-  `Content-Disposition: attachment`; `.PNG` and `.pdf` unchanged; `.html.txt` no longer forced; private files 403
-  without a session as before; realtime handshake 200 as before; nginx syntax test passed first; test files removed.
-  Receipt `p97-test-erp-files-forced-download-95f25b9`; rollback copy kept on the test VM (in the receipt).
-  Limits: checked directly against nginx in the container, not through the ERP upload screen or a signed-in browser.
-- **Production look for existing files: not done.** The owner said yes, but the session's permission check refused
-  the production connection from this PC; nothing ran on production.
-- **Merged, not deployed (26 November 2026, owner's go):** public #103 at `bf8d5c8` (head `af3e6b9`, brought up to date
-  with main, CI passed; the template is byte-identical to the tested `95f25b9`), private #10 at `66d0b9f`.
-  **Reaches:** the erp stack on production (one mounted file, restart of the web container). The test ERP already
-  runs the file.
-- **Production look done (read-only, 15:46 UTC):** production runs the old rule (mounted file equal to the template
-  before P97). The site has **no public files at all** (0 public, 49 private), so no file with an affected extension
-  exists and nothing points to the flaw having been used through a stored file. Until production has the fix, a
-  signed-in user could still upload one.
-- **Production not changed: stopped.** The look showed the production server had rebooted at 15:30 UTC (16 minutes
-  earlier, new kernel) and another key signed in a minute after: another session or the owner is at work there.
-  Raised to the owner, who confirmed it and gave the word to continue. One monitoring container (Prometheus, P72) had not come back
-  after the reboot (seen 15:46 UTC; not touched).
-- **On production since 26 November 2026, 15:51 UTC (owner's go, after the owner confirmed the reboot):** the
-  template of main (`bf8d5c8`) replaced the mounted file; web container restarted (11 s); image unchanged
-  (`059f8bf`). Flaw confirmed before with harmless files, every header check passed after, test files removed.
-  Receipt `p97-production-erp-files-forced-download-bf8d5c8`; release log entry; rollback copy on the VPS.
-- **Drift check:** erp is reported behind main (30 files). The check reads the image tag and cannot see a mounted
-  file, so it still lists this template; the other 29 files are P95 and P93 (merged, not deployed).
-- **Acceptance:** 1, 2 and 4 met; 3 met for the header check, not for "drift check clean" (reason above).
-- **Left:** owner's signed-in browser check (a download, realtime); owner decides when P97 is closed. P99 opened so
-  the drift check compares mounted runtime files by checksum.
-
-**Related:** P89 (register BUILD-2), P91 (upgrade checks), P62 (daily watch finding
-`advisory:frappe_docker@0ad1a1152f93:GHSA-94mh-qq29-qwrf`).
 
 ### P98 — ERP web server template: take up upstream's trusted-HTTPS forwarding changes
 

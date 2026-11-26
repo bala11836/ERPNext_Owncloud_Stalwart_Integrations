@@ -1,6 +1,6 @@
 # General: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -192,7 +192,7 @@ sign-in.
 
 ### P46 — TrueNAS as network video recorder (NVR)
 
-**App:** general · **Also touches:** none · **State:** open
+**App:** general · **Also touches:** none · **State:** in progress
 
 **Status:** planned, owner request 19 November 2026. Besides the test VM and
 the backup storage, the TrueNAS server records IP cameras that stream over
@@ -205,6 +205,23 @@ storage sizing, and the hardware: larger disks, more RAM, Coral. Keep it
 isolated from the backup storage and the test VM (separate dataset, quotas,
 no access from production), and include the recorder configuration in this
 repository as its own module.
+
+**Trial (owner, 26 November 2026):** a proof of concept with one camera on the
+local network; capacity and remote sites are not in scope yet. Frigate 0.18.3
+(MIT, re-verified) from the TrueNAS catalogue, detection with OpenVINO on the
+processor (the host has no graphics chip), recordings in their own dataset with a
+100 GiB quota, the web page with its login on the local and private networks only.
+Coral is dropped: Frigate no longer recommends it for new installations. Settings
+in the `integrations/frigate/` module; Frigate is in the daily upstream watch. The
+owner installs the camera (an Annke I51DS) later.
+
+**Long-term placement and hardware (owner, 26 November 2026):** backups and the Frigate NVR stay on a local server
+(the TrueNAS host), because video processing (detection on an accelerator) cannot run on the VPS; the test VM may
+move to the VPS if required. Long-term TrueNAS upgrade: (i) more RAM; (ii) four 8 TB hard disks; (iii) a detection
+accelerator, which the owner named as Coral. Note for the hardware choice: the trial above dropped Coral because
+Frigate no longer recommends it for new installations; choose the accelerator Frigate recommends at purchase time
+(for example an Intel graphics chip with OpenVINO, or a Hailo card) and record the choice. Disk layout, redundancy
+and the split between backup and recordings are decided with the purchase.
 
 ### P48 — Remote branch router and gateway firewall
 
@@ -220,6 +237,21 @@ logging, filtering, licence and cost. Activity logging must follow the
 applicable law (for example India's IT Act and the Digital Personal Data
 Protection Act: notice to users, purpose, retention, access control); define
 that policy with the owner before enabling it.
+
+**Hardware choice (owner discussion, 26 November 2026; prices from Indian listings that day, agent estimates):**
+- **Box:** a fanless mini PC with an Intel N150 (or N100) processor, 4 Intel i226-V network ports (not Realtek:
+  FreeBSD's drivers are less reliable), 8 GB RAM and a 256 GB NVMe SSD; about ₹18,000–22,000 per site; a seller
+  with an Indian warranty. Many units are sold without RAM and SSD.
+- **System:** OPNsense (needs an x86 processor) for DHCP, DNS, firewall and the mesh gateway; spare ports for a
+  separate camera network or a second internet line.
+- **Wipe on arrival:** install OPNsense fresh; never use a preinstalled system.
+- **Addresses:** every branch and the NVR site get their own LAN range; the mesh cannot route between sites that use
+  the same range.
+- **To check before buying:** the OPNsense Tailscale plugin (`os-tailscale`, community-supported) must sign in to our
+  own Headscale (P29), not only hosted Tailscale; it creates no firewall rules (interface and rules added by hand);
+  licence, maintenance and security review per the adoption rule.
+- **Owner decision:** trial the box on hosted Tailscale now and move it to Headscale later, or wait for P29.
+- The box also carries the project's cameras that can be wired back to it (P88).
 
 ### P57 — The platform survives restarts and reboots without an outage
 
@@ -591,9 +623,38 @@ TrueNAS answers.
 no secrets in dashboards or alert texts; licences of Grafana, Loki (AGPL) and Prometheus (Apache) recorded; set up from
 this repository as a module (stack files, config, README), branch, test, owner go, like every other stack.
 
-### P73 — Matrix as federated messaging between tenants
+### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
-**App:** general · **Also touches:** none · **State:** open · **Category:** long-term plan
+**App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
+
+**Plan (owner, 26 November 2026; replaces the "idea" below as the goal):** replace Raven with a federated chat
+(Matrix or XMPP), built into ERP Mobile as its Chat tab (P50), and retire Raven once the new chat carries the work.
+It must keep what Raven gives today inside ERPNext: the same users and roles (authentik sign-in), sharing ERP
+documents, document-change and approval messages, and company record keeping.
+
+**What:**
+1. **Choose the protocol and server** on the test site: Matrix (servers Synapse, continuwuity or Tuwunel; sign-in with
+   authentik through the Matrix Authentication Service) or XMPP (servers Prosody or ejabberd; lighter to run). Compare:
+   a usable client library for the app (React Native) under a licence that allows commercial use, sign-in with
+   authentik, push to phones (P14), federation, encryption against company record keeping (encrypted rooms cannot be
+   archived or searched by the company), retention and export, running cost, security history.
+2. **ERPNext integration:** messages for document changes and approvals, sharing a document into a chat, the people
+   and groups from ERPNext.
+3. **Chat in the app:** the Chat tab, chats per project or site, files through Drive (not stored twice; see P16),
+   push.
+4. **Move from Raven:** decide whether old Raven messages are moved, archived or kept read-only; run both for a
+   period; then retire Raven and close the Raven items it makes redundant (owner decides each).
+
+**First findings (26 November 2026, public sources, not verified):** the community package `react-native-matrix-sdk`
+is unfinished and limited to non-commercial use, so it is not usable; the app would use Matrix's official libraries
+(JavaScript, or the Rust SDK through native bindings: maturity to check). For XMPP, React Native libraries exist but
+are small; check maintenance. **Agent recommendation:** compare both on the test site with the checks in step 1, with
+Matrix as the first candidate for its apps, bridges and federation, and XMPP if running cost and simplicity weigh more.
+
+**Owner decisions needed:** federation from the start or later; encryption policy for company rooms; what happens to the
+Raven history; priority (the item stays a long-term plan until the owner ranks it).
+
+**Earlier idea (22 November 2026):**
 
 **Status:** owner idea, 22 November 2026; recorded as a long-term plan, not scheduled. Nothing starts until the owner
 decides.
@@ -620,3 +681,103 @@ one ERP site) cannot do.
 **To decide when taken up:** the goal (between tenants only, or the default chat), the server software, encryption
 policy for company rooms, calls, bridges, where it runs, and the effect on mobile plans.
 
+
+### P84 — Client identity out of the public repository, and a check that keeps it out
+
+**App:** general · **Also touches:** erp, mobile, test-site · **State:** open
+
+**Why (owner, 26 November 2026):** a client's name, legal name, logo, domains and people belong to the client and
+stay in the private repository; they must not be in the public repository at all ("tomorrow if not today"). The
+search on 26 November found the client's name in two code lines and the client's legal form in the public P list.
+The P list rules covered host names, addresses and people but not every form of the client's name, and nothing
+checks code pull requests for client names.
+
+**Found (26 November 2026):**
+- `tests/test_website.py:41`: the test checks that the front page does not contain the client's name, so the name
+  is written in the test.
+- `tools/rehearse_cripple.py:76`: the test-data leak check lists the client's and the brand's mail domains.
+- Public P list: the client's legal form next to the `<tenant>` placeholder (P50 branding note, new in PR #80;
+  the P63 test-site note was already covered). Fixed in PR #80 by a publication rule and a leak pattern
+  (26 November 2026).
+- Git history: the two code lines since 19 and 20 November; earlier P list versions.
+
+**What:**
+1. After PR #80 is cleared (owner): the two checks read the client's names and domains from the private deployment
+   profile instead of the code; the tests still pass without a profile (neutral defaults).
+2. An automatic check on every public pull request, including pull requests from forks: a test compares the
+   fingerprints (hashes) of the words in the repository against a list of fingerprints of client identifiers, so
+   the list itself reveals nothing. The plain list and the script that makes the fingerprints stay private.
+3. The publication rules treat client identity (every form of the name, legal name, domains) as a category; the
+   leak scan refuses it.
+4. Project instructions (`AGENTS.md`, `CLAUDE.md` in the public repository) and the decision log state the norm;
+   the norm for all projects is in the working agreements (26 November 2026).
+
+**Acceptance:** no client identifier in any file on the public `main` (search of every form of the name and
+domain); the new check fails on a test branch that adds one and passes on `main`; the P list publication passes
+the leak scan.
+
+**Owner decision open:** remove the client's name from the git history too (rewrite with a force push: breaks the
+open pull requests and the colleague's fork, and GitHub keeps old pull request commits), or clean the current files
+only (agent recommendation).
+
+**Related:** P85 (own brand public), P35 (presentation and upstream sharing).
+
+### P85 — Unformat brand public as the default; client brands supplied privately
+
+**App:** general · **Also touches:** portal, mobile, erp, signin · **State:** open
+
+**Why (owner, 26 November 2026):** about 95% of the work is public and only what licences, copyrights and clients
+require stays private. Our own brand, Unformat (name, "UN" logo, favicons, app icon, colours), is published as the
+default look; users can always replace it. Clients' brands stay private and are supplied when deploying or building.
+
+**What (owner go 26 November 2026):**
+- A `branding/unformat/` folder in the public repository with the logo, favicons, app icon and a brand file (name,
+  colours, app ID such as `in.unformat.erp`); builds use it unless a deployment supplies its own (deployment
+  profile for the portal logo and favicons, build settings for the app's name and ID, as `mobile/app.config.ts`
+  already allows).
+- A "Replace the branding" guide in the README.
+- A trademark note: the code is AGPL-3.0; anyone shipping it as their own product replaces the name and logo.
+- Copyright notice in `README.md` and `LICENSES.md`: "Copyright © 2026 example.com", nothing else (owner,
+  26 November 2026), instead of "Unformat and contributors". The public P list rules replace this domain with a
+  placeholder, so the public copy of this line shows the placeholder until the rules separate the brand domain from
+  host names. Note: outside contributors keep the copyright in their
+  own contributions unless they assign it; a contributor agreement would settle that (owner decision).
+- Production details that are not branding (host names, addresses, the live sign-in policy and group names) stay
+  replaced by placeholders in the public P list.
+
+**Owner input needed:** who owns the name "Unformat" (the owner personally or a company) for the trademark note.
+
+**Acceptance:** a build without private brand settings shows the Unformat brand; a build with a client's profile shows
+only the client's brand; the guide's steps work on the test site; the copyright and trademark notes are in place.
+
+**Related:** P84 (client identity), P50 (per-brand app builds), P63 (demo brand), P55 (tenant logo through the
+private profile).
+
+### P88 — Project camera sites connected to the NVR over the mesh
+
+**App:** general · **Also touches:** mobile · **State:** open
+
+**Why (owner, 26 November 2026):** every project has cameras (outdoor PTZ, at security and elsewhere) that must reach
+the remote NVR (P46) over the mesh, so they can be recorded and watched in the app (P87). The test starts with the
+Annke camera of the P46 trial.
+
+**Design:**
+- **Default:** cameras are wired back to the project's indoor switch; the P48 gateway box carries them to the NVR.
+- **Only where a camera cannot be wired back:** an outdoor kit at the camera, powered from the camera's own PoE line:
+  Raspberry Pi Zero 2 W with the Waveshare PoE Ethernet / USB HUB BOX (with case; 802.3af, 100 Mbit/s, enough for
+  camera streams), a high-endurance microSD card, an outdoor 1-in-2-out PoE extender (IP66, 802.3at on both outputs)
+  and an IP65/66 junction box in the shade (heat is the main risk). About ₹5,000–6,500 per camera (Indian listings,
+  26 November 2026: Robocraze, Rees52, ThinkRobotics, IndiaMART; agent estimate).
+- **PoE power budget:** PTZ cameras usually need 802.3at (about 25 W) or more with heaters or IR; the switch port must
+  supply the camera, about 2–3 W for the Pi and the extender's loss; otherwise an 802.3bt port or a separate feed.
+- The NVR site is on the mesh itself (P46).
+
+**Not known yet (owner, 26 November 2026):** the number of cameras per project and how many can be wired back; counted
+per project at each site survey, which then gives that project's parts list.
+
+**Order:** the Annke test with P46; then one outdoor kit with one camera and the NVR; then per-project rollout.
+
+**Acceptance:** a camera behind the gateway box and one behind an outdoor kit record on the NVR and play in the app;
+the kit survives a hot day in its box (temperature logged).
+
+**Related:** P46 (NVR), P48 (gateway box), P29 (Headscale), P87 (videos in the app), P72 (monitoring).

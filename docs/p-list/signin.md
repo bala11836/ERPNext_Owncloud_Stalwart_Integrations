@@ -1,6 +1,6 @@
 # Sign-in: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -163,7 +163,7 @@ separate step with its own go.
 
 **Production (25 Nov):** done. `akadmin` recreated switched off via `--akadmin-only`
 (PR #73, `0ed08d4`), and the owner's production administrator is passkey-only.
-The owner's browser sign-in check is pending.
+The owner's browser sign-in check passed (owner, 25 Nov afternoon: "working").
 
 **Status 25 November 2026:** on test. Public draft PR #72 (module `6586c38`,
 CI green), throwaway test passed, Test Authentik switched over (the owner's
@@ -213,3 +213,110 @@ Production email wording and P78 on production wait for P49.
 (`passkey-providers.json`, `tools/sync_passkey_providers.py`); every Test
 Authentik passkey step uses the five providers. Not merged; production needs a
 separate go.
+
+### P82 — ERP Mobile holds the passkeys; one phone and one computer session per user
+
+**App:** signin · **Also touches:** mobile, portal, erp, test-site · **State:** open
+
+**Why:** passkeys in Apple Passwords, Google Password Manager or Bitwarden travel with the
+person's account: whoever is given the account login gets the key on their own devices, and a
+key saved on a shared office computer can be used by the next person. The owner wants sign-ins
+that cannot be shared or left behind on a shared computer, enforced in authentik so it holds for
+every service behind it (not in ERPNext).
+
+**What (owner decisions, 25 November 2026):**
+- **ERP Mobile holds the keys.** The app becomes a passkey provider on the phone. Each key is
+  created in the phone's secure hardware, never synced or exported, and locked to the
+  fingerprints/face enrolled at sign-up (adding or removing one destroys the key; Android
+  `setInvalidatedByBiometricEnrollment`, iOS `biometryCurrentSet`); no PIN fallback for the key.
+- **Computers sign in only by QR from the phone** (standard WebAuthn cross-device sign-in: the
+  phone scans, Bluetooth checks it is nearby). Because ERP Mobile keys exist only on phones, a
+  computer can use them only this way; no change to authentik's code is needed. Office
+  computers have Bluetooth (owner).
+- **Sign-up from the phone:** "Request access" in the app, the admin approves (invite page),
+  the key is created in the app. A new or replacement phone needs the admin's approval.
+- **One phone per person** and **at most 1 phone and 1 computer session per user**; the newest
+  sign-in ends the older session of the same kind and the person gets a notice.
+- **Exception group in authentik** (admin adds/removes people): members may sign up and sign in
+  with **Apple Passwords only**, directly on their MacBook, iPad or iPhone, without a phone scan.
+  Members get an extra **tablet** session (1 phone + 1 computer + 1 tablet). The owner is a
+  member. Accepted risk: their keys can be shared through their Apple account.
+- **Everyone else:** only ERP Mobile keys are accepted (the approved-provider setting of P79
+  shrinks to ERP Mobile plus Apple Passwords for the exception group). Chrome's own Mac store
+  is removed.
+- **Proof of the genuine app:** Android key attestation (and Apple App Attest later) checked at
+  sign-up by our own sign-up service (the invitations companion), because authentik does not
+  check it.
+- **Device binding:** phones are bound by their key (the admin sees model, sign-up date, last
+  use and can remove one). Computers are bound too, now, not later (owner: do not wait):
+  first evaluate authentik's Endpoint Devices on test (its docs call it an early preview, not
+  for production, with Enterprise parts; check licence and maturity), and report a fallback
+  design if it is not usable.
+- **Sessions:** the sign-in service session ends when the browser closes, on sign-out, or after
+  **30 minutes** of inactivity; same for the ERP (its `session_expiry` is 170 hours today).
+  Chrome/Edge "continue where you left off" can revive session cookies, so the inactivity
+  limit is the safety net.
+- **Sign-out from the app signs the person out of the Desk and all apps** (moved here from
+  P53): the app revokes its own tokens and ends all of the person's authentik sessions;
+  authentik (2025.10 and later) sends back-channel logout to connected apps; the ERP through our
+  portal code (P56/P08 global logout). Check each app's back-channel support one by one.
+- **Android first;** the Apple part follows later and this item stays open until it is done
+  (needs an Apple Developer account).
+- **Upstream:** post the authentik feature request (validation stage: require or expose the
+  reported authenticator attachment) and share the link with the owner for review (working
+  agreements, upstream rule).
+
+**Decision path (discussion 25 November 2026, owner and agent):**
+1. Owner proposal: store user passkeys in the app; request access on the phone, approve in
+   authentik, key stored on the device; desktop sign-in by scanning a QR. Agent: QR sign-in
+   already exists in the standard (cross-device); the new part is the app as a passkey
+   provider. Three options: (A) app as passkey provider (large, about 6–10 weeks), (B) our own
+   QR approval like WhatsApp Web (refused: a fake site can show a real QR code and the victim
+   signs the attacker in; no proximity check), (C) keep the standard providers and tighten.
+2. Owner alternative: face or fingerprint matched against copies on the server, cached for
+   offline sign-in, and TOTP for the desktop. Agent: phones never give apps fingerprints; a
+   server face store is spoofable without liveness and cannot be rotated if leaked (privacy
+   law); TOTP is phishable, so only as a backup. Owner: a fingerprint change must be noticed;
+   agent: the signature does not carry the fingerprint, but the key can be locked to the
+   current fingerprint set (adopted above). Offline sign-in: a locally unlocked session,
+   time-limited and checked again when back online (P50).
+3. Owner chose C at first with (i) sign-up only from a phone and (ii) computers only by QR.
+   Agent found authentik drops the browser's "where the key came from" report before policies
+   run, so (ii) needed a small authentik code change and an own image (option B of that step);
+   phone-mode/desktop-mode browsers can fake the device type, so the rule must not rely on it.
+4. Owner: give Apple users a free way (Macs are not shared; iPad users must not need a phone);
+   and found that synced passkeys can be shared with the account, so the passkey use case was
+   compromised. Agent: only a non-copyable key that needs the person's own finger stops sharing,
+   which is option A; it also makes the authentik code change unnecessary.
+5. Owner: go for A without intermediate solutions, with the admin exception group in authentik,
+   device binding, the session limits and the app sign-out above.
+
+**Code from other projects (checked 25 November 2026):** borrow with credits and licence notices.
+- Google `android/identity-samples` (`CredentialProvider/MyVault`): Apache-2.0, active.
+- KeePassDX (Kunzisoft, passkey provider on Android 14+): GPL-3.0, active.
+- Password Store, Passkey Edition (pando85 fork; the original Android-Password-Store is archived):
+  GPL-3.0, active.
+- Commercial use is allowed by all three. GPL-3.0 code may be combined with our AGPL-3.0 public
+  repository (GPL-3.0 section 13); it must therefore stay in the public `mobile-app` module, never
+  in the private repository (all rights reserved), and every app build we hand out must offer its
+  source. Prefer the Apache-2.0 sample where it covers the need. Record each borrowed file and its
+  origin in the module's notices.
+
+**To settle in the first step (trial on one Android phone):** Credential Manager provider support
+on the phone brands we use (some Android 14 builds lack third-party providers; some Xiaomi/Oppo
+phones reject the fingerprint-lock flag, which must refuse rather than continue silently); the
+app's link to the sign-in site (`assetlinks.json` on the sign-in host); authentik accepting the
+app's identity (AAGUID) in our existing rules; key attestation from an app installed outside the
+Play Store; Expo native module for the provider service; Endpoint Devices on test.
+
+**Order:** trial on Android; phone sign-up with admin approval; computers by QR and the
+authentik rules (ERP Mobile keys only, Apple for the exception group); sessions and the app
+sign-out; moving existing users (the 9 current passkeys are removed after everyone has signed up
+again, except the exception group's; the owner's emergency link stays); production after test,
+merge and a rollback point; then the Apple part.
+
+**Related:** P50 (the app, per-brand builds), P53 (Desk sign-out icons stay there), P56 and P08
+(global logout), P78 (invitation attempts), P79 (approved providers), P14 (push for approvals).
+
+**Status:** open, discussed and decided 25 November 2026; nothing built. The owner starts the
+work in another session.

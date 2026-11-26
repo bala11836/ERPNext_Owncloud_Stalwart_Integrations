@@ -952,6 +952,13 @@ procedures in ten areas and 18 gaps, published as the inventory in public `docs/
 `p96/sop-first-set`), with the template and the first two SOPs (ERP Mobile onboarding; face enrolment and consent),
 both drafts that apply when built. Next: the gaps that need owner decisions, then the in-use procedures.
 
+**Second set (26 November 2026, night; public PR on `p96/sop-second-set`):** three SOPs for procedures in use
+today (invite a user; approve field attendance; release a change to production) and two for the settled gaps (when
+someone leaves, as a draft manual checklist until the automatic part of P82 is built; alerts and daily checks for
+the admin). Seven inventory rows now link to an SOP. Open points for the owner are listed in the leaver SOP (personal
+files, the leaver's mailbox, where the checklist lives) and in the invitation SOP (the identity check before a
+recovery invitation). Still to write: the remaining in-use procedures (inventory rows without a link).
+
 **Owner decisions on the gaps (26 November 2026, late evening):**
 - **Leavers:** the exit procedure in Frappe HR triggers removal of keys and purges all the person's data in the app
   (P82, P95); SOP A14 to write.

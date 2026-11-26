@@ -330,4 +330,38 @@ production, with the legal opinion.
 model slot (off); 21 new tests, CI passed. Not yet: the face model (waits for the SFace decision), capture screen and
 PM queue, phone liveness (needs a phone), a test-site migrate (needs a slot).
 
+**Face engine (owner's go, 26 November 2026, late evening):** public PR on branch `p95/sface-engine`.
+- YuNet and SFace fp32 from OpenCV Zoo at commit `48b10fa`, fetched into the ERP add-on image with a SHA-256 check
+  per file (`deployment/face-models.json`, `tools/fetch_face_models.py`, register BUILD-11), run by the OpenCV
+  already in the image (version 5.0.0, wheel build 93; OSV: no advisories, also numpy 2.5.4).
+- The engine is off until a site names it in site config. The daily watch follows the model pin. The open-source
+  list moves OpenCV and OpenCV Zoo to "adopted".
+- Engine test here, on OpenCV's sample photos with the image's exact OpenCV version:
+  - the same face mirrored, smaller or darker scored 0.93 to 0.97;
+  - a different person scored 0.18 (threshold 0.363);
+  - a blank photo and a photo with two faces were refused;
+  - identification picked the right worker.
+- Found: OpenCV 5 ignores `setInputSize` after the detector is made, so the engine makes one per photo size.
+  Detection confidence is 0.8, because 0.9 refused a smaller copy of a clear face.
+- Not done:
+  - an ERP image build with the models (next release build);
+  - a trial on the test site with synthetic or consenting faces (needs a test-site slot, owner);
+  - tuning on real field photos.
+
+**Capture without choosing the worker, and the project manager's queue (owner's go, 26 November 2026, night):**
+public PR #101 (`p95/pm-queue`).
+- `face_capture`: a team photograph without a chosen worker is validated once on arrival (place, time, photograph).
+  A confident match is recorded and submitted at once in the supervisor's name; everything else waits as "Needs
+  review" (uncertain, nobody recognised, no clear face, recognition off, or a rule that needs a person such as a
+  machine allocation).
+- The project manager's "Face queue" tab on the field team page: pick the worker or reject with a reason. Only
+  another approver of the site decides; the chosen worker must be on the capturing supervisor's team.
+- Photographs are private; the queue's copy is deleted once recorded; a rejected capture keeps its photograph for 30
+  days (proposal, owner to confirm).
+- It works with recognition off: every such capture then waits for the project manager.
+- Tests: 12 new offline tests; 57 with the HR and face suites pass; CI passed.
+- **Not run:** 22 rollback-only live checks (`custom_hr/face_queue_integration_tests.py`); they need a test-site slot
+  and are where the database behaviour gets proven.
+- Not built: the mobile app's capture screen and the liveness check on the phone.
+
 **Status:** in progress.

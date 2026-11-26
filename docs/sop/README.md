@@ -23,8 +23,8 @@ private companion.
 
 | # | Procedure | Who | When | Status | SOP | Private |
 |---|---|---|---|---|---|---|
-| A1 | Invite a new user (approved group, 1–5 attempts, approved passkey provider) | admin | new person | in use | — | yes |
-| A2 | Lost-passkey recovery invitation (and the identity check before it) | admin | lost device or passkey | in use; identity check a gap | — | yes |
+| A1 | Invite a new user (approved group, 1–5 attempts, approved passkey provider) | admin | new person | in use | [invite a user](invite-a-user.md) | yes |
+| A2 | Lost-passkey recovery invitation (and the identity check before it) | admin | lost device or passkey | in use; identity check a gap | [invite a user](invite-a-user.md) (recovery part) | yes |
 | A3 | Administrator bootstrap and the owner's emergency sign-in link | owner, operator | fresh instance, lockout | in use | — | yes |
 | A4 | Group membership, including the Apple exception group | admin; owner decides the exception group | joiner, role change, review | in use | — | yes |
 | A5 | Change the approved passkey providers | operator via PR, owner go | policy change | in use | — | yes |
@@ -36,8 +36,8 @@ private companion.
 | A11 | Re-onboarding after a 5-miss erase, or a new, lost or replacement phone (P82) | employee, project manager, admin | lockout, phone change | designed | [onboarding](onboarding-identity-and-biometrics.md) | no |
 | A12 | Device and session review (phones and computers); unused-key grace days per group (P82) | admin | periodic, leavers | designed | — | no |
 | A13 | Dual approval for super-administrator access (P28) | two approvers | before privileged sessions | designed | — | yes |
-| A15 | Handling alerts about sign-ins from unusual places or networks; marking office and site networks as usual (P82) | admin | on each alert | designed | — | yes |
-| A14 | Leaver offboarding across every app; the Frappe HR exit procedure triggers key removal and purges the app data (owner, 26 Nov) | HR, admin | person leaves | designed | — | yes |
+| A15 | Handling alerts about sign-ins from unusual places or networks; marking office and site networks as usual (P82) | admin | on each alert | designed | [admin alerts](admin-alerts-and-daily-checks.md) | yes |
+| A14 | Leaver offboarding across every app; the Frappe HR exit procedure triggers key removal and purges the app data (owner, 26 Nov) | HR, admin | person leaves | designed | [leavers](leaver-offboarding.md) (draft) | yes |
 
 ### B. Mobile app and devices
 
@@ -55,7 +55,7 @@ private companion.
 | C1 | Set up a Field Site (fence, accuracy, members, engineer, approval box, check-in block) | admin, HR | new or changed site | in use | — | yes |
 | C2 | Worker assignments and shift allocation | HR, supervisor | worker joins or moves | in use, not described | — | yes |
 | C3 | Team capture and engineer verification | supervisor, engineer | every shift | in use | — | no |
-| C4 | Attendance approval (single and bulk, offline-marked entries) | project manager | daily | in use | — | no |
+| C4 | Attendance approval (single and bulk, offline-marked entries) | project manager | daily | in use | [attendance approval](attendance-approval.md) | no |
 | C5 | Self check-in and check-out (selfie today; biometric when P82 is built) | employee | every shift | in use; change designed | — | no |
 | C6 | Corrections, returns, void and cancel (P24) | supervisor, project manager, HR | errors | **gap**: rules not agreed | — | no |
 | C7 | Face enrolment of field workers with one good phone (P95) | HR or project manager | onboarding, model change | designed | [face enrolment](field-face-enrolment-and-consent.md) | yes |
@@ -91,14 +91,14 @@ private companion.
 | F2 | Offline USB copy (steps, frequency, encryption, storage place) | owner | periodic | **gap** | — | yes |
 | F3 | Backup-store protection and snapshot rollback | owner | storage change, ransomware | partly | — | yes |
 | F4 | Full restore or rehearsal on a clean server | operator | disaster, rehearsal | in use | — | yes |
-| F5 | Watching backup, restore-drill and monitoring results: the admin receives the alerts, plus a Desk widget for the sign-in admin (P72, P53) | admin | daily | partly | — | yes |
+| F5 | Watching backup, restore-drill and monitoring results: the admin receives the alerts, plus a Desk widget for the sign-in admin (P72, P53) | admin | daily | partly | [admin alerts](admin-alerts-and-daily-checks.md) | yes |
 | F6 | Restore one file, record or mailbox | operator | user request | **gap** | — | yes |
 
 ### G. Releases and deployments
 
 | # | Procedure | Who | When | Status | SOP | Private |
 |---|---|---|---|---|---|---|
-| G1 | Production promotion (plan, rollback point, logs, checks, drift, release record) | operator, owner go | each release | in use | — | yes |
+| G1 | Production promotion (plan, rollback point, logs, checks, drift, release record) | operator, owner go | each release | in use | [production release](production-release.md) | yes |
 | G2 | Advisory and adoption checks; upstream-watch digest | agent, owner | promotion, upgrade, new dependency | in use | — | no |
 | G3 | Upgrade checklist: walk the register | operator | version change | in use | — | yes |
 | G4 | Re-check manual live settings | operator | upgrade, recreate, reboot | in use | — | yes |
@@ -139,7 +139,7 @@ private companion.
 | J4 | Test outbound allow list and test recipients' consent | admin | test flows | designed | — | yes |
 | J5 | Licence and contract review before the first client | owner | before the first client | open | — | yes |
 
-### Gaps to settle (no procedure anywhere yet)
+### Gaps to settle (no procedure yet, or only a draft)
 
 The identity check before a recovery invitation (A2); lost or stolen phone (B4); attendance corrections and
 cancel rules (C6); offline USB copy

@@ -35,10 +35,12 @@ told where that is possible; steps 2 and 3 first.
 4. **Attendance (project manager, then admin):** if the person was a supervisor, engineer or approver, reassign
    their workers and approvals first (the system refuses to remove a supervisor who still has active workers), then
    remove them from every Field Site. Decide their own waiting attendance entries before the account closes.
-5. **Mail (admin):** remove the person from shared mailboxes and send-as rights; close or redirect their own
-   mailbox as the owner decided for this person. Company mail is kept under the retention rule; do not delete it.
-6. **Drive, documents and chat (admin):** end their sessions and app tokens; hand over files and spaces they
-   owned to their manager. Do not delete their files before the owner's decision (open point).
+5. **Mail (admin):** remove the person from every shared mailbox and send-as right. Mailboxes are shared in the
+   present setup, so there is no personal mailbox to close or redirect (owner, 26 November 2026). Company mail is
+   kept under the retention rule; do not delete it.
+6. **Drive, documents and chat (admin):** end their sessions and app tokens. **Their personal business files stay
+   where they are; nothing is deleted** (owner, 26 November 2026). Hand over shared spaces they managed to their
+   manager.
 7. **Phone and computers:** ask the person to remove ERP Mobile; when P82 is built, removing the key in the sign-in
    service makes the app purge itself. Remove their computers from the allowed list when computer binding exists.
 8. **Face data (P95, when in use):** it is deleted automatically when the employee is no longer Active. Check that
@@ -50,7 +52,7 @@ told where that is possible; steps 2 and 3 first.
 
 - Sign-in refused; no session, passkey or group left on the account.
 - ERP user disabled; no site membership; no workers or approvals still pointing at them.
-- No shared mailbox or send-as right; files handed over.
+- No shared mailbox or send-as right; the person's files are still in place and nobody deleted them.
 
 ## Record
 
@@ -67,9 +69,9 @@ companion (proposal: a checklist on the employee's separation record).
 
 ## Open points for the owner
 
-- What happens to the leaver's personal business files in the app (keep for how long, hand to whom).
-- Their own mailbox: closed at once, or redirected to the manager for a period.
-- Whether the admin's checklist lives on the Frappe HR separation record (proposal above).
+- Decided on 26 November 2026: personal files stay; mailboxes are shared, so nothing is redirected.
+- Still open: who may open a leaver's personal files afterwards, and for how long they are kept.
+- Still open: whether the admin's checklist lives on the Frappe HR separation record (proposal above).
 
 ## Private companion
 

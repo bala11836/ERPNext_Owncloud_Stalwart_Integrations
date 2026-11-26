@@ -40,6 +40,7 @@ reports. Entries from earlier shifts stay in the list until decided.
 6. **Self check-ins** by staff with the app appear in the same list; check them the same way.
 7. When face attendance is in use (P95): first clear the **Face queue** tab. There, pick the worker in each
    photograph the system could not settle, or reject it with a reason; recorded captures then appear in Approvals.
+   A rejected capture keeps its photograph for 30 days, then only the record and your reason remain.
 
 ## Checks
 

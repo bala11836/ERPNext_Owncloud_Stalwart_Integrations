@@ -58,9 +58,11 @@ whom, date) where the private companion says.
 - **The link expired or the attempts are used up:** create a new invitation; do not extend an old one.
 - **The person opened it on the wrong device or saved the passkey in the wrong place:** use a **recovery**
   invitation. The old passkey is removed only after the new one works.
-- **Lost device or passkey:** before a recovery invitation, confirm the person's identity through their manager, in
-  person or by a call to a known number. A message or mail asking for recovery is not enough. (This check is a
-  recorded gap, inventory A2: owner to confirm the rule.)
+- **Lost device or passkey** (owner's rule, 26 November 2026): the **project manager meets the person, checks
+  their phone in person** and confirms the request. Only then does the admin send a recovery invitation. A message,
+  mail or call asking for recovery is never enough. When ERP Mobile holds the keys (P82), the project manager
+  confirms the request in their own app instead of telling the admin; until then they confirm it to the admin
+  themselves, and the admin notes who confirmed and when.
 - **The invitation reached the wrong person:** delete it at once under **Invitations**; if a passkey was already
   created, remove it from the account, end the account's sessions and tell the owner.
 - **The mail did not arrive:** check the sender account (inventory D1) before sending again.

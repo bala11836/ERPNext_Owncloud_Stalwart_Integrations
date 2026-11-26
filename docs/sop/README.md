@@ -24,7 +24,7 @@ private companion.
 | # | Procedure | Who | When | Status | SOP | Private |
 |---|---|---|---|---|---|---|
 | A1 | Invite a new user (approved group, 1–5 attempts, approved passkey provider) | admin | new person | in use | [invite a user](invite-a-user.md) | yes |
-| A2 | Lost-passkey recovery invitation (and the identity check before it) | admin | lost device or passkey | in use; identity check a gap | [invite a user](invite-a-user.md) (recovery part) | yes |
+| A2 | Lost-passkey recovery: the project manager checks the phone in person and confirms, then the admin invites | project manager, admin | lost device or passkey | in use | [invite a user](invite-a-user.md) (recovery part) | yes |
 | A3 | Administrator bootstrap and the owner's emergency sign-in link | owner, operator | fresh instance, lockout | in use | — | yes |
 | A4 | Group membership, including the Apple exception group | admin; owner decides the exception group | joiner, role change, review | in use | — | yes |
 | A5 | Change the approved passkey providers | operator via PR, owner go | policy change | in use | — | yes |
@@ -141,7 +141,7 @@ private companion.
 
 ### Gaps to settle (no procedure yet, or only a draft)
 
-The identity check before a recovery invitation (A2); lost or stolen phone (B4); attendance corrections and
+Lost or stolen phone (B4); attendance corrections and
 cancel rules (C6); offline USB copy
 (F2); restoring a single file, record or mailbox (F6); break-glass deploy and rollback (G10); secret rotation (H1);
 certificate reminders (H2); app signing-key custody (B1); impersonation and archive access-log review (A6, D4);

@@ -956,6 +956,18 @@ unrecorded dms render is incident `incident-dms-unrecorded-render-fdf4a43`).
 - **website:** behind main (3 files); with the P85 brand defaults once #87 is merged (production supplies its own
   branding, so no visible change).
 
+- **mail (found 26 November 2026, night):** behind main by 2 files plus the three rendering tools: P91's build-time
+  webmail check (`tools/prepare_mail.py`, `integrations/mail/upstream.json`). It changes no running file: same
+  webmail commit and customisations, and the check passes against the pinned commit. Main's
+  `deployment/stacks/mail.compose.json` equals the released `bb546d7` (Stalwart 1.1.1). A render from `bb546d7`
+  and from main with neutral sample values gave the same mail definition (only the per-render generated values and
+  the output path differ) and the same mail policy file. **Owner's go for a re-link:** script
+  `deployment/promotion/p94/relink-mail.sh <main sha>`. It reads the recorded commit, stops unless only those six
+  files changed, saves the note, updates it guarded by the old value and reruns the drift check. **Done** (27 November
+  2026, 01:07 IST, from the Mac session with production access, owner's go): note set from `bb546d7` to main `9f1116a`
+  (main had moved on from `915228c` by P57 merges that touch no mail file); exactly the six expected files; nothing
+  restarted. Drift check: **mail clean**. Receipt `p94-production-relink-mail-9f1116a`.
+
 **First step for each:** run the promotion plan from the stack's recorded revision to main and list what users would
 notice. **Order:** owner decides. **Acceptance:** the nightly drift check is clean for every stack.
 

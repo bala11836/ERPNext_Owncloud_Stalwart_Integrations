@@ -316,7 +316,6 @@ editor-bridge check on production~~ done 22 Nov (PR #23, `85c3f01`);
 (2) ~~port 587~~ removed 22 Nov; (3) ~~worker settings drift~~ not drift (the file is written once and kept by design;
 release log 22 Nov); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
 
-
 ### P59 — Promotion plan and drift check: no stack left behind
 
 **App:** general · **Also touches:** none · **State:** open
@@ -404,7 +403,6 @@ advisory check (the watch was still a plan); the owner's rule "security before f
 that check for every promotion (working agreements, `AGENTS.md`, decision log). **Upgrade:** the colleague's agent was
 asked to prepare the Frappe upgrade on a branch (release notes and advisories reviewed, compatible app versions,
 tests); building the ERP image, the test site and production stay with the maintainers, each on the owner's go.
-
 
 ### P67 — Test deployments: one complete step, no hand-run pieces or drifting profiles
 
@@ -680,47 +678,6 @@ one ERP site) cannot do.
 
 **To decide when taken up:** the goal (between tenants only, or the default chat), the server software, encryption
 policy for company rooms, calls, bridges, where it runs, and the effect on mobile plans.
-
-
-### P84 — Client identity out of the public repository, and a check that keeps it out
-
-**App:** general · **Also touches:** erp, mobile, test-site · **State:** open
-
-**Why (owner, 26 November 2026):** a client's name, legal name, logo, domains and people belong to the client and
-stay in the private repository; they must not be in the public repository at all ("tomorrow if not today"). The
-search on 26 November found the client's name in two code lines and the client's legal form in the public P list.
-The P list rules covered host names, addresses and people but not every form of the client's name, and nothing
-checks code pull requests for client names.
-
-**Found (26 November 2026):**
-- `tests/test_website.py:41`: the test checks that the front page does not contain the client's name, so the name
-  is written in the test.
-- `tools/rehearse_cripple.py:76`: the test-data leak check lists the client's and the brand's mail domains.
-- Public P list: the client's legal form next to the `<tenant>` placeholder (P50 branding note, new in PR #80;
-  the P63 test-site note was already covered). Fixed in PR #80 by a publication rule and a leak pattern
-  (26 November 2026).
-- Git history: the two code lines since 19 and 20 November; earlier P list versions.
-
-**What:**
-1. After PR #80 is cleared (owner): the two checks read the client's names and domains from the private deployment
-   profile instead of the code; the tests still pass without a profile (neutral defaults).
-2. An automatic check on every public pull request, including pull requests from forks: a test compares the
-   fingerprints (hashes) of the words in the repository against a list of fingerprints of client identifiers, so
-   the list itself reveals nothing. The plain list and the script that makes the fingerprints stay private.
-3. The publication rules treat client identity (every form of the name, legal name, domains) as a category; the
-   leak scan refuses it.
-4. Project instructions (`AGENTS.md`, `CLAUDE.md` in the public repository) and the decision log state the norm;
-   the norm for all projects is in the working agreements (26 November 2026).
-
-**Acceptance:** no client identifier in any file on the public `main` (search of every form of the name and
-domain); the new check fails on a test branch that adds one and passes on `main`; the P list publication passes
-the leak scan.
-
-**Owner decision open:** remove the client's name from the git history too (rewrite with a force push: breaks the
-open pull requests and the colleague's fork, and GitHub keeps old pull request commits), or clean the current files
-only (agent recommendation).
-
-**Related:** P85 (own brand public), P35 (presentation and upstream sharing).
 
 ### P85 — Unformat brand public as the default; client brands supplied privately
 

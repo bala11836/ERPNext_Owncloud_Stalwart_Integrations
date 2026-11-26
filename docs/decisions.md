@@ -18,6 +18,20 @@ discussion that led to a decision is not repeated here.
 - **Where:** `integrations/authentik/archive-reader/`, `configuration.json` (group, gate, mail binding),
   `configure_test_clients.py` (`also_groups`), README "Mail archive reader (P69)".
 
+### Upgrade authentik to 2026.8.7 for its security fixes (P83)
+
+Move the authentik pin (server and worker) from 2026.8.5 to 2026.8.7 by digest, with no configuration change.
+2026.8.7 fixes three critical and seven high advisories that affect 2026.8.5. One of them: a stage whose display a
+policy decides could be skipped when that policy failed, so anyone knowing a username could sign in without a
+passkey while, for example, the database disk was full. The passkey sign-in gate is exactly such a stage. The
+others cover the proxy-provider and forward-auth sign-in in front of the ERP and suite gateways, and request
+smuggling. Both releases since 2026.8.5 are patch releases with no migration notes. After the upgrade a failing
+policy is treated as its binding says (fail closed), not skipped. The image's build provenance was verified
+against the upstream release tag. The security fix comes before the mail archive reader's sign-in change (P69).
+
+Release notes: [authentik 2026.8.7](https://docs.goauthentik.io/releases/2026.8#fixed-in-202687);
+[advisories](https://github.com/goauthentik/authentik/security/advisories).
+
 ## 2026-11-25
 
 ### Invitation links allow 1 to 5 attempts (P78)

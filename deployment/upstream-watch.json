@@ -1,7 +1,7 @@
 {
   "_comment": "P62 upstream watch catalog (tools/upstream_watch.py). 'images' records the version behind every pinned image digest (images are pinned by digest only; a test fails when a digest changes without its version here). 'sources' says where each component's releases and advisories are published: github (releases, tags, repository advisories, licence), endoflife (endoflife.date release lines and end of life), osv (OSV.dev package), nvd (NVD product name, version appended), branch (for commit pins), exposure (public, tailnet, internal or build; the private profile may override it) and workaround (our own fix to retire once upstream no longer needs it). Components marked host are not in this repository; their versions come from the private profile.",
   "images": {
-    "ghcr.io/goauthentik/server@sha256:602227a86455d6772e3d16b7d852713c4f864f40df5df894abd1285bb53979a5": "2026.8.5",
+    "ghcr.io/goauthentik/server@sha256:1675a017c46ba7f4f15333aeafeeb64538c581673bcbcd36af872cdf7de4e7f7": "2026.8.7",
     "ghcr.io/paperless-ngx/paperless-ngx@sha256:d704e84f88300eb6ab001ab15720a2330ff99169cf9f94d6b8fcc44b63a84c84": "3.4.2",
     "onlyoffice/documentserver@sha256:ca17889f10b11141cc6441836aebdd2835cf3e1b49681b2fd6e155c94b7850b3": "10.0.0",
     "owncloud/ocis@sha256:8b2249fedba81e8e8ea69ba4baeb880c85978a13a0d73c9bc98ddb3d48dbd4e6": "8.2.3",

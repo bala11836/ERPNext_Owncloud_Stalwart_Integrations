@@ -116,6 +116,12 @@ class Photographs(unittest.TestCase):
         self.assertEqual(tuple(states), rules.STATES)
         self.assertTrue(next(f for f in definition['fields'] if f['fieldname'] == 'capture_id')['unique'])
 
+    def test_every_record_of_the_queued_photograph_is_removed(self):
+        # Frappe keeps two File records per photo field (found in the first live run): delete all of them.
+        drop = function(QUEUE, '_drop_photo')
+        self.assertIn('for name in _photo_names(doc):', drop)
+        self.assertIn("pluck='name'", function(QUEUE, '_photo_names'))
+
     def test_photograph_is_private_and_removed_once_recorded(self):
         self.assertIn('is_private=1', function(QUEUE, 'add'))
         for name in ('add', 'resolve', 'purge_rejected'):

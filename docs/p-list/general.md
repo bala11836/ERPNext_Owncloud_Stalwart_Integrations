@@ -676,8 +676,9 @@ default look; users can always replace it. Clients' brands stay private and are 
   already allows).
 - A "Replace the branding" guide in the README.
 - A trademark note: the code is AGPL-3.0; anyone shipping it as their own product replaces the name and logo.
-- Copyright notice in `README.md` and `LICENSES.md`: the owner's name "and contributors" (owner, 26 November 2026),
-  instead of "Unformat and contributors".
+- Copyright notice in `README.md` and `LICENSES.md`: the owner's name only, without "and contributors" (owner,
+  26 November 2026), instead of "Unformat and contributors". Note: outside contributors keep the copyright in their
+  own contributions unless they assign it; a contributor agreement would settle that (owner decision).
 - Production details that are not branding (host names, addresses, the live sign-in policy and group names) stay
   replaced by placeholders in the public P list.
 

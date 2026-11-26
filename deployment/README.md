@@ -169,10 +169,13 @@ test, merge and production change that the owner takes up.
   `/etc/systemd/system/` (without `.example`) and
   `systemctl enable --now upstream-watch.timer`. The service runs as a
   temporary unprivileged user; digests land in `/var/lib/upstream-watch`.
+- **Our upstream posts (P35):** when the checkout has `docs/upstream-posts.json`, the watch also checks
+  every watched post for new replies and state changes (`tools/upstream_posts.py`) and writes
+  `YYYY-MM-DD-posts.md` for anything new, each reply once (the state keeps what was reported). It never posts.
 - **Not yet:** open upstream issues matching our versions, vendor notices
   outside these sources, and the Ubuntu security notices for host packages.
 
-Tests: `tests/test_upstream_watch.py` (sample answers, no network).
+Tests: `tests/test_upstream_watch.py` and `tests/test_upstream_posts.py` (sample answers, no network).
 
 ## AI-assisted development
 

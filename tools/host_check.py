@@ -90,15 +90,31 @@ class Environment:
         message = email.message.EmailMessage()
         message['From'], message['To'], message['Subject'] = alert['sender'], ', '.join(alert['to']), subject
         message.set_content(body)
-        context = ssl.create_default_context()
-        if alert.get('security', 'ssl') == 'ssl':
-            server = smtplib.SMTP_SSL(alert['smtp_host'], int(alert['smtp_port']), timeout=30, context=context)
-        else:
-            server = smtplib.SMTP(alert['smtp_host'], int(alert['smtp_port']), timeout=30)
-            server.starttls(context=context)
+        server = verified_smtp(alert, ssl.create_default_context())
         with server:
             server.login(alert['username'], password)
             server.send_message(message)
+
+
+def verified_smtp(alert, context, timeout=30):
+    """Open the SMTP connection for the alert sender. With `address` set (for example the mail server's tailnet
+    address, when the server cannot reach its own public name), connect there but still verify the certificate for
+    `smtp_host`; certificate checks are never switched off (P57 follow-up 10)."""
+    hostname, port = alert['smtp_host'], int(alert['smtp_port'])
+    address = alert.get('address') or hostname
+    implicit = alert.get('security', 'ssl') == 'ssl'
+    base = smtplib.SMTP_SSL if implicit else smtplib.SMTP
+
+    class Verified(base):
+        def _get_socket(self, host, port, timeout):
+            raw = socket.create_connection((address, port), timeout, self.source_address)
+            return context.wrap_socket(raw, server_hostname=hostname) if implicit else raw
+
+    if implicit:
+        return Verified(hostname, port, timeout=timeout, context=context)
+    server = Verified(hostname, port, timeout=timeout)
+    server.starttls(context=context)  # verifies the certificate for smtp_host as well
+    return server
 
 
 def load_config(path):

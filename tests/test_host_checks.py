@@ -324,6 +324,63 @@ class AlertRenderTests(unittest.TestCase):
     def test_no_alert_section_renders_no_sender(self):
         self.assertNotIn('alert', rh.build_config({'hosts': {}, 'host_checks': {}}))
 
+    def test_connect_address_is_rendered_only_when_set_and_must_be_an_ip(self):
+        """P57 follow-up 10: a server may not reach its own mail server under the certificate's name."""
+        profile = {'hosts': {}, 'host_checks': {'alert': dict(ALERT, address='100.64.0.10')}}
+        self.assertEqual(rh.build_config(profile)['alert'], dict(ALERT, address='100.64.0.10'))
+        self.assertNotIn('address', rh.build_config({'hosts': {}, 'host_checks': {'alert': dict(ALERT)}})['alert'])
+        for bad in ('mail.example.com', '100.64.0.300', ''):
+            with self.assertRaises(ValueError, msg=bad):
+                rh.build_config({'hosts': {}, 'host_checks': {'alert': dict(ALERT, address=bad)}})
+
+
+class FakeSocket:
+    def __init__(self):
+        self.sent = b''
+
+    def makefile(self, mode):
+        import io
+        return io.BytesIO(b'220 ready\r\n')
+
+    def sendall(self, data):
+        self.sent += data
+
+    def close(self):
+        pass
+
+
+class FakeContext:
+    def __init__(self):
+        self.wrapped = []
+
+    def wrap_socket(self, sock, server_hostname=None):
+        self.wrapped.append(server_hostname)
+        return sock
+
+
+class VerifiedSmtpTests(unittest.TestCase):
+    """The real smtplib classes, with only the network faked: connect to `address`, verify the name."""
+
+    def connect(self, alert):
+        calls, context = [], FakeContext()
+        original = hc.socket.create_connection
+        hc.socket.create_connection = lambda target, timeout, source=None: calls.append(target) or FakeSocket()
+        try:
+            hc.verified_smtp(alert, context)
+        finally:
+            hc.socket.create_connection = original
+        return calls, context.wrapped
+
+    def test_address_is_dialled_but_the_certificate_is_checked_for_the_host_name(self):
+        calls, names = self.connect(dict(ALERT, address='100.64.0.10'))
+        self.assertEqual(calls, [('100.64.0.10', 465)])
+        self.assertEqual(names, ['mail.example.com'])
+
+    def test_without_address_the_host_name_is_dialled(self):
+        calls, names = self.connect(dict(ALERT))
+        self.assertEqual(calls, [('mail.example.com', 465)])
+        self.assertEqual(names, ['mail.example.com'])
+
 
 class RenderTests(unittest.TestCase):
     PROFILE = {'domain': 'example.com', 'projects': ['drive', 'erp'],

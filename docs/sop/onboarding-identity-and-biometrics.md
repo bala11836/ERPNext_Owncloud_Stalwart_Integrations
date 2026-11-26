@@ -18,8 +18,8 @@ are skipped, a family member, a colleague or an impostor can sign in as the empl
 ## When
 
 - A new employee needs the app.
-- **Re-onboarding:** after the app erased the key (5 wrong fingerprints in a row), or for a new, lost or
-  replacement phone.
+- **Re-onboarding:** after the app erased the key (5 wrong fingerprints in a row), after the sign-in server removed
+  a key that was not used for 7 days (for example after leave or illness), or for a new, lost or replacement phone.
 
 ## Steps
 
@@ -60,6 +60,8 @@ are skipped, a family member, a colleague or an impostor can sign in as the empl
 - The phone has no strong sensor: the employee needs another phone; tell HR.
 - After 5 wrong fingerprints the key is erased: the employee starts again at step 1 (common with wet, dusty or cut
   fingers; dry the finger and the sensor first).
+- Back after more than 7 days away: the key was removed by the sign-in server; the app says so. Onboard again from
+  step 1; plan it for the first day back.
 - Phone lost or stolen: the employee tells the admin at once; the admin removes the key and ends the sessions, then
   re-onboarding.
 

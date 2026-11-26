@@ -400,6 +400,15 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   same Apple ID, where that person's own Face ID unlocks them, and a website cannot demand Face ID over the phone's
   passcode. The real fix is the Apple version of ERP Mobile (key kept in one iPhone, not copied), the Apple part of
   this item. Until then the group stays small and the risk stays accepted (owner, 25 November).
+- **Unused keys expire after 7 days** (owner, 26 November 2026, evening, from the P82 discussion with the
+  colleague's agent): the **sign-in server** removes a person's ERP Mobile key when it has not been used for 7 days
+  (the server knows the last use; a phone that is switched off cannot delete its own key). The person then onboards
+  again (project manager, then admin). Accepted cost: anyone away for more than 7 days (leave, illness, a site with
+  no signal) must onboard again; if that happens too often the period can be lengthened (14 or 30 days). The app
+  tells the person when the server has removed their key and deletes its own copy. Not built; to verify: that
+  authentik records each passkey's last use, and that the small sessions service of ours (above) can remove
+  unused keys on a schedule. Open: whether it also applies to the exception group's Apple passkeys. SOP: the
+  onboarding SOP (P96) covers re-onboarding.
 - **Daily face check of the phone owner** (owner question): not taken up; the biometric at every sign-in covers
   most of it (agent).
 - **SOPs:** every manual step of this item (identity check, fingerprint confirmation, re-onboarding after an erase,

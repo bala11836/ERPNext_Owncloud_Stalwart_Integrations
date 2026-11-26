@@ -6,6 +6,16 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### ERP Mobile keys not used for 7 days are removed by the sign-in server (P82)
+
+- **Decision:** the sign-in server removes a person's ERP Mobile passkey when it has not been used for 7 days; the
+  person onboards again (project manager, then admin). The app reports the removal and deletes its own copy.
+- **Why:** owner, 26 November 2026: a safety net for phones that are lost, left in a drawer or passed on without
+  anyone reporting it. It runs on the server because the server knows each key's last use and a switched-off phone
+  cannot act. Accepted cost: anyone away for more than 7 days onboards again; the period can be lengthened (14 or 30
+  days) if that is too frequent.
+- **Where:** P82 in the P list (`docs/p-list/signin.md`); the onboarding SOP (`docs/sop/`); not built yet.
+
 ### Onboarding through the project manager and the admin; strong biometrics only; 5 misses erase the key (P82)
 
 - **Decision:** a person requests access in ERP Mobile (mail address, mobile number, a face photo for the identity

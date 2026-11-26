@@ -121,8 +121,7 @@ marked † are project rules added to it). A screen is not done until it has bee
    notifications; texts readable at the largest font size. Fix what they find or say why not.
 8. **Second review in a fresh session** that did not write the code, as on PR #98. **By a different AI model** for
    anything touching sign-in, security, payments, or personal or biometric data (as Codex for P82); a fresh
-   session of the same model is enough for other screens. (Default recommended to the owner on 26 November 2026;
-   the owner may widen it to every screen.)
+   session of the same model is enough for other screens (owner, 26 November 2026).
 9. **Real phone:** the developer taps through every tap and state of step 2 on a real phone, including offline and
    refused, and notes the phone model and Android version; a tablet when the screen has a tablet layout.
 10. **Small pull request** with the template filled in: the P item; what was tested and what was not; the app build

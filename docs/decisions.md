@@ -15,7 +15,8 @@ discussion that led to a decision is not repeated here.
   and personal data; a tap-through on a real phone; a small pull request saying what was and was not tested; the
   maintainers test on the test site; the owner merges. A fault found late returns to the start with a new test.
   The project rules are added to it: a P item first, advisories and the open-source list for new packages, the
-  promotion plan, SOP and register updates in the same pull request.
+  promotion plan, SOP and register updates in the same pull request. The review by a different model is kept to
+  sensitive screens only (owner, 26 November 2026); P100 is ranked in tier 1.
 - **Why:** the developers' own loop (26 November 2026) was stricter than the guide: it covers every state of a
   screen, real phones and an independent review, and stops a fixed fault from returning. CI did not check the app
   at all, so the automatic checks become their own item (P100) and are run by hand until then.

@@ -423,6 +423,21 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   - **So that retiring is a switch, not a new project (agent):** keep our QR route a separate, removable part of the
     app. Have the Android trial prove Android's own route on an Android 14 phone as well, so it is known to work
     when the add-on goes.
+- **Relay for our QR route: Google's public relay, for the trial and until the add-on is retired (owner,
+  26 November 2026, late evening).** The phone and the computer meet through a relay on the internet (the "tunnel
+  service" of the FIDO hybrid standard). The relay sees only encrypted data and cannot read or change the sign-in.
+  The colleague's trial code uses the public relay the standard names, run by Google (the same one every Android
+  phone uses for QR sign-in). The colleague asked whether to use it for the trial. **Owner:** yes, and keep it for
+  real sign-ins too until the add-on is retired (about a year, when no phone below Android 14 is left). No relay of
+  our own is built.
+  - **Accepted risks (owner):** we have no agreement with Google for this use. Google can change, limit or stop it
+    for third-party apps at any time, and then computer sign-in from older phones stops until a fix. The relay also
+    learns that a sign-in is taking place (not its content).
+  - **Watch:** a failure through the relay goes into the admin's alerts (P53, P72). If Google stops it, the fallback
+    is our own relay (an option the colleague described) or app-only use on older phones.
+  - **Still a gate (from the colleague's report):** the trial code has never talked to a real computer and is
+    encryption code written in one sitting. It is fit for a trial with a test passkey on a demo website only. An
+    outside security expert reviews it before any real sign-in uses it.
 - **microG (being evaluated by the colleague, 26 November 2026):** listed as "evaluating" in public
   `docs/open-source.json` (P35). Record the adoption check here (licence: Apache-2.0 per its repository; maintenance;
   security history; how fixes are published) and in the decision log, whether adopted or not; if adopted, credit

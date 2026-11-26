@@ -20,6 +20,10 @@ discussion that led to a decision is not repeated here.
   none. The app reports each phone's Android version, the admin sees how many active phones are below 14, and when
   none are left the route is retired, after which phones use Android's own provider route. The add-on is kept
   separate and removable so that retiring it is a switch.
+- **Relay (owner, same day):** our route uses the public relay the standard names, run by Google, for the trial and
+  for real sign-ins until the add-on is retired; no relay of our own is built. The relay sees only encrypted data.
+  Accepted: no agreement with Google, which can change or stop the service (fallback: our own relay, or app-only use
+  on older phones). An outside security review of our route's encryption code comes before any real sign-in.
 
 ### Office computers are bound by company certificates, not authentik's paid stage (P82)
 

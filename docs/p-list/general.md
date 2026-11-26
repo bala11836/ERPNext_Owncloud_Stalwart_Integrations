@@ -316,50 +316,28 @@ editor-bridge check on production~~ done 22 Nov (PR #23, `85c3f01`);
 (2) ~~port 587~~ removed 22 Nov; (3) ~~worker settings drift~~ not drift (the file is written once and kept by design;
 release log 22 Nov); (4) repeat the reboot drill on the VPS after the test move; (5) ~~a planned production reboot~~ done 22 Nov 00:55 UTC: everything came back by itself (release log).
 
-### P59 — Promotion plan and drift check: no stack left behind
-
-**App:** general · **Also touches:** none · **State:** open
-
-**Status (24 November 2026):** PR #35 delivered the planner and checker. The VPS nightly
-check is enabled. PR #62 passed on the isolated VM, merged at `2e8b112` and is deployed
-on the VPS. Both the website and the ERP favicon match their live files. The drift report
-remains open. The independent baseline in `deployment/promotion/README.md` confirms the
-website render, Drive bridge networks, and DMS shutdown timeouts already match the relevant
-changes. ERP and editor have stack-specific changes to promote through their own releases.
-Mail's saved profile needs to preserve the live display name. Identity provenance belongs
-with the P49 cutover. The PR #32 Frappe security release is now deployed and its
-verified production ERP core is archived. Later ERP app changes remain in their own
-release scope. **Why:** on 21 November the production ERP swap for `3a93de8`
-missed the website stack (Employee Zone single-click fix): the test deploy script
-re-renders every stack, but production stacks are promoted by hand from separate
-profiles (ERP in `p37`, website, Drive, Mail, DMS and identity in `p45`), and nothing
-says which stacks or live settings a merged change reaches. It was caught only because
-the assistant checked afterwards, and an earlier statement that one ERP swap carried the
-fix was wrong. The same release also had manual pieces outside the image (bootstrap
-step, live authentik brand), and PR #12 adds an ONLYOFFICE restart.
-
-**To build (branch, test, merge, production):**
-1. `tools/promotion_plan.py <from> <to>`: from `modules.json` and the stack ownership,
-   list every stack, bootstrap step, live setting (authentik brand, flows) and restart
-   that the changed files reach, and what cannot be covered by test. The pull request
-   must carry this list before merge.
-2. Drift check on production (`tools/` plus a nightly timer, like the host checks in
-   P57): compare the commit each stack runs (ERP image tag, website/Drive/Mail/DMS/
-   identity profile commits and registered definitions) with `main` for the files it
-   owns; report any stack that is behind, and fail loudly. Run it after every promotion
-   and nightly. Include a check that served content matches (for example the landing
-   page script and the ERP favicon hash).
-3. `AGENTS.md`: a promotion is not finished until the drift check is clean, plus a
-   `docs/decisions.md` entry (what and why).
-4. Keep the nightly image cleanup from deleting `erp-core` (a rebuild costs about 20
-   minutes at every ERP release): tag-protect it or build the add-on from a pinned
-   copy.
-Related: P57 (reboot and post-boot checks), the release checklist in
-`docs/production-moves.md`.
-
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions
 
-**App:** general · **Also touches:** none · **State:** open
+**App:** general · **Also touches:** none · **State:** in progress
+
+**Installed on the test VM (26 November 2026, owner go):** read-only clone of public `main` in
+`<server path>` (`47da25e`), profile `<server path>` (coolify 4.7.5 and rustfs 1.0.4
+as recorded for production; docker 29.10.0, tailscale 1.104.7, ubuntu 24.04, linux 6.8.0 and traefik 3.7.19 read on the
+test VM; **truenas, restic and production's own traefik version not yet entered**: this PC has no production key and
+the TrueNAS host key did not match, so the connection was refused and not overridden), service and timer from the
+examples without the GitHub token lines, timer daily 06:30 IST. First run with a guessed traefik 3.7.0 reported 4
+urgent Traefik advisories; the test VM actually runs 3.7.19, which fixes them, so the profile was corrected and the
+output reset. The second run had no urgent finding but 53 source errors: GitHub's limit for requests without a token
+(60 an hour). **Remaining:** a read-only GitHub token on the test VM (owner creates it; the service lines are then
+restored); production's traefik, TrueNAS and restic versions in the profile; confirm production traefik is at or above
+3.7.15; digests into this repository (`docs/upstream-watch/`); one week of digests reviewed and the false-positive list;
+then close.
+**Token in place (26 November 2026):** the owner installed a fine-grained read-only token (root-only file on the test
+VM); the service uses it. Full run: 0 source errors, 56 open findings, none urgent; baseline saved as
+`docs/upstream-watch/2026-11-26-baseline.md`. **One "upgrade now":** Traefik 3.7.19 (Coolify proxy, public),
+GHSA-3rh5-223h-cpwr (unauthenticated memory exhaustion in the Brotli compression), fixed in 3.7.20; the 3.7 line reached
+end of life on 23 November. Raised to the owner; production's Traefik version still to be read. **Exposure:** part of
+the token's text appeared in a screenshot in the agent conversation; rotation recommended to the owner.
 
 **Status:** open, owner request 21 November 2026; not started. **Why:** the whole stack is
 open source and pinned (ERP core and apps, authentik, Drive, ONLYOFFICE, Stalwart, Bulwark
@@ -681,7 +659,15 @@ policy for company rooms, calls, bridges, where it runs, and the effect on mobil
 
 ### P85 — Unformat brand public as the default; client brands supplied privately
 
-**App:** general · **Also touches:** portal, mobile, erp, signin · **State:** open
+**App:** general · **Also touches:** portal, mobile, erp, signin · **State:** in progress
+
+**Progress (26 November 2026):** trademark owner: example.com (owner). Public PR #87 (`p85/unformat-brand`, head
+`afd74c4`): `branding/unformat/` (logo, favicons with metadata stripped, `brand.json`), guide and trademark note, the
+build's default logo and favicons and the front page's default title and name are Unformat, copyright "Copyright ©
+2026 example.com". CI passed (55 suites, client identity clean). Not deployed to test: both sites supply their own
+branding (no visible change) and the test ERP runs #77 for the colleague's phone test. **Remaining:** owner merges
+#87; then the mobile step (app name, app ID `in.unformat.erp`, icons from `brand.json`), agreed with the colleague
+because it touches the mobile module and the test sign-in link scheme.
 
 **Why (owner, 26 November 2026):** about 95% of the work is public and only what licences, copyrights and clients
 require stays private. Our own brand, Unformat (name, "UN" logo, favicons, app icon, colours), is published as the
@@ -739,6 +725,27 @@ the kit survives a hot day in its box (temperature logged).
 
 **Related:** P46 (NVR), P48 (gateway box), P29 (Headscale), P87 (videos in the app), P72 (monitoring).
 
+### P90 — Traefik security upgrade: pin Coolify's proxy to 3.7.20
+
+**App:** general · **Also touches:** none · **State:** in progress
+
+**Why (upstream watch, P62; owner "sort out traefik", 26 November 2026):** GHSA-3rh5-223h-cpwr (high, unauthenticated
+memory exhaustion in the Compress middleware) plus two medium advisories affect Traefik 3.7.19, the public proxy in
+front of every site; 3.7.20 fixes them. Coolify's moving `traefik:v3.7` tag made the running version depend on the last
+pull.
+
+**Done:** public PR #91 (`p90/traefik-3.7.20`, head `6ee9201`): pin file, `tools/coolify_proxy_image.py`, tests; CI
+passed. Test VM pinned and restarted 26 November 14:09 IST: 3.7.20 running, networks kept, 7 hosts unchanged
+(receipt `p90-test-traefik-3-7-20-6ee9201`); upstream watch profile set to 3.7.20.
+
+**Production (26 November 14:22 IST, from the owner's Mac):** #91 merged (`45c2ec0`); production was on 3.7.19 (moving
+tag); `--restart` from main `45c2ec0`: 3.7.20 running, network kept, 18 hosts unchanged on the server and from outside,
+compose differs only in the image line (receipt `p90-production-traefik-3-7-20-45c2ec0`; rollback
+`<rollback folder>`; production releases, 26 November).
+
+**Remaining:** owner's browser check of the main sites; then move to the 3.8 line once it has a patch release (3.7
+reached end of life 23 November).
+
 ### P89 — Register of our changes to upstream apps, and an upgrade checklist
 
 **App:** general · **Also touches:** erp, portal, signin, drive, editor, mail, dms, raven, mobile · **State:** in progress
@@ -771,7 +778,147 @@ an upgrade action; the next upgrade pull request uses the checklist; the rule is
 **Related:** P62 (upstream watch: its `workaround` fields point to register entries), P59 (promotion plan and drift
 check), P84 (no client identity in the public register).
 
+**Upstream posts (26 November 2026, owner go; account rdavuluri44):**
+- owncloud/ocis#3832 comment: https://github.com/owncloud/ocis/issues/3832#issuecomment-7186892628
+- ONLYOFFICE/DocumentServer#3954: https://github.com/ONLYOFFICE/DocumentServer/issues/3954
+- coollabsio/coolify#12667: https://github.com/coollabsio/coolify/issues/12667
+- frappe/frappe#48437 comment (`?cmd=` on any path; not a Frappe vulnerability, hardening): https://github.com/frappe/frappe/pull/48437#issuecomment-7186893154
+- shridarpatil/frappe_whatsapp#257 comment (already public with an open fix): https://github.com/shridarpatil/frappe_whatsapp/pull/257#issuecomment-7186893657
+- goauthentik/authentik#16049 comment: https://github.com/goauthentik/authentik/issues/16049#issuecomment-7186894135
+- goauthentik/authentik#14304 comment: https://github.com/goauthentik/authentik/issues/14304#issuecomment-7186894885
+- goauthentik/authentik#28187 (authenticatorAttachment to policies): https://github.com/goauthentik/authentik/issues/28187
+- goauthentik/authentik#28188 (per-user session limit): https://github.com/goauthentik/authentik/issues/28188
+- **Private** frappe_docker advisory report GHSA-2qf7-29hw-ch4q (Origin overwrite disables Frappe's realtime Origin
+  check; severity low; state triage): https://github.com/frappe/frappe_docker/security/advisories/GHSA-2qf7-29hw-ch4q
+  (do not link from public files).
+
 **Progress (26 November 2026):** first version written, 102 public entries and the private companion; rule added to
 both instruction files. Public PR #86 (branch `p89/upstream-customizations`), private PR on the branch of the same name,
 working-agreements PR on `upstream-customization-register`. Open questions found are listed at the end of the public
 register and in the handover; none of them is changed by P89.
+
+### P91 — Upgrade checks that cannot miss a changed upstream file; upstream watch gaps
+
+**App:** general · **Also touches:** erp, editor, mail, signin, drive, dms · **State:** in progress
+
+**Why (found 26 November 2026, P89):** some of our patches are applied in a way that an upgrade can silently
+undo: six of the seven text replacements on frappe_docker's Containerfile and two replacements in the Insights
+patch do nothing when the upstream text changes; the ONLYOFFICE patched start page is checked only against our stored
+copy of the original, not against the file in a newly pinned image, so an image bump alone passes CI; the webmail
+overlay is not tied to its base commit. The upstream watch has `workaround` notes only for Insights, Bulwark and
+ONLYOFFICE, and does not watch the six monitoring images.
+
+**What (owner go 26 November 2026):**
+- Every Containerfile replacement and every Insights replacement must find its target or stop the build.
+- ONLYOFFICE: a record ties the stored original start page to the image digest; CI fails when the digest changes
+  without the record; a tool extracts the original from a new image during an upgrade.
+- Webmail: the upstream checksum of every file we replace is recorded against the pinned commit; CI fails when the
+  commit changes without the record; a tool refreshes it from a clone.
+- Upstream watch: `workaround` notes for authentik, oCIS, Stalwart, Paperless, Coolify, Traefik and Tailscale
+  pointing at register IDs; the monitoring images added.
+- Register entries updated in the same pull request.
+
+**Release (owner, 26 November 2026):** the generated build files are shown byte-identical before and after, instead
+of a test-site rebuild; nothing that runs changes.
+
+**Acceptance:** each check fails on a deliberately changed upstream text, digest or commit and passes on the pinned
+one; build output byte-identical; watch tests pass.
+
+**Related:** P89 (register: BUILD-1, INSIGHTS-1, OFFICE-1, WEBMAIL-1), P62 (upstream watch).
+
+**Progress (26 November 2026):** built in public PR #88 (`p91/upgrade-checks`, `78e0142`), CI passed. Byte-identical
+proof: generated Containerfile sha256 `8c97d70cdb34` before and after; patched Insights 3.50.3 sources identical; the
+ONLYOFFICE original equals the start page extracted from the pinned image on the test VM (stopped container, removed);
+the webmail base check passes on a clone of the pinned commit. The ONLYOFFICE version (P92's item) was corrected here.
+Waiting for the owner's merge (after #86).
+
+### P92 — Out-of-date Collabora material, ONLYOFFICE version, WhatsApp entry, hosting provider's name
+
+**App:** general · **Also touches:** editor, drive · **State:** in progress
+
+**Why (found 26 November 2026, P89):** Collabora was retired with P42, but the Drive and deployment READMEs still
+tell readers to deploy it and the office ingress still guards Collabora admin paths; the ONLYOFFICE version is
+written three ways; the decision log describes a WhatsApp wrapper that was never built; public `docs/retained.md`
+names the hosting provider, which the P list rules treat as private.
+
+**What (owner go 26 November 2026):** remove the Collabora instructions; guard ONLYOFFICE's own admin paths if
+version 10 has any, otherwise remove the old rule (ingress change: through the test site); one verified ONLYOFFICE
+version everywhere; a correction note in the decision log (the wrapper is planned under P04, not built); replace the
+provider's name in `docs/retained.md` and add it to the automatic identity check. Git history left as it is (owner).
+
+**Acceptance:** no Collabora deployment instructions remain; office admin paths refused on test; one version string;
+the identity check fails on the provider's name.
+
+**Related:** P89, P84 (identity check), P42 (editor change), P04 (WhatsApp).
+
+**Progress (26 November 2026):** public PR #90 (`p92/stale-material`), CI passed. On the test VM (read-only): ONLYOFFICE 10
+has no admin panel; `/info` and `/internal` return 403 through the test proxy (ONLYOFFICE's own localhost rule; no
+real-IP trust), `/welcome/` returns 200. The provider's name is in `tools/client-identity-terms.private.txt` and its
+fingerprint in the public `.client-identity-fingerprints`. Still to do: deploy the test ingress from the branch and run
+the checks in the PR (needs a test-site slot, owner).
+
+### P94 — Bring production stacks back in line with main
+
+**App:** general · **Also touches:** editor, signin, portal, test-site · **State:** open
+
+**Why (owner, 26 November 2026, splitting the stack releases off P59):** after today's drift check, four stacks are
+behind main: merged changes were never released for them. The same check found dms, processing and private-dns on
+revisions from the pre-publication repository; a read-only comparison showed them identical to main in substance, and
+their recorded revision was re-linked to `33499fd` (receipt `p94-production-relink-dms-processing-dns-33499fd`; the
+unrecorded dms render is incident `incident-dms-unrecorded-render-fdf4a43`).
+
+**Per stack (each a normal release: promotion plan, test, rollback point, quiet moment, drift check clean after):**
+- **editor:** behind main (5 files, e.g. `deployment/stacks/editor-onlyoffice.compose.json`); release together with
+  P61's editor fixes (PR #34, #42) and safety tool.
+- **identity:** behind main (8 files, e.g. `deployment/stacks/identity.compose.json`).
+- **identity-support:** behind main (18 files, e.g. `deployment/stacks/inputs.json`).
+- **website:** behind main (3 files); with the P85 brand defaults once #87 is merged (production supplies its own
+  branding, so no visible change).
+
+**First step for each:** run the promotion plan from the stack's recorded revision to main and list what users would
+notice. **Order:** owner decides. **Acceptance:** the nightly drift check is clean for every stack.
+
+**Rule (working agreements, 26 November 2026):** a merge is not a release; merged changes stay listed as "merged, not
+deployed" until released.
+
+**Progress (26 November 2026, afternoon):** website re-linked after a render comparison showed it identical (receipt
+`p94-production-relink-website-33499fd`). Evaluation of the rest (file checksums against the running containers):
+**identity** already runs main's authentik 2026.8.7 pin (the P83 image change left the Coolify note at `288993c`);
+still pending from PR #72 are the email wording and the first-administrator tool. **identity-support:** the invitation
+page differs from main (PR #72). **editor:** the editor page differs from main (P61, PR #33, #34, #42). The identity
+stacks have no copy on the test site (it signs in through production's authentik), so their release is tested on a
+throwaway authentik first, then applied to production at a quiet moment (authentik restart, install scripts).
+Follow-up: release steps must update the Coolify "Source commit" note automatically (the P83 slip).
+**Related:** P59 (tools, closed), P61, P85, P90.
+
+### P96 — SOPs for every manual procedure, written alongside the build
+
+**App:** general · **Also touches:** signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** open
+
+**Why (owner, 26 November 2026):** the systems we are designing rely on people doing checks that no code enforces
+(for example removing a family member's fingerprint from a phone, or bulk onboarding a field team with one good
+phone). These need written standard operating procedures, kept up to date as the design changes. The SOP work runs
+in parallel with the build, not after it. The rule is also in the working agreements (all projects).
+
+**What:**
+- **Study first:** go through the decision log, the P list, the handovers and the runbooks, and list every step
+  that needs a person to act or check.
+- **One SOP per procedure:** purpose, who does it (by role: project manager, admin, HR, supervisor, owner), when,
+  what they check, what they record and where, and what to do when it goes wrong.
+- **Where:** the public repository holds the SOPs in `docs/sop/`, written for roles, not named people; the private
+  repository holds the client-specific parts (names, contacts, sites).
+- **Kept current:** every change that adds or alters a manual step updates its SOP in the same pull request.
+
+**First SOPs already known:** project manager's identity check at onboarding; confirming the phone holds only the
+person's own fingerprints and face, and removing family members'; re-onboarding after a lockout or erase; new, lost
+or replacement phone; bulk onboarding of a field team with one good phone (P95); the consent agreement and its
+withdrawal; leavers (remove the key, delete face data); exception group membership (Apple); the project manager
+clearing offline queues and uncertain matches; attendance approval; the owner's emergency sign-in link; admin
+approvals in authentik.
+
+**Acceptance:** every manual step found in the study has an SOP or is listed as deliberately left out with a reason;
+the owner reviews the first set.
+
+**Related:** P82, P95, P24, P50.
+
+**Status:** open; decided 26 November 2026; study not started.

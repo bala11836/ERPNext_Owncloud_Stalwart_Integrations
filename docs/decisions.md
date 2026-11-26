@@ -6,6 +6,23 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### After a reboot every container that ran before must run again; the admin is mailed (P57)
+
+- **Decision:** the boot check compares the running containers with the list the five-minute watch saved before
+  the reboot. A container with restart policy `always` or `unless-stopped` that is not running a minute after
+  Docker started is started once; anything still down fails the check. When the check repaired or failed
+  something it mails the admin through a dedicated alert sender, independent of Prometheus. The monitoring stack
+  uses `restart: always`; exporter-only hosts remove the central containers instead of keeping them stopped.
+- **Why:** owner, 26 November 2026. After a production reboot Prometheus stayed down for 26 minutes (exit 0,
+  `unless-stopped`) and nobody knew, because no alert leaves a server yet. A reboot of the test VM did not
+  reproduce it: a fast-stopping copy of Prometheus with the same policy came back. So the exact cause is still
+  open, and the fix does not depend on it. Starting a missing container once is the same pattern the check
+  already uses for the editor bridge; the cost is that a container stopped on purpose in the few minutes before a
+  reboot is started again (the list is at most five minutes old, and the start is reported).
+- **Where:** `tools/host_check.py`, `tools/render_host_checks.py`, `deployment/host-checks.example.json`,
+  `integrations/monitoring/observability/compose.yml` and README, `docs/production-moves.md`,
+  `tests/test_host_checks.py`.
+
 ### The drift check compares mounted runtime files, and runs its own code from main (P99)
 
 - **Decision:** the drift check also compares every read-only runtime file the containers mount from the

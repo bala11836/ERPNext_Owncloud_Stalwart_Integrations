@@ -57,10 +57,33 @@ def build_config(profile):
         config['tailnet_ip'] = options['tailnet_ip']
     if options.get('ignore_prefixes'):
         config['watch'] = {'ignore_prefixes': list(options['ignore_prefixes'])}
+    if options.get('alert'):
+        config['alert'] = alert_config(options['alert'])
     for check in config['tcp']:
         if not re.fullmatch(r'[0-9.]+', str(check.get('host', ''))) or not str(check.get('port', '')).isdigit():
             raise ValueError('Invalid tcp check')
     return config
+
+
+def alert_config(alert):
+    """The dedicated alert sender (P57 follow-up 7, owner 26 November 2026): SMTP host, port, account, password file,
+    sender and the admin's address. The password itself stays in its root-only file on the server."""
+    if not isinstance(alert, dict):
+        raise ValueError('host_checks.alert must be an object')
+    host, port = str(alert.get('smtp_host', '')), alert.get('smtp_port')
+    if not re.fullmatch(r'[A-Za-z0-9.-]+', host) or not isinstance(port, int) or not 0 < port < 65536:
+        raise ValueError('Invalid alert SMTP host or port')
+    if alert.get('security', 'ssl') not in ('ssl', 'starttls'):
+        raise ValueError('host_checks.alert.security must be ssl or starttls')
+    if not str(alert.get('password_file', '')).startswith('/'):
+        raise ValueError('host_checks.alert.password_file must be an absolute path')
+    to = alert.get('to')
+    addresses = [alert.get('username'), alert.get('sender')] + (to if isinstance(to, list) else [None])
+    if not to or not all(isinstance(a, str) and re.fullmatch(r'[^@\s]+@[A-Za-z0-9.-]+', a) for a in addresses):
+        raise ValueError('host_checks.alert needs username, sender and a list of recipient addresses')
+    return {'smtp_host': host, 'smtp_port': port, 'security': alert.get('security', 'ssl'),
+            'username': alert['username'], 'password_file': alert['password_file'], 'sender': alert['sender'],
+            'to': list(to)}
 
 
 BOOT_SERVICE = """[Unit]

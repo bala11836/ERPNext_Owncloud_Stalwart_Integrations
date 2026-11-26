@@ -124,8 +124,9 @@ random at each start) and the stacks give the databases `stop_grace_period`
 of 60 s and Redis 30 s. `tools/render_host_checks.py` renders a Docker drop-in
 (start after Tailscale, wait up to a minute for the tailnet address), a boot
 check (`tools/host_check.py boot`: containers, hosts over HTTP, tailnet ports,
-and a one-time restart of the editor bridge if it cannot register) and a
-five-minute watch for containers that keep restarting. Checklist, planned
+a one-time restart of the editor bridge if it cannot register, and a one-time start of every container that
+ran before the reboot and did not come back, with a mail to the admin when it repaired or failed something) and a
+five-minute watch for containers that keep restarting, which also saves the list of running containers. Checklist, planned
 reboot procedure and install commands: `docs/production-moves.md`; private
 section example: `deployment/host-checks.example.json`; tests:
 `tests/test_reboot_resilience.py`, `tests/test_host_checks.py`.

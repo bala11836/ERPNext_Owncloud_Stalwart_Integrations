@@ -61,10 +61,10 @@ def run():
         a = user('a', ['Field Supervisor', 'Field Attendance Approver'])
         b = user('b', ['Field Supervisor'])
         boss = user('boss', ['Field Attendance Approver'])
-        day = frappe.get_doc(dict(doctype='Shift Type', name=token + ' Day', start_time='00:00:00', end_time='23:59:00',
+        day = frappe.get_doc(dict(doctype='Shift Type', name=token + ' Day', start_time='08:00:00', end_time='20:00:00',
                                   enable_auto_attendance=0)).insert(ignore_permissions=True)
-        night = frappe.get_doc(dict(doctype='Shift Type', name=token + ' Night', start_time='23:59:00',
-                                    end_time='00:00:00', enable_auto_attendance=0)).insert(ignore_permissions=True)
+        night = frappe.get_doc(dict(doctype='Shift Type', name=token + ' Night', start_time='20:00:00',
+                                    end_time='08:00:00', enable_auto_attendance=0)).insert(ignore_permissions=True)
         project = frappe.get_doc(dict(doctype='Project', project_name=token, company=company, status='Open')).insert(
             ignore_permissions=True)
         site = frappe.get_doc(dict(

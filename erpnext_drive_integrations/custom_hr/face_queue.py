@@ -40,15 +40,23 @@ def _lock(name):
     return frappe.get_doc(QUEUE, name)
 
 
+def _photo_names(doc):
+    """Every File record of this capture. Frappe adds a second record for the photo field when the capture is saved
+    (found in the first live run on the test site), so there are usually two."""
+    return frappe.get_all('File', filters={'attached_to_doctype': QUEUE, 'attached_to_name': doc.name},
+                          pluck='name', order_by='creation asc')
+
+
 def _photo_file(doc):
-    name = frappe.db.get_value('File', {'attached_to_doctype': QUEUE, 'attached_to_name': doc.name}, 'name')
-    return frappe.get_doc('File', name) if name else None
+    names = _photo_names(doc)
+    return frappe.get_doc('File', names[0]) if names else None
 
 
 def _drop_photo(doc):
-    """Remove the queue's own copy of the photograph (the attendance entry, when there is one, has its copy)."""
-    file = _photo_file(doc)
-    if file:
+    """Remove every record of the queue's own copy of the photograph (the attendance entry, when there is one, keeps
+    its own records; Frappe deletes the stored file only when no other record still points to it)."""
+    for name in _photo_names(doc):
+        file = frappe.get_doc('File', name)
         file.flags.field_service = True
         file.delete(ignore_permissions=True)
     doc.photo = None

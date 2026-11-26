@@ -452,6 +452,9 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
        our own code.
     3. A written report in the pull request (what was checked, found and fixed) and the owner's written acceptance
        of the remaining risk. Fixes go back through the usual branch and review; Codex checks the fixes too.
+    **Open: Codex review planned for next week, the week of 30 November 2026 (owner, 26 November 2026).** This
+    item stays open until the review report, the fixes and the owner's written acceptance are recorded here; no real
+    sign-in uses the QR route before then.
 - **microG (being evaluated by the colleague, 26 November 2026):** listed as "evaluating" in public
   `docs/open-source.json` (P35). Record the adoption check here (licence: Apache-2.0 per its repository; maintenance;
   security history; how fixes are published) and in the decision log, whether adopted or not; if adopted, credit
@@ -498,6 +501,8 @@ piece or find another free tool). Agent research, primary sources; decided below
   dependable on Mac); Pomerium Core (device approval is Enterprise); Teleport device trust and NetBird peer approval
   (paid); our own browser extension (rebuilds the preview Agent).
 
-**Status:** in progress; research done, decisions amended 26 November; nothing built. A local branch
+**Status:** in progress; research done, decisions amended 26 November; trial code by the colleague (not yet in
+this repository). Open before real sign-ins: the Codex security review of the QR route (planned for the week of 30
+November 2026). A local branch
 `p82/android-trial` (no commits, not pushed) exists in a worktree on the owner's PC; the colleague taking up P82
 picks the trial branch name.

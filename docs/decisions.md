@@ -28,7 +28,7 @@ discussion that led to a decision is not repeated here.
   the Claude agent that wrote it. Accepted: no independent human review. The review is done in a separate session
   from the code and the standard, with the standard's test cases and live checks against Chrome, well-reviewed
   libraries for the encryption, and a written report with the owner's acceptance. Codex works under the working
-  agreements, with no production keys or secrets.
+  agreements, with no production keys or secrets. Planned for the week of 30 November 2026; P82 stays open for it.
 
 ### Office computers are bound by company certificates, not authentik's paid stage (P82)
 

@@ -1,18 +1,75 @@
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Switch, TextInput, View } from 'react-native';
+import { Linking, Pressable, Switch, TextInput, View } from 'react-native';
 
 import { RELOCK_AFTER_MS } from '@/auth/lock';
+import { PUSH_ADDRESS } from '@/auth/push-address';
 import { useApiRef, useAuth } from '@/auth/session';
+import { AREA_LOOK } from '@/components/approval-row';
 import { Button, Screen, Status, T } from '@/components/ui';
 import { t as text } from '@/i18n';
 import { fullPageAllowed, fullPageAvailable, openFullPageSettings, scheduleApprovalAlert } from '@/lib/alerts';
+import { AREAS, type Area } from '@/lib/approvals';
 import { type Api } from '@/lib/erp';
 import { loadBoot } from '@/lib/attendance';
 import { offlineStorageKind, offlineStore } from '@/lib/offline-store';
+import { type PushState, pushAvailable, registerPush, ringOff, setRing } from '@/lib/push';
 import { flushQueue } from '@/lib/sender';
 import { useTheme } from '@/theme';
+
+/** Alerts while the app is closed: on or why not, a retry, which areas ring the full page, and the phone's settings. */
+function PushSettings({ api }: { api: () => Api }) {
+  const t = useTheme();
+  const [state, setState] = useState<PushState | 'failed' | null>(null);
+  const [off, setOff] = useState<Area[]>([]);
+  useEffect(() => {
+    SecureStore.getItemAsync(PUSH_ADDRESS).then((a) => a && setState('registered'), () => {});
+    ringOff().then(setOff, () => {});
+  }, []);
+  const turnOn = () => registerPush(api()).then(setState, () => setState('failed'));
+  const flip = (area: Area, on: boolean) => {
+    setOff((o) => (on ? o.filter((a) => a !== area) : [...o, area]));
+    setRing(area, on).catch(() => {});
+  };
+  return (
+    <View style={{ gap: 10 }}>
+      {state === 'registered' ? (
+        <Status kind="ok" label={text('push.on')} />
+      ) : (
+        <>
+          {state ? <Status kind="warn" label={text(`push.${state}`)} /> : null}
+          <Button label={text('push.turnOn')} icon="bell" secondary onPress={turnOn} />
+        </>
+      )}
+      <T style={{ fontWeight: '700' }}>{text('push.ringFor')}</T>
+      <T variant="small" color="muted">
+        {text('push.ringHint')}
+      </T>
+      {AREAS.map((area) => {
+        const on = !off.includes(area);
+        const label = text(AREA_LOOK[area].label);
+        return (
+          <Pressable
+            key={area}
+            accessibilityRole="switch"
+            accessibilityLabel={label}
+            accessibilityState={{ checked: on }}
+            onPress={() => flip(area, !on)}
+            style={{ minHeight: t.touch, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 4 }}>
+            <T style={{ flex: 1 }}>{label}</T>
+            <Switch value={on} onValueChange={(v) => flip(area, v)} trackColor={{ true: t.c.primary, false: t.c.muted }} thumbColor={t.c.bg} />
+          </Pressable>
+        );
+      })}
+      <T variant="small" color="muted">
+        {text('push.battery')}
+      </T>
+      <Button label={text('push.phoneSettings')} icon="chevron-right" secondary onPress={() => Linking.openSettings()} />
+    </View>
+  );
+}
 
 const CONFIRM_WORD = 'DELETE';
 const TEST_DELAY_S = 60;
@@ -133,6 +190,8 @@ export default function Settings() {
           <Status kind={test === 'scheduled' || test === 'scheduledPage' ? 'ok' : 'warn'} label={text(`notify.${test}`, { seconds: TEST_DELAY_S })} />
         ) : null}
       </View>
+
+      {pushAvailable() && <PushSettings api={() => apiRef.current} />}
 
       {unsent > 0 && (
         <View style={{ gap: 10 }}>

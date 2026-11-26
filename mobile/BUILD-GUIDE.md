@@ -48,8 +48,10 @@ Status: owner decisions of 22 and 23 November 2026; nothing in sections 6 to 12 
 17. **One attendance path:** the app never uses Frappe HR's own check-in (Employee Checkin). On the server it is
     blocked by default, the administrator's choice in HR Settings ("Block Frappe HR check-ins", with the roles
     that may still create them, for example an attendance machine).
-18. **Push without polling:** native push through **Expo's push service**; Frappe's push relay serves only its
-    own HR web app, not this app.
+18. **Push without polling** (owner, 26 November 2026, replacing the Expo relay): ERPNext sends **data-only**
+    messages **directly to Google FCM** (server part `mobile_push`); the app writes the text on the phone and rings
+    the full page for **every approval**, a normal alert when an entry is returned. iPhone later, directly to Apple.
+    Frappe's push relay serves only its own HR web app, not this app.
 19. All HR server work lives in `erpnext_drive_integrations` (part `custom_hr`), with **no new desk icon**.
 
 ## 2. Hard rules
@@ -134,8 +136,8 @@ Server (`erpnext_drive_integrations`):
 - **HR additions (PR #39, builds on the `custom_hr` rename in PR #38; usable once both are merged):** self check-in
   and check-out, offline captures with corrected time, bulk approval, sites without approval, the admin's block
   of Frappe HR check-ins. The calls the app uses are in section 7a.
-- Web push for the browser portal (`portal/push.py`, device registry on the server); native push does not exist
-  yet.
+- Web push for the browser portal (`portal/push.py`, device registry on the server). Native push: the
+  `mobile_push` part (Mobile Device list, `register_device` / `unregister_device`, FCM sender).
 - Raven is installed on the same ERP site.
 
 ## 5. Architecture
@@ -156,8 +158,8 @@ Server (`erpnext_drive_integrations`):
 - **Approvals:** ERPNext's `frappe.model.workflow.apply_workflow` (never write `workflow_state` directly); the
   Inbox lists the person's open Workflow Actions and notifications. Face ID before Approve, Reject, Submit and
   Pay.
-- **Push:** the server sends through Expo's push service to the Expo push token each phone registers (section 7,
-  "Mobile Device"); texts stay generic (section 6). No polling for new items.
+- **Push:** the server sends data-only messages straight to Google FCM for the FCM address each phone registers
+  ("Mobile Device", one phone per person); the phone writes generic texts (section 6). No polling for new items.
 - **Native features** (Live Activities, Android Live Updates): config plugins and Expo modules only; never edit
   generated `ios/` or `android/` folders. They need a development build, not Expo Go.
 

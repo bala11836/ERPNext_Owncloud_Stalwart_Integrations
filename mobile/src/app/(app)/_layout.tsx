@@ -7,6 +7,7 @@ import { Icon, type IconName } from '@/components/icon';
 import { type TextKey, t as text } from '@/i18n';
 import { useAlertTaps } from '@/lib/alerts';
 import { refreshInbox, unreadCount, useInbox } from '@/lib/inbox';
+import { usePushRegistration } from '@/lib/push';
 import { flushQueue } from '@/lib/sender';
 import { useSideRail, useTheme } from '@/theme';
 
@@ -17,6 +18,7 @@ export default function AppTabs() {
   const apiRef = useApiRef();
   const waiting = unreadCount(useInbox());
   useAlertTaps(); // a tapped alert opens its approval screen
+  usePushRegistration(apiRef); // alerts while the app is closed (Android builds with Firebase)
   // The Inbox count is fresh when the app opens and whenever it comes back to the front (no polling).
   useEffect(() => {
     const fresh = () => {

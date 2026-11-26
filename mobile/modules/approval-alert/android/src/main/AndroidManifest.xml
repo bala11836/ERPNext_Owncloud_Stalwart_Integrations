@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
   <!-- The full-page approval alert over the locked screen (owner, 24 November 2026). Android 14+: the person
        allows it once in Settings; the app's Settings screen links there. -->
   <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
@@ -14,5 +14,13 @@
       android:turnScreenOn="true"
       android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
     <receiver android:name=".AlertReceiver" android:exported="false" />
+    <!-- Alerts while the app is closed (owner, 26 November 2026): ERPNext's data-only messages from Google FCM.
+         The app uses no Expo push, so expo-notifications' own receiver is removed: exactly one service gets them. -->
+    <service android:name=".PushService" android:exported="false">
+      <intent-filter>
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+      </intent-filter>
+    </service>
+    <service android:name="expo.modules.notifications.service.ExpoFirebaseMessagingService" tools:node="remove" />
   </application>
 </manifest>

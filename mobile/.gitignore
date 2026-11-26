@@ -33,6 +33,10 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Firebase app file of one deployment (push alerts): private, like .env; see README "Push alerts"
+google-services.json
+GoogleService-Info.plist
+
 # typescript
 *.tsbuildinfo
 

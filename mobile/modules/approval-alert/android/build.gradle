@@ -13,3 +13,8 @@ android {
     versionName '0.1.0'
   }
 }
+
+dependencies {
+  // The same version expo-notifications uses (one copy in the app); FCM receives ERPNext's data messages.
+  implementation 'com.google.firebase:firebase-messaging:25.0.1'
+}

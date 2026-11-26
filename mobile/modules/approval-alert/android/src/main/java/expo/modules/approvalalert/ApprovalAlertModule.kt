@@ -47,5 +47,10 @@ class ApprovalAlertModule : Module() {
         )
       }
     }
+
+    /** The texts and ring choices PushService writes alerts with while the app is closed (lib/push.ts). */
+    Function("setPushTexts") { json: String ->
+      PushTexts.save(context, json)
+    }
   }
 }

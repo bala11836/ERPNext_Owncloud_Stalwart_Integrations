@@ -29,6 +29,7 @@ object Alerts {
   const val URL = "url"
   const val CHANNEL = "channel"
   const val LIST_CHANNEL = "listChannel"
+  const val NORMAL_CHANNEL = "normalChannel"
   const val LATER = "later"
   const val REVIEW = "review"
   const val ACTION_SHOW = "expo.modules.approvalalert.SHOW"
@@ -77,6 +78,32 @@ object Alerts {
   fun clear(ctx: Context, area: String) {
     manager(ctx).cancel(ringId(area))
     manager(ctx).cancel(listId(area))
+  }
+
+  /**
+   * A normal alert with the phone's notification sound, shown on top (a returned entry, or an area the person set
+   * to not ring). One per area: a newer one replaces the older.
+   */
+  @Suppress("DEPRECATION")
+  fun postNormal(ctx: Context, a: Bundle) {
+    val area = a.getString(AREA) ?: "other"
+    val title = a.getString(TITLE) ?: return
+    val channel = "$area-normal"
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      manager(ctx).createNotificationChannel(
+        NotificationChannel(channel, a.getString(NORMAL_CHANNEL) ?: area, NotificationManager.IMPORTANCE_HIGH).apply {
+          lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        },
+      )
+    }
+    val open = PendingIntent.getActivity(ctx, listId(area), openIntent(ctx, a.getString(URL)), FLAGS)
+    val n = builder(ctx, channel)
+      .setSmallIcon(ctx.applicationInfo.icon).setContentTitle(title).setContentText(a.getString(BODY) ?: "")
+      .setContentIntent(open).setAutoCancel(true)
+      .setVisibility(Notification.VISIBILITY_PUBLIC)
+      .setCategory(Notification.CATEGORY_REMINDER)
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) n.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL)
+    manager(ctx).notify(listId(area), n.build())
   }
 
   @Suppress("DEPRECATION")

@@ -19,6 +19,8 @@ type Native = {
   schedule(seconds: number, alert: AlertTexts): void;
   canUseFullScreen(): boolean;
   openFullScreenSettings(): void;
+  /** The texts, areas and ring choices the push service writes alerts with while the app is closed (lib/push). */
+  setPushTexts(json: string): void;
 };
 
 export const ApprovalAlert = requireOptionalNativeModule<Native>('ApprovalAlert');

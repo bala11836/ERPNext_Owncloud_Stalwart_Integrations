@@ -8,6 +8,8 @@ import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { PUSH_ADDRESS, PUSH_API } from '@/auth/push-address';
+
 WebBrowser.maybeCompleteAuthSession();
 
 // Tenant values come from the private mobile/.env (see .env.example), never from Git.
@@ -59,7 +61,7 @@ async function saveTokens(t: AuthSession.TokenResponse) {
 }
 
 async function clearLocal() {
-  await Promise.all([SecureStore.deleteItemAsync(TOKENS), SecureStore.deleteItemAsync(USER)]);
+  await Promise.all([SecureStore.deleteItemAsync(TOKENS), SecureStore.deleteItemAsync(USER), SecureStore.deleteItemAsync(PUSH_ADDRESS)]);
 }
 
 // One refresh at a time: two screens refreshing together must not both spend the same refresh token.
@@ -201,6 +203,16 @@ export function AuthProvider({
   };
 
   const signOut = async () => {
+    // Alerts stop for this person on this phone (server part mobile_push). Offline: the next sign-in on this phone
+    // takes the address over, and an alert never carries names or amounts.
+    const address = await SecureStore.getItemAsync(PUSH_ADDRESS).catch(() => null);
+    if (address) {
+      await api(`/api/method/${PUSH_API}.unregister_device`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: address }),
+      }).catch(() => {});
+    }
     // Revoke on the server first (Bearer header is required by the gateway). Offline: the token still
     // dies when it expires or when the web session ends.
     try {

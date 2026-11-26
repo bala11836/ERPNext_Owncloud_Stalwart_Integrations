@@ -26,6 +26,15 @@ class MobileAppTests(unittest.TestCase):
             if isinstance(plugin, list):
                 self.assertIsNot(plugin[1].get('cameraPermission'), False, f'{plugin[0]} blocks the camera')
 
+    def test_firebase_file_stays_private_and_one_service_gets_push(self):
+        # The deployment's google-services.json is private like .env, and only our PushService receives FCM messages
+        # (owner, 26 November 2026: ERPNext sends data-only messages straight to Google; the phone writes the text).
+        self.assertIn('google-services.json', (MOBILE / '.gitignore').read_text(encoding='utf-8').splitlines())
+        manifest = (MOBILE / 'modules/approval-alert/android/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
+        self.assertEqual(manifest.count('com.google.firebase.MESSAGING_EVENT'), 1)
+        self.assertIn('ExpoFirebaseMessagingService" tools:node="remove"', manifest)
+        self.assertIn('process.env.GOOGLE_SERVICES_FILE', (MOBILE / 'app.config.ts').read_text(encoding='utf-8'))
+
     def test_source_names_no_real_host(self):
         for path in list((MOBILE / 'src').rglob('*.ts*')) + [MOBILE / 'app.config.ts', MOBILE / '.env.example']:
             for host in re.findall(r'https?://([A-Za-z0-9.-]+)', path.read_text()):

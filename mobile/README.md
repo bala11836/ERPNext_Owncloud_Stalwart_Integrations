@@ -102,6 +102,14 @@ pnpm start        # scan the QR code with Expo Go
 | `APP_NAME`, `APP_SLUG`, `APP_SCHEME`, `APP_ID` | App name, Expo project, link scheme for the sign-in return, iOS bundle / Android package ID (`app.config.ts`) |
 | `EXPO_PUBLIC_ERP_URL` | The ERP address, for example `https://erp.example.com` |
 | `EXPO_PUBLIC_OAUTH_CLIENT_ID` | The OAuth Client ID from step 1 of Reuse; empty disables sign-in |
+| `GOOGLE_SERVICES_FILE` | Push alerts (Android): path of this deployment's Firebase `google-services.json`, relative to `mobile/`; empty builds without closed-app alerts |
+
+**Push alerts** (alerts while the app is closed): create a Firebase project, add an Android app with `APP_ID`, put
+its `google-services.json` in `mobile/` (ignored by Git) and set `GOOGLE_SERVICES_FILE=google-services.json`,
+then run `expo prebuild` again. The server needs the service-account key and `mobile_push_fcm_key_file`
+(`erpnext_drive_integrations/mobile_push/README.md`). After sign-in the app registers the phone; Settings shows
+whether alerts are on, which areas ring the full page, and a link to the phone's settings (OPPO, Vivo, Xiaomi and
+Realme need auto-start and background activity allowed).
 
 `app.json` keeps neutral defaults. Install scripts stay blocked and new package versions wait three days
 (`mobile/pnpm-workspace.yaml`). Add Expo packages with `pnpm exec expo install <package>` so versions match

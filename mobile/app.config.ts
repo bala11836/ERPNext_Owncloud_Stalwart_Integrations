@@ -10,6 +10,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: process.env.APP_SLUG || config.slug || 'erp-mobile',
     scheme: process.env.APP_SCHEME || config.scheme,
     ios: { ...config.ios, bundleIdentifier: id || config.ios?.bundleIdentifier },
-    android: { ...config.android, package: id || config.android?.package },
+    android: {
+      ...config.android,
+      package: id || config.android?.package,
+      // Push alerts: this deployment's Firebase file (private, never in Git); absent, the build has no closed-app alerts.
+      googleServicesFile: process.env.GOOGLE_SERVICES_FILE || undefined,
+    },
   };
 };

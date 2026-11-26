@@ -4,6 +4,20 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-26
+
+### The mail archive reader signs in with a passkey, to mail only (P69)
+
+- **Decision:** the archive is read through the dedicated `archive-reader` account in webmail, signing in with a
+  passkey. A new group, Mail Archive Readers, passes the passkey sign-in gate and is admitted by the mail
+  application only; the reader is in no staff or test group.
+- **Why:** the sign-in gate admitted staff only, so the reader could not sign in at all. Adding it to the staff
+  group would have given it every staff application; leaving it in the test group would have given it every test
+  application. An app password in a desktop mail client would have skipped the passkey. The owner chose a
+  passkey sign-in limited to mail.
+- **Where:** `integrations/authentik/archive-reader/`, `configuration.json` (group, gate, mail binding),
+  `configure_test_clients.py` (`also_groups`), README "Mail archive reader (P69)".
+
 ## 2026-11-25
 
 ### Invitation links allow 1 to 5 attempts (P78)

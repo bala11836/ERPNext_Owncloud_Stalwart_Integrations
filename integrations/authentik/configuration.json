@@ -50,6 +50,18 @@
       }
     },
     {
+      "id": "config-210",
+      "model": "authentik_core.group",
+      "identifiers": {
+        "name": "Mail Archive Readers"
+      },
+      "attrs": {
+        "is_superuser": false,
+        "parents": [],
+        "attributes": {}
+      }
+    },
+    {
       "id": "config-20",
       "model": "authentik_flows.flow",
       "identifiers": {
@@ -434,7 +446,7 @@
         "meta_icon": "",
         "meta_description": "",
         "meta_publisher": "",
-        "policy_engine_mode": "all",
+        "policy_engine_mode": "any",
         "group": "",
         "meta_hide": false
       }
@@ -1343,7 +1355,7 @@
       },
       "attrs": {
         "execution_logging": false,
-        "expression": "user = request.context.get(\"pending_user\")\nreturn bool(user and user.is_active and (user.is_superuser or user.groups.filter(name__in=[\"Workspace Users\"]).exists()))"
+        "expression": "user = request.context.get(\"pending_user\")\nreturn bool(user and user.is_active and (user.is_superuser or user.groups.filter(name__in=[\"Workspace Users\", \"Mail Archive Readers\"]).exists()))"
       }
     },
     {
@@ -1506,6 +1518,27 @@
           "$ref": "config-3"
         },
         "order": 0
+      },
+      "attrs": {
+        "user": null,
+        "negate": false,
+        "enabled": true,
+        "timeout": 30,
+        "failure_result": false
+      }
+    },
+    {
+      "id": "config-211",
+      "model": "authentik_policies.policybinding",
+      "identifiers": {
+        "target": {
+          "$ref": "config-6"
+        },
+        "policy": null,
+        "group": {
+          "$ref": "config-210"
+        },
+        "order": 10
       },
       "attrs": {
         "user": null,

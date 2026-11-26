@@ -72,11 +72,11 @@ Utils, RazorpayX Integration, Frappe Bench, frappe_docker (official build recipe
 authentik, ownCloud Infinite Scale, ownCloud Web, ocis-konnectd, ONLYOFFICE Docs, Stalwart Mail Server,
 Bulwark Webmail, Paperless-ngx, Apache Tika, Gotenberg, Coolify, Traefik, nginx, Docker Engine (Moby),
 MariaDB, PostgreSQL, Redis, Python, Node.js, CoreDNS, Tailscale, Linux kernel, Ubuntu, TrueNAS, restic,
-RustFS, Grafana, Loki, Alloy, Prometheus, node_exporter, cAdvisor, Expo and Expo Router, React Native and
-React. Used before: Collabora Online (used until November 2026, replaced by ONLYOFFICE Docs, P42). Thank you
-to their communities. Each remains under its own licence; the full list with licences, where each is used, how
-we track it and what we are evaluating is in [docs/open-source.md](docs/open-source.md) (see also
-LICENSES.md).
+RustFS, Grafana, Loki, Alloy, Prometheus, node_exporter, cAdvisor, Expo and Expo Router, React Native, React,
+OpenCV (opencv-python-headless) and OpenCV Zoo: SFace and YuNet. Used before: Collabora Online (used until
+November 2026, replaced by ONLYOFFICE Docs, P42). Thank you to their communities. Each remains under its own
+licence; the full list with licences, where each is used, how we track it and what we are evaluating is in
+[docs/open-source.md](docs/open-source.md) (see also LICENSES.md).
 <!-- OPEN-SOURCE:END -->
 
 ## AI-assisted development

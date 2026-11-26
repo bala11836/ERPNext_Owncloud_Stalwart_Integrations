@@ -1,6 +1,6 @@
 """Framework-independent parts of the face capture queue (P95), shared by the service and its tests."""
 
-RETENTION_DAYS = 30  # a rejected capture keeps its photograph this long (proposal; owner to confirm)
+RETENTION_DAYS = 30  # a rejected capture keeps its photograph this long (owner, 26 November 2026)
 STATES = ('Needs review', 'Matched', 'Resolved', 'Rejected')
 
 

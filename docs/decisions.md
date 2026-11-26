@@ -14,13 +14,44 @@ discussion that led to a decision is not repeated here.
   Everything else waits for the site's approvers, who pick the worker or reject with a reason. An approver cannot
   decide their own capture or record themselves, and the chosen worker must be on the capturing supervisor's team.
   The queue's copy of the photograph is deleted when the capture is recorded; a rejected capture keeps it for 30
-  days (proposal).
+  days (confirmed by the owner the same day).
 - **Why:** owner, 26 November 2026: the supervisor only takes photographs, also without connection; the project
   manager clears what the server cannot settle. Validating on arrival keeps the one-day limit for offline captures
   meaningful even when the project manager decides later. Recording through the existing capture and submit
   functions, with an explicit actor that no request can set, keeps one set of attendance rules.
 - **Where:** `custom_hr/face_queue.py`, `face_queue_rules.py`, the Field Face Capture DocType, `service.capture`
   and `service.submit_entry` (`actor`, `evidence`), `api.py`, the field team page, `tests/test_custom_hr_face_queue.py`.
+
+### Face engine: OpenCV Zoo's YuNet and SFace in the ERP image, pinned by commit and checksum (P95)
+
+- **Decision:** the face engine uses YuNet (detection) and SFace fp32 (128 numbers per face) from OpenCV Zoo at
+  commit `48b10fa`, fetched into the ERP add-on image with a SHA-256 check per file, and run by the OpenCV already
+  in the image (5.0.0.93, pinned). It is switched on per site in site config. A photograph must hold exactly one
+  clear face. The daily watch follows the model pin.
+- **Why:** owner, 26 November 2026: build on SFace now (adoption check above: Apache-2.0 code and weights, MIT for
+  YuNet, no open advisories for OpenCV 5.0.0.93 or numpy 2.5.4, OSV). The engine test on OpenCV's sample photos
+  separated the same face (0.93 to 0.97 when mirrored, smaller or darker) from a different person (0.18) at the
+  0.363 threshold. Detection confidence is 0.8, not the 0.9 of the samples, because 0.9 refused a smaller copy of a
+  clear face; field photos will vary more.
+- **Still before production:** the legal opinion and the SFace training-data question (P95); tuning on real
+  photos in the trial.
+- **Where:** `custom_hr/face_sface.py`, `deployment/face-models.json`, `tools/fetch_face_models.py`,
+  `deployment/erp/Dockerfile.addon`, register BUILD-11, `tests/test_custom_hr_face_engine.py`.
+
+### Recovery only after the project manager checks the phone in person; leavers' files stay; 30 days for rejected captures
+
+- **Decision (owner, 26 November 2026):**
+  - **Lost passkey or replacement phone:** the project manager verifies the person's phone in person and confirms
+    the request in their own app (P82); until the app does this, they confirm it to the admin themselves. Nothing
+    is re-issued on a message, mail or call.
+  - **Leavers:** their personal business files stay in place and are not deleted. Mailboxes are shared in the
+    present setup, so there is no personal mailbox to close or redirect; the person is removed from the shared ones.
+  - **Rejected face captures** keep their photograph for 30 days, then only the record and the reason remain (P95).
+- **Why:** recovery is the easiest way around a strong sign-in, so it gets the same in-person check as onboarding.
+  Files a person made for the business belong to the business. Thirty days is long enough to answer a dispute
+  about a rejected capture and short enough not to keep faces without a purpose.
+- **Where:** `docs/sop/invite-a-user.md`, `onboarding-identity-and-biometrics.md`, `leaver-offboarding.md`,
+  `attendance-approval.md`; P82, P86, P95 and P96 in the P list; `custom_hr/face_queue_rules.py` (30 days).
 
 ### Correction: removing a fingerprint does not destroy an ERP Mobile key (P82)
 

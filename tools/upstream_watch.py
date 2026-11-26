@@ -182,6 +182,9 @@ def inventory(source, profile):
     add('node-build', name='Node.js (ERP build)', version=build['node_version'])
     native = read('deployment/native-clients-lock.json')
     add('ocis-konnectd', github=repo(native['repository']), commit=native['commit'])
+    if (source / 'deployment/face-models.json').is_file():  # P95 face models, pinned by commit and checksum
+        models = read('deployment/face-models.json')
+        add('opencv_zoo', github=repo(models['repository']), commit=models['commit'])
 
     files = sorted((source / 'deployment/stacks').glob('*.json')) + [source / 'deployment/build-lock.json']
     files += sorted(p for d in ('deployment', 'integrations') for p in (source / d).rglob('Dockerfile*'))

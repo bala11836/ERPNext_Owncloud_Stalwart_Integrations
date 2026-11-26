@@ -79,7 +79,7 @@ colours, server address). The home-screen name and icon come from the build, bec
 cannot reliably rename an app or swap its icon while it runs; inside the app the logo and
 colours also come from the server it connects to. For now there is one brand, **unformat**
 with the **UN** icon, for the test site, demo sites and production. The first client
-(<tenant> Constructions Pvt Ltd; production holds its assets) gets its own build from the same
+(<tenant company>; production holds its assets) gets its own build from the same
 script when it goes live. Demo sites use the unformat build. Record the change in the decision
 log with the first pull request.
 

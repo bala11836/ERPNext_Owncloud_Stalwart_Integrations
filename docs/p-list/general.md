@@ -620,3 +620,72 @@ one ERP site) cannot do.
 **To decide when taken up:** the goal (between tenants only, or the default chat), the server software, encryption
 policy for company rooms, calls, bridges, where it runs, and the effect on mobile plans.
 
+
+### P84 — Client identity out of the public repository, and a check that keeps it out
+
+**App:** general · **Also touches:** erp, mobile, test-site · **State:** open
+
+**Why (owner, 26 November 2026):** a client's name, legal name, logo, domains and people belong to the client and
+stay in the private repository; they must not be in the public repository at all ("tomorrow if not today"). The
+search on 26 November found the client's name in two code lines and the client's legal form in the public P list.
+The P list rules covered host names, addresses and people but not every form of the client's name, and nothing
+checks code pull requests for client names.
+
+**Found (26 November 2026):**
+- `tests/test_website.py:41`: the test checks that the front page does not contain the client's name, so the name
+  is written in the test.
+- `tools/rehearse_cripple.py:76`: the test-data leak check lists the client's and the brand's mail domains.
+- Public P list: the client's legal form next to the `<tenant>` placeholder (P50 branding note, new in PR #80;
+  the P63 test-site note was already covered). Fixed in PR #80 by a publication rule and a leak pattern
+  (26 November 2026).
+- Git history: the two code lines since 19 and 20 November; earlier P list versions.
+
+**What:**
+1. After PR #80 is cleared (owner): the two checks read the client's names and domains from the private deployment
+   profile instead of the code; the tests still pass without a profile (neutral defaults).
+2. An automatic check on every public pull request, including pull requests from forks: a test compares the
+   fingerprints (hashes) of the words in the repository against a list of fingerprints of client identifiers, so
+   the list itself reveals nothing. The plain list and the script that makes the fingerprints stay private.
+3. The publication rules treat client identity (every form of the name, legal name, domains) as a category; the
+   leak scan refuses it.
+4. Project instructions (`AGENTS.md`, `CLAUDE.md` in the public repository) and the decision log state the norm;
+   the norm for all projects is in the working agreements (26 November 2026).
+
+**Acceptance:** no client identifier in any file on the public `main` (search of every form of the name and
+domain); the new check fails on a test branch that adds one and passes on `main`; the P list publication passes
+the leak scan.
+
+**Owner decision open:** remove the client's name from the git history too (rewrite with a force push: breaks the
+open pull requests and the colleague's fork, and GitHub keeps old pull request commits), or clean the current files
+only (agent recommendation).
+
+**Related:** P85 (own brand public), P35 (presentation and upstream sharing).
+
+### P85 — Unformat brand public as the default; client brands supplied privately
+
+**App:** general · **Also touches:** portal, mobile, erp, signin · **State:** open
+
+**Why (owner, 26 November 2026):** about 95% of the work is public and only what licences, copyrights and clients
+require stays private. Our own brand, Unformat (name, "UN" logo, favicons, app icon, colours), is published as the
+default look; users can always replace it. Clients' brands stay private and are supplied when deploying or building.
+
+**What (owner go 26 November 2026):**
+- A `branding/unformat/` folder in the public repository with the logo, favicons, app icon and a brand file (name,
+  colours, app ID such as `in.unformat.erp`); builds use it unless a deployment supplies its own (deployment
+  profile for the portal logo and favicons, build settings for the app's name and ID, as `mobile/app.config.ts`
+  already allows).
+- A "Replace the branding" guide in the README.
+- A trademark note: the code is AGPL-3.0; anyone shipping it as their own product replaces the name and logo.
+- Copyright notice in `README.md` and `LICENSES.md`: the owner's name "and contributors" (owner, 26 November 2026),
+  instead of "Unformat and contributors".
+- Production details that are not branding (host names, addresses, the live sign-in policy and group names) stay
+  replaced by placeholders in the public P list.
+
+**Owner input needed:** the owner's name exactly as it should appear in the copyright notice; who owns the name
+"Unformat" (the owner personally or a company) for the trademark note.
+
+**Acceptance:** a build without private brand settings shows the Unformat brand; a build with a client's profile shows
+only the client's brand; the guide's steps work on the test site; the copyright and trademark notes are in place.
+
+**Related:** P84 (client identity), P50 (per-brand app builds), P63 (demo brand), P55 (tenant logo through the
+private profile).

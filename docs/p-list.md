@@ -80,6 +80,7 @@ until the owner says; the table only fixes the order to take them up.
 | 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
 | 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
 | 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50 |
+| 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the copyright name and the trademark owner |
 
 **Tier 1: high (business-critical, next)**
 
@@ -152,7 +153,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 20 | 20 |
+| General | [pending/general.md](p-list/general.md) | 22 | 22 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
@@ -231,4 +232,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P80 | Editor stays registered with Drive after every Drive restart | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P81 | Editor follow-ups: Compose safety net and release rule | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P82 | ERP Mobile holds the passkeys; one phone and one computer session per user | [Sign-in](p-list/signin.md) | mobile, portal, erp, test-site · **State:** open | open |
+| P84 | Client identity out of the public repository, and a check that keeps it out | [General](p-list/general.md) | erp, mobile, test-site · **State:** open | open |
+| P85 | Unformat brand public as the default; client brands supplied privately | [General](p-list/general.md) | portal, mobile, erp, signin · **State:** open | open |
 <!-- APP-INDEX-END -->

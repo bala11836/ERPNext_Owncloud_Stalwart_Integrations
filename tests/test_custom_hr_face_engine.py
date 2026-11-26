@@ -76,6 +76,27 @@ class Image(unittest.TestCase):
         for target in ('face_detection_yunet_2023mar.onnx', 'face_recognition_sface_2021dec.onnx'):
             self.assertIn(target, engine)
 
+    def test_the_build_context_holds_everything_the_addon_image_copies(self):
+        # The add-on image is built from the rendered folder, not from the checkout (found by the first test build).
+        import render_runtime
+        dockerfile = (ROOT / 'deployment' / 'erp' / 'Dockerfile.addon').read_text(encoding='utf-8')
+        sources = []
+        for line in dockerfile.splitlines():
+            parts = line.split()
+            if parts[:1] == ['COPY']:
+                sources += [p for p in parts[1:-1] if not p.startswith('--')]
+        self.assertIn('deployment/face-models.json', sources)
+        with tempfile.TemporaryDirectory() as tmp:
+            logo = Path(tmp) / 'logo.svg'
+            logo.write_text('<svg/>')
+            build = Path(tmp) / 'build'
+            render_runtime.render(ROOT, build, {'domain': 'example.net', 'asset_version': 'abcdef1',
+                                                'company_logo': str(logo)})
+            pins = json.loads((build / 'deployment' / 'face-models.json').read_text(encoding='utf-8'))
+            self.assertEqual(pins, PINS, 'rendering must not alter the model list')
+            for source in sources:
+                self.assertTrue((build / source).exists(), source + ' is missing from the build context')
+
     def test_opencv_is_pinned_in_the_image(self):
         constraints = (ROOT / 'deployment' / 'python-constraints.txt').read_text(encoding='utf-8')
         self.assertRegex(constraints, r'(?m)^opencv-python-headless==5\.')

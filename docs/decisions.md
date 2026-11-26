@@ -6,6 +6,19 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Coolify's proxy runs a pinned Traefik image: 3.7.20 (P90)
+
+- **Decision:** the proxy image is pinned by tag and digest in `deployment/coolify-proxy.json` and applied with
+  `tools/coolify_proxy_image.py`, instead of Coolify's moving `traefik:v3.7` tag. First pin: 3.7.20.
+- **Why:** the upstream watch (P62) found GHSA-3rh5-223h-cpwr (high: unauthenticated memory exhaustion in the
+  Compress middleware's Brotli writer) and two medium advisories (GHSA-42x2-976f-ph52, GHSA-9657-c2gv-wjpj)
+  affecting 3.7.19 on a public component; 3.7.20 fixes all three, is a patch release without breaking changes,
+  and has no open advisory (GitHub advisories and OSV checked 26 November 2026). A moving tag made the running
+  version depend on the last pull. The 3.7 line reached end of life on 23 November; moving to 3.8 (released the
+  same day) is a separate step once it has a patch release.
+- **Where:** `deployment/coolify-proxy.json`, `tools/coolify_proxy_image.py`, `tests/test_coolify_proxy_image.py`,
+  `deployment/README.md`, `deployment/promotion-map.json`.
+
 ### Client identity stays out of the public repository, checked by fingerprints (P84)
 
 - **Decision:** a client's name in every form, logo, domains, mail addresses and people never appear in this

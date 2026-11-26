@@ -11,6 +11,7 @@ refresh worker) do not change; this index groups them by module.
 
 ## Upstream watch (`deployment`)
 
+- `upstream_posts.py` — The list of our posts on other projects and a read-only check for replies, state changes and unlisted posts; `check --gh --record` at every session start (P35).
 - `upstream_watch.py` — Daily digest of new releases, security advisories, end of life and licence changes for every pinned component, from public sources only; never upgrades anything (P62).
 
 ## Drive (ownCloud Infinite Scale) adapters (`drive`)

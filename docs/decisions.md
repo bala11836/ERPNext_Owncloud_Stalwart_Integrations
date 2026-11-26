@@ -6,6 +6,19 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Every upstream post is listed and checked for replies until we stop using that project (P35)
+
+- **Decision:** our bug reports, feature requests, comments and workarounds on other projects are listed in
+  `docs/upstream-posts.json` with a log of every check and follow-up. `tools/upstream_posts.py check` (read-only)
+  reports replies, state changes and threads the account posted on that the list lacks; it runs at every session
+  start and inside the daily upstream watch. A post stops being watched only when we no longer use the project, with
+  the reason. Private reports stay in the private companion.
+- **Why:** owner, 26 November 2026: a post is only useful if someone reads the answer; a maintainer replied to our
+  Collabora findings two days before anyone noticed, and a Coolify bug we reported was fixed the same day. The rule
+  is in the working agreements for every project.
+- **Where:** `tools/upstream_posts.py`, `docs/upstream-posts.json` and `.md`, `tools/upstream_watch.py`,
+  `AGENTS.md`, `tests/test_upstream_posts.py`.
+
 ### Onboarding through the project manager and the admin; strong biometrics only; 5 misses erase the key (P82)
 
 - **Decision:** a person requests access in ERP Mobile (mail address, mobile number, a face photo for the identity

@@ -32,11 +32,11 @@ private companion.
 | A7 | Joiner access app by app (ERP roles, site membership, mailbox, Drive and DMS first sign-in) | admin | joiner | partly | — | yes |
 | A8 | Sign-in and logout acceptance after a sign-in or ERP deploy | owner | every such deploy | in use | — | yes |
 | A9 | Onboarding in ERP Mobile: identity check, then admin approval (P82) | project manager, admin | "Request access" | designed | [onboarding](onboarding-identity-and-biometrics.md) | no |
-| A10 | Only the person's own fingerprints and face on the phone (P82) | project manager, employee | onboarding | designed | [onboarding](onboarding-identity-and-biometrics.md) | no |
+| A10 | Only the person's own fingerprints and face on the phone; confirmation in the app (proposal) (P82) | project manager, employee | onboarding | designed | [onboarding](onboarding-identity-and-biometrics.md) | no |
 | A11 | Re-onboarding after a 5-miss erase, or a new, lost or replacement phone (P82) | employee, project manager, admin | lockout, phone change | designed | [onboarding](onboarding-identity-and-biometrics.md) | no |
-| A12 | Device and session review (phones and computers) | admin | periodic, leavers | designed | — | no |
+| A12 | Device and session review (phones and computers); unused-key grace days per group (P82) | admin | periodic, leavers | designed | — | no |
 | A13 | Dual approval for super-administrator access (P28) | two approvers | before privileged sessions | designed | — | yes |
-| A14 | Leaver offboarding across every app (keys, sessions, devices, groups, mailbox, tokens, files, face data) | HR, admin | person leaves | **gap** | — | yes |
+| A14 | Leaver offboarding across every app; the Frappe HR exit procedure triggers key removal and purges the app data (owner, 26 Nov) | HR, admin | person leaves | designed | — | yes |
 
 ### B. Mobile app and devices
 
@@ -58,7 +58,7 @@ private companion.
 | C5 | Self check-in and check-out (selfie today; biometric when P82 is built) | employee | every shift | in use; change designed | — | no |
 | C6 | Corrections, returns, void and cancel (P24) | supervisor, project manager, HR | errors | **gap**: rules not agreed | — | no |
 | C7 | Face enrolment of field workers with one good phone (P95) | HR or project manager | onboarding, model change | designed | [face enrolment](field-face-enrolment-and-consent.md) | yes |
-| C8 | Face consent, withdrawal, and attendance without a face (P95) | HR, worker | onboarding, any time | designed | [face enrolment](field-face-enrolment-and-consent.md) | yes |
+| C8 | Face consent, withdrawal, and attendance without a face (P95); [agreement draft](face-attendance-agreement.md) | HR, worker | onboarding, any time | designed | [face enrolment](field-face-enrolment-and-consent.md) | yes |
 | C9 | Uncertain matches and the offline queue (P95) | supervisor, project manager | after capture or sync | designed | — | no |
 | C10 | Legal opinion on face attendance (P95) | owner | see P95 | designed | — | yes |
 
@@ -90,7 +90,7 @@ private companion.
 | F2 | Offline USB copy (steps, frequency, encryption, storage place) | owner | periodic | **gap** | — | yes |
 | F3 | Backup-store protection and snapshot rollback | owner | storage change, ransomware | partly | — | yes |
 | F4 | Full restore or rehearsal on a clean server | operator | disaster, rehearsal | in use | — | yes |
-| F5 | Watching backup, restore-drill and monitoring results | owner, operator | daily | partly; **no role assigned** | — | yes |
+| F5 | Watching backup, restore-drill and monitoring results: the admin receives the alerts, plus a Desk widget for the sign-in admin (P72, P53) | admin | daily | partly | — | yes |
 | F6 | Restore one file, record or mailbox | operator | user request | **gap** | — | yes |
 
 ### G. Releases and deployments
@@ -140,9 +140,8 @@ private companion.
 
 ### Gaps to settle (no procedure anywhere yet)
 
-Leavers (A14); the identity check before a recovery invitation (A2); lost or stolen phone (B4); where the
-biometric confirmation and identity-check outcome are recorded and for how long (A10); attendance corrections and
-cancel rules (C6); face consent text and languages (C8); who watches monitoring every day (F5); offline USB copy
+The identity check before a recovery invitation (A2); lost or stolen phone (B4); attendance corrections and
+cancel rules (C6); offline USB copy
 (F2); restoring a single file, record or mailbox (F6); break-glass deploy and rollback (G10); secret rotation (H1);
 certificate reminders (H2); app signing-key custody (B1); impersonation and archive access-log review (A6, D4);
 the mail server reload missing from the reboot list (D3); test clean-up (H6); vendor KYC checklist (E4).

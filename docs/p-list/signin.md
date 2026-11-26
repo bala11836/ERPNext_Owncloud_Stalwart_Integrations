@@ -407,8 +407,16 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   no signal) must onboard again; if that happens too often the period can be lengthened (14 or 30 days). The app
   tells the person when the server has removed their key and deletes its own copy. Not built; to verify: that
   authentik records each passkey's last use, and that the small sessions service of ours (above) can remove
-  unused keys on a schedule. Open: whether it also applies to the exception group's Apple passkeys. SOP: the
-  onboarding SOP (P96) covers re-onboarding.
+  unused keys on a schedule. **Grace days per group (owner, 26 November 2026, late evening):** the admin decides
+  how many unused days each authentik group gets (a group setting; 7 when a group has none), including the Apple
+  exception group. SOP: the onboarding SOP (P96) covers re-onboarding.
+- **Leavers (owner, 26 November 2026, late evening):** the exit procedure in Frappe HR (the employee's separation,
+  status Left) triggers removal of the person's keys, devices and sessions in authentik and purges all their data
+  in the app on the phone; the face templates go too (P95). SOP A14 (P96).
+- **Alerts and exceptions to the admin (owner, same evening):** the sign-in admin receives the alerts and exceptions
+  of this item (keys removed for no use, erases after wrong attempts, refused or pending onboardings, unknown
+  computers, failed certificate checks), and the person with authentik admin rights sees them in a widget on their
+  Desk (scope added to P53).
 - **Daily face check of the phone owner** (owner question): not taken up; the biometric at every sign-in covers
   most of it (agent).
 - **SOPs:** every manual step of this item (identity check, fingerprint confirmation, re-onboarding after an erase,
@@ -416,7 +424,7 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   build.
 
 **Binding office computers with free tools (owner, 26 November 2026: no paid or preview parts; build the missing
-piece or find another free tool). Agent research, primary sources; owner decision pending:**
+piece or find another free tool). Agent research, primary sources; decided below:**
 - authentik's own client-certificate stage is Enterprise; Endpoint Devices is a preview (Agent and compliance)
   with Enterprise connectors. Free authentik can read the client address and request in expression policies and can
   restrict a passkey step to certain authenticator types.
@@ -424,6 +432,7 @@ piece or find another free tool). Agent research, primary sources; owner decisio
   certificate per computer (on Windows the key in the TPM, not exportable; Mac Keychain); Traefik requires it on
   the host names computers use and passes it on; a free authentik expression policy checks it against an
   admin-managed allow-list (list and remove computers). Binds every request, not only the sign-in. Effort medium.
+  **Owner chose this (26 November 2026, late evening): build it.**
   To verify on test: Traefik must strip a forged certificate header; the app's and the QR sign-in's host names
   stay certificate-free; shared PCs (machine or per-user certificate); renewal; browsers; no revocation list in
   Traefik (the allow-list does the removal); advisories of step-ca and our Traefik.

@@ -169,3 +169,10 @@ Insights menus, and the editor). Design notes to settle at planning:
 in the app signs the person out of the Desk and all apps), the limit of one phone and one
 computer session per user, and the 30-minute inactivity sign-out. The Desk sign-out control
 and removing the per-app sign-out items stay here.
+
+**Additional scope (owner, 26 November 2026): an alerts and exceptions widget for the sign-in admin.** The person
+with authentik admin rights has a widget on their Desk showing the system's alerts and exceptions: monitoring and
+backup alerts (P72), and the sign-in exceptions of P82 (keys removed for no use, erases after wrong attempts,
+pending or refused onboardings, unknown computers, failed certificate checks). Shown only to that role; each item
+links to where it is handled. The admin also receives these alerts directly (owner). The item stays **parked**
+until the owner says to start; this records the scope.

@@ -51,8 +51,18 @@ are skipped, a family member, a colleague or an impostor can sign in as the empl
 ## Record
 
 - The project manager's approval and the admin's approval are recorded by the system with their names and times.
-- The written confirmation (step 4): **where it is kept and for how long is still to be decided** (P96 gap A10).
+- The written confirmation (step 4), **proposal (owner to confirm):** given in the app, not on paper. The employee
+  reads the text below and confirms it with their own fingerprint; the project manager then ticks that they saw the
+  phone's list. The sign-up service stores it with the access request, linked to the employee in the ERP: the text
+  version, both names and the time. Kept while the person is employed and for 3 years after they leave (to answer a
+  later dispute), then deleted.
 - No copy of the identity document and no face photo is kept.
+
+### Confirmation text (draft 1, 26 November 2026)
+
+> I confirm that the only fingerprints and face enrolled on this phone are my own, that I removed any others before
+> this onboarding, and that I will not let anyone else add theirs. I understand that adding another fingerprint or
+> face makes the app delete my sign-in key, and that I then have to be onboarded again.
 
 ## When it goes wrong
 

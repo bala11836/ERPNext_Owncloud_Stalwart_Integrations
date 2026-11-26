@@ -26,7 +26,7 @@ person, or without consent, makes attendance records wrong and breaks the worker
 1. Use **one good phone** for enrolment (a recent model with a good camera, held steady), in even light, with a
    plain background. Not the supervisor's own phone for their own team.
 2. For each worker: check their original identity document against the person and the employee record.
-3. Show the **face attendance agreement** in a language the worker can read. Explain what is kept (encrypted face
+3. Show the **face attendance agreement** ([draft](face-attendance-agreement.md)) in a language the worker can read. Explain what is kept (encrypted face
    templates on the company's server, no photographs), why, for how long (until they withdraw or leave), and that they
    may refuse or withdraw at any time: their attendance is then marked by the supervisor and approved by the
    project manager. The worker ticks the separate acceptance box themselves.
@@ -51,7 +51,8 @@ person, or without consent, makes attendance records wrong and breaks the worker
 
 - The system keeps the consent record (agreement version, language, who recorded it, when, identity checked) and
   the encrypted templates; no photographs and no copy of the identity document.
-- The agreement text and its versions: kept by HR (where, and the languages offered, still to be decided; P96 gap C8).
+- The agreement text and its versions: [draft 1](face-attendance-agreement.md), for the lawyer's review; the languages
+  and translations are in the private companion.
 
 ## When it goes wrong
 

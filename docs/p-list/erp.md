@@ -303,8 +303,13 @@ liveness on two phone models, server matching against a small roster, online pic
 **Related:** P24 (field attendance pilot), P50 (the app, offline captures), P82 (onboarding, biometric sign-in,
 self check-in without a selfie), P96 (SOPs: bulk onboarding, consent, leavers, offline queue).
 
-**Owner, 26 November 2026 (evening):** build now; do not wait for the lawyer's opinion (whether the opinion is
-still needed before launch: asked, open).
+**Owner, 26 November 2026 (evening):** build now; do not wait for the lawyer's opinion. **Late evening:** the legal
+opinion is needed **before the app is connected to production** (that is the gate, not the development).
+
+**SFace (owner, 26 November 2026, late evening):** build on SFace now and ask OpenCV about its training data. Asked
+by adding to the existing upstream issue (opencv/opencv_zoo#313, comment https://github.com/opencv/opencv_zoo/issues/313#issuecomment-7193191907; four open issues ask the same, a
+maintainer has only answered that the Apache-2.0 licence should be enough). The residual risk is decided before
+production, with the legal opinion.
 
 **Adoption check (26 November 2026, agent research, primary sources):**
 

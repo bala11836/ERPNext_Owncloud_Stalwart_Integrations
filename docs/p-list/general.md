@@ -599,6 +599,10 @@ TrueNAS answers.
 no secrets in dashboards or alert texts; licences of Grafana, Loki (AGPL) and Prometheus (Apache) recorded; set up from
 this repository as a module (stack files, config, README), branch, test, owner go, like every other stack.
 
+**Alert delivery (owner, 26 November 2026, late evening):** the **admin** receives the alerts (no longer only the
+owner; phone delivery as decided above), and the person with authentik admin rights also sees alerts and exceptions
+in a widget on their Desk (scope added to P53). Who watches daily: the admin (P96, SOP F5).
+
 ### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
@@ -924,7 +928,18 @@ the owner reviews the first set.
 **Progress (26 November 2026):** study done (decision log, P list, READMEs, runbooks, private records): 69
 procedures in ten areas and 18 gaps, published as the inventory in public `docs/sop/README.md` (PR on branch
 `p96/sop-first-set`), with the template and the first two SOPs (ERP Mobile onboarding; face enrolment and consent),
-both drafts that apply when built. Next: the gaps that need owner decisions (leavers, where the biometric
-confirmation is kept, consent text and languages, who watches monitoring), then the in-use procedures.
+both drafts that apply when built. Next: the gaps that need owner decisions, then the in-use procedures.
+
+**Owner decisions on the gaps (26 November 2026, late evening):**
+- **Leavers:** the exit procedure in Frappe HR triggers removal of keys and purges all the person's data in the app
+  (P82, P95); SOP A14 to write.
+- **Where the biometric confirmation is kept, and the consent text and languages:** the agent prepares a proposal.
+  Prepared 26 November: the confirmation is given in the app with the employee's fingerprint and the project
+  manager's tick, stored by the sign-up service with the access request, kept while employed plus 3 years
+  (onboarding SOP); the face attendance agreement draft 1 is in public `docs/sop/face-attendance-agreement.md`,
+  for the lawyer. **Languages:** a proposal is in the private handover of 26 November (it names the region);
+  translations by a qualified translator, each checked by translating back. Owner to confirm.
+- **Monitoring:** the admin receives the alerts; the person with authentik admin rights also sees alerts and
+  exceptions in a Desk widget (scope added to P53).
 
 **Status:** in progress.

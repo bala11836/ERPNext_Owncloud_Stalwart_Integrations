@@ -6,6 +6,44 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Office computers are bound by company certificates, not authentik's paid stage (P82)
+
+- **Decision:** each office computer gets a certificate from our own certificate authority (smallstep step-ca); the
+  proxy requires it on the host names computers use and passes it on; a free authentik expression policy checks it
+  against an allow-list the admin manages (list and remove computers). The phone app's host names stay without it.
+- **Why:** owner, 26 November 2026: only free tools. authentik's client-certificate stage is Enterprise and its
+  Endpoint Devices is a preview; the alternatives checked either bind only the network path (Headscale, kept as a
+  later complement), rely on self-reported passkey types (Windows Hello), or need paid editions (Pomerium device
+  approval, Teleport, NetBird). Certificates bind every request to a key that cannot be copied off a Windows PC.
+- **Where:** P82 in the P list; to build and verify on test first.
+
+### Unused-key grace days are set per group by the admin; leavers are removed from the Frappe HR exit (P82, P95)
+
+- **Decision:** the admin sets how many unused days each authentik group allows before the sign-in server removes a
+  key (7 when not set), including the Apple exception group. The exit procedure in Frappe HR (separation, status
+  Left) triggers removal of the person's keys, devices and sessions and purges their data in the app; face templates
+  are deleted with it.
+- **Why:** owner, 26 November 2026: one fixed period does not suit every group; leaving must close every way in
+  without depending on someone remembering each app.
+- **Where:** P82 and P95 in the P list; SOP A14 (`docs/sop/README.md`).
+
+### Face model: build on SFace now; the legal opinion and the training-data question are settled before production (P95)
+
+- **Decision:** the face engine uses OpenCV Zoo's SFace (fp32) with the YuNet detector, run by OpenCV on the server.
+  The unanswered question of which dataset trained the published SFace weights was added to the existing upstream
+  issue (opencv/opencv_zoo#313). The residual risk, and the lawyer's opinion, are settled before the app is
+  connected to production; development and tests go ahead.
+- **Why:** owner, 26 November 2026. SFace's code and weights are Apache-2.0 (rare among face models; InsightFace's
+  free models are non-commercial only), but its training data is not documented.
+- **Where:** P95 in the P list; `custom_hr/face_engine.py`.
+
+### The admin receives the alerts, and sees alerts and exceptions in a Desk widget (P72, P53)
+
+- **Decision:** monitoring, backup and sign-in exception alerts go to the admin. The person with authentik admin
+  rights also gets a Desk widget listing them, each linked to where it is handled (scope added to the parked P53).
+- **Why:** owner, 26 November 2026: alerts nobody watches are no alerts; the admin is the one who acts on them.
+- **Where:** P72 and P53 in the P list; SOP F5.
+
 ### ERP Mobile keys not used for 7 days are removed by the sign-in server (P82)
 
 - **Decision:** the sign-in server removes a person's ERP Mobile passkey when it has not been used for 7 days; the

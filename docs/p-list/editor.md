@@ -45,6 +45,14 @@ proven. Also found: the editor-page changes of PR #34 (view cap) and PR #42 (ret
 production (it runs `2c542f0`) and are not in the release records; `tools/editor_safety.py` is not installed on
 production. Next steps proposed in the 25 Nov handover.
 
+**Owner decision (26 November 2026): option A, private sheet views stay on for everyone.** Production check the same
+day (read-only): no `changesError`, no forgotten file and no failed save logged since 24 November 08:28 UTC, while 15
+documents were edited on 25 November and 84 on 26 November (editor cache folders). This shows the problem has not
+returned, not that its cause is gone: it needed two people in the same workbook at once. If it returns, switch the
+views off for that file only (option C) until the fix. **Item stays open (owner) for the test-site work:** reproduce
+the two-person case with a synthetic workbook, make the editor page log the full error stack, then release PR #34 and
+#42 with the P61 safety tool (test first, then production).
+
 **Scenarios (seen = happened to us) and the safeguard for each**
 
 | # | Scenario | Seen | Safeguard |

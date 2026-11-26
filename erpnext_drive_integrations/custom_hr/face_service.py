@@ -28,6 +28,19 @@ def config():
     return frappe.conf.get('custom_hr_face') or {}
 
 
+def enabled():
+    """Face attendance runs only where the site config says `custom_hr_face` -> `enabled: true` (owner, 27 November
+    2026: off on production until the legal opinion and the owner's decision). Withdrawing consent and deleting face
+    data never depend on it."""
+    return config().get('enabled') is True
+
+
+def require_enabled():
+    """First line of every face function that takes in or uses a face; nothing is read or stored before it."""
+    if not enabled():
+        frappe.throw('Face attendance is switched off on this site.', frappe.PermissionError)
+
+
 def rules():
     try:
         return face.settings(config().get('thresholds'))
@@ -93,6 +106,7 @@ def end_consent(employee, status, reason):
 
 
 def enrol(employee, photos, consent):
+    require_enabled()
     user = require_user()
     worker = frappe.db.get_value('Employee', employee, ['name', 'employee_name', 'status'], as_dict=True)
     if not worker or worker.status != 'Active':
@@ -132,6 +146,7 @@ def templates_of(employees, model_id):
 
 
 def identify(site, shift, photo):
+    require_enabled()
     user = require_user()
     require_site(site)
     if not (site_access(site, 'Supervisor', user) or supervised_users(site, user)):

@@ -81,6 +81,7 @@ until the owner says; the table only fixes the order to take them up.
 | 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
 | 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50; amended 26 Nov (PM then admin approval, strong sensors only, 5-miss erase, no selfie, Android 9–13 kept); P95 face attendance and P96 SOPs alongside (not yet ranked) |
 | 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the trademark owner |
+| 4c | **P97** uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf, high) | **owner** 26 Nov: security fix ahead of features; a signed-in user could plant a script file that runs in an administrator's session | public PR #103; test needs only the ERP web container recreated (test ERP runs #77 for the P74 phone test); then production |
 
 **Tier 1: high (business-critical, next)**
 
@@ -157,7 +158,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
-| ERP | [pending/erp.md](p-list/erp.md) | 13 | 13 |
+| ERP | [pending/erp.md](p-list/erp.md) | 14 | 14 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
 | Mobile | [pending/mobile.md](p-list/mobile.md) | 6 | 6 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
@@ -243,4 +244,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P94 | Bring production stacks back in line with main | [General](p-list/general.md) | editor, signin, portal, test-site · **State:** open | open |
 | P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** in progress | in progress |
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
+| P97 | Uploaded files that can run script are always downloaded (GHSA-94mh-qq29-qwrf) | [ERP](p-list/erp.md) | general · **State:** in progress | in progress |
 <!-- APP-INDEX-END -->

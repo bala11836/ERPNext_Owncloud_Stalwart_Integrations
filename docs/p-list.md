@@ -153,7 +153,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 24 | 24 |
+| General | [pending/general.md](p-list/general.md) | 23 | 23 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
@@ -232,7 +232,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P80 | Editor stays registered with Drive after every Drive restart | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P81 | Editor follow-ups: Compose safety net and release rule | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P82 | ERP Mobile holds the passkeys; one phone and one computer session per user | [Sign-in](p-list/signin.md) | mobile, portal, erp, test-site · **State:** open | open |
-| P84 | Client identity out of the public repository, and a check that keeps it out | [General](p-list/general.md) | erp, mobile, test-site · **State:** open | open |
 | P85 | Unformat brand public as the default; client brands supplied privately | [General](p-list/general.md) | portal, mobile, erp, signin · **State:** open | open |
 | P86 | Personal business files in the app, with a quota per user | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** open | open |
 | P87 | Camera videos in the mobile app (Frigate) | [Mobile](p-list/mobile.md) | general, signin · **State:** open | open |

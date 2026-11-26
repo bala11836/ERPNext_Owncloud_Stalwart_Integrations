@@ -1,6 +1,6 @@
 # ERP: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 27 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -377,7 +377,7 @@ public PR #101 (`p95/pm-queue`).
 
 ### P98 — ERP web server template: take up upstream's trusted-HTTPS forwarding changes
 
-**App:** erp · **Also touches:** signin, general · **State:** open
+**App:** erp · **Also touches:** signin, general · **State:** in progress
 
 **Why (found 26 November 2026, P89 and P97; owner: open an item):** our ERP web server template is a full copy
 that replaces frappe_docker's (register BUILD-2), so upstream's changes to it do not reach us. After P97, two
@@ -404,3 +404,32 @@ realtime and file downloads work on test and production; a forged forwarded head
 
 **Related:** P97 (same file), P89 (BUILD-2), P91 (upgrade checks: a check that compares this template with
 upstream's at the pinned commit would catch the next silent difference), P49 and P82 (sign-in redirects).
+
+**Read-only checks (26 November 2026):**
+- Our pinned frappe_docker (`0ad1a1152f93`) has the old nginx entrypoint: it does not fill in
+  `TRUST_UPSTREAM_FORWARDED_PROTO`, so upstream's new map cannot be copied without their newer entrypoint (every
+  request would look like plain http).
+- Production: the public proxy's https entry point has no forwarded-headers trust (it replaces `X-Forwarded-Proto`
+  from outside; only the mail entry point trusts one address); the ERP web container is published only on
+  the server's loopback address (from `deployment/stacks/erp.compose.json`, `CI_ERP_FRONTEND_HOST_PORT`; no connection seen; its
+  user is not documented); the backend is not published and Gunicorn trusts only the frontend's address
+  (`deployment/erp/backend_start.py`).
+- Test site: a browser's `X-Forwarded-Ssl` and `X-Forwarded-Protocol` reached the backend; no visible effect
+  (every probe answered 200).
+
+**Owner (26 November 2026, "go as recommended"):** part A now (clear the two headers, as upstream); part B (the
+trusted-forwarding switch) at the next frappe_docker bump, set to "on", written into the register.
+
+**Progress (26 November 2026):** public PR **#115** (`p98/clear-forwarded-headers`, `a5118e4`): the two lines in
+both locations, a test that fails without them and one that guards part B until the bump, register BUILD-2,
+decision log. **On test since 18:17 UTC** (one mounted file, web container restart; checks passed; receipt
+`p98-test-erp-forwarded-headers-a5118e4`).
+- **Owner's browser check on test (27 November 2026): passed** (sign-in, portal, Desk, a document). The test Drive
+  panel failed for an unrelated reason: test Drive still signs in through production's sign-in server, which no
+  longer admits the owner's account (removed from `Testers` on 24 November by the owner's decision); P101.
+- **Merged** #115 at `cbe976c` (brought up to date with main: decision log kept both entries; CI passed).
+- **On production since 26 November 2026, 18:42 UTC:** one mounted file, web container restart (11 s), recorded
+  for the drift check; checks passed. Receipt `p98-production-erp-forwarded-headers-cbe976c`; release log entry.
+- **Left:** owner's browser check on production; **part B** (upstream's trusted-forwarding switch, set to "on")
+  waits for the next frappe_docker bump, as recorded in register BUILD-2 and guarded by a test. Owner decides
+  whether P98 stays open until then or closes now with part B carried by the register.

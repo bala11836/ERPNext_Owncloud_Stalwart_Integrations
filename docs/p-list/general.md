@@ -230,6 +230,21 @@ applicable law (for example India's IT Act and the Digital Personal Data
 Protection Act: notice to users, purpose, retention, access control); define
 that policy with the owner before enabling it.
 
+**Hardware choice (owner discussion, 26 November 2026; prices from Indian listings that day, agent estimates):**
+- **Box:** a fanless mini PC with an Intel N150 (or N100) processor, 4 Intel i226-V network ports (not Realtek:
+  FreeBSD's drivers are less reliable), 8 GB RAM and a 256 GB NVMe SSD; about ₹18,000–22,000 per site; a seller
+  with an Indian warranty. Many units are sold without RAM and SSD.
+- **System:** OPNsense (needs an x86 processor) for DHCP, DNS, firewall and the mesh gateway; spare ports for a
+  separate camera network or a second internet line.
+- **Wipe on arrival:** install OPNsense fresh; never use a preinstalled system.
+- **Addresses:** every branch and the NVR site get their own LAN range; the mesh cannot route between sites that use
+  the same range.
+- **To check before buying:** the OPNsense Tailscale plugin (`os-tailscale`, community-supported) must sign in to our
+  own Headscale (P29), not only hosted Tailscale; it creates no firewall rules (interface and rules added by hand);
+  licence, maintenance and security review per the adoption rule.
+- **Owner decision:** trial the box on hosted Tailscale now and move it to Headscale later, or wait for P29.
+- The box also carries the project's cameras that can be wired back to it (P88).
+
 ### P57 — The platform survives restarts and reboots without an outage
 
 **App:** general · **Also touches:** drive, mail, editor · **State:** in progress
@@ -729,3 +744,32 @@ only the client's brand; the guide's steps work on the test site; the copyright 
 
 **Related:** P84 (client identity), P50 (per-brand app builds), P63 (demo brand), P55 (tenant logo through the
 private profile).
+
+### P88 — Project camera sites connected to the NVR over the mesh
+
+**App:** general · **Also touches:** mobile · **State:** open
+
+**Why (owner, 26 November 2026):** every project has cameras (outdoor PTZ, at security and elsewhere) that must reach
+the remote NVR (P46) over the mesh, so they can be recorded and watched in the app (P87). The test starts with the
+Annke camera of the P46 trial.
+
+**Design:**
+- **Default:** cameras are wired back to the project's indoor switch; the P48 gateway box carries them to the NVR.
+- **Only where a camera cannot be wired back:** an outdoor kit at the camera, powered from the camera's own PoE line:
+  Raspberry Pi Zero 2 W with the Waveshare PoE Ethernet / USB HUB BOX (with case; 802.3af, 100 Mbit/s, enough for
+  camera streams), a high-endurance microSD card, an outdoor 1-in-2-out PoE extender (IP66, 802.3at on both outputs)
+  and an IP65/66 junction box in the shade (heat is the main risk). About ₹5,000–6,500 per camera (Indian listings,
+  26 November 2026: Robocraze, Rees52, ThinkRobotics, IndiaMART; agent estimate).
+- **PoE power budget:** PTZ cameras usually need 802.3at (about 25 W) or more with heaters or IR; the switch port must
+  supply the camera, about 2–3 W for the Pi and the extender's loss; otherwise an 802.3bt port or a separate feed.
+- The NVR site is on the mesh itself (P46).
+
+**Not known yet (owner, 26 November 2026):** the number of cameras per project and how many can be wired back; counted
+per project at each site survey, which then gives that project's parts list.
+
+**Order:** the Annke test with P46; then one outdoor kit with one camera and the NVR; then per-project rollout.
+
+**Acceptance:** a camera behind the gateway box and one behind an outdoor kit record on the NVR and play in the app;
+the kit survives a hot day in its box (temperature logged).
+
+**Related:** P46 (NVR), P48 (gateway box), P29 (Headscale), P87 (videos in the app), P72 (monitoring).

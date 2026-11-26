@@ -25,7 +25,8 @@ object Keys {
     /** The phone did not give the protection we asked for; the key was deleted again. */
     class Refused(message: String) : Exception(message)
 
-    class Made(val publicKey: ECPublicKey, val certificates: List<ByteArray>, val report: String)
+    /** [chain] describes the key's certificates: how many, and who issued the last one (the maker's or Google's root). */
+    class Made(val publicKey: ECPublicKey, val certificates: List<ByteArray>, val report: String, val chain: String)
 
     private fun store() = KeyStore.getInstance(STORE).apply { load(null) }
 
@@ -72,7 +73,9 @@ object Keys {
             delete(alias)
             throw Refused("This phone did not lock the key as asked: $report")
         }
-        return Made(entry.certificate.publicKey as ECPublicKey, entry.certificateChain.map { it.encoded }, report)
+        val root = (entry.certificateChain.last() as java.security.cert.X509Certificate).subjectX500Principal.name
+        val chain = "${entry.certificateChain.size} certificates, root: $root"
+        return Made(entry.certificate.publicKey as ECPublicKey, entry.certificateChain.map { it.encoded }, report, chain)
     }
 
     /** Throws KeyPermanentlyInvalidatedException when a fingerprint or face was added since the key was made. */

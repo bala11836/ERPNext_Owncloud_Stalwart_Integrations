@@ -63,7 +63,7 @@ class CreateActivity : FragmentActivity() {
                 .put("response", response)
                 .put("clientExtensionResults", JSONObject())
             Store.add(this, passkey)
-            Store.log(this, "create: DONE site=$rpId attestation=${if (attest) "android-key" else "none"}")
+            Store.log(this, "create: DONE site=$rpId attestation=${if (attest) "android-key, ${made.chain}" else "none"}")
             val result = Intent()
             PendingIntentHandler.setCreateCredentialResponse(result, CreatePublicKeyCredentialResponse(credential.toString()))
             setResult(RESULT_OK, result)

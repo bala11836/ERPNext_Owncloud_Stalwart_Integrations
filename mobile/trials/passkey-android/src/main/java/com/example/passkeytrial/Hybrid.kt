@@ -301,9 +301,12 @@ object Hybrid {
         return Create(map[1L] as ByteArray, (map[2L] as Map<*, *>)["id"] as String, user["id"] as ByteArray, user["name"] as? String ?: "user", algorithms)
     }
 
-    /** A new key's answer without attestation ("none"). */
-    fun createAnswer(authData: ByteArray): ByteArray =
-        byteArrayOf(STATUS_OK.toByte()) + Cbor.encode(linkedMapOf(1 to "none", 2 to authData, 3 to emptyMap<String, Any>()))
+    /** A new key's answer: without a signature no attestation ("none"), with one Android key attestation. */
+    fun createAnswer(authData: ByteArray, signature: ByteArray? = null, certificates: List<ByteArray> = emptyList()): ByteArray =
+        byteArrayOf(STATUS_OK.toByte()) + Cbor.encode(
+            if (signature == null) linkedMapOf(1 to "none", 2 to authData, 3 to emptyMap<String, Any>())
+            else linkedMapOf(1 to "android-key", 2 to authData, 3 to linkedMapOf("alg" to -7, "sig" to signature, "x5c" to certificates)),
+        )
 
     fun signInAnswer(credentialId: ByteArray, authData: ByteArray, signature: ByteArray, userHandle: ByteArray): ByteArray =
         byteArrayOf(STATUS_OK.toByte()) + Cbor.encode(

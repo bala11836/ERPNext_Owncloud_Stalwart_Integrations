@@ -111,6 +111,22 @@ agreement with. All of that must change before real sign-ins (see the README's t
 **Answer to question 2:** phones with Android 9 to 13 can sign in on a computer by QR code when the app runs
 the route itself. Tested on Android 13 only; Android 9 to 12 are not tested.
 
+### Android key attestation over the own QR route (26 November 2026): produced and not rejected; verification not proven
+
+The "proof of the genuine app" of P82: when a key is made, the secure hardware adds certificates that say the
+key lives in real secure hardware and which app asked for it.
+
+| Step | Result |
+|:--|:--|
+| The Samsung (Android 13) produces the certificates for a fingerprint-locked key | Yes: 4 certificates; the last one is Google's hardware attestation root (serial `f92009e853b6b045`) |
+| Sent as `android-key` attestation when a computer asks for a new passkey with attestation "Direct" | Yes |
+| The demo website's answer | **Success** |
+
+**What this does not prove:** the demo website does not show whether it checked the certificates, or whether the
+computer's browser passed them on unchanged. That can only be confirmed on a sign-in server we can inspect
+(the test site: the stored attestation of the new key and the server's log). The Oppo, and the passkey-service
+route, are not tested with attestation.
+
 ### 1. Removing a fingerprint does not destroy the key
 
 - **What the record says:** "adding or removing one destroys the key" (P82, owner decisions of 25 November).

@@ -218,8 +218,9 @@ class HybridActivity : FragmentActivity() {
                     return@sign refuse(webSocket, open, Hybrid.STATUS_OPERATION_DENIED, "not confirmed: ${signed.exceptionOrNull()}")
                 }
                 Store.add(this, passkey)
-                reply(webSocket, open, Hybrid.createAnswer(authData))
-                say("DONE: passkey made for ${ask.rpId} (${ask.userName})")
+                val attest = Store.attest(this)
+                reply(webSocket, open, if (attest) Hybrid.createAnswer(authData, signed.getOrThrow(), made.certificates) else Hybrid.createAnswer(authData))
+                say("DONE: passkey made for ${ask.rpId} (${ask.userName}) attestation=${if (attest) "android-key, ${made.chain}" else "none"}")
             }
         }
     }

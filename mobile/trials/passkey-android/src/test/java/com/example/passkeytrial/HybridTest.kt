@@ -169,6 +169,10 @@ class HybridTest {
         val made = Cbor.decode(Hybrid.createAnswer(ByteArray(148)).drop(1).toByteArray()) as Map<*, *>
         assertEquals("none", made[1L])
         assertEquals(148, (made[2L] as ByteArray).size)
+        val attested = Cbor.decode(Hybrid.createAnswer(ByteArray(148), byteArrayOf(9), listOf(byteArrayOf(7), byteArrayOf(8))).drop(1).toByteArray()) as Map<*, *>
+        assertEquals("android-key", attested[1L])
+        assertEquals(-7L, (attested[3L] as Map<*, *>)["alg"])
+        assertEquals(2, ((attested[3L] as Map<*, *>)["x5c"] as List<*>).size)
 
         val info = Cbor.decode(Hybrid.info()) as Map<*, *>
         assertEquals(true, (info[4L] as Map<*, *>)["uv"])

@@ -770,3 +770,8 @@ an upgrade action; the next upgrade pull request uses the checklist; the rule is
 
 **Related:** P62 (upstream watch: its `workaround` fields point to register entries), P59 (promotion plan and drift
 check), P84 (no client identity in the public register).
+
+**Progress (26 November 2026):** first version written, 102 public entries and the private companion; rule added to
+both instruction files. Public PR #86 (branch `p89/upstream-customizations`), private PR on the branch of the same name,
+working-agreements PR on `upstream-customization-register`. Open questions found are listed at the end of the public
+register and in the handover; none of them is changed by P89.

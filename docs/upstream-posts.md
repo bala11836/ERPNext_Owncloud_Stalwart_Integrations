@@ -9,7 +9,7 @@ Account: `rdavuluri44`.
 
 | Posted | Thread | What | P item | Status | Last check |
 |---|---|---|---|---|---|
-| 2026-11-17 | [CollaboraOnline/online#16276](https://github.com/CollaboraOnline/online/issues/16276#issuecomment-6947112394) | Calc AutoFilter search: findings, workaround, search box only above 25 entries | P35, P42 | answered | 2026-11-26: maintainer replied on 24 November: confirmed our analysis (the search only filters in the browser; the engine's search is off), the 25-entry threshold is intended, passed to the Calc popup developers, no date. |
+| 2026-11-17 | [CollaboraOnline/online#16276](https://github.com/CollaboraOnline/online/issues/16276#issuecomment-6947112394) | Calc AutoFilter search: findings, workaround, search box only above 25 entries | P35, P42 | stopped (not watched) | 2026-11-26: stopped watching (owner's go) |
 | 2026-11-26 | [goauthentik/authentik#16049](https://github.com/goauthentik/authentik/issues/16049#issuecomment-7186894135) | WebAuthn AAGUID management: our use case (only our app's keys) | P89, P82 | waiting | 2026-11-26: nothing new |
 | 2026-11-26 | [goauthentik/authentik#28187](https://github.com/goauthentik/authentik/issues/28187) | Expose WebAuthn authenticatorAttachment and transports to policies | P89, P82 | waiting | 2026-11-26: nothing new |
 | 2026-11-26 | [goauthentik/authentik#28188](https://github.com/goauthentik/authentik/issues/28188) | Per-user concurrent session limit, optionally per device kind | P89, P82 | waiting | 2026-11-26: nothing new |
@@ -25,9 +25,10 @@ Account: `rdavuluri44`.
 
 ### CollaboraOnline/online#16276: Calc AutoFilter search: findings, workaround, search box only above 25 entries
 
-Next: We no longer use Collabora (retired with P42). Owner to choose: a one-line thank-you saying we moved to ONLYOFFICE and then stop watching, or stop watching without a post.
+Not watched any more: we no longer use Collabora (replaced by ONLYOFFICE Docs, P42); thank-you posted on 26 November 2026
 
 - 2026-11-26: maintainer replied on 24 November: confirmed our analysis (the search only filters in the browser; the engine's search is off), the 25-entry threshold is intended, passed to the Calc popup developers, no date.
+- 2026-11-26: stopped watching (owner's go) Follow-up: thanked the maintainer and said we moved to another office suite: https://github.com/CollaboraOnline/online/issues/16276#issuecomment-7195109042
 
 ### goauthentik/authentik#16049: WebAuthn AAGUID management: our use case (only our app's keys)
 

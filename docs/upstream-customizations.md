@@ -183,6 +183,24 @@ Made against: frappe_docker `0ad1a11`, bench 5.31.1, Node 24.22.1, Yarn 1.22.22
 - **Upgrade:** **re-check:** move to tags when upstream publishes them; review the
   commit range by hand, because no release notes exist.
 
+
+### BUILD-11 Face models fetched into the ERP add-on image (P95)
+
+- **What:** OpenCV Zoo's SFace recogniser (fp32, `face_recognition_sface_2021dec.onnx`) and YuNet detector
+  (`face_detection_yunet_2023mar.onnx`) with their licence files, at commit `48b10fa`, each checked against its
+  SHA-256 in `deployment/face-models.json`; written to `/opt/face-models` with a `model-id` file. Run by the
+  `opencv-python-headless` 5.0.0.93 already in the image (pinned in `deployment/python-constraints.txt` through an
+  upstream app).
+- **How:** `tools/fetch_face_models.py` in `deployment/erp/Dockerfile.addon`; the build stops on any checksum
+  difference.
+- **Relies on:** with OpenCV 5's graph engine, `FaceDetectorYN.setInputSize` after creation has no effect, so the
+  engine creates one detector per photo size (`custom_hr/face_sface.py`, found in the engine test).
+- **Upgrade:** **re-check**. A new model pin changes `model-id`, and every enrolled worker must enrol again (the
+  service reports them as "needs re-enrolment"). An OpenCV upgrade (through an upstream app) re-runs the live engine
+  test (`tests/test_custom_hr_face_engine.py`) in the new image. Training data of the SFace weights is unverified
+  (opencv/opencv_zoo#313).
+- **Test:** `tests/test_custom_hr_face_engine.py` (pins, fetch refusal, image wiring; live part in the image).
+- **Workaround to retire:** the per-size detector, once `setInputSize` works again in OpenCV 5.
 ## Frappe
 
 Made against: v16.60.2 (`2df0425`).

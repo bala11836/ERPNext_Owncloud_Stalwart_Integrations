@@ -959,6 +959,12 @@ the admin). Seven inventory rows now link to an SOP. Open points for the owner a
 files, the leaver's mailbox, where the checklist lives) and in the invitation SOP (the identity check before a
 recovery invitation). Still to write: the remaining in-use procedures (inventory rows without a link).
 
+**Owner decisions of 26 November 2026, night (in the SOPs and the decision log):** recovery of a lost passkey only
+after the project manager checked the phone in person and confirmed in their app (until built: confirmed to the
+admin); leavers' personal files stay, and mailboxes are shared so nothing is redirected; rejected face captures
+keep their photograph for 30 days. Still open: who may open a leaver's files and for how long; where the leaver
+checklist and the admin's daily line are recorded.
+
 **Owner decisions on the gaps (26 November 2026, late evening):**
 - **Leavers:** the exit procedure in Frappe HR triggers removal of keys and purges all the person's data in the app
   (P82, P95); SOP A14 to write.

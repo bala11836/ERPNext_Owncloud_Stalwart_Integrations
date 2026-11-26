@@ -357,7 +357,7 @@ public PR #101 (`p95/pm-queue`).
 - The project manager's "Face queue" tab on the field team page: pick the worker or reject with a reason. Only
   another approver of the site decides; the chosen worker must be on the capturing supervisor's team.
 - Photographs are private; the queue's copy is deleted once recorded; a rejected capture keeps its photograph for 30
-  days (proposal, owner to confirm).
+  days (confirmed by the owner, 26 November 2026).
 - It works with recognition off: every such capture then waits for the project manager.
 - Tests: 12 new offline tests; 57 with the HR and face suites pass; CI passed.
 - **Not run:** 22 rollback-only live checks (`custom_hr/face_queue_integration_tests.py`); they need a test-site slot

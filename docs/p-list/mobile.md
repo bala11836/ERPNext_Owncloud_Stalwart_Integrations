@@ -171,8 +171,9 @@ and cannot use more than it.
 quota for new spaces (`GRAPH_SPACES_DEFAULT_QUOTA`) and a maximum (`OCIS_SPACES_MAX_QUOTA`); a forum report says a
 personal quota can only be set after the user's first sign-in; check against the oCIS release we pin.
 
-**Owner decisions needed:** the default quota and who may change it; what happens to a person's files when they leave
-(they are business files: hand them to the manager, move them to an archive, or delete after a period); whether
+**Owner (26 November 2026): a leaver's personal files stay in place; nothing is deleted.** Still open: who may open
+them afterwards and for how long they are kept.
+**Owner decisions needed:** the default quota and who may change it; whether
 sharing from the personal space to other people (not only to a project folder) is allowed.
 
 **Acceptance (test site):** two test users, each sees only their own files; upload, open (image, PDF, office file),

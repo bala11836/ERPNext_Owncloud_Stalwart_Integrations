@@ -159,7 +159,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
 | ERP | [pending/erp.md](p-list/erp.md) | 14 | 14 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 6 | 6 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 7 | 7 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
@@ -245,4 +245,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
 | P98 | ERP web server template: take up upstream's trusted-HTTPS forwarding changes | [ERP](p-list/erp.md) | signin, general · **State:** open | open |
 | P99 | Drift check sees mounted runtime files, not only image tags and notes | [General](p-list/general.md) | erp · **State:** open | open |
+| P100 | Mobile app checks in CI, and the app's dependencies in the daily watch | [Mobile](p-list/mobile.md) | general · **State:** open | open |
 <!-- APP-INDEX-END -->

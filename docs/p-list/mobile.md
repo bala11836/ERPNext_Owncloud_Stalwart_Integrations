@@ -217,3 +217,41 @@ request); how long alerts and clips stay available; whether the app may download
 recording through the API); live view, an alert, and a recording play on Android and iPhone over mobile data.
 
 **Related:** P46 (recorder), P14 (push), P50 (app), P82 (sign-in), P72 (monitoring).
+
+### P100 — Mobile app checks in CI, and the app's dependencies in the daily watch
+
+**App:** mobile · **Also touches:** general · **State:** open
+
+**Why (found 26 November 2026; owner go to open it):** the developers' build loop for every screen (adopted the
+same day, `mobile/BUILD-GUIDE.md` section 3) relies on automatic checks: build, all tests, code scanners, security
+advisories, secret scan. The repository's CI (`.github/workflows/check.yml`) checks only the Python and server
+parts. For `mobile/` it runs no install, typecheck, lint or tests, and there is no secret scan or code scanner for
+any part. The app's npm dependencies are not in the daily upstream watch (found by P35 on 26 November). So a pull
+request cannot prove the checks ran; today they run only on the developer's own computer.
+
+**What (proposal, owner to confirm before work):**
+1. A CI job for `mobile/`, on every push and pull request that touches it: `pnpm install --frozen-lockfile` (install
+   scripts stay blocked), `pnpm typecheck`, `pnpm lint`, `pnpm test`, `npx expo-doctor` (pinned), and an export
+   build (`expo export`) so a broken bundle fails. Pinned action versions by commit.
+2. A secret scan for the whole repository on every pull request (including forks), with the findings kept out of
+   public logs.
+3. A code scanner for the app's TypeScript (and the repository's Python and JavaScript where it is free for
+   public repositories), results visible in the pull request.
+4. Dependency advisories: `pnpm audit` (or OSV-Scanner on `pnpm-lock.yaml`) in CI, failing on high and critical;
+   and the app's direct dependencies added to the daily upstream watch (P62), so new flaws reach us without a pull
+   request.
+5. The mobile build guide and the pull request template updated to point at these checks instead of local runs.
+
+**Not decided:** which secret scanner and code scanner (licence, maintenance, how fixes are published, and that
+they run on forks without secrets; adoption check before choosing); whether the export build runs on every pull
+request or only when `mobile/` changes; whether a failed advisory check blocks a merge or only warns at first.
+
+**Overlap:** PR #75 (Maestro robot tests and a roles table in the pull request template) touches the template;
+take both together or rebase. P71 (GitHub Actions deployments) uses the same workflows folder.
+
+**Acceptance:** a pull request that breaks the app's types, lint, tests or bundle fails CI; a committed test
+secret is caught; a dependency with a known high advisory fails the check; the daily watch lists the app's
+direct dependencies.
+
+**Related:** P50 (native app), P62 (daily watch), P35 (open-source list), P71, P96 (SOPs), the build loop in
+`mobile/BUILD-GUIDE.md` section 3.

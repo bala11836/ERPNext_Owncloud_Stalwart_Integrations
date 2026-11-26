@@ -6,6 +6,21 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### One build loop for every screen of the mobile app (P100)
+
+- **Decision:** every screen of ERP Mobile goes through one loop: a tap and state list (loading, empty, offline,
+  refused, error); a mock-up approved before code; tests for the rules first; screen tests in every state at phone
+  and tablet size; automatic checks (build, tests, code scanner, dependency advisories, secret scan); own review
+  against a checklist; a second review in a fresh session, by a different AI model for sign-in, security, payments
+  and personal data; a tap-through on a real phone; a small pull request saying what was and was not tested; the
+  maintainers test on the test site; the owner merges. A fault found late returns to the start with a new test.
+  The project rules are added to it: a P item first, advisories and the open-source list for new packages, the
+  promotion plan, SOP and register updates in the same pull request.
+- **Why:** the developers' own loop (26 November 2026) was stricter than the guide: it covers every state of a
+  screen, real phones and an independent review, and stops a fixed fault from returning. CI did not check the app
+  at all, so the automatic checks become their own item (P100) and are run by hand until then.
+- **Where:** `mobile/BUILD-GUIDE.md` sections 3 and 10; P100 in the work list.
+
 ### A project manager's own online check-in needs no approval; attendance photos served after our own check (25 November 2026)
 
 - **Decision:** when an Approver member of a site checks in themselves at that site, online and without a clash with

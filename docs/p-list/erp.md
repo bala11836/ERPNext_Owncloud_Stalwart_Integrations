@@ -439,8 +439,8 @@ release record.
 - **Drift check:** erp is reported behind main (30 files). The check reads the image tag and cannot see a mounted
   file, so it still lists this template; the other 29 files are P95 and P93 (merged, not deployed).
 - **Acceptance:** 1, 2 and 4 met; 3 met for the header check, not for "drift check clean" (reason above).
-- **Left:** owner's signed-in browser check (a download, realtime); owner decides when P97 is closed. Proposal, no
-  item yet: the drift check compares mounted runtime files by checksum.
+- **Left:** owner's signed-in browser check (a download, realtime); owner decides when P97 is closed. P99 opened so
+  the drift check compares mounted runtime files by checksum.
 
 **Related:** P89 (register BUILD-2), P91 (upgrade checks), P62 (daily watch finding
 `advisory:frappe_docker@0ad1a1152f93:GHSA-94mh-qq29-qwrf`).

@@ -978,3 +978,31 @@ checklist and the admin's daily line are recorded.
   exceptions in a Desk widget (scope added to P53).
 
 **Status:** in progress.
+
+### P99 — Drift check sees mounted runtime files, not only image tags and notes
+
+**App:** general · **Also touches:** erp · **State:** open
+
+**Why (found 26 November 2026, P97; owner: ok to open):** the drift check (P59) learns what a stack runs from one
+commit: the Coolify "Source commit" note, or for ERP the image tag. A file that is mounted into a container at
+start (the ERP web server template, the start script, the realtime adapter and the other files
+`tools/prepare_runtime.py` writes under the runtime mounts folder) can be newer or older than that commit and the
+check cannot tell. After P97 the mounted template on production equals the one on main, yet the check lists it as
+behind; the opposite case is worse: a mounted file changed by hand, or left behind by a release, would be reported
+clean.
+
+**What (proposal, owner to confirm before work):** for every stack, the drift check also compares each mounted
+runtime file with the same file on main (checksum of what `prepare_runtime.py` would write, read-only), and reports
+per file "equal to main", "differs" or "could not check". A file equal to main is not counted as behind even when the
+stack's commit is older. The private settings name the mounts folder per stack. Tests with a fake host; register
+and README of the tool updated.
+
+**Not decided:** files that are rendered with profile values (not byte-equal to the repository file) need the render,
+or stay "could not check"; whether a difference in a mounted file alone makes the nightly check fail.
+
+**Acceptance:** on production the ERP template is reported equal to main while the image is still behind; a
+hand-changed mounted file on the test site is reported; the nightly report and `status.json` carry the per-file
+result.
+
+**Related:** P59 (closed: promotion plan and drift check), P94 (stacks behind main), P97, P71 (deployments by
+GitHub Actions would make partial promotions rarer).

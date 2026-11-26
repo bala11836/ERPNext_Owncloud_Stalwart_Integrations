@@ -227,7 +227,8 @@ every service behind it (not in ERPNext).
 **What (owner decisions, 25 November 2026):**
 - **ERP Mobile holds the keys.** The app becomes a passkey provider on the phone. Each key is
   created in the phone's secure hardware, never synced or exported, and locked to the
-  fingerprints/face enrolled at sign-up (adding or removing one destroys the key; Android
+  fingerprints/face enrolled at sign-up (adding one destroys the key; removing one does not, as the P82 trial
+  found on two phones, wording corrected with the owner's yes on 26 November 2026; Android
   `setInvalidatedByBiometricEnrollment`, iOS `biometryCurrentSet`); no PIN fallback for the key.
 - **Computers sign in only by QR from the phone** (standard WebAuthn cross-device sign-in: the
   phone scans, Bluetooth checks it is nearby). Because ERP Mobile keys exist only on phones, a
@@ -485,7 +486,8 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   - **Alert only, at first:** an unusual sign-in is reported, not blocked, until the rules have proven themselves
     on real use. Blocking or asking for an extra check can follow as a separate owner decision.
   - **Personal data (DPDP):** sign-in addresses and approximate locations of employees are personal data. They go in
-    the staff notice, are kept for a fixed period (proposal: 90 days of history, then only the learned usual places),
+    the staff notice, are kept for a fixed period (**owner, 26 November 2026: 90 days of history**, then only the
+    learned usual places),
     and are shown only to the sign-in admin. The SOP inventory (P96) gets the admin's handling of these alerts.
   - **Office and site networks:** the admin can mark known office and site addresses as usual for everyone, so
     shared office connections do not raise alerts.

@@ -961,6 +961,22 @@ on the pinned image 26 November 2026).
 - **What:** phones use the desktop editor (`docs/decisions.md` P42).
 - **Upgrade:** **re-check** on a phone.
 
+### OFFICE-7 The editor's status page and internal interface stay private at the proxy
+
+- **What and why:** ONLYOFFICE 10 has no admin panel. Its status page (`/info`) and
+  cluster interface (`/internal`), also under a `/<version>/` prefix, are allowed to
+  localhost only by its own nginx rules, which do not trust forwarded addresses, so
+  they are refused through the proxy (checked on test 26 November 2026: 403). The
+  test ingress also keeps them private (P92), so they stay closed even if the
+  info page is turned on as ONLYOFFICE's documentation describes. This replaced a
+  rule for Collabora's admin paths, which ONLYOFFICE does not have. Production has
+  no such proxy rule and relies on ONLYOFFICE's own.
+- **How:** `office-admin` in `tools/prepare_ingress.py`; ONLYOFFICE's
+  `/etc/onlyoffice/documentserver/nginx/includes/ds-docservice.conf`.
+- **Upgrade:** **re-check** the paths ONLYOFFICE restricts in that file (new private
+  interfaces), and that `/info/` returns 403 through the proxy.
+- **Tests:** `tests/test_rebuild_templates.py::test_ingress_references_and_narrow_public_response_routes`.
+
 ## Stalwart mail
 
 Made against: 1.1.1. Mail retention (P69) is on draft PR #69 and is not on `main`;
@@ -1223,8 +1239,8 @@ Made against: 3.4.2.
 ## Retired
 
 - **Collabora** was retired with P42 (the upstream comment was posted on
-  CollaboraOnline/online#16276). **None.** Some documents and one ingress rule still
-  mention it (see open questions).
+  CollaboraOnline/online#16276). **None.** Its deployment instructions and ingress
+  rule were removed in P92; older records mention it as history.
 
 ## Lessons from earlier upgrades
 
@@ -1277,17 +1293,14 @@ Found on 26 November 2026 and reported to the owner; none of them is changed by 
   loudly on a changed upstream file, image or commit).
 - **Upstream watch:** fixed in P91 (`workaround` notes for every app with entries here;
   monitoring images watched).
-- **Collabora leftovers:** `tools/prepare_ingress.py` still restricts Collabora admin
-  paths (no ONLYOFFICE admin path is restricted; whether ONLYOFFICE 10 has one is to
-  verify); `integrations/drive/README.md` and `deployment/README.md` still describe
-  deploying Collabora.
+- **Collabora leftovers:** fixed in P92 (READMEs; the ingress rule now guards
+  ONLYOFFICE's own private paths, OFFICE-7).
 - **ONLYOFFICE version:** fixed in P91 (10.0.0 build 169 everywhere).
 - **Left-over or unexplained code:** BUILD-7 (payment assets manifest), BUILD-8
   (PYTHONPATH), FRAPPE-15/16 (the NetBird names: nothing reads those headers; NetBird
   is not pinned or watched), HRMS-5 (retired launcher script).
-- **WhatsApp:** `docs/decisions.md` describes a signature-checking wrapper at
-  `erpnext_drive_integrations/whatsapp/`, which does not exist; WhatsApp is not
-  installed.
+- **WhatsApp:** fixed in P92 (correction note in `docs/decisions.md`: the wrapper is
+  planned under P04, not built; WhatsApp is not installed).
 - **Upstream reports not filed yet:** oCIS editor registration (P81 F), the
   authentik P82 feature requests, the ONLYOFFICE sheet-view crash, frappe_whatsapp
   unsigned webhooks, the Coolify parser bug, Frappe's nginx template overwriting

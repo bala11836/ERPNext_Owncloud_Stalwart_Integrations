@@ -146,3 +146,16 @@ object names, the client brand) are in the private companion in the operations r
    pull request and the release record.
 3. When upstream fixes something we worked around, remove the workaround, update the entry and its
    `workaround` note in `deployment/upstream-watch.json`, and say so on the upstream issue.
+
+# Our posts on other projects (owner, 26 November 2026; P35)
+
+Every bug report, feature request, comment or workaround we post upstream is listed in
+`docs/upstream-posts.json` (page: `docs/upstream-posts.md`; private reports such as security advisories go in the
+private companion) with why, the P item, the register entry and a log of every check and follow-up.
+
+1. Add the post to the list in the same session it is made, then `python3 tools/upstream_posts.py render`.
+2. At the start of every session, with the upstream-watch digest: `python3 tools/upstream_posts.py check --gh
+   --record`. It reports replies and state changes since the last check and threads the account posted on that the
+   list lacks; act on them (answer questions, test a fix, remove a workaround as in rule 3 above) and log any
+   follow-up in the post's entry. The daily upstream watch also reports new replies (`YYYY-MM-DD-posts.md`).
+3. A post stops being watched only when we no longer use that project: status `stopped` with the reason.

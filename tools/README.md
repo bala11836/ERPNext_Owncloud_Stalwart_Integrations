@@ -12,6 +12,7 @@ refresh worker) do not change; this index groups them by module.
 ## Upstream watch (`deployment`)
 
 - `open_source.py` — One list of every open-source project we use, borrow from or evaluate; renders the README acknowledgements and `docs/open-source.md` and checks them against the upstream watch and `modules.json` (P35).
+- `upstream_posts.py` — The list of our posts on other projects and a read-only check for replies, state changes and unlisted posts; `check --gh --record` at every session start (P35).
 - `upstream_watch.py` — Daily digest of new releases, security advisories, end of life and licence changes for every pinned component, from public sources only; never upgrades anything (P62).
 
 ## Drive (ownCloud Infinite Scale) adapters (`drive`)

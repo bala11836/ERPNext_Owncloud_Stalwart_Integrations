@@ -241,6 +241,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P92 | Out-of-date Collabora material, ONLYOFFICE version, WhatsApp entry, hosting provider's name | [General](p-list/general.md) | editor, drive · **State:** in progress | in progress |
 | P93 | "Request response" button missing on Job Offer | [ERP](p-list/erp.md) | general · **State:** in progress | in progress |
 | P94 | Bring production stacks back in line with main | [General](p-list/general.md) | editor, signin, portal, test-site · **State:** open | open |
-| P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** open | open |
-| P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** open | open |
+| P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** in progress | in progress |
+| P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
 <!-- APP-INDEX-END -->

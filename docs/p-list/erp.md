@@ -261,7 +261,7 @@ Waiting for a test-site slot (test ERP runs #77, used by the P74 phone test; own
 
 ### P95 — Face recognition for field team attendance
 
-**App:** erp · **Also touches:** mobile, signin, test-site · **State:** open
+**App:** erp · **Also touches:** mobile, signin, test-site · **State:** in progress
 
 **Why (owner, 26 November 2026):** field workers often have no phone or app account of their own. The supervisor
 should mark the team's attendance just by photographing each person: no selecting the employee first; the app
@@ -303,4 +303,31 @@ liveness on two phone models, server matching against a small roster, online pic
 **Related:** P24 (field attendance pilot), P50 (the app, offline captures), P82 (onboarding, biometric sign-in,
 self check-in without a selfie), P96 (SOPs: bulk onboarding, consent, leavers, offline queue).
 
-**Status:** open; decided 26 November 2026; nothing built.
+**Owner, 26 November 2026 (evening):** build now; do not wait for the lawyer's opinion. **Late evening:** the legal
+opinion is needed **before the app is connected to production** (that is the gate, not the development).
+
+**SFace (owner, 26 November 2026, late evening):** build on SFace now and ask OpenCV about its training data. Asked
+by adding to the existing upstream issue (opencv/opencv_zoo#313, comment https://github.com/opencv/opencv_zoo/issues/313#issuecomment-7193191907; four open issues ask the same, a
+maintainer has only answered that the Apache-2.0 licence should be enough). The residual risk is decided before
+production, with the legal opinion.
+
+**Adoption check (26 November 2026, agent research, primary sources):**
+
+| Tool | Verdict | Code / weights licence | Version | Note |
+|---|---|---|---|---|
+| MediaPipe Face Landmarker (Android Tasks) | adopt | Apache-2.0 / Apache-2.0 | tasks-vision 1.2.3 (11 Nov 2026) | blink and head pose for liveness; no advisories |
+| Expo wrapper for it | reject | MIT | 1.4.0 | one-person project for an old camera library; write our own Kotlin plugin |
+| OpenCV Zoo SFace (fp32) | adopt with caution | Apache-2.0 / Apache-2.0 | model 2021dec | **training data unverified** (paper used research-only datasets); owner decision |
+| OpenCV Zoo YuNet face detector | adopt | MIT / MIT | 2023mar | |
+| Silent-Face anti-spoofing | adopt with caution | Apache-2.0 | last commit 2020 | unmaintained; one signal only, the head turn and blink are primary |
+| UniFace (packages those weights) | adopt with caution | MIT; weights from Silent-Face | 4.3.0 | maintained packaging |
+| opencv-python-headless | adopt | Apache-2.0 (+ FFmpeg LGPL-2.1) | 5.1.0, wheel build 95 (17 Nov 2026) | no open advisories |
+| onnxruntime | adopt if needed | MIT | 1.32.0 | not needed on the server (OpenCV runs the models); source repo not reachable on the check date |
+| InsightFace models | reject | MIT code / **non-commercial** weights | | |
+
+**Progress (26 November 2026):** public PR #94 (`p95/face-attendance-server`): matching rules, encrypted templates
+(readable by no role, no history, permanent deletion), consent records, enrol / identify / withdraw, leaver hooks, the
+model slot (off); 21 new tests, CI passed. Not yet: the face model (waits for the SFace decision), capture screen and
+PM queue, phone liveness (needs a phone), a test-site migrate (needs a slot).
+
+**Status:** in progress.

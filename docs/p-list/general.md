@@ -109,6 +109,27 @@ Shared 17 November 2026: findings and the workaround posted upstream
 including that the search field only appears for lists longer than 25
 entries, with an AI-assistance credit.
 
+**Upstream posts list and reply check (owner, 26 November 2026, go):** every post we make upstream is listed with
+why, the P item, the register entry and a log of every check and follow-up, and checked for replies until we stop
+using that project (also a working-agreements rule for all projects). Built on public branch `p35/upstream-posts`:
+`docs/upstream-posts.json` and `.md` (11 public posts), `tools/upstream_posts.py` (read-only check; finds replies,
+state changes and posts the list lacks; `check --gh --record` at every session start), the daily upstream watch
+reports new replies once (`YYYY-MM-DD-posts.md`), tests, `AGENTS.md` rule. The private report (frappe_docker
+advisory) is in `docs/upstream-posts-private.md` here. First check, 26 November: Collabora's maintainer had replied on
+24 November (confirmed our analysis, passed to the Calc developers); Coolify fixed our bug the same day (commit
+`8dbaecc`; remove the COOLIFY-1 workaround once a release we run carries it, then say so on the issue); the rest
+waiting. **Open (owner):** Collabora, which we no longer use (P42): a one-line thank-you and stop watching, or stop
+watching without a post.
+
+**Open-source list (owner, 26 November 2026, go):** every open-source project we use, borrow from or evaluate is in
+public `docs/open-source.json` (62: 47 in use, 14 being evaluated, 1 retired; licences read from GitHub the same day).
+The README acknowledgements are generated from it, and a test keeps it in step with the upstream watch and
+`modules.json` (public PR #97, branch `p35/open-source-list`; working-agreements rule on PR #3). Found: the README
+thanks had fallen behind (the monitoring stack, backup tools, CoreDNS, frappe_docker, the hosts' software were
+missing); `owncloud/web` was archived upstream on 23 November 2026 (ocis carries the web client; where development
+continues: to verify); `ocis-konnectd` archived since 2020. Gap kept visible: the mobile app's dependencies are
+credited but not in the daily watch.
+
 ### P40 — Backup hardening against ransomware
 
 **App:** general · **Also touches:** none · **State:** in progress
@@ -599,6 +620,10 @@ TrueNAS answers.
 no secrets in dashboards or alert texts; licences of Grafana, Loki (AGPL) and Prometheus (Apache) recorded; set up from
 this repository as a module (stack files, config, README), branch, test, owner go, like every other stack.
 
+**Alert delivery (owner, 26 November 2026, late evening):** the **admin** receives the alerts (no longer only the
+owner; phone delivery as decided above), and the person with authentik admin rights also sees alerts and exceptions
+in a widget on their Desk (scope added to P53). Who watches daily: the admin (P96, SOP F5).
+
 ### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
@@ -778,7 +803,7 @@ an upgrade action; the next upgrade pull request uses the checklist; the rule is
 **Related:** P62 (upstream watch: its `workaround` fields point to register entries), P59 (promotion plan and drift
 check), P84 (no client identity in the public register).
 
-**Upstream posts (26 November 2026, owner go; account rdavuluri44):**
+**Upstream posts (26 November 2026, owner go; account rdavuluri44; now tracked in the public list, P35):**
 - owncloud/ocis#3832 comment: https://github.com/owncloud/ocis/issues/3832#issuecomment-7186892628
 - ONLYOFFICE/DocumentServer#3954: https://github.com/ONLYOFFICE/DocumentServer/issues/3954
 - coollabsio/coolify#12667: https://github.com/coollabsio/coolify/issues/12667
@@ -893,7 +918,7 @@ Follow-up: release steps must update the Coolify "Source commit" note automatica
 
 ### P96 — SOPs for every manual procedure, written alongside the build
 
-**App:** general · **Also touches:** signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** open
+**App:** general · **Also touches:** signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress
 
 **Why (owner, 26 November 2026):** the systems we are designing rely on people doing checks that no code enforces
 (for example removing a family member's fingerprint from a phone, or bulk onboarding a field team with one good
@@ -921,4 +946,21 @@ the owner reviews the first set.
 
 **Related:** P82, P95, P24, P50.
 
-**Status:** open; decided 26 November 2026; study not started.
+**Progress (26 November 2026):** study done (decision log, P list, READMEs, runbooks, private records): 69
+procedures in ten areas and 18 gaps, published as the inventory in public `docs/sop/README.md` (PR on branch
+`p96/sop-first-set`), with the template and the first two SOPs (ERP Mobile onboarding; face enrolment and consent),
+both drafts that apply when built. Next: the gaps that need owner decisions, then the in-use procedures.
+
+**Owner decisions on the gaps (26 November 2026, late evening):**
+- **Leavers:** the exit procedure in Frappe HR triggers removal of keys and purges all the person's data in the app
+  (P82, P95); SOP A14 to write.
+- **Where the biometric confirmation is kept, and the consent text and languages:** the agent prepares a proposal.
+  Prepared 26 November: the confirmation is given in the app with the employee's fingerprint and the project
+  manager's tick, stored by the sign-up service with the access request, kept while employed plus 3 years
+  (onboarding SOP); the face attendance agreement draft 1 is in public `docs/sop/face-attendance-agreement.md`,
+  for the lawyer. **Languages:** a proposal is in the private handover of 26 November (it names the region);
+  translations by a qualified translator, each checked by translating back. Owner to confirm.
+- **Monitoring:** the admin receives the alerts; the person with authentik admin rights also sees alerts and
+  exceptions in a Desk widget (scope added to P53).
+
+**Status:** in progress.

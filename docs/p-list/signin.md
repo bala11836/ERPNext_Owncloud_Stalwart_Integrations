@@ -436,8 +436,19 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   - **Watch:** a failure through the relay goes into the admin's alerts (P53, P72). If Google stops it, the fallback
     is our own relay (an option the colleague described) or app-only use on older phones.
   - **Still a gate (from the colleague's report):** the trial code has never talked to a real computer and is
-    encryption code written in one sitting. It is fit for a trial with a test passkey on a demo website only. An
-    outside security expert reviews it before any real sign-in uses it.
+    encryption code written in one sitting. It is fit for a trial with a test passkey on a demo website only.
+  - **Security review (owner, 26 November 2026, late evening):** instead of an outside expert, Claude in the role
+    of a senior security analyst reviews and verifies the route before any real sign-in uses it. **Accepted by the
+    owner:** no independent human review. Agent's caution, recorded: the code was also written by a Claude agent, so
+    the reviewer may share its blind spots, which matters most in hand-written encryption code.
+    **How the review is done (agent's recommendation; owner to confirm):**
+    1. A separate session, not the one that wrote the code, reviews it from the code and the standard alone, with
+       the task of breaking it.
+    2. Evidence beyond reading: the standard's published test cases pass; a real Chrome on a computer completes
+       sign-ins and refuses tampered ones; the encryption uses well-reviewed libraries wherever possible instead of
+       our own code.
+    3. A written report in the pull request (what was checked, found and fixed) and the owner's written acceptance
+       of the remaining risk.
 - **microG (being evaluated by the colleague, 26 November 2026):** listed as "evaluating" in public
   `docs/open-source.json` (P35). Record the adoption check here (licence: Apache-2.0 per its repository; maintenance;
   security history; how fixes are published) and in the decision log, whether adopted or not; if adopted, credit

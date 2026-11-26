@@ -23,7 +23,10 @@ discussion that led to a decision is not repeated here.
 - **Relay (owner, same day):** our route uses the public relay the standard names, run by Google, for the trial and
   for real sign-ins until the add-on is retired; no relay of our own is built. The relay sees only encrypted data.
   Accepted: no agreement with Google, which can change or stop the service (fallback: our own relay, or app-only use
-  on older phones). An outside security review of our route's encryption code comes before any real sign-in.
+  on older phones). Before any real sign-in, the route's encryption code is reviewed by Claude in the role of a
+  senior security analyst, not by an outside expert (owner, same day). Accepted: no independent human review. Agent's
+  recommendation: a separate reviewing session, the standard's test cases and live checks against Chrome,
+  well-reviewed libraries for the encryption, and a written report with the owner's acceptance.
 
 ### Office computers are bound by company certificates, not authentik's paid stage (P82)
 

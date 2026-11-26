@@ -411,7 +411,46 @@ release record.
   extensions in upper or mixed case. The test ERP runs the colleague's PR #77 image (`2a9f149`), used by the P74
   phone test: the fix needs only the mounted file replaced and the web container recreated (seconds), not a new
   image. Not done; waits for the owner's go for the test slot.
-- Not done: test deployment, production look for existing files (needs the production key), production.
+- **On test since 26 November 2026, 15:35 UTC (owner's go):** the template of `95f25b9` replaced the mounted file and
+  the web container was restarted (about 10 s; image unchanged, `2a9f149`). Before: `.SVG`, `.HTML`, `.Xml` test
+  files opened inline (flaw confirmed). After: `.SVG`, `.svg`, `.HTML`, `.html`, `.Xml`, `.xml`, `.MHT` answer
+  `Content-Disposition: attachment`; `.PNG` and `.pdf` unchanged; `.html.txt` no longer forced; private files 403
+  without a session as before; realtime handshake 200 as before; nginx syntax test passed first; test files removed.
+  Receipt `p97-test-erp-files-forced-download-95f25b9`; rollback copy kept on the test VM (in the receipt).
+  Limits: checked directly against nginx in the container, not through the ERP upload screen or a signed-in browser.
+- **Production look for existing files: not done.** The owner said yes, but the session's permission check refused
+  the production connection from this PC; nothing ran on production.
+- Not done: owner's browser check on test (optional), merge, production.
 
 **Related:** P89 (register BUILD-2), P91 (upgrade checks), P62 (daily watch finding
 `advisory:frappe_docker@0ad1a1152f93:GHSA-94mh-qq29-qwrf`).
+
+### P98 — ERP web server template: take up upstream's trusted-HTTPS forwarding changes
+
+**App:** erp · **Also touches:** signin, general · **State:** open
+
+**Why (found 26 November 2026, P89 and P97; owner: open an item):** our ERP web server template is a full copy
+that replaces frappe_docker's (register BUILD-2), so upstream's changes to it do not reach us. After P97, two
+differences from upstream `main` remain besides our own Origin change:
+1. **Trusted HTTPS forwarding** (frappe_docker `280fc962eb`, 11 November 2026, "configure trusted HTTPS forwarding for
+   OAuth redirects"): the forwarded "https" header is believed only when a new setting
+   `TRUST_UPSTREAM_FORWARDED_PROTO` is `on`. Ours believes it from anyone who can reach the web container. The
+   commit also changes upstream's entrypoint and compose files, so it is not a one-line copy.
+2. **Clearing two forwarded headers** (`X-Forwarded-SSL`, `X-Forwarded-Protocol`) before requests go to the backend
+   and to socket.io, so a client cannot set them.
+
+**Not decided, to check first:** whether either difference can be used against us (the web container is reached
+only through our proxy; what the proxy strips or sets is not verified); what the setting must be on test and
+production so sign-in redirects keep using https; how it interacts with our Origin change and the private report
+still in triage (private companion, BUILD-2). No published advisory names these two differences (checked
+26 November 2026).
+
+**What (proposal, owner to confirm before work):** read-only check of what reaches the web container on test;
+then carry both changes with the right setting in the test and production profiles; tests; register BUILD-2;
+through the test site with a sign-in and realtime check; production from main.
+
+**Acceptance:** our template differs from upstream's only by the Origin change; sign-in (redirects stay https),
+realtime and file downloads work on test and production; a forged forwarded header from a client is ignored.
+
+**Related:** P97 (same file), P89 (BUILD-2), P91 (upgrade checks: a check that compares this template with
+upstream's at the pinned commit would catch the next silent difference), P49 and P82 (sign-in redirects).

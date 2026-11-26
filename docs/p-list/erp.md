@@ -1,6 +1,6 @@
 # ERP: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -86,7 +86,6 @@ Agree pilot project reports, approvals and attendance summaries; evaluate instal
   secrets manager (P71) and never in workflow exports; AI steps only under the provider and data policy decided in this
   item (business data must not go to an AI provider before that); test-site messages follow the demo safeguards
   (allow list and test marker); every workflow names an owner and has a way to switch it off.
-
 
 ### P24 — Field attendance pilot and correction acceptance
 
@@ -232,3 +231,166 @@ the navigation/configuration to its previous state must not undo legitimate
 business transactions or later independent changes. Validate on permanent test
 before promoting the same revision to production.
 Reference: https://docs.frappe.io/framework/user/en/python-api/hooks
+
+### P93 — "Request response" button missing on Job Offer
+
+**App:** erp · **Also touches:** general · **State:** in progress
+
+**Why (found 26 November 2026, P89):** `onboarding/hooks.py` loads the "Request response" script on Job Offer from
+`client/request_response.js`, which does not exist; Purchase Order uses the real path
+`onboarding/client/request_response.js`. Frappe skips a missing file without an error, so the Job Offer button
+probably never loads. The script itself already handles Job Offer.
+
+**What (owner go 26 November 2026):** point Job Offer at the real file; add a unit test that fails when any
+`doctype_js`, `doctype_list_js` or include hook names a file that does not exist; update the register (HRMS-4).
+
+**Release:** ERP app change: branch, rebuild, test site, owner's browser check (open a Job Offer, the button is
+there and opens the request), merge, production. Waits for a free test-site slot (the owner decides when).
+
+**Acceptance:** the button shows on Job Offer on test and production; the new test fails on a wrong path.
+
+**Related:** P89 (register entry HRMS-4).
+
+**Number (26 November 2026):** opened as P90 in this session, but another session had already
+recorded P90 (Traefik) on `main`; renumbered P93. Public PR #89, its branch `p90/job-offer-button` and its first
+commit still carry the old number.
+
+**Progress (26 November 2026):** public PR #89 (`p90/job-offer-button`), CI passed; the new test fails on the old path.
+Waiting for a test-site slot (test ERP runs #77, used by the P74 phone test; owner decides).
+
+### P95 — Face recognition for field team attendance
+
+**App:** erp · **Also touches:** mobile, signin, test-site · **State:** in progress
+
+**Why (owner, 26 November 2026):** field workers often have no phone or app account of their own. The supervisor
+should mark the team's attendance just by photographing each person: no selecting the employee first; the app
+recognises the face, clears that person's attendance and the supervisor moves on to the next one. Self check-in by
+people with the app uses the fingerprint instead (P82), so this item covers only team attendance.
+
+**What (owner decisions, 26 November 2026):**
+- **No team faces on the supervisor's phone.** Face data lives on our server only.
+- **Bulk onboarding:** HR (or the project manager) enrols each field worker with one good phone, checked against the
+  worker's ID: several angles (front, left, right, up, down) on video. True 3D needs a depth sensor, which only
+  iPhones have; on Android it is several 2D views. The server keeps encrypted face templates (numbers), not the
+  photos (agent recommendation; a model change then needs re-enrolment).
+- **Liveness on the phone, matching on the server:** on the supervisor's phone, offline and free, MediaPipe Face
+  Landmarker follows the head turn and a blink (its 3D is estimated from the picture, not measured) and a photo and
+  screen check (Silent-Face) catches paper and screens on the spot; the phone holds no one's face data. The server
+  matches each capture with SFace against the workers rostered on that site and shift only (more accurate than the
+  whole company) and re-checks the uploaded frames in case a tampered app fakes the liveness result.
+- **Uncertain matches:** with connection, the supervisor picks from the 2–3 closest names on the spot, marked for
+  the project manager. **Offline:** the app saves each capture encrypted with GPS and the phone's time and shows
+  "queued"; the server recognises it when the phone is back online; uncertain or unmatched captures go to the
+  project manager, who clears the offline queue. The existing approval of all attendance by the site's approvers
+  (decision of 22 November) stays.
+- **Consent:** an agreement is shown and accepted at onboarding: a separate tick box, in a language the worker can
+  read, with withdrawal possible. Workers who refuse or withdraw keep an attendance path without a face (the
+  supervisor marks them and the project manager approves). Face data is deleted when a worker leaves.
+- **Legal:** development goes ahead; a lawyer's opinion under India's DPDP Act (consent, or the employment
+  "legitimate use" of section 7; notice; retention; protection) is obtained **before launch**. Build so the face
+  store can be moved or switched off if the opinion asks for it. Until launch, test only with synthetic data or
+  staff who have signed consent.
+
+**Before adoption (working agreements):** check licence, maintenance and security history of MediaPipe
+(reported Apache-2.0), SFace (OpenCV Zoo, reported Apache-2.0) and Silent-Face-Anti-Spoofing (reported Apache-2.0,
+not updated for a few years). The best-known free face models (InsightFace) are for non-commercial use only and are
+not used. Record the results in the decision log.
+
+**First step:** the licence and maintenance checks above, then a trial on test with synthetic faces: enrolment,
+liveness on two phone models, server matching against a small roster, online pick and offline queue.
+
+**Related:** P24 (field attendance pilot), P50 (the app, offline captures), P82 (onboarding, biometric sign-in,
+self check-in without a selfie), P96 (SOPs: bulk onboarding, consent, leavers, offline queue).
+
+**Owner, 26 November 2026 (evening):** build now; do not wait for the lawyer's opinion. **Late evening:** the legal
+opinion is needed **before the app is connected to production** (that is the gate, not the development).
+
+**SFace (owner, 26 November 2026, late evening):** build on SFace now and ask OpenCV about its training data. Asked
+by adding to the existing upstream issue (opencv/opencv_zoo#313, comment https://github.com/opencv/opencv_zoo/issues/313#issuecomment-7193191907; four open issues ask the same, a
+maintainer has only answered that the Apache-2.0 licence should be enough). The residual risk is decided before
+production, with the legal opinion.
+
+**Adoption check (26 November 2026, agent research, primary sources):**
+
+| Tool | Verdict | Code / weights licence | Version | Note |
+|---|---|---|---|---|
+| MediaPipe Face Landmarker (Android Tasks) | adopt | Apache-2.0 / Apache-2.0 | tasks-vision 1.2.3 (11 Nov 2026) | blink and head pose for liveness; no advisories |
+| Expo wrapper for it | reject | MIT | 1.4.0 | one-person project for an old camera library; write our own Kotlin plugin |
+| OpenCV Zoo SFace (fp32) | adopt with caution | Apache-2.0 / Apache-2.0 | model 2021dec | **training data unverified** (paper used research-only datasets); owner decision |
+| OpenCV Zoo YuNet face detector | adopt | MIT / MIT | 2023mar | |
+| Silent-Face anti-spoofing | adopt with caution | Apache-2.0 | last commit 2020 | unmaintained; one signal only, the head turn and blink are primary |
+| UniFace (packages those weights) | adopt with caution | MIT; weights from Silent-Face | 4.3.0 | maintained packaging |
+| opencv-python-headless | adopt | Apache-2.0 (+ FFmpeg LGPL-2.1) | 5.1.0, wheel build 95 (17 Nov 2026) | no open advisories |
+| onnxruntime | adopt if needed | MIT | 1.32.0 | not needed on the server (OpenCV runs the models); source repo not reachable on the check date |
+| InsightFace models | reject | MIT code / **non-commercial** weights | | |
+
+**Progress (26 November 2026):** public PR #94 (`p95/face-attendance-server`): matching rules, encrypted templates
+(readable by no role, no history, permanent deletion), consent records, enrol / identify / withdraw, leaver hooks, the
+model slot (off); 21 new tests, CI passed. Not yet: the face model (waits for the SFace decision), capture screen and
+PM queue, phone liveness (needs a phone), a test-site migrate (needs a slot).
+
+**Face engine (owner's go, 26 November 2026, late evening):** public PR on branch `p95/sface-engine`.
+- YuNet and SFace fp32 from OpenCV Zoo at commit `48b10fa`, fetched into the ERP add-on image with a SHA-256 check
+  per file (`deployment/face-models.json`, `tools/fetch_face_models.py`, register BUILD-11), run by the OpenCV
+  already in the image (version 5.0.0, wheel build 93; OSV: no advisories, also numpy 2.5.4).
+- The engine is off until a site names it in site config. The daily watch follows the model pin. The open-source
+  list moves OpenCV and OpenCV Zoo to "adopted".
+- Engine test here, on OpenCV's sample photos with the image's exact OpenCV version:
+  - the same face mirrored, smaller or darker scored 0.93 to 0.97;
+  - a different person scored 0.18 (threshold 0.363);
+  - a blank photo and a photo with two faces were refused;
+  - identification picked the right worker.
+- Found: OpenCV 5 ignores `setInputSize` after the detector is made, so the engine makes one per photo size.
+  Detection confidence is 0.8, because 0.9 refused a smaller copy of a clear face.
+- Not done:
+  - an ERP image build with the models (next release build);
+  - a trial on the test site with synthetic or consenting faces (needs a test-site slot, owner);
+  - tuning on real field photos.
+
+**Capture without choosing the worker, and the project manager's queue (owner's go, 26 November 2026, night):**
+public PR #101 (`p95/pm-queue`).
+- `face_capture`: a team photograph without a chosen worker is validated once on arrival (place, time, photograph).
+  A confident match is recorded and submitted at once in the supervisor's name; everything else waits as "Needs
+  review" (uncertain, nobody recognised, no clear face, recognition off, or a rule that needs a person such as a
+  machine allocation).
+- The project manager's "Face queue" tab on the field team page: pick the worker or reject with a reason. Only
+  another approver of the site decides; the chosen worker must be on the capturing supervisor's team.
+- Photographs are private; the queue's copy is deleted once recorded; a rejected capture keeps its photograph for 30
+  days (confirmed by the owner, 26 November 2026).
+- It works with recognition off: every such capture then waits for the project manager.
+- Tests: 12 new offline tests; 57 with the HR and face suites pass; CI passed.
+- **Not run:** 22 rollback-only live checks (`custom_hr/face_queue_integration_tests.py`); they need a test-site slot
+  and are where the database behaviour gets proven.
+- Not built: the mobile app's capture screen and the liveness check on the phone.
+
+**Status:** in progress.
+
+### P98 — ERP web server template: take up upstream's trusted-HTTPS forwarding changes
+
+**App:** erp · **Also touches:** signin, general · **State:** open
+
+**Why (found 26 November 2026, P89 and P97; owner: open an item):** our ERP web server template is a full copy
+that replaces frappe_docker's (register BUILD-2), so upstream's changes to it do not reach us. After P97, two
+differences from upstream `main` remain besides our own Origin change:
+1. **Trusted HTTPS forwarding** (frappe_docker `280fc962eb`, 11 November 2026, "configure trusted HTTPS forwarding for
+   OAuth redirects"): the forwarded "https" header is believed only when a new setting
+   `TRUST_UPSTREAM_FORWARDED_PROTO` is `on`. Ours believes it from anyone who can reach the web container. The
+   commit also changes upstream's entrypoint and compose files, so it is not a one-line copy.
+2. **Clearing two forwarded headers** (`X-Forwarded-SSL`, `X-Forwarded-Protocol`) before requests go to the backend
+   and to socket.io, so a client cannot set them.
+
+**Not decided, to check first:** whether either difference can be used against us (the web container is reached
+only through our proxy; what the proxy strips or sets is not verified); what the setting must be on test and
+production so sign-in redirects keep using https; how it interacts with our Origin change and the private report
+still in triage (private companion, BUILD-2). No published advisory names these two differences (checked
+26 November 2026).
+
+**What (proposal, owner to confirm before work):** read-only check of what reaches the web container on test;
+then carry both changes with the right setting in the test and production profiles; tests; register BUILD-2;
+through the test site with a sign-in and realtime check; production from main.
+
+**Acceptance:** our template differs from upstream's only by the Origin change; sign-in (redirects stay https),
+realtime and file downloads work on test and production; a forged forwarded header from a client is ignored.
+
+**Related:** P97 (same file), P89 (BUILD-2), P91 (upgrade checks: a check that compares this template with
+upstream's at the pinned commit would catch the next silent difference), P49 and P82 (sign-in redirects).

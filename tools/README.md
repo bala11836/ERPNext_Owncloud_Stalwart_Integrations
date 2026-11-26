@@ -11,6 +11,8 @@ refresh worker) do not change; this index groups them by module.
 
 ## Upstream watch (`deployment`)
 
+- `open_source.py` — One list of every open-source project we use, borrow from or evaluate; renders the README acknowledgements and `docs/open-source.md` and checks them against the upstream watch and `modules.json` (P35).
+- `upstream_posts.py` — The list of our posts on other projects and a read-only check for replies, state changes and unlisted posts; `check --gh --record` at every session start (P35).
 - `upstream_watch.py` — Daily digest of new releases, security advisories, end of life and licence changes for every pinned component, from public sources only; never upgrades anything (P62).
 
 ## Drive (ownCloud Infinite Scale) adapters (`drive`)
@@ -19,7 +21,8 @@ refresh worker) do not change; this index groups them by module.
 
 ## Mail (Stalwart and Bulwark Webmail) (`mail`)
 
-- `prepare_mail.py` — Prepare pinned upstream Mail plus the selected overlay and corresponding source.
+- `prepare_mail.py` — Prepare pinned upstream Mail plus the selected overlay and corresponding source; stops when the upstream files differ from the overlay's recorded base (P91).
+- `refresh_webmail_overlay_base.py` — Move the webmail overlay to a new upstream commit: lists the files to merge, then records the new base (P91).
 
 ## Drive to DMS document worker (`document-worker`)
 
@@ -33,6 +36,7 @@ refresh worker) do not change; this index groups them by module.
 ## ONLYOFFICE editor (`onlyoffice-editor`)
 
 - `editor_safety.py` — Editor file safety (P61): list and rescue parked edits, unstick a document, and a five-minute watch for failed saves, disk and cache; never deletes a document.
+- `refresh_editor_original.py` — On an image change, copy the new image's own start page to `editor-wopi.original.ejs` without starting it, and record image and checksum in `integrations/onlyoffice/upstream.json` (P91).
 
 ## Reproducible build and deployment (`deployment`)
 
@@ -46,7 +50,7 @@ refresh worker) do not change; this index groups them by module.
 - `prepare_test_relay.py` — Render a pass-through relay (SNI, PROXY protocol, port 80) for the six test hostnames on another Traefik host, for a test host without a public address.
 - `coolify_proxy_http3.py` — Switch HTTP/3 off on a relay host's Coolify proxy (saved configuration and compose file).
 - `coolify_proxy_hosts.py` — Persist the proxy's workspace network/aliases and optional private (tailnet) host pins in Coolify's saved proxy configuration and compose file.
-- `prepare_erp_image.py` — Prepare an ERP build entirely from pinned public sources, with no private image.
+- `prepare_erp_image.py` — Prepare an ERP build entirely from pinned public sources, with no private image; every change to frappe_docker's Containerfile must find its upstream line exactly once (P91).
 - `prepare_ingress.py` — Render complete workspace ingress for a controller's existing Traefik proxy.
 - `prepare_runtime.py` — Prepare portable native service mounts/configuration from a Git checkout.
 - `promotion_plan.py` — List the stacks, steps, live settings and restarts a change reaches, and what test cannot cover (P59).

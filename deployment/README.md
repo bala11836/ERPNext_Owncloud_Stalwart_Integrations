@@ -38,7 +38,7 @@ A Linux Docker host with Coolify; Python 3.14 in the ERP image for the tools; ne
 
 ## Reuse
 
-Use `tools/prepare_erp_image.py` + `tools/build_erp_core.py` for a reproducible Frappe/ERPNext image from `upstream-lock.json`, or `tools/prepare_runtime.py` + `tools/coolify_native.py` to render and register stacks on any Coolify host. See tools/README.md for every tool by module.
+Use `tools/prepare_erp_image.py` + `tools/build_erp_core.py` for a reproducible Frappe/ERPNext image from `upstream-lock.json` (every change it makes to frappe_docker's Containerfile must find its upstream line exactly once, or it stops: register entry BUILD-1), or `tools/prepare_runtime.py` + `tools/coolify_native.py` to render and register stacks on any Coolify host. See tools/README.md for every tool by module.
 
 ## Configuration
 
@@ -53,7 +53,7 @@ Read docs/deployment.md first. This directory and integrations contain source/co
 - `erp/frappe.conf.template`, backend_start.py and netbird_realtime.cjs: retained frontend/startup/realtime adapters. Preserve private ingress boundaries. The separately deferred idle/realtime defect is not fixed by these files.
 - `integrations/authentik/identity-support`: optional private TLS/backchannel gateway and invitation companion composition. Adapt Docker aliases/networks and supply certificates privately; it publishes no host ports. Its internal ERP backchannel still validates signed logout tokens in the addon. The invitation companion source is in its own sibling directory.
 
-Create separate native Coolify projects for ERP, authentik/identity helpers, Drive/collaboration, Collabora, Mail, DMS and the document worker. Create and retain their native database/storage volumes and private application networks. Configure public DNS/TLS for the documented host map, with Coolify/mail administration private. Native product configuration is explicit setup work: clone cannot manufacture provider accounts, signing keys, mailbox credentials, API credits or data.
+Create separate native Coolify projects for ERP, authentik/identity helpers, Drive/collaboration, the ONLYOFFICE editor, Mail, DMS and the document worker. Create and retain their native database/storage volumes and private application networks. Configure public DNS/TLS for the documented host map, with Coolify/mail administration private. Native product configuration is explicit setup work: clone cannot manufacture provider accounts, signing keys, mailbox credentials, API credits or data.
 
 Rebuild order: prerequisite ERP image and native site → authentik/passkey flows and app providers → addon/native migration → Drive/editor → Mail and DMS → owner-bound worker enrollment → acceptance checks. Configure SMTP-only senders and shared-mailbox membership through native Stalwart settings. Retain only the selected integration sender; don't copy mailbox credentials from an old installation.
 
@@ -123,13 +123,18 @@ section example: `deployment/host-checks.example.json`; tests:
 
 ## Upstream watch (P62)
 
+**Container logs before a recreate (P59).** A recreate deletes a container's logs. Before any stack is recreated, run `tools/archive_container_logs.py` on the host as root: it saves every container's logs, compressed, to `/var/log/cloud-integrations/container-logs/<date>/` (root-only) and removes folders older than 30 days. The promotion plan lists it as the first step. **Image cleanup:** Coolify's forced nightly Docker cleanup is off on production and the test VM; Coolify cleans only above 80 percent disk use, so the ERP core and rollback images stay.
+
+**Proxy image (P90).** Coolify writes its proxy as `traefik:v3.x`, a tag that moves with every release. `deployment/coolify-proxy.json` pins the Traefik image by tag and digest; `tools/coolify_proxy_image.py --restart` (on the host, as root) writes it into Coolify's saved proxy configuration and the compose file (keeping a copy), pulls it, recreates the proxy and reattaches its networks; `--check` reports the running version. Keep the upstream watch profile's `traefik` version equal to the pin.
+
 `tools/upstream_watch.py` runs once a day and reports what is new upstream for
 everything we pin. It never upgrades anything: an upgrade is a normal branch,
 test, merge and production change that the owner takes up.
 
 - **Inventory:** the locks (`upstream-lock.json`, `build-lock.json`,
   `native-clients-lock.json`, `integrations/mail/upstream.json`) and every
-  image digest in the stack files, build lock and Dockerfiles. Images are
+  image digest in the stack files, build lock, Dockerfiles and the module
+  compose files under `integrations/` (monitoring, identity support). Images are
   pinned by digest only, so `upstream-watch.json` records the version behind
   each digest (a test fails when a digest changes without it) and where each
   component publishes releases and advisories. Components that are not in the
@@ -164,10 +169,13 @@ test, merge and production change that the owner takes up.
   `/etc/systemd/system/` (without `.example`) and
   `systemctl enable --now upstream-watch.timer`. The service runs as a
   temporary unprivileged user; digests land in `/var/lib/upstream-watch`.
+- **Our upstream posts (P35):** when the checkout has `docs/upstream-posts.json`, the watch also checks
+  every watched post for new replies and state changes (`tools/upstream_posts.py`) and writes
+  `YYYY-MM-DD-posts.md` for anything new, each reply once (the state keeps what was reported). It never posts.
 - **Not yet:** open upstream issues matching our versions, vendor notices
   outside these sources, and the Ubuntu security notices for host packages.
 
-Tests: `tests/test_upstream_watch.py` (sample answers, no network).
+Tests: `tests/test_upstream_watch.py` and `tests/test_upstream_posts.py` (sample answers, no network).
 
 ## AI-assisted development
 

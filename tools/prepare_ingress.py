@@ -85,8 +85,11 @@ def prepare(source, profile):
     route('erp-bootstrap',hosts['erp'],'erp',250,'('+' || '.join(public)+')',middleware=['identity-clean'])
     route('drive',hosts['drive'],'drive',middleware=['frame'])
     route('office',hosts['office'],'office',middleware=['frame'])
+    # ONLYOFFICE 10 has no admin panel; its status page (/info) and cluster
+    # interface (/internal), also under a /<version>/ prefix, stay private even if
+    # its own localhost-only rule is ever opened (P92; Collabora's paths retired).
     route('office-admin',hosts['office'],'office',400,
-          '(PathPrefix(`/browser/dist/admin`) || PathPrefix(`/cool/adminws`))',middleware=['private-admin'])
+          'PathRegexp(`^(/[0-9]+[.][0-9]+[.][0-9]+[.-][A-Za-z0-9_]+)?/(info|internal)(/.*)?$`)',middleware=['private-admin'])
     route('mail',hosts['mail'],'mail',middleware=['frame'])
     route('mail-jmap',hosts['mail'],'jmap',300,
           '(PathPrefix(`/jmap`) || PathPrefix(`/dav`) || PathPrefix(`/.well-known/`))')

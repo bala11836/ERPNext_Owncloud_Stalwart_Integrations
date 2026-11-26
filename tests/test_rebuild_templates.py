@@ -1,6 +1,7 @@
 """Check portable graph, database isolation and native runtime generation."""
 import importlib.util
 import json
+import re
 import yaml
 from pathlib import Path
 import sys
@@ -293,6 +294,14 @@ class Reconstruction(unittest.TestCase):
         self.assertEqual(http['middlewares']['isolated-onboarding-response-help']['redirectRegex']['regex'],
                          r'^https://test\-respond\.example\.net/?$')
         self.assertIn('isolated-private-admin',http['routers']['isolated-office-admin']['middlewares'])
+        # P92: ONLYOFFICE's own private paths, not the retired Collabora admin paths.
+        office_admin=http['routers']['isolated-office-admin']['rule']
+        self.assertNotIn('/cool/',office_admin); self.assertNotIn('/browser/dist/admin',office_admin)
+        pattern=re.compile(re.search(r'PathRegexp\(`(.+)`\)',office_admin).group(1))
+        for path in ['/info/','/info/info.json','/internal/cluster/inactive','/10.0.0-169/info/']:
+            self.assertTrue(pattern.match(path),path)
+        for path in ['/','/healthcheck','/web-apps/apps/api/documents/api.js','/hosting/discovery','/informed']:
+            self.assertFalse(pattern.match(path),path)
     def test_test_ingress_has_production_native_app_routes(self):
         hosts={name:('test.example.net' if name=='erp' else 'test-'+name+'.example.net')
                for name in ['erp','sso','drive','office','mail','dms','respond']}

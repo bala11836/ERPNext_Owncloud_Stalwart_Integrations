@@ -87,6 +87,7 @@ until the owner says; the table only fixes the order to take them up.
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
 | 5 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
+| 5a | **P100** mobile app checks in CI (build, typecheck, lint, tests, secret scan, code scanner, dependency advisories; app dependencies in the daily watch) | **owner** 26 Nov: tier 1; the build loop for every screen relies on these checks and CI checks nothing in `mobile/` today | scanners need an adoption check first; overlaps PR #75 (template) and P71 (workflows); next to P62 because it extends the watch |
 | 6 | **P72** monitoring and alerting | VPS metrics, uptime, probe logs and backup audit live | phone delivery deferred; remaining storage and logging checks in P72 |
 | 7 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | crash fix live since 21 Nov (`4a5151f`) | remaining: correct the stale native client list on production when the app goes live (P50) |
 | 8 | **P71** GitHub CI/CD and central secrets management: Actions deploy test and production, owner approves production; secrets in one managed place; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |

@@ -255,3 +255,6 @@ direct dependencies.
 
 **Related:** P50 (native app), P62 (daily watch), P35 (open-source list), P71, P96 (SOPs), the build loop in
 `mobile/BUILD-GUIDE.md` section 3.
+
+**Owner (26 November 2026):** ranked in tier 1 (row 5a, next to P62). The second review by a different AI model stays
+for sensitive screens only (sign-in, security, payments, personal or biometric data); the guide says so.

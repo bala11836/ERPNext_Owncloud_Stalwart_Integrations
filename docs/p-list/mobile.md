@@ -143,3 +143,76 @@ when the app goes to production (P50), and whether Raven Mobile should be a nati
 - **Open:** the rest of the phone test with #64 and #66 (checklist on #66); backups and disk growth with P72 (about 1 MB per photo
   before compression; the app sends about 200 KB); privacy (photos show workers and the public: project access only,
   no public links); the daily token renewal needs the scheduler (test has none).
+
+### P86 — Personal business files in the app, with a quota per user
+
+**App:** mobile · **Also touches:** drive, erp, signin · **State:** open
+
+**Why (owner, 26 November 2026):** besides the project files of P74, each person needs a place for their own work
+files: business documents they are not ready to share in a project folder yet. Every person has a storage quota
+and cannot use more than it.
+
+**What:**
+- **Personal files in the app:** browse, open, upload from the camera or the phone's files, rename, delete, and
+  **move or copy a file into a project folder** when the person is ready to share it (the step this feature is for).
+  Viewing PDFs and office files on the phone is part of this item (P74 shows "opens in Drive on a computer" for
+  everything except images).
+- **Same files on the computer:** they are the person's personal space in Drive (oCIS gives every user one), so
+  they also appear in Drive on the web.
+- **Quota per user:** a default for everyone and a different amount per person where needed, set by an
+  administrator; the app shows used and free space and refuses an upload over the quota with a clear message
+  (also for uploads waiting in the offline queue). Where the quota is managed (in ERPNext, synced to Drive, or in
+  Drive only) is decided at design.
+- **Privacy:** only the person sees their personal files. The server's photo account of P74 (`erp-photo-service`)
+  must not get access; the app reaches the personal space with the person's own sign-in. Whether the phone talks
+  to Drive directly or through ERPNext (the P74 rule) is decided at design.
+
+**To check at design (26 November 2026, from public sources, not yet verified on our version):** oCIS sets a default
+quota for new spaces (`GRAPH_SPACES_DEFAULT_QUOTA`) and a maximum (`OCIS_SPACES_MAX_QUOTA`); a forum report says a
+personal quota can only be set after the user's first sign-in; check against the oCIS release we pin.
+
+**Owner decisions needed:** the default quota and who may change it; what happens to a person's files when they leave
+(they are business files: hand them to the manager, move them to an archive, or delete after a period); whether
+sharing from the personal space to other people (not only to a project folder) is allowed.
+
+**Acceptance (test site):** two test users, each sees only their own files; upload, open (image, PDF, office file),
+move to a project folder; an upload over the quota is refused in the app and in Drive on the web; backup and disk
+growth counted with P72.
+
+**Related:** P74 (project files and photos, same screens), P50 (Drive tab), P72 (backups and disk growth), P10.
+
+### P87 — Camera videos in the mobile app (Frigate)
+
+**App:** mobile · **Also touches:** general, signin · **State:** open
+
+**Why (owner, 26 November 2026):** Frigate on the TrueNAS server records the cameras (P46); people need to watch live
+views, alerts and recordings on their phones, inside ERP Mobile.
+
+**Where P46 stands (record, 26 November 2026):** a one-camera trial on the local network; Frigate 0.18.3, web page
+with its own login on the local and private networks only; the camera is installed later; remote sites are not in
+the trial. This item builds on the trial's result.
+
+**Recommendation (agent, 26 November 2026), in two steps:**
+1. **First, Frigate's own web page inside the app.** A "Cameras" entry opens Frigate's mobile web page (live, review,
+   recordings) in the in-app browser, signed in through authentik: Frigate does not do single sign-on itself but
+   accepts the user and role from an authenticating proxy (`role_map`). Since 0.17 a viewer role can be limited to
+   chosen cameras, so each person sees only their sites' cameras. Quick, and the full Frigate feature set.
+2. **Then native screens in the app, through our gateway:** an alerts list with thumbnails (Frigate review items),
+   clip and timeline playback (Frigate's recordings API as HLS, played with the app's video player), live view
+   through Frigate's go2rtc (HLS first; low-latency WebRTC needs a native module), and alerts as push messages
+   (Frigate events to our notification service, P14; tapping opens the clip). Who may see which camera comes from
+   ERPNext (site membership, the P74 rule), mapped to Frigate's camera roles.
+- **Not recommended:** the Home Assistant app with a Frigate add-on (a whole extra system to run), or Frigate open to
+  the internet.
+
+**Security (checked 26 November 2026, public sources):** Frigate 0.17.2 fixed ways to reach other cameras' recordings
+despite camera limits; CVE-2026-75608 (a viewer reaching the internal go2rtc API) is fixed in 0.18.0. Keep Frigate
+behind the gateway, the viewer roles camera-limited, and Frigate in the daily upstream watch.
+
+**To decide:** who sees which cameras (by site, by role); mobile data use (live in low resolution, recordings on
+request); how long alerts and clips stay available; whether the app may download clips (evidence) or only play them.
+
+**Acceptance (test site, after P46):** a viewer sees only their cameras in the app (and is refused another camera's
+recording through the API); live view, an alert, and a recording play on Android and iPhone over mobile data.
+
+**Related:** P46 (recorder), P14 (push), P50 (app), P82 (sign-in), P72 (monitoring).

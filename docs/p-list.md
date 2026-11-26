@@ -80,7 +80,7 @@ until the owner says; the table only fixes the order to take them up.
 | 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
 | 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
 | 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50 |
-| 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the copyright name and the trademark owner |
+| 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the trademark owner |
 
 **Tier 1: high (business-critical, next)**
 
@@ -128,7 +128,7 @@ not ranked or scheduled; the owner decides if and when one starts)
 
 | Item | Note |
 |---|---|
-| **P73** Matrix as federated messaging between tenants | owner idea 22 Nov; comparison with Raven recorded in the item |
+| **P73** federated chat (Matrix or XMPP) in the mobile app, replacing Raven | owner idea 22 Nov; 26 Nov: replace Raven, chat built into the app; protocol comparison first |
 
 **Tier 3: low or later**
 
@@ -137,7 +137,7 @@ not ranked or scheduled; the owner decides if and when one starts)
 | **P19** three Google mailboxes to Stalwart | after P12 is resolved; taken up with P70 and P63 |
 | **P22** AI assistant | read-only first; provider and data policy undecided |
 | **P29**, **P30**, **P48** Headscale, Technitium DNS, branch router | one chain, P48 depends on P29 and P30; nothing is broken today |
-| **P46** TrueNAS NVR | hardware and selection first |
+| **P46** TrueNAS NVR | one-camera trial started 26 Nov; hardware for more cameras after the trial |
 | **P53** Desk widgets and universal search | **parked by the owner**: do not start |
 
 **Done, closed, redundant or irrelevant items** are not in the lists any more: see [the closed log](p-closed.md) (one line each; numbers are never reused).
@@ -159,7 +159,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
 | ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 4 | 4 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 6 | 6 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
@@ -202,7 +202,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P41 | Owner recovery essentials (recurring) | [General](p-list/general.md) | none · **State:** recurring | recurring |
 | P43 | Tablet layout and touch check (all apps) | [General](p-list/general.md) | portal, drive, editor, mail, dms · **State:** open | open |
 | P45 | Production Drive, DMS, Mail and sign-in on the repository build | [General](p-list/general.md) | drive, dms, mail, signin · **State:** in progress | in progress |
-| P46 | TrueNAS as network video recorder (NVR) | [General](p-list/general.md) | none · **State:** open | open |
+| P46 | TrueNAS as network video recorder (NVR) | [General](p-list/general.md) | none · **State:** in progress | in progress |
 | P47 | Company website as the front door of the app portal | [Portal (eZone)](p-list/portal.md) | none · **State:** in progress | in progress |
 | P48 | Remote branch router and gateway firewall | [General](p-list/general.md) | none · **State:** blocked | blocked |
 | P49 | Bring production's sign-in pages and templates into the repository | [Sign-in](p-list/signin.md) | none · **State:** open | open |
@@ -223,7 +223,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P70 | Mail and WhatsApp domain split: `tenant.example` for production, `example.com` for the demo | [General](p-list/general.md) | mail, test-site, erp, signin · **State:** open | open |
 | P71 | GitHub CI/CD and central secrets management: Actions deploy test and production; "Refresh code" button removed | [General](p-list/general.md) | test-site, erp, mail, drive, dms, signin · **State:** open | open |
 | P72 | Monitoring and alerting: know when something breaks (on the TrueNAS, watched from outside) | [General](p-list/general.md) | erp, drive, mail, dms, signin, editor, test-site · **State:** open | open |
-| P73 | Matrix as federated messaging between tenants | [General](p-list/general.md) | none · **State:** open · **Category:** long-term plan | open |
+| P73 | Federated chat (Matrix or XMPP) in the mobile app, replacing Raven | [General](p-list/general.md) | mobile, raven, erp, signin · **State:** open · **Category:** long-term plan | open |
 | P74 | Document and photo store in the mobile app (Drive / oCIS) | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** in progress | in progress |
 | P76 | Owner's passkey sign-in on the test site | [Sign-in](p-list/signin.md) | test-site · **State:** in progress | in progress |
 | P77 | First administrator chosen at setup; built-in `akadmin` switched off | [Sign-in](p-list/signin.md) | test-site · **State:** in progress | in progress |
@@ -234,4 +234,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P82 | ERP Mobile holds the passkeys; one phone and one computer session per user | [Sign-in](p-list/signin.md) | mobile, portal, erp, test-site · **State:** open | open |
 | P84 | Client identity out of the public repository, and a check that keeps it out | [General](p-list/general.md) | erp, mobile, test-site · **State:** open | open |
 | P85 | Unformat brand public as the default; client brands supplied privately | [General](p-list/general.md) | portal, mobile, erp, signin · **State:** open | open |
+| P86 | Personal business files in the app, with a quota per user | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** open | open |
+| P87 | Camera videos in the mobile app (Frigate) | [Mobile](p-list/mobile.md) | general, signin · **State:** open | open |
 <!-- APP-INDEX-END -->

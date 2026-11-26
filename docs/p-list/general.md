@@ -192,7 +192,7 @@ sign-in.
 
 ### P46 — TrueNAS as network video recorder (NVR)
 
-**App:** general · **Also touches:** none · **State:** open
+**App:** general · **Also touches:** none · **State:** in progress
 
 **Status:** planned, owner request 19 November 2026. Besides the test VM and
 the backup storage, the TrueNAS server records IP cameras that stream over
@@ -205,6 +205,15 @@ storage sizing, and the hardware: larger disks, more RAM, Coral. Keep it
 isolated from the backup storage and the test VM (separate dataset, quotas,
 no access from production), and include the recorder configuration in this
 repository as its own module.
+
+**Trial (owner, 26 November 2026):** a proof of concept with one camera on the
+local network; capacity and remote sites are not in scope yet. Frigate 0.18.3
+(MIT, re-verified) from the TrueNAS catalogue, detection with OpenVINO on the
+processor (the host has no graphics chip), recordings in their own dataset with a
+100 GiB quota, the web page with its login on the local and private networks only.
+Coral is dropped: Frigate no longer recommends it for new installations. Settings
+in the `integrations/frigate/` module; Frigate is in the daily upstream watch. The
+owner installs the camera (an Annke I51DS) later.
 
 ### P48 — Remote branch router and gateway firewall
 
@@ -591,9 +600,38 @@ TrueNAS answers.
 no secrets in dashboards or alert texts; licences of Grafana, Loki (AGPL) and Prometheus (Apache) recorded; set up from
 this repository as a module (stack files, config, README), branch, test, owner go, like every other stack.
 
-### P73 — Matrix as federated messaging between tenants
+### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
-**App:** general · **Also touches:** none · **State:** open · **Category:** long-term plan
+**App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
+
+**Plan (owner, 26 November 2026; replaces the "idea" below as the goal):** replace Raven with a federated chat
+(Matrix or XMPP), built into ERP Mobile as its Chat tab (P50), and retire Raven once the new chat carries the work.
+It must keep what Raven gives today inside ERPNext: the same users and roles (authentik sign-in), sharing ERP
+documents, document-change and approval messages, and company record keeping.
+
+**What:**
+1. **Choose the protocol and server** on the test site: Matrix (servers Synapse, continuwuity or Tuwunel; sign-in with
+   authentik through the Matrix Authentication Service) or XMPP (servers Prosody or ejabberd; lighter to run). Compare:
+   a usable client library for the app (React Native) under a licence that allows commercial use, sign-in with
+   authentik, push to phones (P14), federation, encryption against company record keeping (encrypted rooms cannot be
+   archived or searched by the company), retention and export, running cost, security history.
+2. **ERPNext integration:** messages for document changes and approvals, sharing a document into a chat, the people
+   and groups from ERPNext.
+3. **Chat in the app:** the Chat tab, chats per project or site, files through Drive (not stored twice; see P16),
+   push.
+4. **Move from Raven:** decide whether old Raven messages are moved, archived or kept read-only; run both for a
+   period; then retire Raven and close the Raven items it makes redundant (owner decides each).
+
+**First findings (26 November 2026, public sources, not verified):** the community package `react-native-matrix-sdk`
+is unfinished and limited to non-commercial use, so it is not usable; the app would use Matrix's official libraries
+(JavaScript, or the Rust SDK through native bindings: maturity to check). For XMPP, React Native libraries exist but
+are small; check maintenance. **Agent recommendation:** compare both on the test site with the checks in step 1, with
+Matrix as the first candidate for its apps, bridges and federation, and XMPP if running cost and simplicity weigh more.
+
+**Owner decisions needed:** federation from the start or later; encryption policy for company rooms; what happens to the
+Raven history; priority (the item stays a long-term plan until the owner ranks it).
+
+**Earlier idea (22 November 2026):**
 
 **Status:** owner idea, 22 November 2026; recorded as a long-term plan, not scheduled. Nothing starts until the owner
 decides.
@@ -676,14 +714,15 @@ default look; users can always replace it. Clients' brands stay private and are 
   already allows).
 - A "Replace the branding" guide in the README.
 - A trademark note: the code is AGPL-3.0; anyone shipping it as their own product replaces the name and logo.
-- Copyright notice in `README.md` and `LICENSES.md`: the owner's name only, without "and contributors" (owner,
-  26 November 2026), instead of "Unformat and contributors". Note: outside contributors keep the copyright in their
+- Copyright notice in `README.md` and `LICENSES.md`: "Copyright © 2026 example.com", nothing else (owner,
+  26 November 2026), instead of "Unformat and contributors". The public P list rules replace this domain with a
+  placeholder, so the public copy of this line shows the placeholder until the rules separate the brand domain from
+  host names. Note: outside contributors keep the copyright in their
   own contributions unless they assign it; a contributor agreement would settle that (owner decision).
 - Production details that are not branding (host names, addresses, the live sign-in policy and group names) stay
   replaced by placeholders in the public P list.
 
-**Owner input needed:** the owner's name exactly as it should appear in the copyright notice; who owns the name
-"Unformat" (the owner personally or a company) for the trademark note.
+**Owner input needed:** who owns the name "Unformat" (the owner personally or a company) for the trademark note.
 
 **Acceptance:** a build without private brand settings shows the Unformat brand; a build with a client's profile shows
 only the client's brand; the guide's steps work on the test site; the copyright and trademark notes are in place.

@@ -230,3 +230,22 @@ def my_records():
     sites=sorted(set(site_ids(user,'Supervisor')) | set(site_ids(user,'Verifier')))
     if not sites:return []
     return frappe.get_all('Field Attendance Entry',filters={'captured_by':user,'site':['in',sites]},fields=['name','employee','employee_name','site','shift','attendance_date','state','review_remarks'],order_by='modified desc',limit=100)
+
+
+# Face attendance for field teams (P95). Templates never leave the server; see face_service.py.
+@frappe.whitelist(methods=['POST'])
+def face_enrol(employee,photos,consent):
+    from erpnext_drive_integrations.custom_hr import face_service
+    return face_service.enrol(employee,data(photos),data(consent))
+
+
+@frappe.whitelist(methods=['POST'])
+def face_identify(site,shift,photo):
+    from erpnext_drive_integrations.custom_hr import face_service
+    return face_service.identify(site,shift,photo)
+
+
+@frappe.whitelist(methods=['POST'])
+def face_withdraw(employee,reason):
+    from erpnext_drive_integrations.custom_hr import face_service
+    return face_service.withdraw(employee,reason)

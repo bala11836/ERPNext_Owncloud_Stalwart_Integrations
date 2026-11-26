@@ -96,9 +96,35 @@ DocTypes are synced; it renames "Cloud Field" to "Custom HR". When Frappe has al
 the new module for this app, the patch merges the old module's links into that record. Records and
 tables are not touched. The scheduled checkout job moves to its new name during the same migrate.
 
+### Face attendance for field teams (P95, in progress)
+
+The supervisor photographs each worker without choosing them first; the server recognises the face among the
+workers that supervisor may record on that site and shift. Decided by the owner on 26 November 2026 (P95).
+
+- **Enrolment** (`api.face_enrol(employee, photos, consent)`, POST): HR, a Field Attendance Manager or an approver of
+  the worker's site enrols the worker from several angles (at least 3) after checking their identity document. The
+  consent (`accepted`, `agreement_version`, `language`, `identity_checked`) is stored as a **Biometric Consent**
+  record. Only encrypted templates are kept, in **Field Face Enrolment** (site encryption key; the templates field
+  is readable by no role and keeps no version history). The photographs are not stored.
+- **Identification** (`api.face_identify(site, shift, photo)`, POST): for a supervisor or assigned engineer of the
+  site. Returns `decision` (`match`, `uncertain` or `none`), the `employee` for a match, up to three `candidates`
+  with scores, and how many rostered workers are not enrolled or need re-enrolment (templates of another model).
+  A match needs the threshold and a clear margin over the next worker, so look-alikes are never decided alone.
+- **Withdrawal and leavers** (`api.face_withdraw(employee, reason)`, POST; and automatically when an employee is no
+  longer Active or is deleted): the templates are deleted permanently (not kept in Deleted Documents); the consent
+  record stays as evidence, marked Withdrawn or Ended.
+- **Face model:** none ships yet. Until a model passes the licence and security check (decision log), enrolment
+  and identification refuse with a clear message. An engine is named in site config `custom_hr_face` ->
+  `engine` (dotted path inside this app, with `model_id` and `embed(jpeg_bytes)`); thresholds can be set in
+  `custom_hr_face` -> `thresholds` (`match`, `margin`, `floor`, `candidates`, `minimum_angles`, `same_person`),
+  within fixed bounds.
+- **Not yet built:** the capture screen calling identification, the project manager's queue for offline and
+  uncertain captures, liveness on the phone (needs a phone), and the face model itself.
+
 ## Tests
 
 - `tests/test_custom_hr.py` (offline)
+- `tests/test_custom_hr_face.py` (offline: face matching rules, consent, engine slot, stored records)
 - `erpnext_drive_integrations/custom_hr/test_checkout.py`
 - `erpnext_drive_integrations/custom_hr/integration_tests.py` (needs a live test site)
 

@@ -6,6 +6,22 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Face attendance, first part: templates encrypted on the server, readable by no role, deleted for good (P95)
+
+- **Decision:** a worker's face is kept only as encrypted templates (site encryption key) in **Field Face
+  Enrolment**, one record per worker, in a field no role can read and with no version history; photographs taken
+  for enrolment are not stored. Consent is a separate **Biometric Consent** record that stays as evidence.
+  Identification compares one photograph only with the workers the requesting supervisor may record on that site
+  and shift, and decides alone only above a threshold with a clear margin over the next worker. Templates are
+  deleted permanently on withdrawal, when a worker leaves, or when the employee record is deleted. The face model
+  is a separate slot that stays off until a model passes the adoption check.
+- **Why:** owner, 26 November 2026: faces of field workers live on our server, not on supervisors' phones, and the
+  owner asked to build now without waiting for the lawyer's opinion. Keeping templates out of every role's view,
+  out of version history and out of Deleted Documents limits who and what can ever copy them; the margin rule
+  keeps look-alikes for a person to decide.
+- **Where:** `erpnext_drive_integrations/custom_hr/face.py`, `face_service.py`, `face_engine.py`, the two DocTypes,
+  `api.py` (`face_enrol`, `face_identify`, `face_withdraw`), `tests/test_custom_hr_face.py`, the module README.
+
 ### Onboarding through the project manager and the admin; strong biometrics only; 5 misses erase the key (P82)
 
 - **Decision:** a person requests access in ERP Mobile (mail address, mobile number, a face photo for the identity

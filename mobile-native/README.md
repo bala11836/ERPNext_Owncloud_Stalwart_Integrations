@@ -23,6 +23,10 @@ tap leads to a finished screen. This folder currently holds the foundation every
     the WCAG contrast formula, and the bright-light switch with two thresholds so the look does not flicker.
     A unit test checks every text and status colour against every background in every look (7:1 or more;
     10:1 outdoors).
+  - `Saver`: the one place every save passes through. It sends, sorts the answer to the point where it failed
+    (no connection, signed out, not allowed, refused by a server rule, server failure), reads the record back and
+    compares it, writes every step into the trace, and returns a plain sentence for the person. The network itself
+    is an interface until Phase 1, so every path is tested without a server.
   - `Format`: the fixed ways of writing dates ("26 Nov 2026", "Today, 08:57") and waiting times ("12 min", "3 h",
     counted from when the thing started waiting), and cutting long text at a word.
 - **The app shell** (`app`): a look that adjusts to the person's phone by itself: day or night mode, the phone's
@@ -67,21 +71,29 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests, Android lint with warnings as errors, the app's unit tests and a debug build.
+runs the rules module's unit tests (29), Android lint with warnings as errors, the app's screen tests (11) and a
+debug build.
+
+The screen tests run on the computer (Robolectric). **The robot that walks every link** opens every place in the
+frame and every item on it, in the light, dark and outdoor looks, at phone and tablet width and at normal and
+double font size, and fails when a destination is missing, when anything that can be tapped is under 48 dp, or
+when text runs off the side. Proven once by breaking the rule on purpose (smaller buttons: five tests failed).
 `tests/test_mobile_native.py` checks from the repository's side that the app stays neutral, keeps its backup and
 screenshot protection, and keeps the "no action words without an action" building blocks.
 
 Checked by hand on a phone on 26 November 2026 (Oppo, Android 15): the app starts, Data trace shows a failed and a
 complete sample trace, and the detail shows the eight points with the failed one and its reason; the look turns
 dark and light with the phone's night mode, the Outdoor switch changes the look, and the light sensor is read.
-Not yet covered by automatic screen and picture tests (light, dark, outdoor; font sizes; phone and tablet); those
-are the next step of Phase 0. Not yet looked at by a person in real sunlight or at the largest font size.
+Not yet covered: picture comparison (the robot measures sizes and positions, it does not see overlapping or
+ugly layouts), Android 9 to 14, a real tablet. Not yet looked at by a person in real sunlight or at the largest
+font size.
 
 ## Licenses
 
 Our own code, AGPL-3.0-or-later like the repository. Libraries (all Apache-2.0 unless noted): Kotlin 2.2.10
 (JetBrains), Jetpack Compose (BOM 2026.09.00: UI, Material 3, adaptive navigation suite), AndroidX Activity
-1.12.4 and Biometric 1.1.0, the Android Gradle plugin 9.2.1; JUnit 4.13.2 for tests (EPL-1.0).
+1.12.4 and Biometric 1.1.0, the Android Gradle plugin 9.2.1; for tests only: JUnit 4.13.2 (EPL-1.0), Robolectric
+4.18 (MIT) and Compose's UI test library.
 
 ## AI-assisted development
 

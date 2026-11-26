@@ -820,6 +820,16 @@
       ],
       "status": "evaluating",
       "note": "mobile-native (in progress, not shipped): 2.2.10 with the Android Gradle plugin 9.2.1; the two old standard-library advisories in OSV were fixed before 1.6"
+    },
+    {
+      "name": "Robolectric",
+      "repo": "https://github.com/robolectric/robolectric",
+      "licence": "MIT",
+      "used_in": [
+        "P50"
+      ],
+      "status": "evaluating",
+      "note": "mobile-native tests only (screen tests on the computer): 4.18, no open advisories (OSV, 26 November 2026)"
     }
   ]
 }

@@ -40,7 +40,9 @@ discussion that led to a decision is not repeated here.
   2026.09.00 (UI, Material 3, adaptive navigation suite), AndroidX Activity 1.12.4 and Biometric 1.1.0
   (Apache-2.0) and JUnit 4.13.2 (EPL-1.0, tests) were checked in OSV: none open (the two Kotlin standard-library
   entries were fixed before 1.6; JUnit's was fixed in 4.13.1). detekt is not added yet: its stable release does not
-  support this Kotlin version; Android lint runs with warnings as errors meanwhile.
+  support this Kotlin version; Android lint runs with warnings as errors meanwhile. Added for the screen tests
+  (tests only, not in the app): Robolectric 4.18 (MIT, active, released 13 November 2026) and Compose's UI test
+  library; OSV, 26 November 2026: none open.
 - **Where:** `mobile-native/` (README), `tests/test_mobile_native.py`. AI-assisted by Claude Code.
 
 

@@ -14,20 +14,12 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.core.content.edit
 import com.example.erp.core.OutdoorSwitch
 import com.example.erp.core.Palettes
@@ -35,13 +27,6 @@ import com.example.erp.core.Point
 import com.example.erp.core.Trace
 import com.example.erp.core.Tracer
 import java.util.UUID
-
-/** Every destination the frame can show. A screen that is not finished is not in this list, so it cannot be reached. */
-enum class Place(val label: String, val icon: Int) {
-    TRACE("Data trace", R.drawable.ic_trace),
-    PHONE("This phone", R.drawable.ic_phone),
-    DISPLAY("Display", R.drawable.ic_display),
-}
 
 class MainActivity : ComponentActivity() {
     private val tracer = Tracer()
@@ -56,12 +41,14 @@ class MainActivity : ComponentActivity() {
         val settings = getSharedPreferences("display", Context.MODE_PRIVATE)
         val sensors = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val lightSensor: Sensor? = sensors.getDefaultSensor(Sensor.TYPE_LIGHT)
+        val phone = checkPhone(this)
 
         setContent {
             var automatic by remember { mutableStateOf(settings.getBoolean("outdoor-automatic", true)) }
             var forced by remember { mutableStateOf(settings.getBoolean("outdoor-forced", false)) }
             var bright by remember { mutableStateOf(false) }
             var lux by remember { mutableStateOf<Float?>(null) }
+            var traces by remember { mutableStateOf(tracer.all()) }
 
             // The light sensor is listened to only while the automatic switch is on and the app is on screen.
             DisposableEffect(automatic, lightSensor) {
@@ -87,51 +74,32 @@ class MainActivity : ComponentActivity() {
             }
 
             ErpTheme(palette) {
-                var place by rememberSaveable { mutableStateOf(Place.TRACE) }
-                var traces by remember { mutableStateOf(tracer.all()) }
-                // Bottom bar on a phone, side rail on a tablet or a phone turned sideways: chosen by the window's width.
-                NavigationSuiteScaffold(
-                    navigationSuiteItems = {
-                        for (item in Place.entries) {
-                            item(
-                                selected = place == item,
-                                onClick = { place = item },
-                                icon = { Icon(painterResource(item.icon), contentDescription = null) },
-                                label = { Text(item.label) },
-                            )
-                        }
-                    },
-                ) {
-                    Box(Modifier.statusBarsPadding()) {
-                        when (place) {
-                            Place.TRACE -> TraceScreen(traces, showValues = testBuild, onAddSample = if (testBuild) ({ addSample(); traces = tracer.all() }) else null)
-                            Place.PHONE -> PhoneScreen(checkPhone(this@MainActivity), "${Build.MANUFACTURER} ${Build.MODEL}", BuildConfig.VERSION_NAME)
-                            Place.DISPLAY -> DisplayScreen(
-                                palette,
-                                hasLightSensor = lightSensor != null,
-                                automatic = automatic,
-                                forced = forced,
-                                lux = if (testBuild) lux else null,
-                                onAutomatic = { automatic = it; settings.edit { putBoolean("outdoor-automatic", it) } },
-                                onForced = { forced = it; settings.edit { putBoolean("outdoor-forced", it) } },
-                            )
-                        }
-                    }
-                }
+                AppFrame(
+                    FrameState(
+                        palette, testBuild, traces, phone, "${Build.MANUFACTURER} ${Build.MODEL}", BuildConfig.VERSION_NAME,
+                        hasLightSensor = lightSensor != null, automaticOutdoor = automatic, forcedOutdoor = forced, lux = lux,
+                    ),
+                    onAddSample = { addSample(); traces = tracer.all() },
+                    onAutomaticOutdoor = { automatic = it; settings.edit { putBoolean("outdoor-automatic", it) } },
+                    onForcedOutdoor = { forced = it; settings.edit { putBoolean("outdoor-forced", it) } },
+                )
             }
         }
     }
 
     /** Test builds only: one failed and one complete trace, so the screen can be checked before real calls exist (Phase 1). */
-    private fun addSample(): Trace? {
-        val bad = UUID.randomUUID().toString()
-        tracer.start(bad, "Sample: check-out refused")
-        listOf(Point.SCREEN, Point.PHONE_STORE, Point.GATEWAY).forEach { tracer.mark(bad, it, true) }
-        tracer.mark(bad, Point.NETWORK, true, tookMs = 420)
-        tracer.mark(bad, Point.SERVER, false, "Refused: outside the site", detail = "sample values: distance_m=180, radius_m=100")
-        val good = UUID.randomUUID().toString()
-        tracer.start(good, "Sample: check-in saved")
-        listOf(Point.SCREEN, Point.PHONE_STORE, Point.NETWORK, Point.GATEWAY, Point.SERVER).forEach { tracer.mark(good, it, true) }
-        return tracer.mark(good, Point.READ_BACK, true, "matches")
-    }
+    private fun addSample(): Trace? = sampleTraces(tracer)
+}
+
+/** One failed and one complete made-up trace. Used by the test-build button and by the screen tests. */
+fun sampleTraces(tracer: Tracer): Trace? {
+    val bad = UUID.randomUUID().toString()
+    tracer.start(bad, "Sample: check-out refused")
+    listOf(Point.SCREEN, Point.PHONE_STORE, Point.GATEWAY).forEach { tracer.mark(bad, it, true) }
+    tracer.mark(bad, Point.NETWORK, true, tookMs = 420)
+    tracer.mark(bad, Point.SERVER, false, "refused by a server rule (417)", detail = "sample values: distance_m=180, radius_m=100")
+    val good = UUID.randomUUID().toString()
+    tracer.start(good, "Sample: check-in saved")
+    listOf(Point.SCREEN, Point.PHONE_STORE, Point.NETWORK, Point.GATEWAY, Point.SERVER).forEach { tracer.mark(good, it, true) }
+    return tracer.mark(good, Point.READ_BACK, true, "matches")
 }

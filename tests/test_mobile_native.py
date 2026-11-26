@@ -46,7 +46,7 @@ class MobileNativeTests(unittest.TestCase):
         self.assertNotIn('onClick', status)
 
     def test_every_destination_in_the_frame_has_a_screen(self):
-        main = (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8')
+        main = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
         places = re.findall(r'^\s+([A-Z_]+)\("', main.split('enum class Place')[1].split('}')[0], re.M)
         self.assertTrue(places)
         for place in places:
@@ -72,6 +72,25 @@ class MobileNativeTests(unittest.TestCase):
         self.assertNotRegex(theme, r'fontSize = [^,]*\.dp', 'text sizes are in sp so they follow the font size set on the phone')
         sizes = [int(n) for n in re.findall(r'fontSize = \((\d+) \+ more\)\.sp', theme)]
         self.assertTrue(sizes and min(sizes) >= 15, 'no text smaller than 15')
+
+    def test_the_robot_walks_every_link_in_every_look_and_size(self):
+        robot = (NATIVE / 'app/src/test/kotlin/com/example/erp/app/ScreensTest.kt').read_text(encoding='utf-8')
+        self.assertIn('for (place in Place.entries)', robot, 'every place, also ones added later')
+        for look in ('LIGHT', 'DARK', 'OUTDOOR'):
+            self.assertIn(f'walk(Palettes.{look}', robot)
+        self.assertIn('fontScale = 2.0f', robot, 'double font size')
+        self.assertIn('w1100dp', robot, 'tablet width')
+        self.assertIn('48.dp', robot, 'tap targets are measured')
+        self.assertIn('runs off the side', robot, 'text overflow is measured')
+        build = (NATIVE / 'build.gradle.kts').read_text(encoding='utf-8')
+        self.assertIn('":app:testDebugUnitTest"', build, 'the check command runs the robot')
+
+    def test_every_save_goes_through_the_one_calling_layer(self):
+        saver = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Saver.kt').read_text(encoding='utf-8')
+        for point in ('Point.SCREEN', 'Point.NETWORK', 'Point.GATEWAY', 'Point.SERVER', 'Point.READ_BACK'):
+            self.assertIn(point, saver)
+        # A raw server error text is never the sentence a person reads.
+        self.assertIn('"The server has a problem right now.', saver)
 
     def test_reports_leave_values_out_by_default(self):
         trace = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Trace.kt').read_text(encoding='utf-8')

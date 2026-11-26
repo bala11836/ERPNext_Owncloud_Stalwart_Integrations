@@ -373,4 +373,16 @@ public PR #101 (`p95/pm-queue`).
   - Also found earlier in this slot: the build context lacked the model files (fixed in #105, merged).
 - Not built: the mobile app's capture screen and the liveness check on the phone.
 
+**Off switch (owner's go, 27 November 2026; public PR #121, `9c0d183`):**
+- Found by the other session: releasing main for P93 and #77 would also ship a working face-photo intake
+  (`face_capture` stored photographs for manual review even without face settings) before the legal opinion.
+- Every face function that takes in or uses a face refuses unless the site config has `custom_hr_face` ->
+  `enabled: true`. Withdrawal, deletion for leavers and the photo clean-up always work. Production has no
+  `custom_hr_face`, so it is off; the test site has `{"enabled": true}` with no engine, as it behaved before.
+- On the test ERP since 26 November 20:17 UTC (receipt `p95-test-erp-face-switch-9c0d183`): 69 suites in the image,
+  face queue live 29/29 (7 new switched-off checks: nothing stored, withdrawal works), field attendance 79/79.
+- **Next:** owner merges #121; one ERP release from main (P93, #77, P95 present but off) at a quiet moment, after the
+  owner's P93 browser check on the test ERP. **Switching P95 on in production waits for the legal opinion and the
+  owner's decision.**
+
 **Status:** in progress.

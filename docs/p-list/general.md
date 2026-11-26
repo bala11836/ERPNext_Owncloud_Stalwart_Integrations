@@ -215,6 +215,14 @@ Coral is dropped: Frigate no longer recommends it for new installations. Setting
 in the `integrations/frigate/` module; Frigate is in the daily upstream watch. The
 owner installs the camera (an Annke I51DS) later.
 
+**Long-term placement and hardware (owner, 26 November 2026):** backups and the Frigate NVR stay on a local server
+(the TrueNAS host), because video processing (detection on an accelerator) cannot run on the VPS; the test VM may
+move to the VPS if required. Long-term TrueNAS upgrade: (i) more RAM; (ii) four 8 TB hard disks; (iii) a detection
+accelerator, which the owner named as Coral. Note for the hardware choice: the trial above dropped Coral because
+Frigate no longer recommends it for new installations; choose the accelerator Frigate recommends at purchase time
+(for example an Intel graphics chip with OpenVINO, or a Hailo card) and record the choice. Disk layout, redundancy
+and the split between backup and recordings are decided with the purchase.
+
 ### P48 — Remote branch router and gateway firewall
 
 **App:** general · **Also touches:** none · **State:** blocked

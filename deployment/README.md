@@ -38,7 +38,7 @@ A Linux Docker host with Coolify; Python 3.14 in the ERP image for the tools; ne
 
 ## Reuse
 
-Use `tools/prepare_erp_image.py` + `tools/build_erp_core.py` for a reproducible Frappe/ERPNext image from `upstream-lock.json`, or `tools/prepare_runtime.py` + `tools/coolify_native.py` to render and register stacks on any Coolify host. See tools/README.md for every tool by module.
+Use `tools/prepare_erp_image.py` + `tools/build_erp_core.py` for a reproducible Frappe/ERPNext image from `upstream-lock.json` (every change it makes to frappe_docker's Containerfile must find its upstream line exactly once, or it stops: register entry BUILD-1), or `tools/prepare_runtime.py` + `tools/coolify_native.py` to render and register stacks on any Coolify host. See tools/README.md for every tool by module.
 
 ## Configuration
 
@@ -129,7 +129,8 @@ test, merge and production change that the owner takes up.
 
 - **Inventory:** the locks (`upstream-lock.json`, `build-lock.json`,
   `native-clients-lock.json`, `integrations/mail/upstream.json`) and every
-  image digest in the stack files, build lock and Dockerfiles. Images are
+  image digest in the stack files, build lock, Dockerfiles and the module
+  compose files under `integrations/` (monitoring, identity support). Images are
   pinned by digest only, so `upstream-watch.json` records the version behind
   each digest (a test fails when a digest changes without it) and where each
   component publishes releases and advisories. Components that are not in the

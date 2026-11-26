@@ -261,14 +261,17 @@
         "integrations/mail/**",
         "erpnext_drive_integrations/cloud_integrations/**",
         "deployment/stacks/mail.compose.json",
-        "tools/prepare_mail.py"
+        "tools/prepare_mail.py",
+        "tools/refresh_webmail_overlay_base.py",
+        "tests/test_webmail_overlay_base.py"
       ],
       "depends_on": [
         "authentik-identity",
         "drive"
       ],
       "tests": [
-        "tests/test_rebuild_templates.py"
+        "tests/test_rebuild_templates.py",
+        "tests/test_webmail_overlay_base.py"
       ],
       "upstream": [
         {
@@ -386,13 +389,15 @@
       "summary": "Patches the pinned Insights frontend to take identity from the native authenticated API before it is compiled.",
       "readme": "integrations/insights/README.md",
       "paths": [
-        "integrations/insights/**"
+        "integrations/insights/**",
+        "tests/test_insights_patch.py"
       ],
       "depends_on": [
         "erp-addon-shell"
       ],
       "tests": [
-        "tests/test_rebuild_templates.py"
+        "tests/test_rebuild_templates.py",
+        "tests/test_insights_patch.py"
       ],
       "upstream": [
         {
@@ -411,6 +416,7 @@
         "deployment/**",
         "tools/build_erp_core.py",
         "tools/prepare_erp_image.py",
+        "tests/test_prepare_erp_image.py",
         "tools/prepare_runtime.py",
         "tools/render_runtime.py",
         "tools/prepare_ingress.py",
@@ -466,6 +472,7 @@
       "depends_on": [],
       "tests": [
         "tests/test_rebuild_templates.py",
+        "tests/test_prepare_erp_image.py",
         "tests/test_promotion_plan.py",
         "tests/test_realtime_origin.py",
         "tests/test_module_manifest.py",
@@ -585,13 +592,16 @@
         "tests/test_onlyoffice_private_views.py",
         "tests/test_onlyoffice_sheetview_filter.py",
         "tools/editor_safety.py",
+        "tools/refresh_editor_original.py",
+        "tests/test_refresh_editor_original.py",
         "tests/test_editor_safety.py"
       ],
       "tests": [
         "tests/test_onlyoffice_editor.py",
         "tests/test_onlyoffice_private_views.py",
         "tests/test_onlyoffice_sheetview_filter.py",
-        "tests/test_editor_safety.py"
+        "tests/test_editor_safety.py",
+        "tests/test_refresh_editor_original.py"
       ],
       "depends_on": [
         "deployment"

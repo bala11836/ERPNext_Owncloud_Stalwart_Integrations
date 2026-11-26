@@ -6,6 +6,17 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### No offline web app: offline work is built in the native mobile app (P23 closed, P50)
+
+- **Decision:** the planned offline and poor-connection behaviour for the web portal (installable web app with
+  caches and a send queue, P23) is not built. P23 is closed as superseded. Working without a signal is part of the
+  native app ERP Mobile (P50): capture works offline and is sent later, with a visible "waiting to send" state.
+- **Why:** the owner decided to develop the native mobile app, so the phone work happens there; a second offline
+  layer in the browser would duplicate the queue, the cache isolation and the wipe-on-sign-out design for the same
+  people. The related work stays with the app: push notifications (P14), native sign-in on production (P64), the
+  photo and document store (P74) and passkeys in the app (P82).
+- **Where:** `docs/p-list/mobile.md` (P50), `docs/p-closed.md` (P23).
+
 ### The mail archive reader signs in with a passkey, to mail only (P69)
 
 - **Decision:** the archive is read through the dedicated `archive-reader` account in webmail, signing in with a

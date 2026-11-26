@@ -1,6 +1,6 @@
 # Mobile: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 25 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -19,16 +19,6 @@ Part of the P list: back to the [index and priority order](../p-list.md). Items 
 Verify the new portal's per-device opt-in controls, ERP/HR notification receipt and tapping, and Raven background delivery from another user on actual devices. Native relay credentials and registrations stay private. Mocked tests and a provider HTTP success do not prove device delivery. No notification test or business approval message was sent during consolidation.
 
 Recheck native Raven login/chat/refresh and revoked-token refusal, and coordinate realtime recovery with P01. Preserve exact validated callbacks and existing workers/drafts. See [push and Raven scope](../roadmap.md#1-push-and-session-bound-native-raven).
-
-### P23 — PWA offline and poor-connectivity behavior
-
-**App:** mobile · **Also touches:** portal · **State:** open
-
-**Status:** planned. Audit retained drafts and existing service workers before
-adding any caching or queue. Design user-isolated caches, safe logout/wipe,
-idempotent retries, conflict/error visibility and bounded storage. Test browser
-and installed iOS behavior, airplane mode and reconnect; do not cache sensitive
-business data or replay consequential actions by default.
 
 ### P50 — Native mobile app for phones and tablets (module `mobile-app`)
 
@@ -53,7 +43,8 @@ login already exists).
 - Screens: hybrid. Hand-designed screens for the top daily tasks per module,
   automatic forms generated from ERPNext's definitions for everything else.
 - Offline: capture works without a signal and syncs later, with a visible
-  "waiting to send" state.
+  "waiting to send" state. This replaces the web-app (PWA) offline work: P23
+  closed as superseded (owner, 26 November 2026).
 - Layout: four bottom tabs on the phone (Work = the person's own module,
   opening with a Today dashboard; Chat; Mail; Drive); floating "+" for quick
   capture; module switcher only for the few multi-module users; project
@@ -81,6 +72,20 @@ proxy setting). His own SSH access (forced-command deploy key plus a tailnet sha
 bug (`portal/mobile.py` imported a non-existent `before_request`); fixed in PR #15 (`4d28354`), installed on test,
 app requests now succeed. The same line is latent on production: promote it with PR #15 (ERP release). **Naming (owner, 21 November 2026):** one universal app name with no company name, **"ERP Mobile"**,
 for the app title, its sign-in record and its link scheme (`erpmobile`); on test the client id is `erpmobiletest1`.
+
+**Branding per server (owner, 25 November 2026; replaces the single universal name above):**
+one build per brand, same code, built automatically from a small brand file (name, icon,
+colours, server address). The home-screen name and icon come from the build, because phones
+cannot reliably rename an app or swap its icon while it runs; inside the app the logo and
+colours also come from the server it connects to. For now there is one brand, **unformat**
+with the **UN** icon, for the test site, demo sites and production. The first client
+(<tenant> Constructions Pvt Ltd; production holds its assets) gets its own build from the same
+script when it goes live. Demo sites use the unformat build. Record the change in the decision
+log with the first pull request.
+
+**Passkeys in the app (owner, 25 November 2026):** ERP Mobile becomes the phone's passkey
+provider and holds each person's sign-in key; Android first. Scope, decisions and the decision
+path are in **P82** (sign-in list).
 
 ### P64 — Native app sign-in on production: latent auth-hook crash and a stale client list
 
@@ -128,8 +133,13 @@ when the app goes to production (P50), and whether Raven Mobile should be a nati
 - **Production 25 November 2026:** Drive preview size, ERP main `059f8bf` (with #40 and #51), the
   `erp-photo-service` account and `drive_store` config are live (release log, receipts `p74-production-*`). No
   production test photo (owner).
-- **Open:** browser checks by the owner (Desk, Insights, attendance, an office document); the first daily token
-  renewal on the production scheduler; phone test with #64 and #66; backups and disk growth with P72 (about 1 MB per photo
+- **26 November 2026:** owner browser checks on production working; first nightly renewal run without failure.
+  Phone test started on the test site (owner: colleague's Android development build of #66 head `f195a2d`, which
+  contains #64 head `5c7c3b5`; the owner's test administrator; site Mobile Attendance QA, project PROJ-0002, no
+  new test data: the account is a System Manager, so it counts as a member of every enabled site).
+- **Phone test, first part (25 November, found 26 November):** two camera photos from the app on test passed the
+  server checks (folder, tags, no EXIF, 256 px preview, no duplicate). Gallery, offline, list, project files and
+  sign-out still to test.
+- **Open:** the rest of the phone test with #64 and #66 (checklist on #66); backups and disk growth with P72 (about 1 MB per photo
   before compression; the app sends about 200 KB); privacy (photos show workers and the public: project access only,
   no public links); the daily token renewal needs the scheduler (test has none).
-

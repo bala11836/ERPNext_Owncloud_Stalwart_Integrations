@@ -2,7 +2,7 @@
 
 > **Generated file: do not edit by hand.** This is the project's work list (every "P" number used in
 > commits, pull requests, READMEs and `docs/decisions.md`) published from the maintainers' private
-> list on 25 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
+> list on 26 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
 > deploying organisation's name (`<tenant>`), host names (`example.com`), IP addresses
 > (documentation ranges), server file paths and rollback folders, mail addresses, names of people and
 > of third parties' internal products, business file names, and links to private records
@@ -79,6 +79,7 @@ until the owner says; the table only fixes the order to take them up.
 | 2 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
 | 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
 | 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
+| 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50 |
 
 **Tier 1: high (business-critical, next)**
 
@@ -117,7 +118,6 @@ until the owner says; the table only fixes the order to take them up.
 | **P26** banking and payroll sandbox | needs sandbox accounts; no live transfers |
 | **P28** dual approval for super-administrator | owner deferred the model |
 | **P31**, **P32**, **P07** keyboard navigation, native-module navigation, UI coverage | usability; P31 and P32 share design |
-| **P23** PWA offline | audit first |
 | **P41** quarterly recovery check | recurring: next due **18 Feb 2027** |
 | **P40** remainder (offline USB copy, test VM settings backup, tailnet rule) | hardening; backups already live |
 | **P35** presentation polish and upstream sharing | module READMEs, forum and tracker posts |
@@ -158,10 +158,10 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
 | ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 5 | 5 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 4 | 4 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
-| Sign-in | [pending/signin.md](p-list/signin.md) | 7 | 7 |
+| Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
 | Test site | [pending/test-site.md](p-list/test-site.md) | 4 | 4 |
 
 ## All P items (index)
@@ -188,7 +188,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P20 | Paperless document links on ERP transactions | [DMS](p-list/dms.md) | erp · **State:** open | open |
 | P21 | Client/project correspondence register and DMS integration | [ERP](p-list/erp.md) | dms · **State:** open | open |
 | P22 | Permission-controlled ERP AI assistant and business automation (Activepieces) | [ERP](p-list/erp.md) | raven, mail, drive, dms, general · **State:** open | open |
-| P23 | PWA offline and poor-connectivity behavior | [Mobile](p-list/mobile.md) | portal · **State:** open | open |
 | P24 | Field attendance pilot and correction acceptance | [ERP](p-list/erp.md) | none · **State:** open | open |
 | P25 | Invitation, passkey enrollment and recovery acceptance | [Sign-in](p-list/signin.md) | none · **State:** open | open |
 | P26 | Banking and payroll provider sandbox acceptance | [ERP](p-list/erp.md) | none · **State:** blocked | blocked |
@@ -231,4 +230,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P79 | Approved passkey providers as one setting | [Sign-in](p-list/signin.md) | test-site · **State:** in progress | in progress |
 | P80 | Editor stays registered with Drive after every Drive restart | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P81 | Editor follow-ups: Compose safety net and release rule | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
+| P82 | ERP Mobile holds the passkeys; one phone and one computer session per user | [Sign-in](p-list/signin.md) | mobile, portal, erp, test-site · **State:** open | open |
 <!-- APP-INDEX-END -->

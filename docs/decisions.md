@@ -6,6 +6,23 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### The drift check compares mounted runtime files, and runs its own code from main (P99)
+
+- **Decision:** the drift check also compares every read-only runtime file the containers mount from the
+  repository. A mount counts as equal to main when its bytes equal main's file, or when it matches the record
+  written at deployment and its source has not changed on main since; it is behind when its source changed, and
+  changed by hand when it differs from its record (both drift); with no record it is listed as not compared,
+  without failing the run. Records are written by every full render and by a `record` command after a one-file
+  promotion. The nightly run first moves its own checkout to `main`.
+- **Why:** after P97 the ERP web server template on production equalled main, yet the check reported it as behind
+  because it reads only the image tag; a file changed by hand on a server was never noticed at all. The check's
+  own code on production was still from 24 November, so improvements to it never ran. Existing production files
+  have no record and are listed as not compared until their next release (owner, 26 November 2026: the
+  recommended options).
+- **Where:** `tools/drift_check.py`, `tools/runtime_mounts.py` (shared with `tools/prepare_runtime.py`),
+  `deployment/drift-check.service.example`, `deployment/README.md`, `docs/sop/production-release.md`,
+  `tests/test_drift_mounts.py`.
+
 ### One build loop for every screen of the mobile app (P100)
 
 - **Decision:** every screen of ERP Mobile goes through one loop: a tap and state list (loading, empty, offline,

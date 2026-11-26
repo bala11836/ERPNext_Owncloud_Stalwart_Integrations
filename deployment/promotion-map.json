@@ -117,7 +117,7 @@
     },
     {
       "name": "Rendering of every stack",
-      "paths": ["tools/prepare_runtime.py", "tools/render_runtime.py", "tools/coolify_native.py", "deployment/stacks/inputs.json", "deployment/stacks/mounts.json"],
+      "paths": ["tools/prepare_runtime.py", "tools/runtime_mounts.py", "tools/render_runtime.py", "tools/coolify_native.py", "deployment/stacks/inputs.json", "deployment/stacks/mounts.json"],
       "stacks": ["erp", "website", "drive", "editor", "mail", "dms", "processing", "private-dns", "identity", "identity-support"],
       "steps": ["render every stack and compare the result with what runs; redeploy the stacks whose rendered files changed"]
     },

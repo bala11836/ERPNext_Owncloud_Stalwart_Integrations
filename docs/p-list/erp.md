@@ -330,4 +330,22 @@ production, with the legal opinion.
 model slot (off); 21 new tests, CI passed. Not yet: the face model (waits for the SFace decision), capture screen and
 PM queue, phone liveness (needs a phone), a test-site migrate (needs a slot).
 
+**Face engine (owner's go, 26 November 2026, late evening):** public PR on branch `p95/sface-engine`.
+- YuNet and SFace fp32 from OpenCV Zoo at commit `48b10fa`, fetched into the ERP add-on image with a SHA-256 check
+  per file (`deployment/face-models.json`, `tools/fetch_face_models.py`, register BUILD-11), run by the OpenCV
+  already in the image (version 5.0.0, wheel build 93; OSV: no advisories, also numpy 2.5.4).
+- The engine is off until a site names it in site config. The daily watch follows the model pin. The open-source
+  list moves OpenCV and OpenCV Zoo to "adopted".
+- Engine test here, on OpenCV's sample photos with the image's exact OpenCV version:
+  - the same face mirrored, smaller or darker scored 0.93 to 0.97;
+  - a different person scored 0.18 (threshold 0.363);
+  - a blank photo and a photo with two faces were refused;
+  - identification picked the right worker.
+- Found: OpenCV 5 ignores `setInputSize` after the detector is made, so the engine makes one per photo size.
+  Detection confidence is 0.8, because 0.9 refused a smaller copy of a clear face.
+- Not done:
+  - an ERP image build with the models (next release build);
+  - a trial on the test site with synthetic or consenting faces (needs a test-site slot, owner);
+  - tuning on real field photos.
+
 **Status:** in progress.

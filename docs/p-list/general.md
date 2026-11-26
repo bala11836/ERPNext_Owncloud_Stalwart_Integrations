@@ -109,6 +109,18 @@ Shared 17 November 2026: findings and the workaround posted upstream
 including that the search field only appears for lists longer than 25
 entries, with an AI-assistance credit.
 
+**Upstream posts list and reply check (owner, 26 November 2026, go):** every post we make upstream is listed with
+why, the P item, the register entry and a log of every check and follow-up, and checked for replies until we stop
+using that project (also a working-agreements rule for all projects). Built on public branch `p35/upstream-posts`:
+`docs/upstream-posts.json` and `.md` (11 public posts), `tools/upstream_posts.py` (read-only check; finds replies,
+state changes and posts the list lacks; `check --gh --record` at every session start), the daily upstream watch
+reports new replies once (`YYYY-MM-DD-posts.md`), tests, `AGENTS.md` rule. The private report (frappe_docker
+advisory) is in `docs/upstream-posts-private.md` here. First check, 26 November: Collabora's maintainer had replied on
+24 November (confirmed our analysis, passed to the Calc developers); Coolify fixed our bug the same day (commit
+`8dbaecc`; remove the COOLIFY-1 workaround once a release we run carries it, then say so on the issue); the rest
+waiting. **Open (owner):** Collabora, which we no longer use (P42): a one-line thank-you and stop watching, or stop
+watching without a post.
+
 ### P40 — Backup hardening against ransomware
 
 **App:** general · **Also touches:** none · **State:** in progress
@@ -782,7 +794,7 @@ an upgrade action; the next upgrade pull request uses the checklist; the rule is
 **Related:** P62 (upstream watch: its `workaround` fields point to register entries), P59 (promotion plan and drift
 check), P84 (no client identity in the public register).
 
-**Upstream posts (26 November 2026, owner go; account rdavuluri44):**
+**Upstream posts (26 November 2026, owner go; account rdavuluri44; now tracked in the public list, P35):**
 - owncloud/ocis#3832 comment: https://github.com/owncloud/ocis/issues/3832#issuecomment-7186892628
 - ONLYOFFICE/DocumentServer#3954: https://github.com/ONLYOFFICE/DocumentServer/issues/3954
 - coollabsio/coolify#12667: https://github.com/coollabsio/coolify/issues/12667

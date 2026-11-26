@@ -173,7 +173,7 @@ class Records(unittest.TestCase):
         tree = ast.parse((HR / 'api.py').read_text(encoding='utf-8'))
         found = {}
         for node in tree.body:
-            if isinstance(node, ast.FunctionDef) and node.name.startswith('face_'):
+            if isinstance(node, ast.FunctionDef) and node.name in ('face_enrol', 'face_identify', 'face_withdraw'):
                 found[node.name] = ast.unparse(node.decorator_list[0])
         self.assertEqual(set(found), {'face_enrol', 'face_identify', 'face_withdraw'})
         for name, decorator in found.items():

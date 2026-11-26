@@ -638,20 +638,25 @@
       "repo": "https://github.com/opencv/opencv",
       "licence": "Apache-2.0",
       "used_in": [
-        "P95"
+        "custom-hr (P95)",
+        "erp image"
       ],
-      "status": "evaluating",
-      "note": "server runtime for the face models"
+      "status": "adopted",
+      "note": "runs the face models on the server",
+      "not_watched": "already in the ERP image through an upstream app, pinned at 5.0.0.93 in deployment/python-constraints.txt (no advisories, OSV, 26 November 2026); Python packages are not in the daily watch yet (gap)"
     },
     {
       "name": "OpenCV Zoo: SFace and YuNet",
       "repo": "https://github.com/opencv/opencv_zoo",
       "licence": "Apache-2.0 (SFace), MIT (YuNet)",
       "used_in": [
-        "P95"
+        "custom-hr (P95)"
       ],
-      "status": "evaluating",
-      "note": "SFace training data unverified; asked upstream (opencv/opencv_zoo#313)"
+      "status": "adopted",
+      "note": "model files pinned by commit and SHA-256 (deployment/face-models.json); SFace training data unverified, asked upstream (opencv/opencv_zoo#313)",
+      "watch": [
+        "opencv_zoo"
+      ]
     },
     {
       "name": "Silent-Face-Anti-Spoofing",

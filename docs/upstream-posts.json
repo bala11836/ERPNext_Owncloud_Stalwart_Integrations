@@ -12,17 +12,22 @@
         "P35",
         "P42"
       ],
-      "status": "answered",
-      "watch": true,
-      "next": "We no longer use Collabora (retired with P42). Owner to choose: a one-line thank-you saying we moved to ONLYOFFICE and then stop watching, or stop watching without a post.",
+      "status": "stopped",
+      "watch": false,
       "last_seen": "2026-11-24T18:25:17Z",
       "thread_state": "open (reopened)",
       "checks": [
         {
           "date": "2026-11-26",
           "result": "maintainer replied on 24 November: confirmed our analysis (the search only filters in the browser; the engine's search is off), the 25-entry threshold is intended, passed to the Calc popup developers, no date."
+        },
+        {
+          "date": "2026-11-26",
+          "result": "stopped watching (owner's go)",
+          "follow_up": "thanked the maintainer and said we moved to another office suite: https://github.com/CollaboraOnline/online/issues/16276#issuecomment-7195109042"
         }
-      ]
+      ],
+      "stop_reason": "we no longer use Collabora (replaced by ONLYOFFICE Docs, P42); thank-you posted on 26 November 2026"
     },
     {
       "id": "ocis-app-registry-refresh",

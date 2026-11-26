@@ -113,18 +113,44 @@ workers that supervisor may record on that site and shift. Decided by the owner 
 - **Withdrawal and leavers** (`api.face_withdraw(employee, reason)`, POST; and automatically when an employee is no
   longer Active or is deleted): the templates are deleted permanently (not kept in Deleted Documents); the consent
   record stays as evidence, marked Withdrawn or Ended.
-- **Face model:** none ships yet. Until a model passes the licence and security check (decision log), enrolment
-  and identification refuse with a clear message. An engine is named in site config `custom_hr_face` ->
-  `engine` (dotted path inside this app, with `model_id` and `embed(jpeg_bytes)`); thresholds can be set in
+- **Face model:** OpenCV Zoo's YuNet detector and SFace recogniser (`custom_hr/face_sface.py`), adopted on 26
+  November 2026. The ERP add-on image fetches them at a pinned commit with checksums into `/opt/face-models`
+  (`deployment/face-models.json`, `tools/fetch_face_models.py`, register BUILD-11); OpenCV is already in the image.
+  The engine stays **off** until a site names it in site config `custom_hr_face` -> `engine`:
+  `erpnext_drive_integrations.custom_hr.face_sface.SFaceEngine`. A photograph must hold exactly one clear face
+  (detection confidence 0.8, at least 80 pixels); otherwise it is refused and retaken. Thresholds can be set in
   `custom_hr_face` -> `thresholds` (`match`, `margin`, `floor`, `candidates`, `minimum_angles`, `same_person`),
-  within fixed bounds.
-- **Not yet built:** the capture screen calling identification, the project manager's queue for offline and
-  uncertain captures, liveness on the phone (needs a phone), and the face model itself.
+  within fixed bounds. Engine test (26 November 2026, OpenCV 5.0.0): the same face mirrored, smaller or darker
+  scored 0.93 to 0.97, a different person 0.18 (match threshold 0.363). Before production: the legal opinion and
+  the SFace training-data question (P95).
+- **Capture without choosing the worker, and the project manager's queue** (`custom_hr/face_queue.py`):
+  - `api.face_capture(payload)` (POST; `site`, `shift`, `capture_id`, `photo`, `latitude`, `longitude`, `accuracy_m`,
+    `gps_captured_at`, and for offline captures `offline`, `device_captured_at`, `clock_offset_s`): for a supervisor
+    or assigned engineer. The place and time are validated once, on arrival, under the same rules as a normal
+    capture. A confident match is recorded and submitted at once **in the supervisor's name** and goes to
+    Approvals as usual. Anything else waits as **Needs review**: an uncertain match, nobody recognised, no clear
+    face, face recognition off, or a rule that needs a person (for example a machine allocation). A retry with the
+    same `capture_id` returns the same capture.
+  - **Face queue** screen on the field team page (approvers only) and `api.face_queue_pending(site)`,
+    `api.face_queue_resolve(name, employee, work_mode, asset, remarks)`, `api.face_queue_reject(name, reason)`:
+    the project manager picks the worker (the closest matches are offered) or rejects with a reason. The chosen
+    worker must be one the capturing supervisor may record on that shift; an approver cannot decide their own
+    capture or record themselves. `api.face_queue_mine(site)` shows a supervisor what became of their captures of
+    the last three days.
+  - **Photographs:** private; only the site's approvers and the capturing supervisor can read a queued capture.
+    The queue's copy is deleted as soon as the capture is recorded (the attendance entry keeps its own). A rejected
+    capture keeps its photograph for 30 days (owner, 26 November 2026), then only the record and the reason remain.
+  - The roster used for matching is the supervisor's team at the time of upload.
+- **Not yet built:** the capture screen in the mobile app (take the photograph, call `face_identify` when
+  online or `face_capture` when offline), liveness on the phone (needs a phone), and a trial on the test site.
 
 ## Tests
 
 - `tests/test_custom_hr.py` (offline)
 - `tests/test_custom_hr_face.py` (offline: face matching rules, consent, engine slot, stored records)
+- `tests/test_custom_hr_face_queue.py` (offline: who the queue acts for, who decides, photographs, the web screen)
+- `erpnext_drive_integrations/custom_hr/face_queue_integration_tests.py` (needs a live test site; rollback only)
+- `tests/test_custom_hr_face_engine.py` (model pins and fetch; the live engine part runs in the ERP image)
 - `erpnext_drive_integrations/custom_hr/test_checkout.py`
 - `erpnext_drive_integrations/custom_hr/integration_tests.py` (needs a live test site)
 
@@ -134,6 +160,9 @@ Run all suites offline with `python tools/run_unit_tests.py` in the matching ERP
 
 - ERPNext — GPL-3.0 — https://github.com/frappe/erpnext
 - Frappe HR — GPL-3.0 — https://github.com/frappe/hrms
+- OpenCV — Apache-2.0 — https://github.com/opencv/opencv
+- OpenCV Zoo SFace (Apache-2.0) and YuNet (MIT) models — https://github.com/opencv/opencv_zoo (licence files
+  copied with the models into `/opt/face-models`)
 
 Upstream licenses are as published by each project; verify them at the pinned version before redistributing (LICENSES.md). This module's own code: open-source license not yet chosen by the owner (P35).
 

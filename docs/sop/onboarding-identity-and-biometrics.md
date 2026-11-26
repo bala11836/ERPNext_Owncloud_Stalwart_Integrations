@@ -72,6 +72,8 @@ are skipped, a family member, a colleague or an impostor can sign in as the empl
   fingers; dry the finger and the sensor first).
 - Back after more than 7 days away: the key was removed by the sign-in server; the app says so. Onboard again from
   step 1; plan it for the first day back.
+- Lost passkey, or a new or replacement phone (owner's rule, 26 November 2026): the project manager checks the
+  person's phone in person and confirms the request in their own app; nothing is re-issued on a message or a call.
 - Phone lost or stolen: the employee tells the admin at once; the admin removes the key and ends the sessions, then
   re-onboarding.
 

@@ -6,6 +6,14 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Design decisions about use are written into the SOPs in the same change (P96)
+
+- **Decision:** a decision that says how people will use the system goes into the SOPs when it is taken, without
+  being asked for: the picture by role in `docs/sop/how-we-use-the-system.md`, the steps in the procedure concerned.
+- **Why:** owner, 26 November 2026: our decisions already contain how we plan to use the app; if that stays in the
+  decision log and the work list, the people who use the system never read it.
+- **Where:** `docs/sop/README.md` (rule), `docs/sop/how-we-use-the-system.md`.
+
 ### Face capture queue: recorded in the supervisor's name, decided by another approver (P95)
 
 - **Decision:** a team photograph sent without choosing the worker is validated once on arrival (place, time,

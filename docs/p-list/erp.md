@@ -359,8 +359,18 @@ public PR #101 (`p95/pm-queue`).
   days (confirmed by the owner, 26 November 2026).
 - It works with recognition off: every such capture then waits for the project manager.
 - Tests: 12 new offline tests; 57 with the HR and face suites pass; CI passed.
-- **Not run:** 22 rollback-only live checks (`custom_hr/face_queue_integration_tests.py`); they need a test-site slot
-  and are where the database behaviour gets proven.
+- **Live run on the test site (26 November 2026, owner's go, option A; receipt `test-erp-main-4412593-20261126`):**
+  `main` `4412593` (with #77, #100, #101, #105) deployed to the test ERP and migrated (the three new DocTypes exist).
+  - Image: 67 suites / 531 tests; face engine on sample photographs 8/8.
+  - Live: field attendance 79/79 and #77's checks 12/12.
+  - Face queue 22/22 and the real face engine end to end 9/9 (enrolled worker recognised at 0.96 and recorded at
+    once; a stranger and a blank photograph wait for the project manager). Both ran with the fix of PR #109
+    loaded for the check.
+  - Found: a queued photograph kept one File record after the capture was recorded (Frappe keeps two per photo
+    field), and the live checks used shift times HRMS refuses. Both fixed in public PR #109, merged at `73b6da4`
+    and deployed to the test ERP the same night (receipt `test-erp-main-73b6da4-20261126`): face queue 22/22 and
+    the real face engine 9/9 against the deployed code.
+  - Also found earlier in this slot: the build context lacked the model files (fixed in #105, merged).
 - Not built: the mobile app's capture screen and the liveness check on the phone.
 
 **Status:** in progress.

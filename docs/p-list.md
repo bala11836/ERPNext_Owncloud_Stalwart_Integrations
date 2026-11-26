@@ -154,7 +154,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 28 | 28 |
+| General | [pending/general.md](p-list/general.md) | 27 | 27 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
@@ -245,6 +245,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** in progress | in progress |
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
 | P98 | ERP web server template: take up upstream's trusted-HTTPS forwarding changes | [ERP](p-list/erp.md) | signin, general · **State:** open | open |
-| P99 | Drift check sees mounted runtime files, not only image tags and notes | [General](p-list/general.md) | erp · **State:** open | open |
 | P100 | Mobile app checks in CI, and the app's dependencies in the daily watch | [Mobile](p-list/mobile.md) | general · **State:** open | open |
 <!-- APP-INDEX-END -->

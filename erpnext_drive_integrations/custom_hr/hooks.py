@@ -25,11 +25,13 @@ permission_query_conditions = {
     "Field Shift Allocation": "erpnext_drive_integrations.custom_hr.permissions.allocation_query",
     "Field Assignment Event": "erpnext_drive_integrations.custom_hr.permissions.event_query",
     "Field Site": "erpnext_drive_integrations.custom_hr.permissions.site_query",
+    "Field Face Capture": "erpnext_drive_integrations.custom_hr.permissions.face_capture_query",
 }
 has_permission = {doctype: "erpnext_drive_integrations.custom_hr.permissions.has_permission" for doctype in [
-    "Field Attendance Entry", "Field Worker Assignment", "Field Shift Allocation", "Field Assignment Event", "Field Site"
+    "Field Attendance Entry", "Field Worker Assignment", "Field Shift Allocation", "Field Assignment Event", "Field Site", "Field Face Capture"
 ]}
 website_route_rules = [{"from_route": "/field-team", "to_route": "field_team"}]
 
 # Run on the server; no open browser or phone connection is required.
-scheduler_events = {"cron": {"* * * * *": ["erpnext_drive_integrations.custom_hr.checkout.close_due_entries"]}}
+scheduler_events = {"cron": {"* * * * *": ["erpnext_drive_integrations.custom_hr.checkout.close_due_entries"]},
+                    "daily": ["erpnext_drive_integrations.custom_hr.face_queue.purge_rejected"]}

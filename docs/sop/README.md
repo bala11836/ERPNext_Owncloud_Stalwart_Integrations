@@ -11,6 +11,12 @@ Every step the system relies on a **person** to do or check, because no code enf
 - **Kept current:** a change that adds or alters a manual step updates its SOP in the same pull request; a design
   decision that creates one names the SOP to be written. An SOP describes what is **live**; a step that is decided
   but not built is marked *draft, applies when built*.
+- **Design decisions describe use** (owner, 26 November 2026): when a decision says how people will use the
+  system (who does what, on which device, what they see, what happens when it goes wrong), it is written into the
+  SOPs in the same change, without waiting to be asked: the picture by role in
+  [How we use the system](how-we-use-the-system.md), and the steps in the procedure concerned.
+
+**Start here:** [How we use the system](how-we-use-the-system.md) (sign-in, ERP Mobile and attendance, by role).
 
 ## Inventory (study of 26 November 2026)
 

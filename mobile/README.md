@@ -35,6 +35,8 @@ phases).
 
 - `mobile/**`: the Expo project (`src/` screens and logic, `scripts/` checks, `assets/` placeholder icons),
   `BUILD-GUIDE.md` (the build guide for agents and developers).
+- `mobile/trials/passkey-android/`: a throw-away Kotlin test app for P82 (passkeys held by the app, fingerprint
+  lock); never shipped, see its README.
 - `tests/test_mobile_app.py`: tenant-neutral source and server API checks.
 
 ## Requirements

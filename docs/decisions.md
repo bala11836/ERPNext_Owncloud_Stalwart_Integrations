@@ -23,6 +23,27 @@ discussion that led to a decision is not repeated here.
   `deployment/drift-check.service.example`, `deployment/README.md`, `docs/sop/production-release.md`,
   `tests/test_drift_mounts.py`.
 
+### The Android app is rebuilt natively; Phase 0 lays the foundation (P50)
+
+- **Decision:** the Android app is rebuilt in Kotlin with Jetpack Compose in `mobile-native/`, beside the Expo app,
+  which stays the app in use until the native one does everything it does and passes the same checks; the iPhone
+  app follows after Android. The rules live in a pure Kotlin module without Android, so they can be shared with an
+  iPhone app later without choosing a cross-platform framework now. Built in from the first day: a data-flow
+  tracker (one tracking number per action, a mark at each of eight points, a read-back comparison after every
+  save), building blocks that cannot show an action word without an action, no backup or screenshot of app data,
+  one command that runs every check, and a pinned checksum for every library.
+- **Why:** developer's decision with the owner's agreement, 26 November 2026, after the P82 trial showed the
+  sign-in key, the fingerprint lock and the computer sign-in must be native code anyway. Testing the Expo app
+  showed taps that led nowhere and failures without a reason; the tracker and the building blocks make those two
+  faults visible or impossible. Crash reports will use Google's free service (developer's choice, not added yet).
+- **Dependency review:** on 26 November 2026, Kotlin 2.2.10, the Android Gradle plugin 9.2.1, Compose BOM
+  2026.09.00 (UI, Material 3, adaptive navigation suite), AndroidX Activity 1.12.4 and Biometric 1.1.0
+  (Apache-2.0) and JUnit 4.13.2 (EPL-1.0, tests) were checked in OSV: none open (the two Kotlin standard-library
+  entries were fixed before 1.6; JUnit's was fixed in 4.13.1). detekt is not added yet: its stable release does not
+  support this Kotlin version; Android lint runs with warnings as errors meanwhile.
+- **Where:** `mobile-native/` (README), `tests/test_mobile_native.py`. AI-assisted by Claude Code.
+
+
 ### One build loop for every screen of the mobile app (P100)
 
 - **Decision:** every screen of ERP Mobile goes through one loop: a tap and state list (loading, empty, offline,

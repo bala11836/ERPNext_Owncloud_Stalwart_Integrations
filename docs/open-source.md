@@ -80,6 +80,8 @@
 | [OkHttp](https://github.com/square/okhttp) | Apache-2.0 | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 4.12.0 for the relay connection, no open advisories (OSV, 26 November 2026) |
 | [JUnit 4](https://github.com/junit-team/junit4) | EPL-1.0 | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 4.13.2, tests only |
 | [Google code scanner (play-services-code-scanner)](https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner) | Android Software Development Kit licence (not open source) | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 16.1.0 reads the QR code; needs Google Play services, so the real app needs another reader for phones without them |
+| [Jetpack Compose and AndroidX (native app)](https://github.com/androidx/androidx) | Apache-2.0 | P50 | — | mobile-native (in progress, not shipped): Compose BOM 2026.09.00, Activity 1.12.4, Biometric 1.1.0; no open advisories (OSV, 26 November 2026) |
+| [Kotlin](https://github.com/JetBrains/kotlin) | Apache-2.0 | P50 | — | mobile-native (in progress, not shipped): 2.2.10 with the Android Gradle plugin 9.2.1; the two old standard-library advisories in OSV were fixed before 1.6 |
 
 ## Used before
 

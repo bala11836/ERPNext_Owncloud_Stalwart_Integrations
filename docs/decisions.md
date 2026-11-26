@@ -16,6 +16,10 @@ discussion that led to a decision is not repeated here.
   also means one way to test and support. Cost: about 4 to 6 weeks plus the review.
 - **Where:** P82 in the P list; the Android trial verifies the tunnel service, Bluetooth on our phone brands and
   attestation through this route.
+- **Temporary (owner, same day):** few phones below Android 14 remain, and in about a year there will probably be
+  none. The app reports each phone's Android version, the admin sees how many active phones are below 14, and when
+  none are left the route is retired, after which phones use Android's own provider route. The add-on is kept
+  separate and removable so that retiring it is a switch.
 
 ### Office computers are bound by company certificates, not authentik's paid stage (P82)
 

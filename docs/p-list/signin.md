@@ -412,6 +412,17 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
   separate it from the WhatsApp-style QR approval refused on 25 November (decision path, step 1), where a fake site
   could show a real QR code. To verify in the trial: which tunnel service the browsers accept for a third-party
   authenticator, Bluetooth advertising on the phone brands we use, and attestation through this route.
+- **Our QR route is a temporary add-on, retired when no phone below Android 14 is left (owner, 26 November 2026,
+  late evening).** Few people still use Android 13 or older, and in about a year there will probably be none.
+  - **Track Android versions:** the app reports its Android version at onboarding and at each sign-in. The server
+    keeps it with the phone's binding (next to model, sign-up date and last use), and the admin sees how many active
+    phones are below Android 14 (device list; alerts and exceptions widget, P53).
+  - **Retire:** when the count of active phones below Android 14 reaches zero and new onboardings no longer bring
+    any, open a work item to retire our QR route. Phones then use Android's own passkey-provider route for computer
+    sign-in.
+  - **So that retiring is a switch, not a new project (agent):** keep our QR route a separate, removable part of the
+    app. Have the Android trial prove Android's own route on an Android 14 phone as well, so it is known to work
+    when the add-on goes.
 - **Unused keys expire after 7 days** (owner, 26 November 2026, evening, from the P82 discussion with the
   colleague's agent): the **sign-in server** removes a person's ERP Mobile key when it has not been used for 7 days
   (the server knows the last use; a phone that is switched off cannot delete its own key). The person then onboards

@@ -81,6 +81,21 @@ def entry(name):
     return result
 
 
+
+@frappe.whitelist(methods=['GET'])
+def entry_photo(name):
+    """The attendance photo, for anyone who may view the entry (same check as `entry`). The private file itself
+    (/private/files) applies ERPNext's user permissions on Employee, which stop a site's approver from opening another
+    employee's photo; this answers from our site rules instead, and only for the file attached to this entry."""
+    require_user();doc=frappe.get_doc('Field Attendance Entry',name)
+    if not entry_access(doc):frappe.throw('You cannot view this record.',frappe.PermissionError)
+    file_name=doc.photo and frappe.db.get_value('File',{'file_url':doc.photo,'is_private':1,
+        'attached_to_doctype':'Field Attendance Entry','attached_to_name':doc.name},'name')
+    if not file_name:frappe.throw('This record has no photo.',frappe.DoesNotExistError)
+    frappe.local.response.update(type='download',filename=f'{doc.name}.jpg',content_type='image/jpeg',
+        display_content_as='inline',filecontent=frappe.get_doc('File',file_name).get_content())
+
+
 def can_review(doc, user):
     return (approval_access(doc, user) and doc.captured_by != user and doc.verified_by != user
             and frappe.db.get_value('Employee', doc.employee, 'user_id') != user)

@@ -6,6 +6,22 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### A project manager's own online check-in needs no approval; attendance photos served after our own check (25 November 2026)
+
+- **Decision:** when an Approver member of a site checks in themselves at that site, online and without a clash with
+  HR attendance made elsewhere, the entry becomes HR attendance at once (remark "Own check-in of the site approver:
+  no approval required"). Offline check-ins and clashes still go to another approver or a Field Attendance Manager,
+  and team entries the approver records still need another approver. A new read-only call `entry_photo(name)`
+  returns an entry's photograph to anyone the existing `entry` call allows, and only the private file attached to
+  that entry.
+- **Why:** owner, 25 November 2026: a project manager should not wait for someone else to approve their own day.
+  The photo problem: `/private/files` applies ERPNext's user permissions on Employee, so a project manager could not
+  open another employee's attendance photograph; answering from our own site rules keeps those permissions as they
+  are.
+- **Where:** `custom_hr/domain.py` (`skips_approval`), `service.py` (`approve_without_review`, `self_capture`),
+  `api.py` (`entry_photo`), the custom_hr README, `tests/test_custom_hr.py`. Public PR #77, tested on the test site on
+  25 November 2026 at `2a9f149` (12 of 12 live checks). Decision entry added by the owner's agent at merge.
+
 ### Design decisions about use are written into the SOPs in the same change (P96)
 
 - **Decision:** a decision that says how people will use the system goes into the SOPs when it is taken, without

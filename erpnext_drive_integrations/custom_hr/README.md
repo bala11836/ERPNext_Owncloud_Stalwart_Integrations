@@ -79,6 +79,10 @@ engineer assignment changes.
   approval"**, ticked by default and for every existing site. Where an administrator unticks it, an online entry
   (self or team) becomes HR attendance as soon as it is submitted. Offline entries still go to the site's
   approvers, and so does a clash with HR attendance created elsewhere; so such a site also keeps an approver.
+- **Project manager's own check-in** (owner, 25 November 2026): when an **Approver** member of a site checks in
+  themselves at that site, online and with no clash, the entry becomes HR attendance at once (remark "Own check-in
+  of the site approver"). Selfie and fence rules are unchanged. Offline check-ins and clashes still go to another
+  approver or a Field Attendance Manager. Team entries the approver records still need another approver.
 - **One attendance path, the administrator's choice:** HR Settings has **"Block Frappe HR check-ins (use the
   company app)"** (ticked on first install) and **"Roles that may still create check-ins"** (first "System
   Manager"; one role per line, for example for an attendance machine). While ticked:
@@ -89,7 +93,9 @@ engineer assignment changes.
   Unticked, this module leaves Frappe HR's check-in settings alone; the administrator manages them.
 - **For the mobile app:** `bootstrap` (now also `check_in_sites` with each site's fence and shifts, and
   `server_now`), `self_check_in`, `self_check_out`, `my_attendance`, `save_capture`, `submit`, `approvals`,
-  `entry`, `review`, `review_many`. Writes are POST only.
+  `entry`, `entry_photo`, `review`, `review_many`. Writes are POST only. `entry_photo` returns an entry's photo to
+  anyone `entry` allows: the private file URL itself applies ERPNext's Employee user permissions, which would stop a
+  project manager from seeing another employee's photo.
 
 **Upgrading a site from the former name:** `bench migrate` runs `custom_hr/patches/rename_module.py` before the
 DocTypes are synced; it renames "Cloud Field" to "Custom HR". When Frappe has already registered

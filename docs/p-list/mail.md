@@ -235,7 +235,7 @@ status). The webmail policy locks the delete action to Trash, and 16 English web
 - **Passkey:** the owner impersonated `archive-reader` and enrolled a Bitwarden passkey (second attempt, 03:09 UTC;
   the first attempt never reached authentik and left a useless Bitwarden entry). Impersonation ended cleanly.
 - **Sign-in refused:** the production passkey sign-in gate (`<namespace>-passkey-approved-account`) admits superusers and
-  "Unformat Users" only, so `archive-reader` was denied (the recovery deny message). Test webmail uses the same
+  "<staff group>" only, so `archive-reader` was denied (the recovery deny message). Test webmail uses the same
   production sign-in. Options put to the owner: an app password in a desktop mail client, a change to the gate, or
   the staff group. **Owner chose (2): a gate change limited to mail.** PR #78 (`p69/archive-reader-signin`, merged `81d73dd`):
   group Mail Archive Readers passes the gate; only the mail applications admit it (mode "any" over plain group

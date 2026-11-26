@@ -55,6 +55,8 @@
 | [Expo and Expo Router](https://github.com/expo/expo) | MIT | mobile-app | app dependencies follow the app lock file; not yet in the daily watch (gap, P35) |  |
 | [React Native](https://github.com/react/react-native) | MIT | mobile-app | app dependencies follow the app lock file; not yet in the daily watch (gap, P35) |  |
 | [React](https://github.com/react/react) | MIT | mobile-app | app dependencies follow the app lock file; not yet in the daily watch (gap, P35) |  |
+| [OpenCV (opencv-python-headless)](https://github.com/opencv/opencv) | Apache-2.0 | custom-hr (P95), erp image | already in the ERP image through an upstream app, pinned at 5.0.0.93 in deployment/python-constraints.txt (no advisories, OSV, 26 November 2026); Python packages are not in the daily watch yet (gap) | runs the face models on the server |
+| [OpenCV Zoo: SFace and YuNet](https://github.com/opencv/opencv_zoo) | Apache-2.0 (SFace), MIT (YuNet) | custom-hr (P95) | daily watch: `opencv_zoo` | model files pinned by commit and SHA-256 (deployment/face-models.json); SFace training data unverified, asked upstream (opencv/opencv_zoo#313) |
 
 ## Being evaluated or chosen, not in the code yet
 
@@ -64,8 +66,6 @@
 | [frappe_whatsapp](https://github.com/shridarpatil/frappe_whatsapp) | to verify (GitHub reports no standard licence) | P04 | — | planned under P04, not installed |
 | [Headscale](https://github.com/juanfont/headscale) | BSD-3-Clause | P29, P82 | — | planned own mesh server (P29); also the later complement for computer binding (P82) |
 | [MediaPipe (Face Landmarker)](https://github.com/google-ai-edge/mediapipe) | Apache-2.0 (code and model) | P95 | — | chosen for liveness on the phone; adoption check 26 November 2026 |
-| [OpenCV (opencv-python-headless)](https://github.com/opencv/opencv) | Apache-2.0 | P95 | — | server runtime for the face models |
-| [OpenCV Zoo: SFace and YuNet](https://github.com/opencv/opencv_zoo) | Apache-2.0 (SFace), MIT (YuNet) | P95 | — | SFace training data unverified; asked upstream (opencv/opencv_zoo#313) |
 | [Silent-Face-Anti-Spoofing](https://github.com/minivision-ai/Silent-Face-Anti-Spoofing) | Apache-2.0 | P95 | — | unmaintained since 2020; one liveness signal only |
 | [UniFace](https://github.com/yakhyo/uniface) | MIT (some weights under their own licence) | P95 | — | maintained packaging of the anti-spoofing weights |
 | [smallstep step-ca](https://github.com/smallstep/certificates) | Apache-2.0 | P82 | — | chosen for computer certificates (owner, 26 November 2026); advisories to check before adoption |

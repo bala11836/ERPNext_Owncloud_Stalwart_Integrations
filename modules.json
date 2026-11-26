@@ -19,15 +19,40 @@
       "title": "Workspace HTTPS monitoring",
       "summary": "Independent HTTPS availability checks for public workspace routes.",
       "readme": "integrations/monitoring/README.md",
-      "paths": ["integrations/monitoring/**", "tests/test_https_monitor.py"],
+      "paths": [
+        "integrations/monitoring/**",
+        "tests/test_https_monitor.py"
+      ],
       "depends_on": [],
-      "tests": ["tests/test_https_monitor.py"],
+      "tests": [
+        "tests/test_https_monitor.py"
+      ],
       "upstream": [
-        {"name": "Grafana", "license": "AGPL-3.0-only", "url": "https://github.com/grafana/grafana"},
-        {"name": "Loki", "license": "AGPL-3.0-only", "url": "https://github.com/grafana/loki"},
-        {"name": "Alloy", "license": "Apache-2.0", "url": "https://github.com/grafana/alloy"},
-        {"name": "Prometheus and node_exporter", "license": "Apache-2.0", "url": "https://prometheus.io/"},
-        {"name": "cAdvisor", "license": "Apache-2.0", "url": "https://github.com/google/cadvisor"}
+        {
+          "name": "Grafana",
+          "license": "AGPL-3.0-only",
+          "url": "https://github.com/grafana/grafana"
+        },
+        {
+          "name": "Loki",
+          "license": "AGPL-3.0-only",
+          "url": "https://github.com/grafana/loki"
+        },
+        {
+          "name": "Alloy",
+          "license": "Apache-2.0",
+          "url": "https://github.com/grafana/alloy"
+        },
+        {
+          "name": "Prometheus and node_exporter",
+          "license": "Apache-2.0",
+          "url": "https://prometheus.io/"
+        },
+        {
+          "name": "cAdvisor",
+          "license": "Apache-2.0",
+          "url": "https://github.com/google/cadvisor"
+        }
       ]
     },
     {
@@ -140,7 +165,10 @@
         "erpnext_drive_integrations/public/custom_hr/**",
         "erpnext_drive_integrations/www/field_team.*",
         "tests/test_custom_hr.py",
-        "tests/test_custom_hr_face.py"
+        "tests/test_custom_hr_face.py",
+        "deployment/face-models.json",
+        "tools/fetch_face_models.py",
+        "tests/test_custom_hr_face_engine.py"
       ],
       "depends_on": [
         "erp-addon-shell"
@@ -148,7 +176,8 @@
       "tests": [
         "erpnext_drive_integrations/custom_hr/test_checkout.py",
         "tests/test_custom_hr.py",
-        "tests/test_custom_hr_face.py"
+        "tests/test_custom_hr_face.py",
+        "tests/test_custom_hr_face_engine.py"
       ],
       "upstream": [
         {
@@ -160,6 +189,16 @@
           "name": "Frappe HR",
           "license": "GPL-3.0",
           "url": "https://github.com/frappe/hrms"
+        },
+        {
+          "name": "OpenCV",
+          "license": "Apache-2.0",
+          "url": "https://github.com/opencv/opencv"
+        },
+        {
+          "name": "OpenCV Zoo (SFace, YuNet)",
+          "license": "Apache-2.0 (SFace), MIT (YuNet)",
+          "url": "https://github.com/opencv/opencv_zoo"
         }
       ]
     },
@@ -480,7 +519,8 @@
         "deployment/native-clients-lock.json",
         "deployment/scope-mappings.example.json",
         "deployment/test-refresh-worker.*",
-        "deployment/test-runtime.example.json"
+        "deployment/test-runtime.example.json",
+        "deployment/face-models.json"
       ],
       "depends_on": [],
       "tests": [

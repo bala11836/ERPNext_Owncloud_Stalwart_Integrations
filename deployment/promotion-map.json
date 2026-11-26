@@ -110,9 +110,9 @@
     },
     {
       "name": "Production proxy routes",
-      "paths": ["deployment/config/proxy/**", "deployment/config/proxy-inputs.json", "deployment/production/**", "tools/prepare_auth_bridge.py", "tools/sso_proxy_trust.py", "tools/coolify_proxy_hosts.py", "tools/coolify_proxy_http3.py"],
+      "paths": ["deployment/config/proxy/**", "deployment/config/proxy-inputs.json", "deployment/production/**", "tools/prepare_auth_bridge.py", "tools/sso_proxy_trust.py", "tools/coolify_proxy_hosts.py", "tools/coolify_proxy_http3.py", "tools/coolify_proxy_image.py", "deployment/coolify-proxy.json"],
       "stacks": ["proxy"],
-      "steps": ["install the changed route or proxy files on the production proxy (keep a copy of the old ones)"],
+      "steps": ["install the changed route or proxy files on the production proxy (keep a copy of the old ones)", "when deployment/coolify-proxy.json changed: run tools/coolify_proxy_image.py --restart on the host, then --check"],
       "not_covered": "production-only route and proxy files: browser and protocol check right after promotion"
     },
     {
@@ -141,7 +141,7 @@
     },
     {
       "name": "No running stack (documents, tests, checks, operator tools)",
-      "paths": ["*.md", "**/*.md", "LICENSE", ".github/**", ".gitignore", ".gitattributes", ".dockerignore", "modules.json", "docs/**", "tests/**", "tools/check_repository.py", "tools/check_client_identity.py", ".client-identity-fingerprints", "tools/run_unit_tests.py", "tools/promotion_plan.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "deployment/runtime.example.json", "deployment/promotion-map.json", "integrations/onlyoffice/sheetview_sanitize.py", "integrations/onlyoffice/editor-wopi.original.ejs", "integrations/authentik/invite-recovery/test_*", "integrations/authentik/invite-recovery/smoke_*"],
+      "paths": ["*.md", "**/*.md", "LICENSE", ".github/**", ".gitignore", ".gitattributes", ".dockerignore", "modules.json", "docs/**", "tests/**", "tools/check_repository.py", "tools/check_client_identity.py", ".client-identity-fingerprints", "tools/run_unit_tests.py", "tools/promotion_plan.py", "tools/archive_container_logs.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "deployment/runtime.example.json", "deployment/promotion-map.json", "integrations/onlyoffice/sheetview_sanitize.py", "integrations/onlyoffice/editor-wopi.original.ejs", "integrations/authentik/invite-recovery/test_*", "integrations/authentik/invite-recovery/smoke_*"],
       "stacks": []
     }
   ]

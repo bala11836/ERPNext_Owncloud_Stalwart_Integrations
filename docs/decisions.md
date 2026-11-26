@@ -6,6 +6,82 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Onboarding through the project manager and the admin; strong biometrics only; 5 misses erase the key (P82)
+
+- **Decision:** a person requests access in ERP Mobile (mail address, mobile number, a face photo for the identity
+  check only, not kept). The project manager approves their identity in person, then the admin approves in
+  authentik; the app creates the key in the phone's secure hardware and authentik stores only its public half.
+  The key unlocks only with Android's strong (Class 3) biometrics, so weak camera face unlock is never offered and
+  a phone without a strong sensor is refused. The app counts misses in a row (reset after a successful sign-in,
+  tries left shown, growing waits) and erases the key after 5; the person then onboards again through both
+  approvals. The person confirms at onboarding that only their own fingerprints and face are enrolled. Phones on
+  Android 9 to 13 stay supported: the trial tests whether the app can run the computer QR sign-in itself there.
+- **Why:** owner, 26 November 2026: identity must be checked by someone who knows the person, and the key accepts
+  every fingerprint on the phone, so that is a manual check. Counting only misses in a row avoids erasing keys for
+  wet or dusty fingers on site. Forcing Face ID would not close the Apple exception's gap (synced passkeys unlock
+  with the other person's own Face ID), so the fix there is the Apple version of the app.
+- **Where:** P82 in the P list (`docs/p-list/signin.md`); app code to follow in `mobile/`.
+
+### Self check-in uses the biometric and the location fence, no selfie (P82; amends the 22 November decision)
+
+- **Decision:** employees with the app check in with the fingerprint (or strong face unlock) at each check-in plus
+  the site's location fence and the server's time; the selfie is dropped. Approval by the site's approvers is
+  unchanged.
+- **Why:** owner, 26 November 2026: the biometric already proves who is holding the phone at that moment, so a
+  selfie adds face data without adding proof. The location check is our own server code and costs nothing.
+- **Where:** P82 in the P list; `custom_hr` and `mobile/` when built.
+
+### Field team attendance by face: liveness on the phone, matching on the server (P95)
+
+- **Decision:** HR enrols field workers with one good phone (several angles, checked against their ID); the server
+  keeps encrypted face templates, never the supervisor's phone. The supervisor photographs each worker without
+  selecting them first; the phone checks liveness offline (MediaPipe head turn and blink, a photo and screen
+  check), the server matches against that site's roster (SFace). Uncertain matches are picked by the supervisor
+  when online; offline captures are queued and the project manager clears what the server cannot match. Consent
+  is a separate agreement at onboarding, with a path without a face for those who refuse. A lawyer's opinion
+  under India's DPDP Act is obtained before launch; development goes ahead meanwhile with synthetic or consenting
+  test data only.
+- **Why:** owner, 26 November 2026: field workers often have no phone of their own, and the supervisor should only
+  have to take photos. Keeping faces off the supervisor's phone limits what a lost phone exposes; matching against
+  one site's roster is more accurate than against the whole company. InsightFace's free models are for
+  non-commercial use only, so they are not used; the licences of the chosen tools are checked before adoption.
+- **Where:** P95 in the P list (`docs/p-list/erp.md`).
+
+### Standard operating procedures are written alongside the build (P96)
+
+- **Decision:** every step that needs a person to act or check gets a written SOP in `docs/sop/` (by role, not by
+  name; client specifics stay private), and every change that adds or alters a manual step updates its SOP in the
+  same pull request. The first task is a study of the decisions, the P list and the runbooks for such steps.
+- **Why:** owner, 26 November 2026: designs like P82 and P95 rely on people doing checks no code enforces (removing
+  a family member's fingerprint, bulk onboarding a field team); without written procedures they are done
+  differently by each person or forgotten. The rule also applies to all the owner's projects (working agreements).
+- **Where:** P96 in the P list (`docs/p-list/general.md`); `docs/sop/` once the first SOP is written.
+
+### Keep logs and images across releases: archive container logs, no forced image cleanup (P59)
+
+- **Decision:** before any stack is recreated, `tools/archive_container_logs.py` saves every container's logs on the
+  host (root-only, compressed, 30 days); the promotion plan lists it first. Coolify's forced nightly Docker cleanup
+  is off on production (it was on; the test VM already had it off); Coolify still cleans above 80 percent disk use.
+- **Why:** a recreate deletes container logs (the 20 November failed save could not be diagnosed), and the forced
+  cleanup deleted the unused ERP core and prepared release images three times (each core rebuild about 20 minutes;
+  a 25 November release start had to stop). Production disk use is 23 percent of 394 GB; disk space is monitored
+  (P72). Switching Docker's log driver was not chosen: it restarts every container.
+- **Where:** `tools/archive_container_logs.py`, `tools/promotion_plan.py`, `deployment/README.md`; Coolify server
+  setting on production (live change, private record).
+
+### Coolify's proxy runs a pinned Traefik image: 3.7.20 (P90)
+
+- **Decision:** the proxy image is pinned by tag and digest in `deployment/coolify-proxy.json` and applied with
+  `tools/coolify_proxy_image.py`, instead of Coolify's moving `traefik:v3.7` tag. First pin: 3.7.20.
+- **Why:** the upstream watch (P62) found GHSA-3rh5-223h-cpwr (high: unauthenticated memory exhaustion in the
+  Compress middleware's Brotli writer) and two medium advisories (GHSA-42x2-976f-ph52, GHSA-9657-c2gv-wjpj)
+  affecting 3.7.19 on a public component; 3.7.20 fixes all three, is a patch release without breaking changes,
+  and has no open advisory (GitHub advisories and OSV checked 26 November 2026). A moving tag made the running
+  version depend on the last pull. The 3.7 line reached end of life on 23 November; moving to 3.8 (released the
+  same day) is a separate step once it has a patch release.
+- **Where:** `deployment/coolify-proxy.json`, `tools/coolify_proxy_image.py`, `tests/test_coolify_proxy_image.py`,
+  `deployment/README.md`, `deployment/promotion-map.json`.
+
 ### Client identity stays out of the public repository, checked by fingerprints (P84)
 
 - **Decision:** a client's name in every form, logo, domains, mail addresses and people never appear in this
@@ -602,6 +678,10 @@ own policies, hosts and mail transport.
   `erpnext_drive_integrations/patches.txt`, `tests/test_custom_hr.py`, `modules.json`.
 
 ### Self check-in with a selfie, approved by the project manager like team attendance; one attendance path
+
+**Amended 26 November 2026:** the selfie is replaced by the biometric at each check-in (see "Self check-in uses
+the biometric and the location fence, no selfie" above).
+
 - **Decision:** employees with a login check in themselves through `custom_hr` (selfie, location inside the site's
   fence, the server's time), and every attendance, team or self, is approved by the site's approvers, singly or in
   bulk; HR attendance is created only on approval. Offline captures (self and team) carry the phone's clock and its

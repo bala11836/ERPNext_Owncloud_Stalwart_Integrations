@@ -595,6 +595,9 @@ own policies, hosts and mail transport.
   allowed recipient numbers.
 - **Why:** the upstream webhook accepts unsigned posts; refreshed test data
   holds real contacts. **Where:** `erpnext_drive_integrations/whatsapp/`, P04.
+- **Correction (26 November 2026, P92):** this is a plan, not built yet. The
+  folder does not exist and frappe_whatsapp is not installed; the wrapper will
+  be built with P04, and the decision above still applies when it is.
 
 ### App menu in two columns above five apps
 - **Decision:** the portal's auto-hiding app menu switches from one to two
@@ -924,3 +927,19 @@ check themselves in keep their existing workflows.
   `tools/prepare_mail.py`, the two refresh tools, `tools/upstream_watch.py`,
   `deployment/upstream-watch.json`, their tests and module READMEs. AI-assisted by
   Claude Code.
+
+### Retired Collabora material removed; private operational names checked like client identity (P92)
+
+- **Decision:** The Drive and deployment READMEs describe deploying ONLYOFFICE, not
+  Collabora. The test ingress rule that guarded Collabora's admin paths now guards
+  ONLYOFFICE's own status page and internal interface (`/info`, `/internal`, also
+  under a version prefix); ONLYOFFICE 10 has no admin panel. The automatic identity
+  check (P84) also fingerprints private operational names such as the hosting
+  provider's, which `docs/retained.md` no longer names; git history is left as it
+  is (owner). A correction note marks the WhatsApp wrapper as planned, not built.
+- **Why:** The old instructions described a retired editor, the old rule guarded
+  paths that do not exist, and the public P list already replaces the provider's
+  name while one public record still carried it.
+- **Where:** `integrations/drive/README.md`, `deployment/README.md`,
+  `tools/prepare_ingress.py`, `.client-identity-fingerprints`, `docs/retained.md`,
+  register entry OFFICE-7. AI-assisted by Claude Code.

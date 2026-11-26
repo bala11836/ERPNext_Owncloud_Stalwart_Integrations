@@ -97,21 +97,26 @@ Made against: frappe_docker `0ad1a11`, bench 5.31.1, Node 24.22.1, Yarn 1.22.22
 
 ### BUILD-2 Our copy of Frappe's nginx template
 
-- **What and why:** a full copy of the official template with three changes:
-  Origin is filled in only when the browser leaves it out, the socket.io
-  location passes it on, and `absolute_redirect off`. Reason: Frappe 16 rejects a
-  realtime socket whose Origin differs from Host, and upstream's template forced
-  Origin to the internal site name ("Invalid origin", `docs/idle-navigation.md`).
-  The reason for `absolute_redirect off` is not written down (**to verify**).
+- **What and why:** a full copy of the official template with two changes: Origin
+  is filled in only when the browser leaves it out, and the socket.io location
+  passes it on. Reason: Frappe 16 rejects a realtime socket whose Origin differs
+  from Host, and upstream's template forced Origin to the internal site name
+  ("Invalid origin", `docs/idle-navigation.md`). (`absolute_redirect off` is
+  upstream's own line, added in frappe_docker `eccae39`, not ours: checked
+  26 November 2026.)
 - **How:** `deployment/erp/frappe.conf.template`, copied over
   `resources/core/nginx/nginx-template.conf` at build and mounted at runtime
   (`deployment/stacks/erp.compose.json`).
-- **Upgrade:** **re-apply** on every frappe_docker bump: rebase our three changes onto
+- **Upgrade:** **re-apply** on every frappe_docker bump: rebase our two changes onto
   the new upstream template. **Silent:** new upstream directives are lost because
-  our copy replaces theirs.
+  our copy replaces theirs; upstream `main` has already changed this template
+  since our pin, so the next bump must start from upstream's new file. Our fix
+  has only static tests; "Invalid origin" is still listed as open in
+  `docs/rebuild-verification.md`, so check realtime on test after any change.
 - **Tests:** `tests/test_realtime_origin.py`.
-- **Upstream:** not reported yet. Workaround to retire if upstream stops
-  overwriting Origin.
+- **Upstream:** reported privately to frappe_docker on 26 November 2026 (the Origin
+  overwrite also switches off Frappe's own Origin check). Workaround to retire if
+  upstream stops overwriting Origin.
 
 ### BUILD-3 Python constraints for the whole bench
 
@@ -217,7 +222,8 @@ Made against: v16.60.2 (`2df0425`).
 - **Upgrade:** **re-check** whether upstream still dispatches `cmd`; retire the guard if
   not. Nothing breaks if it stays.
 - **Tests:** `tests/test_hook_composition.py`, `tests/onboarding/test_respond.py`.
-- **Upstream:** not reported. Workaround.
+- **Upstream:** frappe/frappe#48437 drops `cmd` dispatch in v17 (not backported);
+  we asked there for an opt-in v16 setting (26 November 2026). Workaround until v17.
 
 ### FRAPPE-4 Desk logout replaced and idle sessions recovered in the browser
 
@@ -852,7 +858,9 @@ Made against: oCIS 8.2.3, ownCloud Web 12.5.0.
 - **Upgrade:** **re-check** by opening a document after every oCIS upgrade or restart.
   **Silent** (Drive offers download instead of editing) if the log text changes.
 - **Tests:** `tests/test_reboot_resilience.py`, `tests/test_host_checks.py`.
-- **Upstream:** report still to be filed (P81 F). Retire when oCIS re-registers itself.
+- **Upstream:** added to owncloud/ocis#3832 (registration refresh, open) on 26 November
+  2026; the OpenCloud fork fixed it with periodic re-registration
+  (opencloud-eu/opencloud#1035). Retire when oCIS re-registers itself.
 
 ### DRIVE-6 Test-copy scrambler rewrites oCIS storage directly
 
@@ -925,7 +933,8 @@ on the pinned image 26 November 2026).
   itself off **silently** (safe if upstream fixed it, unsafe if not). Test whether the
   new build still crashes; remove the guard once it does not.
 - **Tests:** `tests/test_onlyoffice_sheetview_filter.py`.
-- **Upstream:** no report found in the records; to be filed.
+- **Upstream:** ONLYOFFICE/DocumentServer#3954 (26 November 2026). The throwing code is
+  unchanged in sdkjs `v10.0.0.176` and master.
 
 ### OFFICE-3 Start command removes a stale supervisor PID file
 
@@ -960,6 +969,22 @@ on the pinned image 26 November 2026).
 
 - **What:** phones use the desktop editor (`docs/decisions.md` P42).
 - **Upgrade:** **re-check** on a phone.
+
+### OFFICE-7 The editor's status page and internal interface stay private at the proxy
+
+- **What and why:** ONLYOFFICE 10 has no admin panel. Its status page (`/info`) and
+  cluster interface (`/internal`), also under a `/<version>/` prefix, are allowed to
+  localhost only by its own nginx rules, which do not trust forwarded addresses, so
+  they are refused through the proxy (checked on test 26 November 2026: 403). The
+  test ingress also keeps them private (P92), so they stay closed even if the
+  info page is turned on as ONLYOFFICE's documentation describes. This replaced a
+  rule for Collabora's admin paths, which ONLYOFFICE does not have. Production has
+  no such proxy rule and relies on ONLYOFFICE's own.
+- **How:** `office-admin` in `tools/prepare_ingress.py`; ONLYOFFICE's
+  `/etc/onlyoffice/documentserver/nginx/includes/ds-docservice.conf`.
+- **Upgrade:** **re-check** the paths ONLYOFFICE restricts in that file (new private
+  interfaces), and that `/info/` returns 403 through the proxy.
+- **Tests:** `tests/test_rebuild_templates.py::test_ingress_references_and_narrow_public_response_routes`.
 
 ## Stalwart mail
 
@@ -1156,7 +1181,7 @@ Made against: 3.4.2.
   Coolify's parser writes an empty `ports` list as null and empty `volumes` as `{}`,
   which Compose rejects, so empty fields are dropped first.
 - **Upgrade:** **re-check.** Loud. Retire the workaround when Coolify fixes its parser
-  (not reported upstream yet).
+  (reported as coollabsio/coolify#12667, 26 November 2026).
 - **Tests:** `tests/test_rebuild_templates.py::test_coolify_registration_drops_empty_ports_and_volumes`.
 
 ### COOLIFY-2 Direct edits of Coolify's stored proxy configuration
@@ -1223,8 +1248,8 @@ Made against: 3.4.2.
 ## Retired
 
 - **Collabora** was retired with P42 (the upstream comment was posted on
-  CollaboraOnline/online#16276). **None.** Some documents and one ingress rule still
-  mention it (see open questions).
+  CollaboraOnline/online#16276). **None.** Its deployment instructions and ingress
+  rule were removed in P92; older records mention it as history.
 
 ## Lessons from earlier upgrades
 
@@ -1277,18 +1302,16 @@ Found on 26 November 2026 and reported to the owner; none of them is changed by 
   loudly on a changed upstream file, image or commit).
 - **Upstream watch:** fixed in P91 (`workaround` notes for every app with entries here;
   monitoring images watched).
-- **Collabora leftovers:** `tools/prepare_ingress.py` still restricts Collabora admin
-  paths (no ONLYOFFICE admin path is restricted; whether ONLYOFFICE 10 has one is to
-  verify); `integrations/drive/README.md` and `deployment/README.md` still describe
-  deploying Collabora.
+- **Collabora leftovers:** fixed in P92 (READMEs; the ingress rule now guards
+  ONLYOFFICE's own private paths, OFFICE-7).
 - **ONLYOFFICE version:** fixed in P91 (10.0.0 build 169 everywhere).
 - **Left-over or unexplained code:** BUILD-7 (payment assets manifest), BUILD-8
   (PYTHONPATH), FRAPPE-15/16 (the NetBird names: nothing reads those headers; NetBird
   is not pinned or watched), HRMS-5 (retired launcher script).
-- **WhatsApp:** `docs/decisions.md` describes a signature-checking wrapper at
-  `erpnext_drive_integrations/whatsapp/`, which does not exist; WhatsApp is not
-  installed.
-- **Upstream reports not filed yet:** oCIS editor registration (P81 F), the
-  authentik P82 feature requests, the ONLYOFFICE sheet-view crash, frappe_whatsapp
-  unsigned webhooks, the Coolify parser bug, Frappe's nginx template overwriting
-  Origin, Frappe 16 running `?cmd=` on any path.
+- **WhatsApp:** fixed in P92 (correction note in `docs/decisions.md`: the wrapper is
+  planned under P04, not built; WhatsApp is not installed).
+- **Upstream reports:** filed 26 November 2026: owncloud/ocis#3832 (comment),
+  ONLYOFFICE/DocumentServer#3954, coollabsio/coolify#12667, frappe/frappe#48437
+  (comment), shridarpatil/frappe_whatsapp#257 (comment on the open signature-check
+  fix), goauthentik/authentik#16049 and #14304 (comments), #28187 and #28188 (new
+  requests), and a private report to frappe_docker (Origin overwrite).

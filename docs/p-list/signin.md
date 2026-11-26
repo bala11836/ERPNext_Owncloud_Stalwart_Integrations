@@ -395,11 +395,23 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
 - **Older phones (Android 9–13):** owner: Android's limits must not lock these users out. The fingerprint-locked
   key works from Android 9, and signing in to the app itself is done by the app. Only computer sign-in by QR
   normally goes through Android 14's passkey-provider service; the trial tests whether the app can run the
-  QR-and-Bluetooth step (FIDO hybrid) itself on Android 9–13. Unverified until the trial.
+  QR-and-Bluetooth step (FIDO hybrid) itself on Android 9–13. Unverified until the trial. **Decided later the same
+  day: our own route on all phones (below).**
 - **Apple exception group:** forcing Face ID does not close the gap: Apple passkeys copy to every device on the
   same Apple ID, where that person's own Face ID unlocks them, and a website cannot demand Face ID over the phone's
   passcode. The real fix is the Apple version of ERP Mobile (key kept in one iPhone, not copied), the Apple part of
   this item. Until then the group stays small and the risk stays accepted (owner, 25 November).
+- **Computer sign-in by QR: our own route for all phones (owner, 26 November 2026, late evening).** The colleague's
+  P82 work set out three options for phones below Android 14: (1) older phones use the app only, and computer
+  sign-in needs Android 14 or newer; (2) build our own QR route for all phones, about 4 to 6 weeks plus the review;
+  (3) count first how many staff need a computer and have an older phone. **Owner chose (2).** ERP Mobile carries out
+  the standard QR-and-Bluetooth computer sign-in (FIDO "hybrid": the computer's browser shows the QR, the phone
+  scans it, a Bluetooth advertisement proves it is nearby, and the signed answer travels through the standard tunnel
+  service) **itself on every phone**, instead of through Android 14's passkey-provider service. One route on every
+  Android version. **Must stay:** the Bluetooth nearness check and the browser's own origin check. Those are what
+  separate it from the WhatsApp-style QR approval refused on 25 November (decision path, step 1), where a fake site
+  could show a real QR code. To verify in the trial: which tunnel service the browsers accept for a third-party
+  authenticator, Bluetooth advertising on the phone brands we use, and attestation through this route.
 - **Unused keys expire after 7 days** (owner, 26 November 2026, evening, from the P82 discussion with the
   colleague's agent): the **sign-in server** removes a person's ERP Mobile key when it has not been used for 7 days
   (the server knows the last use; a phone that is switched off cannot delete its own key). The person then onboards

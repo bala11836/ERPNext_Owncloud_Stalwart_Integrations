@@ -6,6 +6,17 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Computer sign-in by QR runs through our own app on every phone, keeping the Bluetooth check (P82)
+
+- **Decision:** ERP Mobile carries out the standard QR-and-Bluetooth computer sign-in (FIDO hybrid) itself, on
+  every Android version, instead of relying on Android 14's passkey-provider service. The Bluetooth nearness check
+  and the browser's origin check stay; an approval-only QR without them stays refused (25 November).
+- **Why:** owner, 26 November 2026: staff with phones below Android 14 must be able to sign in on a computer too.
+  The alternatives were app-only use on older phones, or counting the affected staff first. One route on every phone
+  also means one way to test and support. Cost: about 4 to 6 weeks plus the review.
+- **Where:** P82 in the P list; the Android trial verifies the tunnel service, Bluetooth on our phone brands and
+  attestation through this route.
+
 ### Office computers are bound by company certificates, not authentik's paid stage (P82)
 
 - **Decision:** each office computer gets a certificate from our own certificate authority (smallstep step-ca); the

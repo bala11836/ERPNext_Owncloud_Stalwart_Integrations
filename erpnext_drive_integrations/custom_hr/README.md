@@ -118,13 +118,33 @@ workers that supervisor may record on that site and shift. Decided by the owner 
   `engine` (dotted path inside this app, with `model_id` and `embed(jpeg_bytes)`); thresholds can be set in
   `custom_hr_face` -> `thresholds` (`match`, `margin`, `floor`, `candidates`, `minimum_angles`, `same_person`),
   within fixed bounds.
-- **Not yet built:** the capture screen calling identification, the project manager's queue for offline and
-  uncertain captures, liveness on the phone (needs a phone), and the face model itself.
+- **Capture without choosing the worker, and the project manager's queue** (`custom_hr/face_queue.py`):
+  - `api.face_capture(payload)` (POST; `site`, `shift`, `capture_id`, `photo`, `latitude`, `longitude`, `accuracy_m`,
+    `gps_captured_at`, and for offline captures `offline`, `device_captured_at`, `clock_offset_s`): for a supervisor
+    or assigned engineer. The place and time are validated once, on arrival, under the same rules as a normal
+    capture. A confident match is recorded and submitted at once **in the supervisor's name** and goes to
+    Approvals as usual. Anything else waits as **Needs review**: an uncertain match, nobody recognised, no clear
+    face, face recognition off, or a rule that needs a person (for example a machine allocation). A retry with the
+    same `capture_id` returns the same capture.
+  - **Face queue** screen on the field team page (approvers only) and `api.face_queue_pending(site)`,
+    `api.face_queue_resolve(name, employee, work_mode, asset, remarks)`, `api.face_queue_reject(name, reason)`:
+    the project manager picks the worker (the closest matches are offered) or rejects with a reason. The chosen
+    worker must be one the capturing supervisor may record on that shift; an approver cannot decide their own
+    capture or record themselves. `api.face_queue_mine(site)` shows a supervisor what became of their captures of
+    the last three days.
+  - **Photographs:** private; only the site's approvers and the capturing supervisor can read a queued capture.
+    The queue's copy is deleted as soon as the capture is recorded (the attendance entry keeps its own). A rejected
+    capture keeps its photograph for 30 days (proposal), then only the record and the reason remain.
+  - The roster used for matching is the supervisor's team at the time of upload.
+- **Not yet built:** the capture screen in the mobile app (take the photograph, call `face_identify` when
+  online or `face_capture` when offline), liveness on the phone (needs a phone), the face model itself (PR #100), and a trial on the test site.
 
 ## Tests
 
 - `tests/test_custom_hr.py` (offline)
 - `tests/test_custom_hr_face.py` (offline: face matching rules, consent, engine slot, stored records)
+- `tests/test_custom_hr_face_queue.py` (offline: who the queue acts for, who decides, photographs, the web screen)
+- `erpnext_drive_integrations/custom_hr/face_queue_integration_tests.py` (needs a live test site; rollback only)
 - `erpnext_drive_integrations/custom_hr/test_checkout.py`
 - `erpnext_drive_integrations/custom_hr/integration_tests.py` (needs a live test site)
 

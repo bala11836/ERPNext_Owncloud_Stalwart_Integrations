@@ -249,3 +249,34 @@ def face_identify(site,shift,photo):
 def face_withdraw(employee,reason):
     from erpnext_drive_integrations.custom_hr import face_service
     return face_service.withdraw(employee,reason)
+
+
+# Face capture queue (P95): team photographs sent without choosing the worker; see face_queue.py.
+@frappe.whitelist(methods=['POST'])
+def face_capture(payload):
+    from erpnext_drive_integrations.custom_hr import face_queue
+    return face_queue.add(data(payload))
+
+
+@frappe.whitelist()
+def face_queue_pending(site):
+    from erpnext_drive_integrations.custom_hr import face_queue
+    return face_queue.pending(site)
+
+
+@frappe.whitelist()
+def face_queue_mine(site):
+    from erpnext_drive_integrations.custom_hr import face_queue
+    return face_queue.mine(site)
+
+
+@frappe.whitelist(methods=['POST'])
+def face_queue_resolve(name,employee,work_mode='Not applicable',asset=None,remarks=''):
+    from erpnext_drive_integrations.custom_hr import face_queue
+    return face_queue.resolve(name,employee,work_mode,asset,remarks)
+
+
+@frappe.whitelist(methods=['POST'])
+def face_queue_reject(name,reason):
+    from erpnext_drive_integrations.custom_hr import face_queue
+    return face_queue.reject(name,reason)

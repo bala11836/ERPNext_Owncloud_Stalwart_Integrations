@@ -97,7 +97,16 @@ because production stacks are promoted one by one and nothing listed what a merg
   reports the stack as **behind** when a file it owns changed between that commit and
   `main`, **not on main** when it runs another branch, and **unknown** when its commit
   cannot be read. It also compares served pages with local files (for example the landing
-  page or ERP favicon). For assets in a live container, specify its name as
+  page or ERP favicon). **Mounted runtime files (P99):** it finds every read-only file or
+  folder the running containers mount from a runtime `mounts/` folder that is made from a
+  repository file (`tools/runtime_mounts.py`; data, secrets and writable mounts are never
+  read). A mount is **equal to main** when its bytes equal main's file, or when it matches
+  its deployment record (`mount-record.json`, written by `tools/prepare_runtime.py` or by
+  `tools/runtime_mounts.py record` after a one-file promotion) and its source is unchanged on
+  main since the recorded commit; such a file no longer makes its stack "behind". It is
+  **behind** when the recorded source changed on main, **changed by hand** when the file
+  differs from its record (both are drift), and **not compared** when there is no record.
+  The nightly unit first updates the check's own checkout to `main` (`ExecStartPre`). For assets in a live container, specify its name as
   `container` and the absolute path as `file`. Signals: exit 0 clean, 1 a check
   could not run, 2 drift. The service produces a journal line and
   `/var/lib/cloud-drift-check/status.json`. Settings example:

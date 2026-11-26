@@ -41,11 +41,15 @@ merged it. Security fixes come before features.
    container logs).
 7. **Promote every stack in the plan**, not only the ERP: build where the plan says, render and redeploy, run the
    setup steps, apply the live settings, restart what it names. For the ERP, plan about 20 minutes extra when the
-   core image has to be rebuilt.
+   core image has to be rebuilt. A full render (`tools/prepare_runtime.py`) records every mount it writes
+   (`mount-record.json` in the runtime folder). **When you replace one mounted file by hand** (a one-file
+   promotion, as P97 did), record it right after: `python3 tools/runtime_mounts.py record --runtime RUNTIME
+   --mount NAME --commit SHA` (SHA: the main commit the file came from).
 8. **Check what test could not cover**, right after promotion: a browser and protocol check of the affected apps
    (production-only route files, sign-in).
 9. **Drift check.** Run `tools/drift_check.py` on production with its config. Every stack must be clean (exit 0).
-   The release is not finished while it reports drift.
+   The release is not finished while it reports drift. It also compares the mounted runtime files (P99): a file
+   "changed by hand" or "behind" is drift; "not compared" means no record yet (listed, not a failure).
 10. **Record**, in the same session: the release entry (tested commit, rollback point, what test could not
     cover, checks run, failed or skipped checks), the event receipt, the work item's status, and the handover.
 11. **Owner's browser check** of the main sites, when the release changes what users see.

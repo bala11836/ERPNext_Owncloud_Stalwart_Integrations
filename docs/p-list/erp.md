@@ -232,3 +232,49 @@ the navigation/configuration to its previous state must not undo legitimate
 business transactions or later independent changes. Validate on permanent test
 before promoting the same revision to production.
 Reference: https://docs.frappe.io/framework/user/en/python-api/hooks
+
+### P95 — Face recognition for field team attendance
+
+**App:** erp · **Also touches:** mobile, signin, test-site · **State:** open
+
+**Why (owner, 26 November 2026):** field workers often have no phone or app account of their own. The supervisor
+should mark the team's attendance just by photographing each person: no selecting the employee first; the app
+recognises the face, clears that person's attendance and the supervisor moves on to the next one. Self check-in by
+people with the app uses the fingerprint instead (P82), so this item covers only team attendance.
+
+**What (owner decisions, 26 November 2026):**
+- **No team faces on the supervisor's phone.** Face data lives on our server only.
+- **Bulk onboarding:** HR (or the project manager) enrols each field worker with one good phone, checked against the
+  worker's ID: several angles (front, left, right, up, down) on video. True 3D needs a depth sensor, which only
+  iPhones have; on Android it is several 2D views. The server keeps encrypted face templates (numbers), not the
+  photos (agent recommendation; a model change then needs re-enrolment).
+- **Liveness on the phone, matching on the server:** on the supervisor's phone, offline and free, MediaPipe Face
+  Landmarker follows the head turn and a blink (its 3D is estimated from the picture, not measured) and a photo and
+  screen check (Silent-Face) catches paper and screens on the spot; the phone holds no one's face data. The server
+  matches each capture with SFace against the workers rostered on that site and shift only (more accurate than the
+  whole company) and re-checks the uploaded frames in case a tampered app fakes the liveness result.
+- **Uncertain matches:** with connection, the supervisor picks from the 2–3 closest names on the spot, marked for
+  the project manager. **Offline:** the app saves each capture encrypted with GPS and the phone's time and shows
+  "queued"; the server recognises it when the phone is back online; uncertain or unmatched captures go to the
+  project manager, who clears the offline queue. The existing approval of all attendance by the site's approvers
+  (decision of 22 November) stays.
+- **Consent:** an agreement is shown and accepted at onboarding: a separate tick box, in a language the worker can
+  read, with withdrawal possible. Workers who refuse or withdraw keep an attendance path without a face (the
+  supervisor marks them and the project manager approves). Face data is deleted when a worker leaves.
+- **Legal:** development goes ahead; a lawyer's opinion under India's DPDP Act (consent, or the employment
+  "legitimate use" of section 7; notice; retention; protection) is obtained **before launch**. Build so the face
+  store can be moved or switched off if the opinion asks for it. Until launch, test only with synthetic data or
+  staff who have signed consent.
+
+**Before adoption (working agreements):** check licence, maintenance and security history of MediaPipe
+(reported Apache-2.0), SFace (OpenCV Zoo, reported Apache-2.0) and Silent-Face-Anti-Spoofing (reported Apache-2.0,
+not updated for a few years). The best-known free face models (InsightFace) are for non-commercial use only and are
+not used. Record the results in the decision log.
+
+**First step:** the licence and maintenance checks above, then a trial on test with synthetic faces: enrolment,
+liveness on two phone models, server matching against a small roster, online pick and offline queue.
+
+**Related:** P24 (field attendance pilot), P50 (the app, offline captures), P82 (onboarding, biometric sign-in,
+self check-in without a selfie), P96 (SOPs: bulk onboarding, consent, leavers, offline queue).
+
+**Status:** open; decided 26 November 2026; nothing built.

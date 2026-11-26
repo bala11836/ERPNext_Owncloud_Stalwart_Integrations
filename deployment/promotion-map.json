@@ -123,7 +123,7 @@
     },
     {
       "name": "Host checks and watches",
-      "paths": ["tools/host_check.py", "tools/render_host_checks.py", "deployment/host-checks.example.json", "tools/editor_safety.py", "integrations/onlyoffice/editor-safety.*", "tools/upstream_watch.py", "deployment/upstream-watch*", "tools/drift_check.py", "deployment/drift-check.*", "integrations/backup/**", "integrations/monitoring/**", "tools/export_snapshot.py", "tools/backup_to_snapshot.py", "tools/snapshot_archive.py"],
+      "paths": ["tools/host_check.py", "tools/render_host_checks.py", "deployment/host-checks.example.json", "tools/editor_safety.py", "integrations/onlyoffice/editor-safety.*", "tools/upstream_watch.py", "tools/upstream_posts.py", "deployment/upstream-watch*", "tools/drift_check.py", "deployment/drift-check.*", "integrations/backup/**", "integrations/monitoring/**", "tools/export_snapshot.py", "tools/backup_to_snapshot.py", "tools/snapshot_archive.py"],
       "stacks": ["host"],
       "steps": ["update the installed copy on each server that runs it (host checks, editor safety, upstream watch, drift check, backup, snapshot export)"]
     },
@@ -141,7 +141,7 @@
     },
     {
       "name": "No running stack (documents, tests, checks, operator tools)",
-      "paths": ["*.md", "**/*.md", "LICENSE", ".github/**", ".gitignore", ".gitattributes", ".dockerignore", "modules.json", "docs/**", "tests/**", "tools/check_repository.py", "tools/check_client_identity.py", ".client-identity-fingerprints", "tools/run_unit_tests.py", "tools/refresh_editor_original.py", "tools/refresh_webmail_overlay_base.py", "integrations/onlyoffice/upstream.json", "tools/promotion_plan.py", "tools/archive_container_logs.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "deployment/runtime.example.json", "deployment/promotion-map.json", "integrations/onlyoffice/sheetview_sanitize.py", "integrations/onlyoffice/editor-wopi.original.ejs", "integrations/authentik/invite-recovery/test_*", "integrations/authentik/invite-recovery/smoke_*"],
+      "paths": ["*.md", "**/*.md", "LICENSE", ".github/**", ".gitignore", ".gitattributes", ".dockerignore", "modules.json", "docs/**", "tests/**", "tools/check_repository.py", "tools/check_client_identity.py", ".client-identity-fingerprints", "tools/open_source.py", "tools/run_unit_tests.py", "tools/refresh_editor_original.py", "tools/refresh_webmail_overlay_base.py", "integrations/onlyoffice/upstream.json", "tools/promotion_plan.py", "tools/archive_container_logs.py", "tools/initialize_erp.py", "tools/migrate_asset_references.py", "tools/verify_erp_assets.py", "deployment/runtime.example.json", "deployment/promotion-map.json", "integrations/onlyoffice/sheetview_sanitize.py", "integrations/onlyoffice/editor-wopi.original.ejs", "integrations/authentik/invite-recovery/test_*", "integrations/authentik/invite-recovery/smoke_*"],
       "stacks": []
     }
   ]

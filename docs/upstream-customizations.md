@@ -1327,7 +1327,7 @@ Found on 26 November 2026 and reported to the owner; none of them is changed by 
   is not pinned or watched), HRMS-5 (retired launcher script).
 - **WhatsApp:** fixed in P92 (correction note in `docs/decisions.md`: the wrapper is
   planned under P04, not built; WhatsApp is not installed).
-- **Upstream reports:** filed 26 November 2026: owncloud/ocis#3832 (comment),
+- **Upstream reports** (now tracked with every check and follow-up in `docs/upstream-posts.md`): filed 26 November 2026: owncloud/ocis#3832 (comment),
   ONLYOFFICE/DocumentServer#3954, coollabsio/coolify#12667, frappe/frappe#48437
   (comment), shridarpatil/frappe_whatsapp#257 (comment on the open signature-check
   fix), goauthentik/authentik#16049 and #14304 (comments), #28187 and #28188 (new

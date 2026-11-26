@@ -22,6 +22,105 @@ discussion that led to a decision is not repeated here.
 - **Where:** `erpnext_drive_integrations/custom_hr/face.py`, `face_service.py`, `face_engine.py`, the two DocTypes,
   `api.py` (`face_enrol`, `face_identify`, `face_withdraw`), `tests/test_custom_hr_face.py`, the module README.
 
+### One list of the open-source projects we use, credited and tracked in step (P35)
+
+- **Decision:** every open-source project we use, borrow code from or evaluate is in `docs/open-source.json` with
+  its repository, licence, where we use it and how we track it. The README acknowledgements and
+  `docs/open-source.md` are generated from it, and a test fails when a component the upstream watch follows, or an
+  upstream named in `modules.json`, is missing from the list (or the other way round). Projects under evaluation
+  are listed but not credited as used; they are credited and tracked in the pull request that adopts them.
+- **Why:** owner, 26 November 2026: we rely on many open-source projects (microG is being evaluated now) and must
+  credit them and follow their repositories. The README thanks had fallen behind the daily watch (the monitoring
+  stack, backup tools, CoreDNS, frappe_docker, the hosts' software), because the two lists were kept apart. The
+  first list also found that ownCloud Web's repository was archived on 23 November 2026 and that ocis-konnectd has
+  been archived since 2020.
+- **Where:** `docs/open-source.json`, `tools/open_source.py`, `tests/test_open_source.py`, `README.md`, `AGENTS.md`.
+
+### Every upstream post is listed and checked for replies until we stop using that project (P35)
+
+- **Decision:** our bug reports, feature requests, comments and workarounds on other projects are listed in
+  `docs/upstream-posts.json` with a log of every check and follow-up. `tools/upstream_posts.py check` (read-only)
+  reports replies, state changes and threads the account posted on that the list lacks; it runs at every session
+  start and inside the daily upstream watch. A post stops being watched only when we no longer use the project, with
+  the reason. Private reports stay in the private companion.
+- **Why:** owner, 26 November 2026: a post is only useful if someone reads the answer; a maintainer replied to our
+  Collabora findings two days before anyone noticed, and a Coolify bug we reported was fixed the same day. The rule
+  is in the working agreements for every project.
+- **Where:** `tools/upstream_posts.py`, `docs/upstream-posts.json` and `.md`, `tools/upstream_watch.py`,
+  `AGENTS.md`, `tests/test_upstream_posts.py`.
+
+### Computer sign-in by QR runs through our own app on every phone, keeping the Bluetooth check (P82)
+
+- **Decision:** ERP Mobile carries out the standard QR-and-Bluetooth computer sign-in (FIDO hybrid) itself, on
+  every Android version, instead of relying on Android 14's passkey-provider service. The Bluetooth nearness check
+  and the browser's origin check stay; an approval-only QR without them stays refused (25 November).
+- **Why:** owner, 26 November 2026: staff with phones below Android 14 must be able to sign in on a computer too.
+  The alternatives were app-only use on older phones, or counting the affected staff first. One route on every phone
+  also means one way to test and support. Cost: about 4 to 6 weeks plus the review.
+- **Where:** P82 in the P list; the Android trial verifies the tunnel service, Bluetooth on our phone brands and
+  attestation through this route.
+- **Temporary (owner, same day):** few phones below Android 14 remain, and in about a year there will probably be
+  none. The app reports each phone's Android version, the admin sees how many active phones are below 14, and when
+  none are left the route is retired, after which phones use Android's own provider route. The add-on is kept
+  separate and removable so that retiring it is a switch.
+- **Relay (owner, same day):** our route uses the public relay the standard names, run by Google, for the trial and
+  for real sign-ins until the add-on is retired; no relay of our own is built. The relay sees only encrypted data.
+  Accepted: no agreement with Google, which can change or stop the service (fallback: our own relay, or app-only use
+  on older phones). Before any real sign-in, the route's encryption code is reviewed by an AI agent in the role of
+  a senior security analyst, not by an outside expert (owner, same day): **Codex** (OpenAI), a different model from
+  the Claude agent that wrote it. Accepted: no independent human review. The review is done in a separate session
+  from the code and the standard, with the standard's test cases and live checks against Chrome, well-reviewed
+  libraries for the encryption, and a written report with the owner's acceptance. Codex works under the working
+  agreements, with no production keys or secrets. Planned for the week of 30 November 2026; P82 stays open for it.
+
+### Office computers are bound by company certificates, not authentik's paid stage (P82)
+
+- **Decision:** each office computer gets a certificate from our own certificate authority (smallstep step-ca); the
+  proxy requires it on the host names computers use and passes it on; a free authentik expression policy checks it
+  against an allow-list the admin manages (list and remove computers). The phone app's host names stay without it.
+- **Why:** owner, 26 November 2026: only free tools. authentik's client-certificate stage is Enterprise and its
+  Endpoint Devices is a preview; the alternatives checked either bind only the network path (Headscale, kept as a
+  later complement), rely on self-reported passkey types (Windows Hello), or need paid editions (Pomerium device
+  approval, Teleport, NetBird). Certificates bind every request to a key that cannot be copied off a Windows PC.
+- **Where:** P82 in the P list; to build and verify on test first.
+
+### Unused-key grace days are set per group by the admin; leavers are removed from the Frappe HR exit (P82, P95)
+
+- **Decision:** the admin sets how many unused days each authentik group allows before the sign-in server removes a
+  key (7 when not set), including the Apple exception group. The exit procedure in Frappe HR (separation, status
+  Left) triggers removal of the person's keys, devices and sessions and purges their data in the app; face templates
+  are deleted with it.
+- **Why:** owner, 26 November 2026: one fixed period does not suit every group; leaving must close every way in
+  without depending on someone remembering each app.
+- **Where:** P82 and P95 in the P list; SOP A14 (`docs/sop/README.md`).
+
+### Face model: build on SFace now; the legal opinion and the training-data question are settled before production (P95)
+
+- **Decision:** the face engine uses OpenCV Zoo's SFace (fp32) with the YuNet detector, run by OpenCV on the server.
+  The unanswered question of which dataset trained the published SFace weights was added to the existing upstream
+  issue (opencv/opencv_zoo#313). The residual risk, and the lawyer's opinion, are settled before the app is
+  connected to production; development and tests go ahead.
+- **Why:** owner, 26 November 2026. SFace's code and weights are Apache-2.0 (rare among face models; InsightFace's
+  free models are non-commercial only), but its training data is not documented.
+- **Where:** P95 in the P list; `custom_hr/face_engine.py`.
+
+### The admin receives the alerts, and sees alerts and exceptions in a Desk widget (P72, P53)
+
+- **Decision:** monitoring, backup and sign-in exception alerts go to the admin. The person with authentik admin
+  rights also gets a Desk widget listing them, each linked to where it is handled (scope added to the parked P53).
+- **Why:** owner, 26 November 2026: alerts nobody watches are no alerts; the admin is the one who acts on them.
+- **Where:** P72 and P53 in the P list; SOP F5.
+
+### ERP Mobile keys not used for 7 days are removed by the sign-in server (P82)
+
+- **Decision:** the sign-in server removes a person's ERP Mobile passkey when it has not been used for 7 days; the
+  person onboards again (project manager, then admin). The app reports the removal and deletes its own copy.
+- **Why:** owner, 26 November 2026: a safety net for phones that are lost, left in a drawer or passed on without
+  anyone reporting it. It runs on the server because the server knows each key's last use and a switched-off phone
+  cannot act. Accepted cost: anyone away for more than 7 days onboards again; the period can be lengthened (14 or 30
+  days) if that is too frequent.
+- **Where:** P82 in the P list (`docs/p-list/signin.md`); the onboarding SOP (`docs/sop/`); not built yet.
+
 ### Onboarding through the project manager and the admin; strong biometrics only; 5 misses erase the key (P82)
 
 - **Decision:** a person requests access in ERP Mobile (mail address, mobile number, a face photo for the identity

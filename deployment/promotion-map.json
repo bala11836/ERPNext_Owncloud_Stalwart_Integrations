@@ -96,6 +96,12 @@
       "not_covered": "Test Authentik covers the isolated issuer; production provider mappings, mail transport and production recovery require separate validation."
     },
     {
+      "name": "Mail archive reader sign-in (operator tool, P69)",
+      "paths": ["integrations/authentik/archive-reader/**"],
+      "stacks": [],
+      "live": ["run archive-reader/archive_reader_access.py in ak shell (plan, apply with a receipt, check) on the instance whose mail applications should admit the reader"]
+    },
+    {
       "name": "First administrator (operator tool, P77)",
       "paths": ["integrations/authentik/first-admin/**"],
       "stacks": [],

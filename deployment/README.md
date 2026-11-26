@@ -123,6 +123,8 @@ section example: `deployment/host-checks.example.json`; tests:
 
 ## Upstream watch (P62)
 
+**Proxy image (P90).** Coolify writes its proxy as `traefik:v3.x`, a tag that moves with every release. `deployment/coolify-proxy.json` pins the Traefik image by tag and digest; `tools/coolify_proxy_image.py --restart` (on the host, as root) writes it into Coolify's saved proxy configuration and the compose file (keeping a copy), pulls it, recreates the proxy and reattaches its networks; `--check` reports the running version. Keep the upstream watch profile's `traefik` version equal to the pin.
+
 `tools/upstream_watch.py` runs once a day and reports what is new upstream for
 everything we pin. It never upgrades anything: an upgrade is a normal branch,
 test, merge and production change that the owner takes up.

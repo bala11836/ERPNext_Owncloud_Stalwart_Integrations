@@ -437,18 +437,21 @@ Android ID: owner chose `in.unformat.erp` (the app's web address written reverse
     is our own relay (an option the colleague described) or app-only use on older phones.
   - **Still a gate (from the colleague's report):** the trial code has never talked to a real computer and is
     encryption code written in one sitting. It is fit for a trial with a test passkey on a demo website only.
-  - **Security review (owner, 26 November 2026, late evening):** instead of an outside expert, Claude in the role
-    of a senior security analyst reviews and verifies the route before any real sign-in uses it. **Accepted by the
-    owner:** no independent human review. Agent's caution, recorded: the code was also written by a Claude agent, so
-    the reviewer may share its blind spots, which matters most in hand-written encryption code.
-    **How the review is done (agent's recommendation; owner to confirm):**
+  - **Security review (owner, 26 November 2026, late evening):** instead of an outside expert, an AI agent in the
+    role of a senior security analyst reviews and verifies the route before any real sign-in uses it; **the owner
+    deploys Codex (OpenAI's coding agent) for this job**, a different model from the Claude agent that wrote the
+    code, which answers the concern about shared blind spots. **Accepted by the owner:** no independent human
+    review. Setting Codex up under the working agreements: its entry point must load the working agreements and this
+    project's `AGENTS.md` (verify on that computer); Claude Code's hooks and secret guard do not apply to Codex, so
+    it gets no production keys or secrets for this job; it reviews the public mobile module and the standard only.
+    **How the review is done (agent's recommendation, confirmed by the owner's "ok"):**
     1. A separate session, not the one that wrote the code, reviews it from the code and the standard alone, with
        the task of breaking it.
     2. Evidence beyond reading: the standard's published test cases pass; a real Chrome on a computer completes
        sign-ins and refuses tampered ones; the encryption uses well-reviewed libraries wherever possible instead of
        our own code.
     3. A written report in the pull request (what was checked, found and fixed) and the owner's written acceptance
-       of the remaining risk.
+       of the remaining risk. Fixes go back through the usual branch and review; Codex checks the fixes too.
 - **microG (being evaluated by the colleague, 26 November 2026):** listed as "evaluating" in public
   `docs/open-source.json` (P35). Record the adoption check here (licence: Apache-2.0 per its repository; maintenance;
   security history; how fixes are published) and in the decision log, whether adopted or not; if adopted, credit

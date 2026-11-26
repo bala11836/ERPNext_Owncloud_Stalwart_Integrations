@@ -70,6 +70,21 @@ private repository; agents working here follow them. The essentials, binding in 
    and record it in `docs/decisions.md`. Read the latest upstream-watch digest (P62) when it exists;
    security fixes for what we run come before new features unless the owner decides otherwise.
 
+# Branding and client identity (owner, 26 November 2026)
+
+- **Our own Unformat branding is public** and the default look; deployments replace it through their
+  profile or build settings (P85).
+- **A client's identity is never in this repository:** its name in every form (short, legal,
+  abbreviation), logo, favicons, domains, mail addresses, people, documents and data. Not in code,
+  tests, fixtures, comments, file names, commit messages or pull request text. Code and tests read
+  such values from the private deployment profile and work with neutral defaults without it.
+- **Checked automatically:** `tools/check_client_identity.py` runs on every push and pull request
+  (files, file names, pull request title and description, commit messages). The repository holds
+  only fingerprints (`.client-identity-fingerprints`); the list of identifiers stays private. To add a
+  client, generate its fingerprints from the private list (`--make`) and commit only those lines.
+- If a client identifier reaches this repository, tell the owner at once and remove it; the owner
+  decides whether the history is rewritten.
+
 # Project principles (owner, 17 November 2026)
 
 These are nonnegotiable and apply to this and all future projects:

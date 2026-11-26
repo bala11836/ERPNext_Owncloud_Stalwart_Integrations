@@ -6,6 +6,24 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-26
 
+### Client identity stays out of the public repository, checked by fingerprints (P84)
+
+- **Decision:** a client's name in every form, logo, domains, mail addresses and people never appear in this
+  repository. `tools/check_client_identity.py` fails a push or pull request when one appears in a file, a file
+  name, the pull request title or description, or a commit message. Only fingerprints (SHA-256 of each
+  identifier with a fixed prefix) are stored here; the plain list stays in the private operations repository.
+  Identifiers of 6 or more characters are found inside longer names too; shorter ones only as whole words, so
+  hashes in lock files cannot match by chance. The two places that named the client (a front-page test and the
+  test-data rehearsal's mail audit) now use the check or read the domains from the private worker profile
+  (`audit_mail_domains`). Our own Unformat branding is public (P85). The history keeps the earlier lines; the
+  owner chose to clean the current files only.
+- **Why:** the owner's norm for all projects (26 November 2026): our brand is public, a client's identity is
+  not. A plain list of client names in a public check would itself publish them, and a check that needs a
+  secret would not run on pull requests from forks. Fingerprints of short names can be guessed by trying
+  words; this is accepted, as the check is a guard against accidents, not a secret store.
+- **Where:** `tools/check_client_identity.py`, `.client-identity-fingerprints`, `.github/workflows/check.yml`,
+  `tests/test_client_identity.py`, `tools/rehearse_cripple.py`, `AGENTS.md`, `CONTRIBUTING.md`.
+
 ### No offline web app: offline work is built in the native mobile app (P23 closed, P50)
 
 - **Decision:** the planned offline and poor-connection behaviour for the web portal (installable web app with

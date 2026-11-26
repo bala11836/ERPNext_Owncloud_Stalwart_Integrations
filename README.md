@@ -50,6 +50,7 @@ replica from the provider/device and future-feature work.
 Use Python 3.14 in the matching ERP image:
 
     python tools/check_repository.py
+    python tools/check_client_identity.py
     python tools/run_unit_tests.py
 
 Never run invitation/native migration smoke scripts against production without their documented rollback/mock requirements. Feature and permission tests are separate from actual-device acceptance.

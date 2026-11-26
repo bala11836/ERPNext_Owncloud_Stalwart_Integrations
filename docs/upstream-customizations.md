@@ -520,7 +520,7 @@ Made against: v16.60.0 (`1b2d7e0`). See also FRAPPE-5, -7, -8.
   Job Offer is enabled.
 - **Upgrade:** **re-check** the button on a Job Offer.
 - **Tests:** `tests/test_hook_asset_paths.py` (every script a hook names must exist).
-- **Fixed in P90:** the hook pointed at `client/request_response.js`, which does not
+- **Fixed in P93:** the hook pointed at `client/request_response.js`, which does not
   exist, and Frappe skips a missing file without an error, so the button never
   loaded.
 
@@ -1272,7 +1272,7 @@ Made against: 3.4.2.
 
 Found on 26 November 2026 and reported to the owner; none of them is changed by P89.
 
-- **HRMS-4:** fixed in P90.
+- **HRMS-4:** fixed in P93.
 - **OFFICE-1, WEBMAIL-1, BUILD-1, INSIGHTS-1:** fixed in P91 (each check now fails
   loudly on a changed upstream file, image or commit).
 - **Upstream watch:** fixed in P91 (`workaround` notes for every app with entries here;

@@ -1,4 +1,4 @@
-"""P90: every script or style a hook names must exist in the app.
+"""P93: every script or style a hook names must exist in the app.
 
 Frappe skips a missing `doctype_js` file without an error, so a wrong path only
 shows up as a button that never appears (the Job Offer "Request response" button,

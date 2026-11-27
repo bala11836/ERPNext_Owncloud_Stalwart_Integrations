@@ -32,6 +32,25 @@ discussion that led to a decision is not repeated here.
 - **Where:** the native app (`mobile-native`, PR #114) for the lock, offline window and cache; P82 sign-up; P04
   (WhatsApp); P106 (video upload, to build).
 
+### Face enrolment: also the worker's own supervisor or engineer; the agreement in English, other languages on choice (P95)
+
+- **Decision:** besides HR, a Field Attendance Manager and the project manager of the worker's site, the worker's own
+  supervisor (the responsible supervisor on their Field Worker Assignment) and the engineer assigned to that
+  supervisor at that site may enrol a face and record a withdrawal. Another team's supervisor or engineer is refused.
+  The face attendance agreement opens in English; the worker may choose to read a translation in the language of
+  their choice, and the language they read is recorded with their consent (as before, every acceptance records the
+  agreement version and language). If a translation and the English differ, the English version governs, and the
+  agreement tells the worker so. By ticking "I agree" the worker also confirms that the person enrolling them
+  explained the terms in a language they understand; the consent record names that person and the language.
+- **Why:** owner, 27 November 2026, answering the native app's request on PR #114. Supervisors and engineers are the
+  ones at the site with the team, so enrolment does not wait for HR or the project manager to visit. Limiting it to
+  the worker's own team keeps it to people who know the worker; the consent record names who recorded it, and the
+  project manager looks over new enrolments (SOP). English as the default with a free choice of translation keeps one
+  reference text and still lets every worker read it in a language they understand.
+- **Where:** `custom_hr/face_service.py` (`may_enrol`, `require_enroller`), `tests/test_custom_hr_face_enrolers.py`,
+  `custom_hr/face_queue_integration_tests.py` (part 6), the module README, `docs/sop/field-face-enrolment-and-consent.md`,
+  `docs/sop/face-attendance-agreement.md` (draft 2), `docs/sop/README.md`.
+
 ### Face attendance has an off switch, and it is off unless the site turns it on (P95)
 
 - **Decision:** every face function that takes in or uses a face (enrolment, identification, the capture queue's

@@ -207,7 +207,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P47 | Company website as the front door of the app portal | [Portal (eZone)](p-list/portal.md) | none · **State:** in progress | in progress |
 | P48 | Remote branch router and gateway firewall | [General](p-list/general.md) | none · **State:** blocked | blocked |
 | P49 | Bring production's sign-in pages and templates into the repository | [Sign-in](p-list/signin.md) | none · **State:** open | open |
-| P50 | Native mobile app for phones and tablets (module `mobile-app`) | [Mobile](p-list/mobile.md) | none · **State:** open | open |
+| P50 | Native mobile app for phones and tablets (modules `mobile-app` and `mobile-native`) | [Mobile](p-list/mobile.md) | none · **State:** open | open |
 | P51 | Data refresh runs at 8 pm, not on demand | [Test site](p-list/test-site.md) | none · **State:** open | open |
 | P53 | Desk: day-planning widgets and dashboards from all apps | [Portal (eZone)](p-list/portal.md) | signin, mail, drive, dms · **State:** parked | parked |
 | P54 | Branch deploy button for the "developer" group on the test site | [Test site](p-list/test-site.md) | none · **State:** blocked | blocked |

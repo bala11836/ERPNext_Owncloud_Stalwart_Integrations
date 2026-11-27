@@ -35,7 +35,9 @@ tap leads to a finished screen. This folder currently holds the foundation every
   light sensor (strongest contrast, larger and heavier type), automatic by default and switchable by the person.
   Wallpaper colours are deliberately not used: a status colour must mean the same on every phone. 56 dp touch
   targets, status always as a mark and words, edge to edge with readable system bar icons in every look, no white
-  flash at start in night mode. A frame that shows a bottom bar on phones and a side rail on tablets, and three
+  flash at start in night mode. The app's icon is its own mark, a white key on the accent colour, as one drawing
+  for every phone's icon shape and for themed icons; Android 12 and newer show it on the page colour while the
+  app starts (Android 9 to 11 show the plain page colour). A frame that shows a bottom bar on phones and a side rail on tablets, and three
   finished screens: **Data trace** (list and detail; side by side on a tablet), **This phone** (fingerprint sensor,
   secure chip, Android version, checked for real) and **Display** (the look in use and the two Outdoor switches).
 - **Building blocks with rules built in** (`Parts.kt`): a plain status line cannot be tapped and must not name an
@@ -152,6 +154,8 @@ Our own code, AGPL-3.0-or-later like the repository. Libraries (all Apache-2.0 u
 (JetBrains), Jetpack Compose (BOM 2026.09.00: UI, Material 3, adaptive navigation suite), AndroidX Activity
 1.12.4 and Biometric 1.1.0, the Android Gradle plugin 9.2.1; for tests only: JUnit 4.13.2 (EPL-1.0), Robolectric
 4.18 (MIT) and Compose's UI test library.
+
+The icons and the app's mark are simple line drawings made for this app (our own work, same licence).
 
 ## AI-assisted development
 

@@ -5,4 +5,6 @@
         <item name="android:windowBackground">@color/start_ground</item>
     </style>
     <color name="start_ground">#F4F7FB</color>
+    <!-- The icon's ground: the accent of the day look, the same on every phone and in night mode. -->
+    <color name="icon_ground">#0B4F9E</color>
 </resources>

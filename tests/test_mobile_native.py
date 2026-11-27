@@ -20,6 +20,20 @@ class MobileNativeTests(unittest.TestCase):
         self.assertIn('minSdk = 28', build)
         self.assertEqual((APP / 'res/values/strings.xml').read_text(encoding='utf-8').count('>ERP<'), 1)
 
+    def test_the_icon_is_our_own_neutral_mark_in_the_accent_colour(self):
+        manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
+        self.assertIn('android:icon="@mipmap/ic_launcher"', manifest)
+        icon = (APP / 'res/mipmap-anydpi/ic_launcher.xml').read_text(encoding='utf-8')
+        for layer in ('<background android:drawable="@color/icon_ground"', '<foreground ', '<monochrome '):
+            self.assertIn(layer, icon)
+        themes = (APP / 'res/values/themes.xml').read_text(encoding='utf-8')
+        palette = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Palette.kt').read_text(encoding='utf-8')
+        self.assertIn('<color name="icon_ground">#0B4F9E</color>', themes)
+        self.assertIn('0x0B4F9E', palette, 'the icon ground is the accent of the day look')
+        # Vector drawings only: no picture files that could carry a brand.
+        pictures = [p.name for p in (APP / 'res').rglob('*') if p.suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp')]
+        self.assertEqual(pictures, [])
+
     def test_nothing_leaves_the_phone_by_backup_or_screenshot(self):
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
         self.assertIn('android:allowBackup="false"', manifest)

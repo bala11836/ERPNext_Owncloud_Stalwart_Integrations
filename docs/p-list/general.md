@@ -1,6 +1,6 @@
 # General: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 27 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -12,11 +12,23 @@ Part of the P list: back to the [index and priority order](../p-list.md). Items 
 
 ### P11 — Certificate issuance and renewal acceptance
 
-**App:** general · **Also touches:** none · **State:** open
+**App:** general · **Also touches:** none · **State:** in progress
 
-**Status:** current HTTPS validation passes; ERP/SSO automation is configured, but renewal/individual issuance has not been accepted.
+**Status (27 November 2026):** **issuance done on production.** Every public name has its own Let's Encrypt certificate
+from Traefik (to 25 February 2027). Production names use the HTTP challenge, with challenge routes above every port-80
+route. The relayed test names use the `letsencrypt-tls` resolver (TLS-ALPN), so the test host keeps renewing its own
+certificates through the port-80 relay. The copied wildcard is no longer loaded. Records: release log 27 November,
+receipts `p11-production-challenge-routes-662aaf9` and `p11-production-own-certificates-662aaf9`; public #126 and #128.
 
-ERP, SSO, Drive and Respond currently present certificates expiring **30 January 2027**. Confirm the active renewal mechanism covers all four names, issue/renew through the intended configuration, and verify the served certificate afterwards. Office, Mail and DMS currently have February 2027 expiries. Do this before the January expiry; no reminder has been scheduled.
+- **Left to accept:**
+  - the first automatic renewal, due about 26 January 2027 (check the dates in the HTTPS probe);
+  - Stalwart's own `mx` certificate renewing before 11 February;
+  - the test host's own certificates renewing (from 9 February).
+- **Clean-up:** remove the copied certificate files from the proxy folder after a week (the rollback set keeps a copy);
+  then delete register PROXY-P5.
+- **Notes:** the HTTPS probe's failures still reach nobody (P72, separate decision). `docs` has no DNS record (its
+  certificate will lapse; harmless if unused). mx on 443 serves Traefik's default certificate (no HTTPS route asks for
+  it).
 
 ### P13 — Remaining users, app permissions and worker enrollment
 
@@ -354,6 +366,40 @@ another start-at-boot guarantee), then reproduce with a reboot of the test VM to
 back, on test and production, with an alert that does not depend on Prometheus;
 (8) check the other stacks for services that stop as fast (same risk); (9) the reboot drill list names the
 monitoring stack.
+
+**Follow-ups 6 to 9 built and tested on the test VM (owner's go, 26 November 2026, night; public PR #112, receipt
+`p57-test-boot-counts-containers-f971f54`):**
+- **Cause:** not reproduced. A reboot of the test VM brought back throwaway copies of Prometheus with
+  `unless-stopped`, `always`, and `unless-stopped` with a slow stop. Production could not be read from this session.
+  So the fix does not depend on the cause.
+- **Fix:**
+  - The watch saves the running containers. After a reboot the boot check starts each one that ran before
+    (`always` or `unless-stopped`) and is still down after a minute, once, and fails on anything still down.
+  - It mails the admin through a dedicated sender when it repaired or failed something.
+  - The monitoring stack uses `restart: always`.
+  - Exporter-only hosts remove the central containers instead of keeping them stopped. On the test VM the four
+    pilot leftovers were removed; their volumes are kept.
+- **Second reboot with the fix:** the boot check started a deliberately lost container once (76 s after boot) and
+  passed.
+- **Follow-up 8 (other stacks):** on test every container with a restart policy came back. The boot check's start
+  now covers any stack that does not.
+- **Follow-up 9:** the reboot checklist names the monitoring stack.
+- **Open:**
+  - Production promotion (host check, monitoring policy) and the dedicated SMTP-only alert sender on production
+    mail with the admin as recipient. Both need production access and the owner's go.
+  - The restart watch reports the editor bridge's normal start-up retries after every boot (small follow-up).
+- **Merged** as `f5ac9ec` (PR #112, 26 November 2026, 18:30 UTC). **On production** since 26 November 19:07 UTC (owner's go, 27 November IST).
+
+**Production (owner's go, 27 November 2026, IST; release log of that night):**
+- Boot check from `f5ac9ec` installed; monitoring stack on `restart: always` without a restart; boot check by hand passed.
+- Dedicated SMTP-only alert sender `smtp-host-alerts` created on production mail (send-as `noreply`, allowed only from
+  the VPS's tailnet address); recipient: the owner's mailbox (owner's choice). No mail sent yet.
+- **Follow-up 10 (found during the promotion; owner chose the repository fix):** the VPS cannot reach its own mail
+  server under the certificate's name. Public PR **#117** adds `host_checks.alert.address` (connect to the tailnet
+  address, certificate still verified for the name); on the test VM at `84c578e`, CI passed. **Done:** merged as
+  `e82f0f2`; on production from main `b4fdae5` (26 November 19:19 UTC): alert section and Prometheus (owner: yes) in
+  the boot check, one test alert mailed to the owner; **the owner confirmed it arrived** (27 November).
+- Not covered: a production reboot with the new check (proven on the test VM).
 
 ### P62 — Daily upstream watch: new releases, security flaws, patches, upgrade decisions
 
@@ -921,6 +967,18 @@ unrecorded dms render is incident `incident-dms-unrecorded-render-fdf4a43`).
 - **identity-support:** behind main (18 files, e.g. `deployment/stacks/inputs.json`).
 - **website:** behind main (3 files); with the P85 brand defaults once #87 is merged (production supplies its own
   branding, so no visible change).
+
+- **mail (found 26 November 2026, night):** behind main by 2 files plus the three rendering tools: P91's build-time
+  webmail check (`tools/prepare_mail.py`, `integrations/mail/upstream.json`). It changes no running file: same
+  webmail commit and customisations, and the check passes against the pinned commit. Main's
+  `deployment/stacks/mail.compose.json` equals the released `bb546d7` (Stalwart 1.1.1). A render from `bb546d7`
+  and from main with neutral sample values gave the same mail definition (only the per-render generated values and
+  the output path differ) and the same mail policy file. **Owner's go for a re-link:** script
+  `deployment/promotion/p94/relink-mail.sh <main sha>`. It reads the recorded commit, stops unless only those six
+  files changed, saves the note, updates it guarded by the old value and reruns the drift check. **Done** (27 November
+  2026, 01:07 IST, from the Mac session with production access, owner's go): note set from `bb546d7` to main `9f1116a`
+  (main had moved on from `915228c` by P57 merges that touch no mail file); exactly the six expected files; nothing
+  restarted. Drift check: **mail clean**. Receipt `p94-production-relink-mail-9f1116a`.
 
 **First step for each:** run the promotion plan from the stack's recorded revision to main and list what users would
 notice. **Order:** owner decides. **Acceptance:** the nightly drift check is clean for every stack.

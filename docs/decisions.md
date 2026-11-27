@@ -4,7 +4,66 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-27
+
+### Face attendance has an off switch, and it is off unless the site turns it on (P95)
+
+- **Decision:** every face function that takes in or uses a face (enrolment, identification, the capture queue's
+  intake, its lists and its decisions) refuses unless the site config has `custom_hr_face` -> `enabled: true`. The
+  check is the first line, so nothing is read or stored while off. Withdrawing consent, deleting face data when an
+  employee leaves or is deleted, and the daily removal of rejected photographs never depend on it.
+- **Why:** owner, 27 November 2026. The ERP ships as one image, so a release of main for other merged changes (P93,
+  #77) also ships P95. Without face settings, matching and enrolment already refused, but the capture queue still took
+  in photographs for manual review: a working face-photo intake on production before the legal opinion. An
+  explicit switch, off by default, lets the code be released while nothing can use it.
+- **Where:** `custom_hr/face_service.py` (`enabled`, `require_enabled`), `custom_hr/face_queue.py`,
+  `custom_hr/face_queue_integration_tests.py`, `tests/test_custom_hr_face_switch.py`, the module README.
+
+### The boot check's alert mail may connect to the mail server's private address (P57)
+
+- **Decision:** the alert sender's settings take an optional `address` (an IP address). The boot check then connects
+  there instead of to `smtp_host`, and still verifies the server certificate for `smtp_host`; certificate checks are
+  never switched off. Without `address` nothing changes.
+- **Why:** owner, 27 November 2026. On the production server the mail server's public name resolves to the public
+  address, where the submission port is closed; it answers only on the server's tailnet address, whose certificate
+  carries the public name. The options were a line in the server's hosts file (a hand patch outside the
+  repository that also changes the name for everything else on the server) or this setting; the owner chose the
+  setting. The onboarding form mail already uses the same pattern (`address` in `test_form_smtp`).
+- **Where:** `tools/host_check.py` (`verified_smtp`), `tools/render_host_checks.py`,
+  `deployment/host-checks.example.json`, `docs/production-moves.md`, `tests/test_host_checks.py`.
+
 ## 2026-11-26
+
+### After a reboot every container that ran before must run again; the admin is mailed (P57)
+
+- **Decision:** the boot check compares the running containers with the list the five-minute watch saved before
+  the reboot. A container with restart policy `always` or `unless-stopped` that is not running a minute after
+  Docker started is started once; anything still down fails the check. When the check repaired or failed
+  something it mails the admin through a dedicated alert sender, independent of Prometheus. The monitoring stack
+  uses `restart: always`; exporter-only hosts remove the central containers instead of keeping them stopped.
+- **Why:** owner, 26 November 2026. After a production reboot Prometheus stayed down for 26 minutes (exit 0,
+  `unless-stopped`) and nobody knew, because no alert leaves a server yet. A reboot of the test VM did not
+  reproduce it: a fast-stopping copy of Prometheus with the same policy came back. So the exact cause is still
+  open, and the fix does not depend on it. Starting a missing container once is the same pattern the check
+  already uses for the editor bridge; the cost is that a container stopped on purpose in the few minutes before a
+  reboot is started again (the list is at most five minutes old, and the start is reported).
+- **Where:** `tools/host_check.py`, `tools/render_host_checks.py`, `deployment/host-checks.example.json`,
+  `integrations/monitoring/observability/compose.yml` and README, `docs/production-moves.md`,
+  `tests/test_host_checks.py`.
+
+### The ERP web server clears two forwarded headers now; trusted forwarding waits for the frappe_docker bump (P98)
+
+- **Decision:** our ERP web server template clears `X-Forwarded-SSL` and `X-Forwarded-Protocol` before requests go
+  to the backend and to realtime, as upstream does. Upstream's switch for trusting `X-Forwarded-Proto`
+  (`TRUST_UPSTREAM_FORWARDED_PROTO`) is taken at the next frappe_docker bump, set to "on"; until then our existing
+  map, which behaves like "on", stays.
+- **Why:** a browser's copy of those two headers reached Gunicorn, which trusts the frontend and reads them, so the
+  backend could see two protocol indications. The switch needs upstream's newer nginx entrypoint: with our pinned
+  image the variable would stay unfilled and every request would look like plain http, which can break sign-in
+  redirects. Our current behaviour is safe because the public proxy replaces forwarded headers from outside, the
+  frontend is published only on the server's loopback address, and Gunicorn trusts only the frontend (owner,
+  26 November 2026: the recommended options).
+- **Where:** `deployment/erp/frappe.conf.template`, register entry BUILD-2, `tests/test_realtime_origin.py`.
 
 ### The drift check compares mounted runtime files, and runs its own code from main (P99)
 
@@ -1235,3 +1294,34 @@ check themselves in keep their existing workflows.
 - **Where:** `integrations/drive/README.md`, `deployment/README.md`,
   `tools/prepare_ingress.py`, `.client-identity-fingerprints`, `docs/retained.md`,
   register entry OFFICE-7. AI-assisted by Claude Code.
+
+### Every public name has its own certificate; no copied wildcard (P11)
+
+- **Decision:** The production proxy obtains a Let's Encrypt certificate for every
+  public name itself. The production names use the HTTP challenge it already used
+  for some of them: a port-80 challenge route with a priority above every other
+  port-80 route sends each name's challenge to Traefik
+  (`own-certificate-acme-validation`). The relayed test names use a second resolver,
+  `letsencrypt-tls`, with the TLS-ALPN challenge on port 443
+  (`tools/coolify_proxy_tls_resolver.py`), because their port-80 challenges belong
+  to the test host, which renews its own certificates through the relay. The
+  wildcard certificate copied onto the proxy at the November migration is removed
+  once both are live. A test checks that every name using the HTTP resolver has a
+  challenge route that outranks the rest, and that the relay leaves port 80,
+  challenges included, to the test host.
+- **Why:** The copied wildcard had no renewal: Traefik cannot issue a wildcard with
+  the HTTP challenge, and the DNS host has no API it can use. While any loaded
+  certificate covers a name, Traefik does not request its own, and it does not look
+  at the expiry date (Traefik 3.7.20, `getUncheckedDomains`). So ERP, sign-in, Drive,
+  Respond, the website and the test site would all have failed on the wildcard's
+  expiry. The wildcard was once needed for the test relay. That reason is gone,
+  because the relay ends TLS on production and has its own certificate per name.
+  Respond's host-wide port-80 redirect also sent challenges to HTTPS, where they
+  fail. Traefik's HTTP challenge handler answers only its own tokens (404
+  otherwise), so two hosts cannot share port-80 challenges for one name.
+- **Consequence:** Adding the resolver restarts the proxy once (about 16 seconds).
+  Removing the wildcard leaves a short gap: Traefik requests the new certificates
+  only once nothing covers the names.
+- **Where:** `deployment/config/proxy/office-acme.yml`, `tools/prepare_test_relay.py`,
+  `tools/coolify_proxy_hosts.py`, `tools/coolify_proxy_tls_resolver.py`,
+  `tests/test_rebuild_templates.py`, register entry PROXY-6. AI-assisted by Claude Code.

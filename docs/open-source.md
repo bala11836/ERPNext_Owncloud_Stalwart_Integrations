@@ -84,6 +84,7 @@
 | [Kotlin](https://github.com/JetBrains/kotlin) | Apache-2.0 | P50 | — | mobile-native (in progress, not shipped): 2.2.10 with the Android Gradle plugin 9.2.1; the two old standard-library advisories in OSV were fixed before 1.6 |
 | [Robolectric](https://github.com/robolectric/robolectric) | MIT | P50 | — | mobile-native tests only (screen tests on the computer): 4.18, no open advisories (OSV, 26 November 2026) |
 | [Gradle](https://github.com/gradle/gradle) | Apache-2.0 | P50 | — | mobile-native build tool (developers and the CI job): 9.9.2 or newer; 9.9.2 fixes the critical and high advisories published up to 19 November 2026 (GitHub Security Advisories, 27 November 2026) |
+| [Pebble](https://github.com/letsencrypt/pebble) | MPL-2.0 | P11 | — | Let's Encrypt's ACME test server, for a local rehearsal of the certificate switch (P11) only; not shipped. v2.10.3 (11 Nov 2026), release checksums verified. |
 
 ## Used before
 

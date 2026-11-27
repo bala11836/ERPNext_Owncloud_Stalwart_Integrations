@@ -107,6 +107,12 @@ tables are not touched. The scheduled checkout job moves to its new name during 
 The supervisor photographs each worker without choosing them first; the server recognises the face among the
 workers that supervisor may record on that site and shift. Decided by the owner on 26 November 2026 (P95).
 
+- **Switched off unless the site says so** (owner, 27 November 2026): face attendance runs only where the site config
+  has `custom_hr_face` -> `enabled: true`. Without it, enrolment, identification, the capture queue (sending a
+  photograph, both lists and deciding a capture) refuse with "Face attendance is switched off on this site." before
+  anything is read or stored. Naming an engine does not switch it on. **Withdrawal, the deletion of a leaver's or
+  deleted employee's face data and the daily removal of rejected photographs always work.** Production stays off
+  until the legal opinion and the owner's decision (P95); the test site has it on.
 - **Enrolment** (`api.face_enrol(employee, photos, consent)`, POST): HR, a Field Attendance Manager or an approver of
   the worker's site enrols the worker from several angles (at least 3) after checking their identity document. The
   consent (`accepted`, `agreement_version`, `language`, `identity_checked`) is stored as a **Biometric Consent**
@@ -155,6 +161,7 @@ workers that supervisor may record on that site and shift. Decided by the owner 
 - `tests/test_custom_hr.py` (offline)
 - `tests/test_custom_hr_face.py` (offline: face matching rules, consent, engine slot, stored records)
 - `tests/test_custom_hr_face_queue.py` (offline: who the queue acts for, who decides, photographs, the web screen)
+- `tests/test_custom_hr_face_switch.py` (offline: the off switch, where it applies and where it never does)
 - `erpnext_drive_integrations/custom_hr/face_queue_integration_tests.py` (needs a live test site; rollback only)
 - `tests/test_custom_hr_face_engine.py` (model pins and fetch; the live engine part runs in the ERP image)
 - `erpnext_drive_integrations/custom_hr/test_checkout.py`

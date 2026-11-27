@@ -122,8 +122,22 @@ Made against: frappe_docker `0ad1a11`, bench 5.31.1, Node 24.22.1, Yarn 1.22.22
   v4.3.0 rule word for word since 26 November 2026 (P97): any case, 14 file
   types. **Re-check** on every bump and whenever the daily watch reports a
   frappe_docker advisory: compare this rule and the rest of the file with
-  upstream's.
-- **Tests:** `tests/test_realtime_origin.py`, `tests/test_files_forced_download.py`.
+  upstream's. Also carried (P98, 26 November 2026): upstream's clearing of
+  `X-Forwarded-SSL` and `X-Forwarded-Protocol` in the socket.io and backend
+  locations, so the backend sees only the `X-Forwarded-Proto` this template sets.
+- **Not carried yet, re-apply at the next frappe_docker bump (P98):** upstream's
+  trusted-forwarding map (`TRUST_UPSTREAM_FORWARDED_PROTO`, frappe_docker
+  `280fc962eb`). The nginx entrypoint in our pinned image does not fill in that
+  variable, so the map would stay literal and every request would look like plain
+  http. At the bump: take upstream's map together with their newer entrypoint, set
+  `TRUST_UPSTREAM_FORWARDED_PROTO=on` for the frontend in `deployment/stacks/`,
+  and change the test that guards this
+  (`tests/test_realtime_origin.py`, `ForwardedHeaderTests`). Until then our map
+  trusts `X-Forwarded-Proto: https` as upstream's "on" does; that is safe here
+  because the public proxy trusts no forwarded headers from outside on its https
+  entry point, the frontend is published only on the server's loopback address,
+  and Gunicorn trusts only the frontend's own address.
+- **Tests:** `tests/test_realtime_origin.py` (Origin; forwarded headers, P98), `tests/test_files_forced_download.py`.
 - **Upstream:** reported privately to frappe_docker on 26 November 2026 (the Origin
   overwrite also switches off Frappe's own Origin check). Workaround to retire if
   upstream stops overwriting Origin.
@@ -570,10 +584,16 @@ Made against: v16.60.0 (`1b2d7e0`). See also FRAPPE-5, -7, -8.
   same script as Purchase Order. The button shows only when a response rule for
   Job Offer is enabled.
 - **Upgrade:** **re-check** the button on a Job Offer.
-- **Tests:** `tests/test_hook_asset_paths.py` (every script a hook names must exist).
+- **Tests:** `tests/test_hook_asset_paths.py` (every script a hook names must exist);
+  `tests/test_js_call_methods.py` (every browser call uses an HTTP method its function accepts).
 - **Fixed in P93:** the hook pointed at `client/request_response.js`, which does not
   exist, and Frappe skips a missing file without an error, so the button never
   loaded.
+- **Fixed in P93 (27 November 2026):** the script asked `rule_status` with
+  `frappe.xcall`, which sends POST by default; `rule_status` accepts GET only, so
+  Frappe answered "Not permitted" and the button never showed, on Job Offer and on
+  Purchase Order. The script now asks with GET. **Relies on** Frappe's `xcall`
+  default (POST) and its refusal of a method the whitelist does not allow.
 
 ### HRMS-5 Script injected into the HRMS mobile pages
 
@@ -1215,6 +1235,29 @@ Made against: 3.4.2.
   `acme-http@internal`; a HostSNI rule cannot list several host names, and the relay
   router needs an explicit priority (`tools/prepare_test_relay.py`).
 - **Upgrade:** **re-check** on a major Traefik upgrade (loud: configuration refused).
+
+### PROXY-6 Own certificate per name; two Let's Encrypt resolvers (P11)
+
+- **What:** every public name gets a Let's Encrypt certificate from Traefik.
+  - **Production names:** HTTP challenge (`acme-http@internal`), with challenge routes
+    above all other port-80 routes for those names (`own-certificate-acme-validation`
+    in `deployment/config/proxy/office-acme.yml`).
+  - **Relayed test names:** a second resolver `letsencrypt-tls` with the TLS-ALPN
+    challenge (proxy flags from `tools/coolify_proxy_tls_resolver.py`; it shares the
+    ACME storage), so their port-80 challenges keep reaching the test host.
+  - **Relies on:** Traefik skips any name that a loaded certificate covers, without
+    checking its expiry date (`getUncheckedDomains` in 3.7.20). So no copied
+    certificate may be loaded for these names. The challenge handler answers only its
+    own tokens.
+  - The manual live item, removing the copied wildcard from production, is in the
+    private companion.
+- **Upgrade:** **re-check** on a Traefik upgrade: certificates renew (dates in the
+  HTTPS probe), each production name's port-80 challenge path still reaches Traefik,
+  and the running proxy still has the second resolver (`--check`). **Re-apply** if
+  Coolify resets the proxy configuration.
+- **Tests:** `tests/test_rebuild_templates.py::test_every_certificate_name_answers_its_http_challenge`,
+  `test_test_relay_terminates_and_forwards_only_test_hosts`,
+  `test_tls_resolver_flags_are_added_once_and_keep_the_rest`.
 
 ## Coolify
 

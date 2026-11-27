@@ -76,12 +76,14 @@
         "erpnext_drive_integrations/public/company-favicon*",
         "erpnext_drive_integrations/public/plain-background.svg",
         "tests/test_hook_composition.py",
-        "tests/test_hook_asset_paths.py"
+        "tests/test_hook_asset_paths.py",
+        "tests/test_js_call_methods.py"
       ],
       "depends_on": [],
       "tests": [
         "tests/test_hook_composition.py",
-        "tests/test_hook_asset_paths.py"
+        "tests/test_hook_asset_paths.py",
+        "tests/test_js_call_methods.py"
       ],
       "upstream": [
         {
@@ -167,6 +169,7 @@
         "tests/test_custom_hr.py",
         "tests/test_custom_hr_face.py",
         "tests/test_custom_hr_face_queue.py",
+        "tests/test_custom_hr_face_switch.py",
         "deployment/face-models.json",
         "tools/fetch_face_models.py",
         "tests/test_custom_hr_face_engine.py"
@@ -179,6 +182,7 @@
         "tests/test_custom_hr.py",
         "tests/test_custom_hr_face.py",
         "tests/test_custom_hr_face_queue.py",
+        "tests/test_custom_hr_face_switch.py",
         "tests/test_custom_hr_face_engine.py"
       ],
       "upstream": [
@@ -470,6 +474,7 @@
         "tools/coolify_proxy_hosts.py",
         "tools/prepare_test_relay.py",
         "tools/coolify_proxy_http3.py",
+        "tools/coolify_proxy_tls_resolver.py",
         "tools/coolify_proxy_image.py",
         "tests/test_coolify_proxy_image.py",
         "tools/test_host_aliases.py",

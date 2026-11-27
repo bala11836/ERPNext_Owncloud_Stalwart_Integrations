@@ -256,6 +256,15 @@ Frigate no longer recommends it for new installations; choose the accelerator Fr
 (for example an Intel graphics chip with OpenVINO, or a Hailo card) and record the choice. Disk layout, redundancy
 and the split between backup and recordings are decided with the purchase.
 
+**Advisories rechecked and accepted for the trial (27 November 2026).** Of the five Frigate advisories without a
+listed fix, the two high ones (GHSA-c4qf-xxq4-vf55, GHSA-mgh5-cr9h-g6hr) are closed in 0.18.3 in the code; three
+medium ones remain (GHSA-74x4-gw64-2mq5, GHSA-w3c4-957q-2jw4, GHSA-4xp7-86rr-9758). The code was read; no attack was
+tried. **Owner: the trial runs with these open**, on the private network, with administrator accounts only and our
+own camera; no camera-limited or view-only accounts until GHSA-74x4-gw64-2mq5 is fixed. Production is decided after
+the trial, including whether detection is needed at all (a recording-only tool has far less exposed code). Public
+draft #81 was brought up to date with main (`aac5887`, CI passed); Frigate and its bundled detection model are in the
+open-source list. Still open: a detection check and the first admin password change.
+
 ### P48 — Remote branch router and gateway firewall
 
 **App:** general · **Also touches:** none · **State:** blocked
@@ -714,6 +723,9 @@ places or networks (P82) reach the admin the same way: on the widget, by mail, o
 - **Order:** test site first, then production. Follows the working-agreements rule "What every project's system
   has" (4).
 
+**Public draft #134 brought up to date with main (27 November 2026): `ffd4d96`, CI passed, no conflicts.** Its
+first test-site run shares one build with #142 (P53), because both change the Desk; it waits for the test host.
+
 ### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
@@ -748,7 +760,13 @@ accepts that risk.
 - **Every new server part gets** monitoring, backups and a test copy from the first deployment (working agreements).
 - **Progress (27 November 2026, night):** the stack is public PR #139 (`p73/matrix-stack`, `9890da2`) and runs on the
   test VM since 14:41 UTC (receipt `p73-test-chat-stack-9890da2`), with sign-in set up in the test sign-in service.
-  Not reachable from outside until #139 is on main and the production relay carries the two test names. Not built:
+  #139 merged at `5f3a897` (14:45 UTC); the production relay carries the two test names since 14:46 UTC (receipt
+  `p73-production-test-relay-chat-names-735b117`), so the test chat answers from outside with valid certificates.
+  13 test people have a chat name. **Merged, on test only:** production gets a chat stack only on the company domain
+  people keep (P70). The owner signed in on test (`@rajesh.d`). **The business system's bot** (`@erp`, no admin
+  token; people join by automatic acceptance of its invitations) is public PR #143, on test since 17:57 UTC
+  (receipt `p73-test-chat-bot-92b77c4`). Next: the ERPNext module that makes rooms from sites and teams. Waiting:
+  the Firebase key for the alert gateway; the meaning of a "team" room. Not built:
   the push gateway, the ERPNext bot and rooms, monitoring, backups and the drift check for the stack, the production
   route file.
 - **First step:** the adoption check (licence, maintenance, security history, how fixes are published) for Synapse,
@@ -852,6 +870,12 @@ only the client's brand; the guide's steps work on the test site; the copyright 
 
 **Related:** P84 (client identity), P50 (per-brand app builds), P63 (demo brand), P55 (tenant logo through the
 private profile).
+
+**Merged (27 November 2026): public #87 as `f02bf30`** (branch head `486c6d3`, brought up to date with main the
+same evening; CI passed). **Merged, not deployed.** It reaches the ERP image (the default logo and favicons in the
+build) and the renderer, so the promotion plan asks for a render check of every stack. Both sites supply their own
+branding, so no visible change is expected. It goes out with the next ERP release; the mobile app's name and icons
+are still a later step.
 
 ### P88 — Project camera sites connected to the NVR over the mesh
 

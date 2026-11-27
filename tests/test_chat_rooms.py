@@ -87,7 +87,7 @@ class Rules(unittest.TestCase):
             rules.membership_changes(['Not A Name'], present, bot)
 
     def test_chat_names(self):
-        for good in ('asha.d', 'asha.d2', 'sai.b', 'a.b'):
+        for good in ('asha.d', 'asha.d2', 'mira.b', 'a.b'):
             self.assertTrue(rules.valid_chat_name(good), good)
         for bad in ('asha', 'Asha.D', 'asha.d@x', 'asha.', '.d', 'as ha.d', '', None, 'asha.dddd'):
             self.assertFalse(rules.valid_chat_name(bad), bad)

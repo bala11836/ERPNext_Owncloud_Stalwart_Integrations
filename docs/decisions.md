@@ -6,6 +6,19 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-28
 
+### The phone app is named "UNformat ERP" (P85, P50)
+
+- **Decision:** the phone app's name is **UNformat ERP**, replacing "ERP Mobile". It is the default brand's app name
+  (`branding/unformat/brand.json`, `mobile_app.name`), with the app ID `in.unformat.erp`, which test builds use
+  from now on as well. A deployment that ships the app as its own product replaces both through its brand settings.
+- **Why:** owner, 28 November 2026. The earlier rule (22 November) was one universal, neutral app name; since P85 our
+  own brand is the public default and is replaceable, so the app carries the brand's name like the rest.
+- **Not changed:** earlier entries of this log and of the work list keep "ERP Mobile", the name in use when they
+  were written. The Expo app's tests keep their sample name: that app is being replaced by the native one, and
+  three open pull requests touch those files. The native app's own texts are changed in its pull request (#114).
+- **Where:** `branding/unformat/brand.json`, `docs/sop/` (five procedures), `mobile/BUILD-GUIDE.md`,
+  `mobile/README.md`, `deployment/test-runtime.example.json`, `tests/test_test_oauth_clients.py`.
+
 ### Chat alerts: the gateway runs inside the chat stack, optional and private (P73)
 
 - **Decision:**

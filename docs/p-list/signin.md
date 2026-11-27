@@ -1,6 +1,6 @@
 # Sign-in: P items
 
-> **Generated file: do not edit by hand.** Published from the maintainers' private list on 26 November 2026
+> **Generated file: do not edit by hand.** Published from the maintainers' private list on 27 November 2026
 > with every line kept; only identifying names, addresses, paths and links to private records are
 > replaced by placeholders (see the [P list index](../p-list.md) for the rules).
 
@@ -227,7 +227,8 @@ every service behind it (not in ERPNext).
 **What (owner decisions, 25 November 2026):**
 - **ERP Mobile holds the keys.** The app becomes a passkey provider on the phone. Each key is
   created in the phone's secure hardware, never synced or exported, and locked to the
-  fingerprints/face enrolled at sign-up (adding or removing one destroys the key; Android
+  fingerprints/face enrolled at sign-up (adding one destroys the key; removing one does not, as the P82 trial
+  found on two phones, wording corrected with the owner's yes on 26 November 2026; Android
   `setInvalidatedByBiometricEnrollment`, iOS `biometryCurrentSet`); no PIN fallback for the key.
 - **Computers sign in only by QR from the phone** (standard WebAuthn cross-device sign-in: the
   phone scans, Bluetooth checks it is nearby). Because ERP Mobile keys exist only on phones, a
@@ -318,5 +319,227 @@ merge and a rollback point; then the Apple part.
 **Related:** P50 (the app, per-brand builds), P53 (Desk sign-out icons stay there), P56 and P08
 (global logout), P78 (invitation attempts), P79 (approved providers), P14 (push for approvals).
 
-**Status:** open, discussed and decided 25 November 2026; nothing built. The owner starts the
-work in another session.
+**Started (owner, 25 November 2026, evening):** go for research, a trial branch
+`p82/android-passkey-trial` in the public `mobile/` module, the upstream feature requests and these records.
+Trial phone: Android 14 or newer (model not yet named). Builds: Expo's cloud build (EAS), APK profile.
+Android ID: owner chose `in.unformat.erp` (the app's web address written reversed, as Android requires).
+
+**Research results (25 November 2026, read-only, public sources; agent research, partly unverified):**
+- *Android:* third-party passkey providers work from Android 14 (`androidx.credentials` 1.6.0 stable,
+  its credential provider service class in `androidx.credentials.provider`); the service, activities and XML go in a local Expo module, no config plugin
+  needed; EAS builds an installable APK. `in.unformat.erp` works: Expo writes ``package `in`.unformat.erp``
+  since SDK 51 (expo#26910); our own Kotlin files must use the backticks; open SDK 58 bug expo#53158, so
+  always prebuild with `--clean`. No security advisories (OSV) for `androidx.credentials`,
+  `androidx.biometric`, `expo-modules-core`.
+- *Biggest unknown:* Google publishes no statement that the computer QR sign-in offers a third-party
+  provider's keys; community reports (OneKeePass, Bitwarden) say it works on phones with Google Play
+  services, and it fails on microG. The trial tests this first.
+- *Phone makers:* some Android 14 builds have no third-party provider setting; Xiaomi/Oppo reportedly reject
+  the fingerprint-lock flag (single source); Samsung Pass conflicts reported. Pixel or recent Samsung for the trial.
+- *Google MyVault sample* (Apache-2.0, active): demonstration only; it stores private keys in its database,
+  allows PIN fallback and gives no attestation, so only its structure is borrowed; key handling is our own
+  (Keystore, StrongBox when present, fingerprint/face only, invalidated on enrolment change).
+- *Website link:* a provider serving websites through the browser gets the origin from the browser
+  (`CallingAppInfo.getOrigin` with Google's privileged-browser list); `assetlinks.json` on the sign-in host is
+  not needed for that (only when a native app calls). The earlier "to settle" point is answered.
+- *Attestation:* the app can give Android key attestation (package name and signing-certificate digest in the
+  certificate). authentik 2026.8.5 checks `android-key` signatures against Google's roots and stores the
+  certificate, but also accepts "none". Whether attestation survives the QR route: unverified, trial.
+- *authentik 2026.8.5 gaps:* (1) our app's AAGUID cannot be added to the device-type list (read-only, not in
+  blueprints); only "Unknown devices" (opens every unlisted one). Plan: an expression policy after the passkey
+  stages checks the key's AAGUID and attestation certificate. (2) authentik never sees whether the QR route
+  was used (`authenticatorAttachment` is not sent; confirmed in source); keys that exist only in the phone app
+  achieve the "computers only by QR" rule in practice. (3) No per-user session limit, no idle timeout (absolute
+  duration only), and browser-close and a fixed duration cannot both be set in one login stage. Plan: a small
+  service of ours, fed by login events, using `/api/v3/core/authenticated_sessions/` to end the older session
+  of the same kind; deleting a session sends back-channel logout (OIDC since 2025.8, SAML since 2025.10).
+  (4) App sign-out of everything: `bulk_delete` of the user's sessions plus revoking refresh tokens; works.
+  (5) Endpoint Devices: early preview, "not recommended for production", needs the authentik Agent on every
+  computer and a browser extension; local device login and advanced compliance are Enterprise (paid in
+  production); checks the device only at sign-in. Owner decision pending (see handover 25 Nov).
+- *Upstream:* existing requests to add to: authentik #16049 (AAGUID management), discussion #10104, #14304
+  (session refresh/idle). New requests needed: expose `authenticatorAttachment`/transports to policies;
+  per-user concurrent session limits. Not yet posted.
+- *Conflict with an owner decision:* the app's minimum is Android 9 (build guide, 22 Nov); passkeys in the app
+  need Android 14. Answered by the owner on 26 November (older phones, below): the minimum stays Android 9.
+
+**Owner decisions, 26 November 2026 (discussion with the agent; they amend the points above where they differ):**
+- **Onboarding in the app:** the person enters their mail address, mobile number and a face photo and sends
+  "Request access". The **project manager approves the person's identity** (in person, against an ID), then the
+  **admin approves** in authentik (invite). The app then creates the key in the phone's secure hardware; authentik
+  stores only its public half; the person is signed into the app automatically. The face photo serves only the
+  project manager's identity check and is not kept after the request is decided (owner: the face is not stored in
+  our database). A new key (new or replacement phone, or after an erase) goes through both approvals again; the
+  old key is removed in authentik at the same time.
+- **Biometrics stay with the phone:** fingerprints and face are enrolled in the phone's own settings and held by
+  its secure hardware; the app only learns "matched / not matched"; nothing biometric goes into the app's storage
+  or to our server. The key accepts **every** fingerprint enrolled on that phone, so at onboarding the project
+  manager asks, and the person confirms in writing, that only their own fingerprints and face are enrolled
+  (removing family members' first; SOP in P96). Enrolling another one afterwards destroys the key (unchanged).
+- **Strong sensors only:** the key unlocks only with Android's "strong" (Class 3) biometrics. Weak camera face
+  unlock, which most Android phones have, is never offered, so on those phones only the fingerprint works. Strong
+  face unlock (for example recent Pixels) is accepted: Android does not let an app choose fingerprint over a strong
+  face. A phone with neither is refused at onboarding with a clear message.
+- **Every sign-in needs the biometric,** no PIN fallback (unchanged). Signing in to the ERP and the other services
+  needs internet, because authentik checks the signature; without internet the app opens with the biometric for a
+  limited time and queues its captures (P50 offline). Computer sign-in by QR needs internet on both devices and
+  Bluetooth.
+- **Wrong attempts:** the app counts misses **in a row** (reset after a successful sign-in), shows how many tries
+  are left and makes the wait grow between tries; after **5** misses in a row it erases the key, and the person
+  onboards again (project manager, then admin). The phone's own 30-second sensor pause after 5 misses still
+  applies. Reason for counting only misses in a row: wet, dusty or cut fingers on site fail often, and every erase
+  costs a project manager visit and an admin approval.
+- **Self check-in without a selfie:** the biometric at each check-in plus the site's location fence proves the
+  person was there; this replaces the selfie of the 22 November decision (decision log, 26 November). The location
+  check is already built and free (our own server compares the distance and GPS accuracy; the app refuses
+  fake-location apps); nothing is paid unless the app shows Google maps. Field team attendance by face: **P95**.
+- **Older phones (Android 9–13):** owner: Android's limits must not lock these users out. The fingerprint-locked
+  key works from Android 9, and signing in to the app itself is done by the app. Only computer sign-in by QR
+  normally goes through Android 14's passkey-provider service; the trial tests whether the app can run the
+  QR-and-Bluetooth step (FIDO hybrid) itself on Android 9–13. Unverified until the trial. **Decided later the same
+  day: our own route on all phones (below).**
+- **Apple exception group:** forcing Face ID does not close the gap: Apple passkeys copy to every device on the
+  same Apple ID, where that person's own Face ID unlocks them, and a website cannot demand Face ID over the phone's
+  passcode. The real fix is the Apple version of ERP Mobile (key kept in one iPhone, not copied), the Apple part of
+  this item. Until then the group stays small and the risk stays accepted (owner, 25 November).
+- **Computer sign-in by QR: our own route for all phones (owner, 26 November 2026, late evening).** The colleague's
+  P82 work set out three options for phones below Android 14: (1) older phones use the app only, and computer
+  sign-in needs Android 14 or newer; (2) build our own QR route for all phones, about 4 to 6 weeks plus the review;
+  (3) count first how many staff need a computer and have an older phone. **Owner chose (2).** ERP Mobile carries out
+  the standard QR-and-Bluetooth computer sign-in (FIDO "hybrid": the computer's browser shows the QR, the phone
+  scans it, a Bluetooth advertisement proves it is nearby, and the signed answer travels through the standard tunnel
+  service) **itself on every phone**, instead of through Android 14's passkey-provider service. One route on every
+  Android version. **Must stay:** the Bluetooth nearness check and the browser's own origin check. Those are what
+  separate it from the WhatsApp-style QR approval refused on 25 November (decision path, step 1), where a fake site
+  could show a real QR code. To verify in the trial: which tunnel service the browsers accept for a third-party
+  authenticator, Bluetooth advertising on the phone brands we use, and attestation through this route.
+- **Our QR route is a temporary add-on, retired when no phone below Android 14 is left (owner, 26 November 2026,
+  late evening).** Few people still use Android 13 or older, and in about a year there will probably be none.
+  - **Track Android versions:** the app reports its Android version at onboarding and at each sign-in. The server
+    keeps it with the phone's binding (next to model, sign-up date and last use), and the admin sees how many active
+    phones are below Android 14 (device list; alerts and exceptions widget, P53).
+  - **Retire:** when the count of active phones below Android 14 reaches zero and new onboardings no longer bring
+    any, open a work item to retire our QR route. Phones then use Android's own passkey-provider route for computer
+    sign-in.
+  - **So that retiring is a switch, not a new project (agent):** keep our QR route a separate, removable part of the
+    app. Have the Android trial prove Android's own route on an Android 14 phone as well, so it is known to work
+    when the add-on goes.
+- **Relay for our QR route: Google's public relay, for the trial and until the add-on is retired (owner,
+  26 November 2026, late evening).** The phone and the computer meet through a relay on the internet (the "tunnel
+  service" of the FIDO hybrid standard). The relay sees only encrypted data and cannot read or change the sign-in.
+  The colleague's trial code uses the public relay the standard names, run by Google (the same one every Android
+  phone uses for QR sign-in). The colleague asked whether to use it for the trial. **Owner:** yes, and keep it for
+  real sign-ins too until the add-on is retired (about a year, when no phone below Android 14 is left). No relay of
+  our own is built.
+  - **Accepted risks (owner):** we have no agreement with Google for this use. Google can change, limit or stop it
+    for third-party apps at any time, and then computer sign-in from older phones stops until a fix. The relay also
+    learns that a sign-in is taking place (not its content).
+  - **Watch:** a failure through the relay goes into the admin's alerts (P53, P72). If Google stops it, the fallback
+    is our own relay (an option the colleague described) or app-only use on older phones.
+  - **Still a gate (from the colleague's report):** the trial code has never talked to a real computer and is
+    encryption code written in one sitting. It is fit for a trial with a test passkey on a demo website only.
+  - **Security review (owner, 26 November 2026, late evening):** instead of an outside expert, an AI agent in the
+    role of a senior security analyst reviews and verifies the route before any real sign-in uses it; **the owner
+    deploys Codex (OpenAI's coding agent) for this job**, a different model from the Claude agent that wrote the
+    code, which answers the concern about shared blind spots. **Accepted by the owner:** no independent human
+    review. Setting Codex up under the working agreements: its entry point must load the working agreements and this
+    project's `AGENTS.md` (verify on that computer); Claude Code's hooks and secret guard do not apply to Codex, so
+    it gets no production keys or secrets for this job; it reviews the public mobile module and the standard only.
+    **How the review is done (agent's recommendation, confirmed by the owner's "ok"):**
+    1. A separate session, not the one that wrote the code, reviews it from the code and the standard alone, with
+       the task of breaking it.
+    2. Evidence beyond reading: the standard's published test cases pass; a real Chrome on a computer completes
+       sign-ins and refuses tampered ones; the encryption uses well-reviewed libraries wherever possible instead of
+       our own code.
+    3. A written report in the pull request (what was checked, found and fixed) and the owner's written acceptance
+       of the remaining risk. Fixes go back through the usual branch and review; Codex checks the fixes too.
+    **Open: Codex review planned for next week, the week of 30 November 2026 (owner, 26 November 2026).** This
+    item stays open until the review report, the fixes and the owner's written acceptance are recorded here; no real
+    sign-in uses the QR route before then.
+- **microG (being evaluated by the colleague, 26 November 2026):** listed as "evaluating" in public
+  `docs/open-source.json` (P35). Record the adoption check here (licence: Apache-2.0 per its repository; maintenance;
+  security history; how fixes are published) and in the decision log, whether adopted or not; if adopted, credit
+  and track it in the same pull request (working agreements).
+- **Unused keys expire after 7 days** (owner, 26 November 2026, evening, from the P82 discussion with the
+  colleague's agent): the **sign-in server** removes a person's ERP Mobile key when it has not been used for 7 days
+  (the server knows the last use; a phone that is switched off cannot delete its own key). The person then onboards
+  again (project manager, then admin). Accepted cost: anyone away for more than 7 days (leave, illness, a site with
+  no signal) must onboard again; if that happens too often the period can be lengthened (14 or 30 days). The app
+  tells the person when the server has removed their key and deletes its own copy. Not built; to verify: that
+  authentik records each passkey's last use, and that the small sessions service of ours (above) can remove
+  unused keys on a schedule. **Grace days per group (owner, 26 November 2026, late evening):** the admin decides
+  how many unused days each authentik group gets (a group setting; 7 when a group has none), including the Apple
+  exception group. SOP: the onboarding SOP (P96) covers re-onboarding.
+- **Leavers (owner, 26 November 2026, late evening):** the exit procedure in Frappe HR (the employee's separation,
+  status Left) triggers removal of the person's keys, devices and sessions in authentik and purges all their data
+  in the app on the phone; the face templates go too (P95). SOP A14 (P96).
+- **Lost passkey or replacement phone (owner, 26 November 2026, night):** the project manager verifies the
+  person's phone in person and confirms the request **in their own app**; only then is a key issued again (the admin's
+  approval follows as for onboarding). Nothing is re-issued on a message, mail or call. Until the app does this, the
+  project manager confirms to the admin themselves before a recovery invitation (SOP: invite a user).
+- **Usual places and unusual sign-ins (owner, 26 November 2026, late evening):** the sign-in server learns where
+  each person usually signs in from: their usual IP addresses and networks, and the approximate location an IP
+  address gives (city and country, not GPS). A sign-in from somewhere unusual (a new country or city, a new
+  network, or two sign-ins too far apart for the time between them) sends an alert to the admin: on the Desk
+  widget (P53), by mail, or both (P72).
+  - **Free tools, to verify on test:** authentik already records the client address, location and network operator
+    with every sign-in event, and has a free GeoIP policy (country, distance and "impossible travel" checks) and
+    notification rules that can send mail or call a webhook for our widget. Location needs a free IP database:
+    MaxMind GeoLite2 (free account, its own licence) or DB-IP Lite (CC BY 4.0); to choose, and to list in the
+    open-source file (P35).
+  - **Alert only, at first:** an unusual sign-in is reported, not blocked, until the rules have proven themselves
+    on real use. Blocking or asking for an extra check can follow as a separate owner decision.
+  - **Personal data (DPDP):** sign-in addresses and approximate locations of employees are personal data. They go in
+    the staff notice, are kept for a fixed period (**owner, 26 November 2026: 90 days of history**, then only the
+    learned usual places),
+    and are shown only to the sign-in admin. The SOP inventory (P96) gets the admin's handling of these alerts.
+  - **Office and site networks:** the admin can mark known office and site addresses as usual for everyone, so
+    shared office connections do not raise alerts.
+- **Alerts and exceptions to the admin (owner, same evening):** the sign-in admin receives the alerts and exceptions
+  of this item (keys removed for no use, erases after wrong attempts, refused or pending onboardings, unknown
+  computers, failed certificate checks), and the person with authentik admin rights sees them in a widget on their
+  Desk (scope added to P53).
+- **Daily face check of the phone owner** (owner question): not taken up; the biometric at every sign-in covers
+  most of it (agent).
+- **SOPs:** every manual step of this item (identity check, fingerprint confirmation, re-onboarding after an erase,
+  new or lost phone, exception group membership, admin approvals) gets an SOP under **P96**, written alongside the
+  build.
+
+**Binding office computers with free tools (owner, 26 November 2026: no paid or preview parts; build the missing
+piece or find another free tool). Agent research, primary sources; decided below:**
+- authentik's own client-certificate stage is Enterprise; Endpoint Devices is a preview (Agent and compliance)
+  with Enterprise connectors. Free authentik can read the client address and request in expression policies and can
+  restrict a passkey step to certain authenticator types.
+- **Recommended: company certificates.** Our own certificate authority (smallstep step-ca, Apache-2.0) issues a
+  certificate per computer (on Windows the key in the TPM, not exportable; Mac Keychain); Traefik requires it on
+  the host names computers use and passes it on; a free authentik expression policy checks it against an
+  admin-managed allow-list (list and remove computers). Binds every request, not only the sign-in. Effort medium.
+  **Owner chose this (26 November 2026, late evening): build it.**
+  To verify on test: Traefik must strip a forged certificate header; the app's and the QR sign-in's host names
+  stay certificate-free; shared PCs (machine or per-user certificate); renewal; browsers; no revocation list in
+  Traefik (the allow-list does the removal); advisories of step-ca and our Traefik.
+- **Complement later:** Headscale (BSD-3, already planned): apps reachable only over the mesh from admin-approved
+  computers (binds the network path, not the browser).
+- **Rejected:** a second Windows Hello passkey step (self-reported type, Windows can now sync passkeys, nothing
+  dependable on Mac); Pomerium Core (device approval is Enterprise); Teleport device trust and NetBird peer approval
+  (paid); our own browser extension (rebuilds the preview Agent).
+
+**Onboarding details (owner, 27 November 2026):**
+- **Full name** at onboarding, as on the identity document the project manager checks: first name (required) and
+  surname (optional; many people use an initial and one name).
+- **The user name is the full mail address**, in the sign-in service and in ERPNext (ERPNext's user ID is the mail
+  address anyway). The agent's alternatives (firstname.initial with a number on collision; the part before @) were
+  set aside. Consequences to keep in mind: a person's mail address is their identity, so a changed address needs an
+  admin rename; colleagues see each other's addresses in lists.
+- **Chat name** (owner, 27 November 2026, night): the sign-up service also makes each person's chat name,
+  `firstname.initial` with a number on a clash, and stores it as the attribute `chat_name` (P73).
+- **Mail address verified** with a **6-digit code** sent by **our own mail server** (not Firebase, which only sends
+  sign-in links). The code expires after 10 minutes, allows 5 tries, and a new one can be asked after 60 seconds.
+- **Mobile number verified** with a 6-digit code **over WhatsApp** (P04), same limits; no SMS and no Firebase.
+  So onboarding with a verified number waits for P04.
+
+**Status:** in progress; research done, decisions amended 26 November; trial code by the colleague (not yet in
+this repository). Open before real sign-ins: the Codex security review of the QR route (planned for the week of 30
+November 2026). A local branch
+`p82/android-trial` (no commits, not pushed) exists in a worktree on the owner's PC; the colleague taking up P82
+picks the trial branch name.

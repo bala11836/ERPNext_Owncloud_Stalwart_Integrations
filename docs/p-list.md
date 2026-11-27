@@ -2,7 +2,7 @@
 
 > **Generated file: do not edit by hand.** This is the project's work list (every "P" number used in
 > commits, pull requests, READMEs and `docs/decisions.md`) published from the maintainers' private
-> list on 26 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
+> list on 27 November 2026, with every line kept. Only these categories are replaced, by placeholders: the
 > deploying organisation's name (`<tenant>`), host names (`example.com`), IP addresses
 > (documentation ranges), server file paths and rollback folders, mail addresses, names of people and
 > of third parties' internal products, business file names, and links to private records
@@ -78,8 +78,8 @@ until the owner says; the table only fixes the order to take them up.
 | 1 | **P74** document and photo store in the mobile app (Drive) | server part on production 25 Nov (`059f8bf`); next: phone test | app #66 needs #64 |
 | 2 | **P61** editor file safety | production business data: a shared workbook became unusable and edits were parked unsaved (20 Nov); owner request | start with the unstick and rescue tool; relates to P57, P59 |
 | 3 | **P59** promotion plan and drift check | a stack was missed in the 21 Nov promotion; prevents repeats | none; do before the next multi-stack release |
-| 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | done apart from one follow-up | remaining: repeat the reboot drill on the test VPS after the move |
-| 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50 |
+| 4 | **P57** survive reboots (released 21 Nov; production reboot passed 22 Nov) | **26 Nov: Prometheus did not come back after a production reboot** (started by hand after 26 minutes) | remaining: lasting fix and a boot check that counts containers (follow-ups 6 to 9, owner's go needed); repeat the reboot drill on the test VPS after the move |
+| 4a | **P82** ERP Mobile holds the passkeys; 1 phone + 1 computer session per user | **owner** 25 Nov: sign-ins that cannot be shared or left on a shared computer; owner starts it in another session | Android first, Apple later; with P50; amended 26 Nov (PM then admin approval, strong sensors only, 5-miss erase, no selfie, Android 9–13 kept); P95 face attendance and P96 SOPs alongside (not yet ranked) |
 | 4b | **P84** client identity out of the public repository, with an automatic check; **P85** Unformat brand public as the default | **owner** 26 Nov: client names must leave the public repository "tomorrow if not today" | after PR #80 is cleared; history rewrite is an owner decision; P85 needs the trademark owner |
 
 **Tier 1: high (business-critical, next)**
@@ -87,6 +87,7 @@ until the owner says; the table only fixes the order to take them up.
 | Rank | Item | Why | Depends on / note |
 |---|---|---|---|
 | 5 | **P62** daily upstream watch (releases, security flaws, upgrade advice) | security: new flaws and fixes reach us only by chance today; advice only, no automatic upgrades | none; baseline first, dry-run a week; owner may place it higher |
+| 5a | **P100** mobile app checks in CI (build, typecheck, lint, tests, secret scan, code scanner, dependency advisories; app dependencies in the daily watch) | **owner** 26 Nov: tier 1; the build loop for every screen relies on these checks and CI checks nothing in `mobile/` today | scanners need an adoption check first; overlaps PR #75 (template) and P71 (workflows); next to P62 because it extends the watch |
 | 6 | **P72** monitoring and alerting | VPS metrics, uptime, probe logs and backup audit live | phone delivery deferred; remaining storage and logging checks in P72 |
 | 7 | **P64** native app sign-in on production: latent auth-hook crash, stale client list | crash fix live since 21 Nov (`4a5151f`) | remaining: correct the stale native client list on production when the app goes live (P50) |
 | 8 | **P71** GitHub CI/CD and central secrets management: Actions deploy test and production, owner approves production; secrets in one managed place; "Refresh code" button removed | owner decision 21 Nov; removes the hand-run steps behind several slips today | plan settled 21 Nov, **scheduled for later** (owner go needed); order in the item; takes over deploy parts of P67, P54, P59 |
@@ -138,7 +139,8 @@ not ranked or scheduled; the owner decides if and when one starts)
 | **P22** AI assistant | read-only first; provider and data policy undecided |
 | **P29**, **P30**, **P48** Headscale, Technitium DNS, branch router | one chain, P48 depends on P29 and P30; nothing is broken today |
 | **P46** TrueNAS NVR | one-camera trial started 26 Nov; hardware for more cameras after the trial |
-| **P53** Desk widgets and universal search | **parked by the owner**: do not start |
+| **P53** Desk widgets and universal search | **taken up 27 Nov:** the admin alerts widget (with P72), and help, notifications, search and sign-out moved from the apps to the Desk; the day-planning widgets stay **parked** |
+| **P107** user support: "Report a problem" in the apps, and an admin support desk (Frappe Helpdesk proposed) | **parked by the owner** 27 Nov: take up later; no RustDesk, no paid tool; P103 first |
 
 **Done, closed, redundant or irrelevant items** are not in the lists any more: see [the closed log](p-closed.md) (one line each; numbers are never reused).
 
@@ -153,17 +155,17 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 22 | 22 |
+| General | [pending/general.md](p-list/general.md) | 30 | 30 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
-| ERP | [pending/erp.md](p-list/erp.md) | 11 | 11 |
+| ERP | [pending/erp.md](p-list/erp.md) | 15 | 15 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 6 | 6 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 9 | 9 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
-| Test site | [pending/test-site.md](p-list/test-site.md) | 4 | 4 |
+| Test site | [pending/test-site.md](p-list/test-site.md) | 6 | 6 |
 
 ## All P items (index)
 
@@ -177,7 +179,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P08 | Latest global logout and fresh passkey sign-in | [Sign-in](p-list/signin.md) | portal, erp, drive, mail, dms · **State:** in progress | in progress |
 | P09 | Portal fullscreen toggle | [Portal (eZone)](p-list/portal.md) | none · **State:** open | open |
 | P10 | Desktop/iPhone Drive and calendar/contact clients | [Drive](p-list/drive.md) | mail · **State:** open | open |
-| P11 | Certificate issuance and renewal acceptance | [General](p-list/general.md) | none · **State:** open | open |
+| P11 | Certificate issuance and renewal acceptance | [General](p-list/general.md) | none · **State:** in progress | in progress |
 | P12 | PTR and external mail delivery | [Mail](p-list/mail.md) | none · **State:** blocked | blocked |
 | P13 | Remaining users, app permissions and worker enrollment | [General](p-list/general.md) | signin, mail, dms · **State:** in progress | in progress |
 | P14 | Retained mobile/browser push acceptance | [Mobile](p-list/mobile.md) | erp, raven · **State:** open | open |
@@ -206,14 +208,13 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P47 | Company website as the front door of the app portal | [Portal (eZone)](p-list/portal.md) | none · **State:** in progress | in progress |
 | P48 | Remote branch router and gateway firewall | [General](p-list/general.md) | none · **State:** blocked | blocked |
 | P49 | Bring production's sign-in pages and templates into the repository | [Sign-in](p-list/signin.md) | none · **State:** open | open |
-| P50 | Native mobile app for phones and tablets (module `mobile-app`) | [Mobile](p-list/mobile.md) | none · **State:** open | open |
+| P50 | Native mobile app for phones and tablets (modules `mobile-app` and `mobile-native`) | [Mobile](p-list/mobile.md) | none · **State:** open | open |
 | P51 | Data refresh runs at 8 pm, not on demand | [Test site](p-list/test-site.md) | none · **State:** open | open |
-| P53 | Desk: day-planning widgets and dashboards from all apps | [Portal (eZone)](p-list/portal.md) | signin, mail, drive, dms · **State:** parked | parked |
+| P53 | Desk: day-planning widgets and dashboards from all apps | [Portal (eZone)](p-list/portal.md) | signin, mail, drive, dms · **State:** in progress | in progress |
 | P54 | Branch deploy button for the "developer" group on the test site | [Test site](p-list/test-site.md) | none · **State:** blocked | blocked |
 | P57 | The platform survives restarts and reboots without an outage | [General](p-list/general.md) | drive, mail, editor · **State:** in progress | in progress |
-| P59 | Promotion plan and drift check: no stack left behind | [General](p-list/general.md) | none · **State:** open | open |
 | P61 | Editor file safety: a document is never left unusable or its edits lost | [Editor](p-list/editor.md) | drive · **State:** in progress | in progress |
-| P62 | Daily upstream watch: new releases, security flaws, patches, upgrade decisions | [General](p-list/general.md) | none · **State:** open | open |
+| P62 | Daily upstream watch: new releases, security flaws, patches, upgrade decisions | [General](p-list/general.md) | none · **State:** in progress | in progress |
 | P63 | Demo mode for the test site (`test.example.com`): neutral brand, no tenant traces | [Test site](p-list/test-site.md) | portal, signin, mail, erp · **State:** in progress | in progress |
 | P64 | Native app sign-in on production: latent auth-hook crash and a stale client list | [Mobile](p-list/mobile.md) | signin, erp · **State:** in progress | in progress |
 | P66 | Errors on the test site are invisible: Error Log rows stay queued | [Test site](p-list/test-site.md) | general, erp · **State:** open | open |
@@ -232,8 +233,26 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P80 | Editor stays registered with Drive after every Drive restart | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P81 | Editor follow-ups: Compose safety net and release rule | [Editor](p-list/editor.md) | drive, general · **State:** open | open |
 | P82 | ERP Mobile holds the passkeys; one phone and one computer session per user | [Sign-in](p-list/signin.md) | mobile, portal, erp, test-site · **State:** open | open |
-| P85 | Unformat brand public as the default; client brands supplied privately | [General](p-list/general.md) | portal, mobile, erp, signin · **State:** open | open |
+| P85 | Unformat brand public as the default; client brands supplied privately | [General](p-list/general.md) | portal, mobile, erp, signin · **State:** in progress | in progress |
 | P86 | Personal business files in the app, with a quota per user | [Mobile](p-list/mobile.md) | drive, erp, signin · **State:** open | open |
 | P87 | Camera videos in the mobile app (Frigate) | [Mobile](p-list/mobile.md) | general, signin · **State:** open | open |
 | P88 | Project camera sites connected to the NVR over the mesh | [General](p-list/general.md) | mobile · **State:** open | open |
+| P89 | Register of our changes to upstream apps, and an upgrade checklist | [General](p-list/general.md) | erp, portal, signin, drive, editor, mail, dms, raven, mobile · **State:** in progress | in progress |
+| P90 | Traefik security upgrade: pin Coolify's proxy to 3.7.20 | [General](p-list/general.md) | none · **State:** in progress | in progress |
+| P91 | Upgrade checks that cannot miss a changed upstream file; upstream watch gaps | [General](p-list/general.md) | erp, editor, mail, signin, drive, dms · **State:** in progress | in progress |
+| P92 | Out-of-date Collabora material, ONLYOFFICE version, WhatsApp entry, hosting provider's name | [General](p-list/general.md) | editor, drive · **State:** in progress | in progress |
+| P93 | "Request response" button missing on Job Offer | [ERP](p-list/erp.md) | general · **State:** in progress | in progress |
+| P94 | Bring production stacks back in line with main | [General](p-list/general.md) | editor, signin, portal, test-site · **State:** open | open |
+| P95 | Face recognition for field team attendance | [ERP](p-list/erp.md) | mobile, signin, test-site · **State:** in progress | in progress |
+| P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
+| P100 | Mobile app checks in CI, and the app's dependencies in the daily watch | [Mobile](p-list/mobile.md) | general · **State:** open | open |
+| P101 | Test Drive, test Paperless, test mail and the test editor sign in through the test sign-in server | [Test site](p-list/test-site.md) | signin, drive, dms, mail, editor · **State:** open | open |
+| P102 | Admin tools: single sign-on by default, the tailnet as the backup door | [General](p-list/general.md) | signin, test-site · **State:** open | open |
+| P103 | Request ID on every app action, and "what happened to my request" | [ERP](p-list/erp.md) | mobile · **State:** open | open |
+| P104 | Version handshake between the server and the mobile apps | [ERP](p-list/erp.md) | mobile · **State:** open | open |
+| P105 | Test site ready for the native app's five-phone test round | [Test site](p-list/test-site.md) | erp, signin, mobile · **State:** blocked | blocked |
+| P106 | Short video clips with site incidents | [Mobile](p-list/mobile.md) | drive, erp · **State:** open | open |
+| P107 | User support: "Report a problem" in the apps, and an admin support desk | [General](p-list/general.md) | erp, mobile, portal, signin · **State:** parked | parked |
+| P108 | Remove Raven from ERPNext; all messages through our own channels | [General](p-list/general.md) | raven, mail, mobile, portal, signin, general · **State:** open | open |
+| P109 | A light mail client in the phone app (JMAP) | [Mobile](p-list/mobile.md) | mail, signin · **State:** open · **Category:** now | open |
 <!-- APP-INDEX-END -->

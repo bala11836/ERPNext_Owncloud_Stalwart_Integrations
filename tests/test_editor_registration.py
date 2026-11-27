@@ -39,6 +39,13 @@ class Drive:
     def now(self):
         return self.t
 
+    def boot_id(self):
+        # The boot check also compares with the containers saved before a reboot (P57); same boot here.
+        return 'boot-1'
+
+    def send_mail(self, alert, subject, body):
+        self.mails = getattr(self, 'mails', []) + [(subject, body)]
+
     def sleep(self, seconds):
         self.t += seconds
 

@@ -65,11 +65,18 @@ class Bot:
     def _room(self, room_id, rest):
         return '/_matrix/client/v3/rooms/%s%s' % (urllib.parse.quote(room_id), rest)
 
-    def members(self, room_id):
-        """Everyone joined or invited, by user ID."""
+    def states(self, room_id):
+        """Everyone joined or invited, as {user ID: 'join' or 'invite'}."""
         answer = self.call('GET', self._room(room_id, '/members'))
-        return sorted(event['state_key'] for event in answer.get('chunk', [])
-                      if event.get('content', {}).get('membership') in ('join', 'invite'))
+        return {event['state_key']: event['content']['membership'] for event in answer.get('chunk', [])
+                if event.get('content', {}).get('membership') in ('join', 'invite')}
+
+    def members(self, room_id):
+        return sorted(self.states(room_id))
+
+    def exists(self, user_id):
+        """Whether this person has a chat account yet (it is made at their first sign-in)."""
+        return self.call('GET', '/_matrix/client/v3/profile/' + urllib.parse.quote(user_id), missing_ok=True) is not None
 
     def invite(self, room_id, user_id):
         self.call('POST', self._room(room_id, '/invite'), {'user_id': user_id})

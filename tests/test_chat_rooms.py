@@ -141,6 +141,15 @@ class Client(unittest.TestCase):
         self.assertEqual((method, body['msgtype']), ('PUT', 'm.notice'))
         self.assertTrue(url.endswith('/send/m.room.message/approval%2F42%20done'), 'the key makes a repeat harmless')
 
+    def test_whether_a_person_has_an_account_and_who_is_only_invited(self):
+        bot = self.bot((404, {'errcode': 'M_NOT_FOUND'}), (200, {'displayname': 'Asha K'}),
+                       (200, {'chunk': [{'state_key': '@a.b:' + SERVER, 'content': {'membership': 'join'}},
+                                        {'state_key': '@c.d:' + SERVER, 'content': {'membership': 'invite'}}]}))
+        self.assertFalse(bot.exists('@new.x:' + SERVER), 'no account before the first sign-in')
+        self.assertTrue(bot.exists('@asha.k:' + SERVER))
+        self.assertTrue(self.wire.sent[0][1].endswith('/_matrix/client/v3/profile/%40new.x%3Achat.example.net'))
+        self.assertEqual(bot.states('!r:' + SERVER), {'@a.b:' + SERVER: 'join', '@c.d:' + SERVER: 'invite'})
+
     def test_no_connection_without_all_three_settings(self):
         for url, server, token in (('', SERVER, 't'), ('http://x', '', 't'), ('http://x', SERVER, '')):
             with self.assertRaises(ChatError):
@@ -152,6 +161,14 @@ class MemoryChat:
     def __init__(self):
         self.server, self.user_id = SERVER, '@erp:' + SERVER
         self.rooms, self.fail = {}, set()
+        self.no_account, self.pending = set(), set()
+
+    def exists(self, user):
+        return user.split(':')[0][1:] not in self.no_account
+
+    def states(self, room_id):
+        return {m: ('invite' if (room_id[1:], m) in self.pending else 'join')
+                for m in self.rooms[room_id[1:]]['members']}
 
     def room_id(self, alias):
         if alias in self.fail:
@@ -167,9 +184,11 @@ class MemoryChat:
 
     def invite(self, room_id, user):
         self.rooms[room_id[1:]]['members'].add(user)
+        self.pending.discard((room_id[1:], user))  # an invitation to an existing account is accepted at once
 
     def remove(self, room_id, user, reason):
         self.rooms[room_id[1:]]['members'].discard(user)
+        self.pending.discard((room_id[1:], user))
 
     def name(self, room_id):
         return self.rooms[room_id[1:]]['name']
@@ -199,7 +218,35 @@ class Applying(unittest.TestCase):
         first = sync.apply(self.chat, wanted)
         self.assertEqual((first['created'], first['failed']), (len(wanted), 0))
         self.assertEqual(self.people('site-north-yard-phase-2'), ['asha.k', 'lata.p', 'meena.s', 'ravi.m'])
-        self.assertEqual(sync.apply(self.chat, wanted), {'created': 0, 'invited': 0, 'removed': 0, 'renamed': 0, 'failed': 0})
+        self.assertEqual(sync.apply(self.chat, wanted), {'created': 0, 'invited': 0, 'removed': 0, 'renamed': 0,
+                                                         'failed': 0, 'not_signed_in_yet': 0})
+
+    def test_someone_who_never_signed_in_to_chat_waits_and_is_added_after_their_first_sign_in(self):
+        self.chat.no_account = {'ravi.m'}
+        wanted = rules.wanted_rooms([SITE], NAMES)
+        first = sync.apply(self.chat, wanted)
+        self.assertEqual(first['not_signed_in_yet'], 1)
+        self.assertEqual(self.people('site-north-yard-phase-2'), ['asha.k', 'lata.p', 'meena.s'], 'no early invitation')
+        self.assertNotIn('notices-ravi.m', self.chat.rooms)
+        self.chat.no_account = set()
+        later = sync.apply(self.chat, wanted)
+        self.assertEqual(self.people('site-north-yard-phase-2'), ['asha.k', 'lata.p', 'meena.s', 'ravi.m'])
+        self.assertEqual(self.people('team-north-yard-phase-2-asha.k'), ['asha.k', 'meena.s', 'ravi.m'])
+        self.assertIn('notices-ravi.m', self.chat.rooms)
+        self.assertEqual(later['not_signed_in_yet'], 0)
+
+    def test_a_pending_invitation_is_made_again_or_withdrawn(self):
+        wanted = rules.wanted_rooms([SITE], NAMES)
+        sync.apply(self.chat, wanted)
+        room, person = 'site-north-yard-phase-2', '@ravi.m:' + SERVER
+        self.chat.pending.add((room, person))
+        result = sync.apply(self.chat, wanted)
+        self.assertEqual(self.chat.states('!' + room)[person], 'join', 'the invitation was made again and accepted')
+        self.assertEqual(result['invited'], 1)
+        self.chat.pending.add((room, person))
+        self.chat.no_account = {'ravi.m'}
+        sync.apply(self.chat, wanted)
+        self.assertNotIn(person, self.chat.rooms[room]['members'], 'an invitation to a missing account is withdrawn')
 
     def test_a_change_of_assignment_invites_and_removes_and_a_new_name_renames(self):
         sync.apply(self.chat, rules.wanted_rooms([SITE], NAMES))

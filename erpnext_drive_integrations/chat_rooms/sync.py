@@ -62,23 +62,38 @@ def collect():
 
 def apply(chat, wanted):
     """Make each wanted room real. Returns counts; one room's failure does not stop the others."""
-    done = {'created': 0, 'invited': 0, 'removed': 0, 'renamed': 0, 'failed': 0}
+    done = {'created': 0, 'invited': 0, 'removed': 0, 'renamed': 0, 'failed': 0, 'not_signed_in_yet': 0}
+    known, waiting = {}, set()
+
+    def has_account(name):
+        """A chat account is made at a person's first sign-in. Until then they are not invited: an invitation
+        is accepted automatically only at the moment it is made, so an early one would stay pending."""
+        if name not in known:
+            known[name] = chat.exists(rules.user_id(name, chat.server))
+        if not known[name]:
+            waiting.add(name)
+        return known[name]
+
     for alias, room in sorted(wanted.items()):
         try:
+            members = [name for name in room['members'] if has_account(name)]
             room_id = chat.room_id(alias)
             if not room_id:
-                if room['members']:
+                if members:
                     chat.create_room(alias, room['name'], room['topic'], room['levels'],
-                                     [rules.user_id(name, chat.server) for name in room['members']])
+                                     [rules.user_id(name, chat.server) for name in members])
                     done['created'] += 1
-                    done['invited'] += len(room['members'])
+                    done['invited'] += len(members)
                 continue
-            invite, remove = rules.membership_changes(room['members'], chat.members(room_id), chat.user_id)
-            for person in invite:
-                chat.invite(room_id, person)
-            for person in remove:
+            states = chat.states(room_id)
+            invite, remove = rules.membership_changes(members, sorted(states), chat.user_id)
+            # Someone still only invited although their account exists: make the invitation again, so it is accepted.
+            again = [person for person, state in sorted(states.items()) if state == 'invite' and person not in remove]
+            for person in remove + again:
                 chat.remove(room_id, person, REMOVED_REASON)
-            done['invited'] += len(invite)
+            for person in invite + again:
+                chat.invite(room_id, person)
+            done['invited'] += len(invite) + len(again)
             done['removed'] += len(remove)
             if chat.name(room_id) != room['name']:
                 chat.rename(room_id, room['name'])
@@ -86,6 +101,7 @@ def apply(chat, wanted):
         except (ChatError, rules.RuleError) as error:
             done['failed'] += 1
             frappe.log_error(title='Chat room not updated', message='%s: %s' % (alias, error))
+    done['not_signed_in_yet'] = len(waiting)
     return done
 
 
@@ -126,13 +142,17 @@ def user_changed(doc, method=None):
 
 def notify(user, key, text):
     """One informing message into a person's Notices room (for the notification service, P108). Returns False
-    when the person has no chat name or chat is not set up; a repeat with the same key posts nothing new."""
+    when the person has no chat name, has never signed in to chat, or chat is not set up; a repeat with the same
+    key posts nothing new."""
     chat = bot()
     chat_name = frappe.db.get_value('User', {'name': user, 'enabled': 1}, CHAT_NAME_FIELD)
     if not chat or not rules.valid_chat_name(chat_name):
         return False
     alias = rules.notices_alias(chat_name)
-    room_id = chat.room_id(alias) or chat.create_room(
-        alias, 'Notices', rules.NOTICES_TOPIC, rules.READ_ONLY_LEVELS, [rules.user_id(chat_name, chat.server)])
+    person = rules.user_id(chat_name, chat.server)
+    if not chat.exists(person):
+        return False
+    room_id = chat.room_id(alias) or chat.create_room(alias, 'Notices', rules.NOTICES_TOPIC, rules.READ_ONLY_LEVELS,
+                                                      [person])
     chat.post(room_id, key, text, notice=True)
     return True

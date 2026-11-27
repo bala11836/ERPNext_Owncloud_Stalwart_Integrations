@@ -16,6 +16,7 @@ Rules that follow from this:
 
 - Only the bot invites, removes, renames or changes a room's rules.
 - A person takes part only when their User record has a **chat name** (`firstname.initial`, as held by the sign-in service). People without one are counted and left out, never guessed.
+- A person is put into rooms only once they have **signed in to chat once**: their chat account is made at the first sign-in, and an invitation is accepted automatically only at the moment it is made. The hourly run adds them afterwards (within the hour), and makes any invitation that is still pending again.
 - A disabled site keeps its rooms, with nobody in them. A disabled person leaves their site and team rooms.
 - An empty room is not created.
 

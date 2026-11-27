@@ -126,6 +126,8 @@ class MobileNativeTests(unittest.TestCase):
         self.assertNotRegex(lock.split('object Session')[1], r'prefs|SharedPreferences|File')
         main = (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8')
         self.assertIn('if (!Session.isOpen) {', main)
+        # Test builds, and only test builds, see the stand-ins.
+        self.assertIn('val testBuild = BuildConfig.DEBUG', main)
         self.assertIn('check(BuildConfig.DEBUG || view.key != KeyState.NONE)', main)
         self.assertIn('Session.left()', main.split('override fun onStop()')[1].split('}')[0])
         rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Lock.kt').read_text(encoding='utf-8')
@@ -195,7 +197,36 @@ class MobileNativeTests(unittest.TestCase):
         self.assertIn('RECEIVED("Received")', rules)
         self.assertNotIn('"Inbox"', rules.split('enum class Folder')[1].split('}')[0])
         self.assertIn('domain.isEmpty() || domain !in company', rules)
-        self.assertIn('IDN.toASCII(named)', rules)
+        # The host shown is never converted from special letters (programs disagree on the result), and a link with
+        # anything outside plain printable ASCII, or a numeric host, cannot be opened.
+        self.assertNotIn('IDN', rules)
+        self.assertIn("link.all { it in '!'..'~' }", rules)
+        self.assertIn('!numeric && !local', rules)
+        # What is being written is kept in memory only, never in the state Android stores outside the app.
+        for name in ('MailScreen.kt', 'ChatScreen.kt'):
+            text = (KOTLIN / name).read_text(encoding='utf-8')
+            self.assertNotRegex(text, r'(body|subject|to|draft|asked|file) by rememberSaveable', name)
+
+    def test_today_shows_counts_only_and_its_stand_in_asks_no_server(self):
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Today.kt').read_text(encoding='utf-8')
+        # What Today knows holds no amount and no other person's name: counts, states and times only.
+        facts = rules.split('data class TodayFacts(')[1].split('\n)')[0]
+        self.assertNotRegex(facts, r'(?i)amount|total:|rupee|BigDecimal|Money|names?:')
+        # Nothing the server writes freely reaches Today: no text field at all in what Today knows.
+        self.assertNotRegex(facts, r': (List<)?String')
+        self.assertIn('!facts.online -> null', rules.split('fun emptyLine(')[1].split('\n    }')[0])
+        # "Nothing is waiting" is never said when a check failed.
+        empty = rules.split('fun emptyLine(')[1].split('\n    }')[0]
+        self.assertLess(empty.index('facts.failed.isNotEmpty() -> null'), empty.index('"Nothing is waiting for you today."'))
+        # A deadline today sorts first.
+        self.assertIn('compareBy<Card> { !urgent(it) }', rules)
+        preview = (KOTLIN / 'TodayPreview.kt').read_text(encoding='utf-8')
+        self.assertNotRegex(preview, r'Safe|SharedPreferences|HttpTransport|Saver|File\(')
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertRegex(frame, r'TODAY\("Today", "Today", R\.drawable\.ic_today, testOnly = true\)')
+        screen = (KOTLIN / 'TodayScreen.kt').read_text(encoding='utf-8')
+        # A card is a button only when it has somewhere to lead.
+        self.assertIn('onClick = if (lead != null) ({ onOpen(lead) }) else null', screen)
 
     def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
         kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
@@ -250,6 +281,7 @@ class MobileNativeTests(unittest.TestCase):
         self.assertEqual(opens, ['HttpTransport.kt'])
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
         self.assertIn('android:usesCleartextTraffic="false"', manifest)
+        self.assertIn('android:windowSoftInputMode="adjustResize"', manifest)
         self.assertNotIn('networkSecurityConfig', manifest)
         # The server's address is set privately, never here.
         build = (NATIVE / 'app/build.gradle.kts').read_text(encoding='utf-8')

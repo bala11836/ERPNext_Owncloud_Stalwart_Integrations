@@ -59,7 +59,10 @@ object Chat {
     }
 
     /** What is really sent for what was typed, or null when there is nothing to send. */
-    fun cleaned(typed: String): String? = typed.trim().take(MAX_LENGTH).ifEmpty { null }
+    fun cleaned(typed: String): String? = limited(typed.trim()).ifEmpty { null }
+
+    /** At most [MAX_LENGTH] characters, and never half of a character that is stored in two parts (many emoji). */
+    fun limited(text: String): String = text.take(MAX_LENGTH).let { if (it.isNotEmpty() && it.last().isHighSurrogate()) it.dropLast(1) else it }
 
     /** What stays on the phone: the last [KEEP_DAYS] days, and anything still waiting to be sent. */
     fun kept(messages: List<Message>, now: LocalDateTime): List<Message> = messages.filter { it.waiting || !it.at.isBefore(now.minusDays(KEEP_DAYS)) }

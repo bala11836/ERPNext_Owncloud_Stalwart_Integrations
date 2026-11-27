@@ -71,7 +71,8 @@ class ScreensTest {
         }
     }
 
-    private fun place(place: Place) = compose.onNode(hasText(place.label) and hasClickAction())
+    /** A place in the bar (or rail). A card on Today can carry the same word, so the bar's own kind of button is asked for. */
+    private fun place(place: Place) = compose.onNode(hasText(place.label) and androidx.compose.ui.test.isSelectable())
 
     /** Opens one of the screens behind More, from wherever the app is. */
     private fun tool(tool: Tool) {
@@ -105,6 +106,14 @@ class ScreensTest {
             compose.onNode(hasText(place.title) and !hasClickAction()).assertIsDisplayed()
             checkLayout("$name / ${place.label}")
         }
+        // Every made-up day on Today: each role and each situation.
+        place(Place.TODAY).performClick()
+        for (day in Day.entries) {
+            compose.onNodeWithText("Role: ${day.label}").assertIsDisplayed()
+            checkLayout("$name / today, ${day.label}")
+            compose.onNodeWithText("Role: ${day.label}").performClick()
+        }
+        compose.onNodeWithText("Role: ${Day.SUPERVISOR.label}").assertIsDisplayed()
         // Everything behind More opens its own screen and leads back to More.
         for (tool in Tool.entries) {
             tool(tool)
@@ -237,6 +246,25 @@ class ScreensTest {
         shown("This mail goes outside the company: engineer@supplier-example.net")
         tap("Send")
         reach(compose.onNode(hasText("To: engineer@supplier-example.net") and hasClickAction())).assertIsDisplayed()
+        // Back from a new mail leads to the list, never into a mail read earlier.
+        tap("Folder: Sent")
+        tap("Received")
+        tap("HR (2)")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        tap("Write a mail")
+        tap("Discard this mail")
+        shown("Folder: Received")
+        assertEquals(0, compose.onAllNodes(hasText("Reply") and hasClickAction()).fetchSemanticsNodes().size)
+        // Also straight after a reply was sent: a new mail then leads back to the list, not into that conversation.
+        tap("HR (2)")
+        tap("Reply")
+        tap("Send")
+        tap("Write a mail")
+        type("Subject", "One\nline")
+        shown("One line")
+        tap("Discard this mail")
+        shown("Folder: Received")
+        assertEquals(0, compose.onAllNodes(hasText("Reply") and hasClickAction()).fetchSemanticsNodes().size)
     }
 
     @Test
@@ -430,16 +458,81 @@ class ScreensTest {
     @Test
     fun theBarHasTheFivePlacesAndMoreAlwaysLeadsBackToItsList() {
         show(Palettes.LIGHT)
-        // The app opens on Today. The unfinished places say so and offer nothing to tap.
+        // The app opens on Today. The unfinished place says so and offers nothing to tap.
         compose.onNode(hasText("Today") and !hasClickAction()).assertIsDisplayed()
-        shown("Not built yet. It comes after sign-in.")
         place(Place.INBOX).performClick()
+        shown("Not built yet. It comes after sign-in.")
         shown("Everything that waits for your decision")
         // A tap on More shows More's list, also from inside one of its screens.
         tool(Tool.DISPLAY)
         place(Place.MORE).performClick()
         compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()
         for (item in Tool.entries) reach(compose.onNode(hasText(item.title) and hasClickAction())).assertIsDisplayed()
+    }
+
+    private fun day(day: Day) {
+        place(Place.TODAY).performClick()
+        while (compose.onAllNodesWithText("Role: ${day.label}").fetchSemanticsNodes().isEmpty()) compose.onNodeWithText("Role:", substring = true).performClick()
+    }
+
+    @Test
+    fun todayShowsEachRoleItsOwnDayInCountsOnly() {
+        show(Palettes.LIGHT)
+        // The supervisor: own attendance, the team, what came back. None of these screens exists yet, so none is a button.
+        shown("Site supervisor · Site A")
+        shown("Up to date.")
+        shown("Marked 18 of 24. Not sent yet.")
+        shown("2 entries were sent back to correct.")
+        assertEquals(0, compose.onAllNodes(hasText("My team today") and hasClickAction()).fetchSemanticsNodes().size)
+        absent("To approve")
+        // The engineer: what has a deadline today is first and says its time; it leads to Inbox.
+        day(Day.ENGINEER)
+        shown("12 entries at 2 sites. Due today, 23:30.")
+        absent("My team today")
+        tap("To verify")
+        compose.onNode(hasText("Inbox") and !hasClickAction()).assertIsDisplayed()
+        // The project manager: what waits, by count; the unread counts lead to Chat and Mail.
+        day(Day.PROJECT_MANAGER)
+        shown("8 waiting, the oldest for 2 h.")
+        shown("3 sites: 1 approved, 1 verified, 1 not sent yet.")
+        reach(compose.onNode(hasText("12 unread.") and hasClickAction())).performClick()
+        shown("Folder: Received")
+        day(Day.PROJECT_MANAGER)
+        reach(compose.onNode(hasText("5 unread.") and hasClickAction())).performClick()
+        shown("New chat with a colleague")
+        // Staff see their own day and nothing of anyone else's.
+        day(Day.STAFF)
+        shown("Not checked in yet. You are outside the site.")
+        shown("Leave: waiting for approval.")
+        absent("To approve")
+        absent("My sites today")
+    }
+
+    @Test
+    fun todaySaysPlainlyWhenThereIsNothingOrWhenItCouldNotCheck() {
+        show(Palettes.LIGHT)
+        day(Day.NEW_PERSON)
+        shown("You are set up. Your site and your team appear here")
+        day(Day.HOLIDAY)
+        shown("Today is a holiday for your site.")
+        absent("My attendance")
+        day(Day.OFFLINE)
+        shown("No connection: 3 things wait to be sent.")
+        absent("Nothing is waiting")
+        shown("Without a connection the app opens for 3 more hours.")
+        shown("3 things are saved on this phone and not sent yet.")
+        day(Day.QUIET)
+        shown("Your phone's clock is 12 minutes behind.")
+        shown("Nothing is waiting for you today.")
+        // A failed check is named and never hidden behind "nothing waiting"; "Try again" leads somewhere.
+        day(Day.FAILED)
+        shown("Could not check: purchases, leave.")
+        shown("Your key was not used for 5 days.")
+        absent("Nothing is waiting")
+        tap("Try again") // the same day again, now with every check answered
+        compose.onNodeWithText("Role: ${Day.FAILED.label}").assertIsDisplayed()
+        absent("Could not check")
+        shown("8 waiting, the oldest for 2 h.")
     }
 
     @Test

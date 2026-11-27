@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -116,7 +117,8 @@ private fun Colleagues(colleagues: List<String>, onBack: () -> Unit, onChoose: (
 
 @Composable
 private fun RoomView(room: Room, now: LocalDateTime, onBack: (() -> Unit)?, actions: ChatActions) {
-    var draft by rememberSaveable(room.id) { mutableStateOf("") }
+    // In memory only: what is being typed is never handed to the state Android keeps outside the app.
+    var draft by remember(room.id) { mutableStateOf("") }
     var replyTo by rememberSaveable(room.id) { mutableStateOf<String?>(null) }
     val answered = room.messages.firstOrNull { it.id == replyTo }
     val messagesScroll = rememberScrollState()
@@ -150,13 +152,14 @@ private fun RoomView(room: Room, now: LocalDateTime, onBack: (() -> Unit)?, acti
             }
             OutlinedTextField(
                 draft,
-                { draft = it },
+                { draft = Chat.limited(it) },
                 Modifier.fillMaxWidth(),
                 label = { Text("Message") },
                 textStyle = MaterialTheme.typography.bodyLarge,
                 maxLines = 5,
                 shape = RoundedCornerShape(Look.Corner),
             )
+            if (draft.length >= Chat.MAX_LENGTH) Text("A message holds ${Chat.MAX_LENGTH} characters at most. Send this one and go on in the next.", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
             val text = Chat.cleaned(draft)
             if (text != null) {
                 MainButton("Send", {

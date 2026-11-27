@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -55,21 +56,25 @@ fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDa
     var view by rememberSaveable { mutableStateOf(View.LIST) }
     var folder by rememberSaveable { mutableStateOf(Folder.RECEIVED) }
     var thread by rememberSaveable { mutableStateOf<String?>(null) }
-    var file by rememberSaveable { mutableStateOf("") }
+    var file by remember { mutableStateOf("") }
     var title by rememberSaveable { mutableStateOf("New mail") }
-    var to by rememberSaveable { mutableStateOf("") }
-    var subject by rememberSaveable { mutableStateOf("") }
-    var body by rememberSaveable { mutableStateOf("") }
+    // What is being written stays in memory only. It is never put into the state Android keeps for the app outside
+    // the app's own storage: that would carry mail text out of the app, and a long quoted mail would crash it.
+    var to by remember { mutableStateOf("") }
+    var subject by remember { mutableStateOf("") }
+    var body by remember { mutableStateOf("") }
 
     val conversations = Mails.conversations(mails, folder)
     val open = conversations.firstOrNull { it.thread == thread }
     val write = { heading: String, toWhom: String, about: String, text: String -> title = heading; to = toWhom; subject = about; body = text; view = View.WRITE }
     val openConversation = { id: String -> thread = id; view = View.READ; actions.opened(id) }
 
+    var wideNow by remember { mutableStateOf(false) }
+
     @Composable
     fun list(modifier: Modifier, selected: String?) = Page(modifier) {
         Text("Mail", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
-        MainButton("Write a mail", { write("New mail", "", "", "") })
+        MainButton("Write a mail", { if (!wideNow) thread = null; write("New mail", "", "", "") })
         OutlineButton("Folder: ${folder.label}", { view = View.FOLDERS })
         if (conversations.isEmpty()) Text("Nothing in ${folder.label}.", style = MaterialTheme.typography.bodyLarge, color = Look.Muted)
         for (conversation in conversations) ConversationRow(conversation, folder, company, now, conversation.thread == selected) { openConversation(conversation.thread) }
@@ -91,6 +96,7 @@ fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDa
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 840.dp
+        wideNow = wide
         when {
             view == View.FOLDERS -> {
                 BackHandler { view = View.LIST }
@@ -107,7 +113,7 @@ fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDa
                 val leave = { view = if (open != null) View.READ else View.LIST }
                 BackHandler(onBack = leave)
                 Write(title, to, subject, body, company, onTo = { to = it }, onSubject = { subject = it }, onBody = { body = it }, onLeave = leave) { recipients ->
-                    actions.send(recipients, subject.trim(), body.trim())
+                    actions.send(recipients, Mails.oneLine(subject), body.trim())
                     view = View.LIST
                 }
             }
@@ -128,8 +134,10 @@ fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDa
                 }
             }
             view == View.READ && open != null -> {
-                BackHandler { view = View.LIST }
-                Column(Modifier.fillMaxSize().padding(Look.Gap)) { read(open) { view = View.LIST } }
+                // Leaving a conversation forgets it, so a later "back" never lands in a mail read earlier.
+                val close = { view = View.LIST; thread = null }
+                BackHandler(onBack = close)
+                Column(Modifier.fillMaxSize().padding(Look.Gap)) { read(open, close) }
             }
             else -> list(Modifier.fillMaxSize().padding(Look.Gap), null)
         }
@@ -168,7 +176,7 @@ private fun ConversationRow(conversation: Conversation, folder: Folder, company:
 @Composable
 private fun MailCard(mail: Mail, company: Set<String>, now: LocalDateTime, onFile: (String) -> Unit, onOpenLink: (String) -> Unit) {
     var pictures by rememberSaveable(mail.id) { mutableStateOf(false) }
-    var asked by rememberSaveable(mail.id) { mutableStateOf<String?>(null) }
+    var asked by remember(mail.id) { mutableStateOf<String?>(null) }
     Panel {
         Text("${mail.from.name} <${mail.from.address}>", style = MaterialTheme.typography.titleMedium)
         if (Mails.outside(mail.from.address, company)) {
@@ -191,7 +199,7 @@ private fun MailCard(mail: Mail, company: Set<String>, now: LocalDateTime, onFil
         for (link in Mails.links(mail.body)) {
             val host = Mails.realHost(link)
             if (host == null) {
-                RowCard(R.drawable.ic_link, "A link that is not a web address", "It cannot be opened.")
+                RowCard(R.drawable.ic_link, "A link the app cannot check", "The app cannot be sure where it leads, so it cannot be opened here.")
             } else {
                 RowCard(R.drawable.ic_link, "Link to $host", "Tap to see the full address before it opens.", onClick = { asked = link })
             }
@@ -213,6 +221,7 @@ private fun Field(value: String, onChange: (String) -> Unit, label: String, line
         label = { Text(label) },
         textStyle = MaterialTheme.typography.bodyLarge,
         minLines = if (lines >= 4) 4 else 1,
+        singleLine = lines == 1,
         maxLines = lines,
         shape = RoundedCornerShape(Look.Corner),
     )
@@ -239,7 +248,7 @@ private fun Write(
         Field(to, onTo, "To", 3)
         if (unusable.isNotEmpty()) Notice(StatusKind.BAD, "Not a mail address: ${unusable.joinToString(", ")}. Correct it to send.")
         if (leaving.isNotEmpty()) Notice(StatusKind.WARN, "This mail goes outside the company: ${leaving.joinToString(", ")}")
-        Field(subject, onSubject, "Subject", 2)
+        Field(subject, { onSubject(it.replace(Mails.LINE_BREAK, " ")) }, "Subject", 1)
         Field(body, onBody, "Message", 12)
         // Send exists only when the mail can be sent: someone to send to, no unreadable address, and something said.
         if (usable.isNotEmpty() && unusable.isEmpty() && (subject.isNotBlank() || body.isNotBlank())) MainButton("Send", { onSend(usable) })

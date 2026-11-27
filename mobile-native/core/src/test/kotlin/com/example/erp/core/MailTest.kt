@@ -52,6 +52,14 @@ class MailTest {
     fun whatIsTypedInToIsSortedIntoUsableAndNot() {
         assertEquals(listOf("pm@example.com", "engineer@example.com") to emptyList<String>(), Mails.addresses("pm@example.com, engineer@example.com; pm@example.com"))
         assertEquals(listOf("pm@example.com") to listOf("engineer", "a@b", "x@@example.com"), Mails.addresses("pm@example.com engineer a@b x@@example.com"))
+        val notAddresses = listOf("a@-.-", "a@1.2", ".a@example.com", "a..b@example.com", "a.@example.com", "a@example", "a@-example.com", "a\u202e@example.com", "<pm@example.com>")
+        assertEquals(emptyList<String>() to notAddresses, Mails.addresses(notAddresses.joinToString(", ")))
+        val real = listOf("first.last+site@mail.example.co.in", "o'brien@example.com", "A.B-c_d@EXAMPLE.technology", "x@example.xn--h2brj9c")
+        assertEquals(real to emptyList<String>(), Mails.addresses(real.joinToString("; ")))
+        // An absurdly long "address" is refused without being examined, and nothing crashes.
+        val huge = "a." .repeat(5000) + "a@example.com"
+        assertEquals(emptyList<String>() to listOf(huge), Mails.addresses(huge))
+        assertEquals("Pour checklist for Friday", Mails.oneLine("  Pour\nchecklist\r\n for\u2028Friday\u0085 "))
         assertEquals(emptyList<String>() to emptyList<String>(), Mails.addresses("  "))
     }
 
@@ -75,9 +83,29 @@ class MailTest {
         assertEquals("example.com.account-check.net", Mails.realHost(web("example.com.account-check.net/login")))
         // A name before "@" is not where the browser goes.
         assertEquals("account-check.net", Mails.realHost(web("example.com@account-check.net/login")))
-        // Look-alike letters show in their coded form.
-        assertEquals("xn--exmple-qta.com", Mails.realHost(web("exámple.com")))
         assertEquals("example.com", Mails.realHost(web("EXAMPLE.com:8443/x?y=1")))
+        // A name already in its coded form is shown exactly as the browser will use it.
+        assertEquals("xn--exmple-qta.com", Mails.realHost(web("xn--exmple-qta.com/login")))
+        val cannotBeSure = listOf(
+            web("ex\u00e1mple.com"), // look-alike letters
+            web("busine\u00df.example"), // "ß": one program reads "ss", the browser keeps it and goes elsewhere
+            web("\u03c3\u03c5\u03c2.example"), // final sigma, the same disagreement
+            web("exam\u200dple.com"), // an invisible joiner
+            web("example.com/\u202egnp.exe"), // a character that makes the address read backwards
+            web("a@b@account-check.net/login"), // two "@": not a form the app can read for sure
+            web("2130706433/"), // a number is a network address to a browser
+            web("0x7f.1/"),
+            web("127.1/"),
+            web("192.168.1.1/"),
+            web("example.com\\@account-check.net"),
+            web("exa%6dple.com"),
+            web("example.com./"),
+            web("[::1]/"),
+            web("exa_mple.com"),
+            web("localhost/admin"),
+            web("intranet/login"),
+        )
+        for (link in cannotBeSure) assertNull(link, Mails.realHost(link))
         for (bad in listOf("javascript:alert(1)", "intent://scan/#Intent;end", "file:///sdcard/x", "mailto:a@example.com", "example.com", "", web(""))) {
             assertNull(bad, Mails.realHost(bad))
         }

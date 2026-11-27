@@ -47,6 +47,10 @@ class ChatTest {
         assertNull(Chat.cleaned("  \n "))
         assertEquals("on my way", Chat.cleaned("  on my way\n"))
         assertEquals(Chat.MAX_LENGTH, Chat.cleaned("x".repeat(5000))!!.length)
+        // A cut never leaves half an emoji behind.
+        val cut = Chat.limited("x".repeat(Chat.MAX_LENGTH - 1) + "\uD83D\uDE00")
+        assertEquals(Chat.MAX_LENGTH - 1, cut.length)
+        assertFalse(cut.last().isSurrogate())
     }
 
     @Test

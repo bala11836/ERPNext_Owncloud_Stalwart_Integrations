@@ -39,7 +39,7 @@ tap leads to a finished screen. This folder currently holds the foundation every
   for every phone's icon shape and for themed icons; Android 12 and newer show it on the page colour while the
   app starts (Android 9 to 11 show the plain page colour). A frame that shows a bottom bar on phones and a side rail on tablets with the
   five agreed places (Today, Inbox, Chat, Mail, More; only More is finished, the others are in test builds only:
-  Today and Inbox as a page that says what will be there, Chat and Mail against stand-ins), and behind More three
+  Inbox as a page that says what will be there, Today, Chat and Mail against stand-ins), and behind More three
   finished screens: **Data trace** (list and detail; side by side on a tablet), **This phone** (fingerprint sensor,
   secure chip, Android version, checked for real) and **Display** (the look in use and the two Outdoor switches).
 - **Building blocks with rules built in** (`Parts.kt`): a plain status line cannot be tapped and must not name an
@@ -96,12 +96,23 @@ tap leads to a finished screen. This folder currently holds the foundation every
 - **Mail screens** (`core` `Mail`, `app` `MailScreen.kt`): the received mail as conversations (the list is called
   "Received", because "Inbox" is the approvals place), folders, reading, reply, reply to all, forward and a new
   mail. Built in: mail from outside the company says so (only an exact company domain counts as inside);
-  pictures from the internet are not loaded until asked for; a link shows the host it really leads to (look-alike
-  letters in their coded form, a name before an "@" ignored) and is opened only after a yes; a mail to someone
+  pictures from the internet are not loaded until asked for; a link shows the host it really leads to (a name before an "@" ignored) and is opened only after a yes; a link
+  the app cannot be sure about cannot be opened at all (special or look-alike letters, which programs convert
+  differently from browsers; a host written as a number or without a dot; any character outside plain ASCII); a mail to someone
   outside says so before it is sent; Send exists only when the mail can be sent. Attachments open inside the app;
   there is no "save to phone" (a setting that is off, owner's decision). **Not live:** there is no mail sign-in
   yet, so the screens run against a stand-in (`MailPreview.kt`) that only test builds can reach; nothing is sent,
   no link is opened, and there is no file viewer and no picture loading yet.
+
+- **Today, the home screen** (`core` `Today`, `app` `TodayScreen.kt`): cards made by one rule from what the server
+  says exists for the person, never from a job title: my attendance, my team, returned to me, waiting to send, to
+  verify, to approve, face queue, access requests, my sites, faces missing, my requests, chat, mail. Only what
+  applies is shown; counts only, never a name, an amount or a message (what Today knows holds no free text from
+  the server at all); a deadline today (or a missed one) comes first and
+  says its time. One status line (up to date, no connection with the age of the numbers, a phone clock that is off), and
+  "nothing is waiting" is never said when a check failed (the failed check is named) or without a connection. A card is a button only when
+  its screen exists. **Not live:** it runs against a stand-in (`TodayPreview.kt`) with made-up days for seven
+  roles and six situations, in test builds only; nothing is asked from a server.
 
 ## Contents
 
@@ -138,7 +149,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (54), Android lint with warnings as errors, the app's screen and connection tests (30) and a
+runs the rules module's unit tests (61), Android lint with warnings as errors, the app's screen and connection tests (32) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 

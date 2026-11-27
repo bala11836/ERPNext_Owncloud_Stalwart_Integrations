@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.erp.core.Lead
 import com.example.erp.core.Palette
 import com.example.erp.core.Trace
 
@@ -31,7 +32,7 @@ import com.example.erp.core.Trace
  * test builds only, so the real app never offers a place that leads nowhere.
  */
 enum class Place(val label: String, val title: String, val icon: Int, val testOnly: Boolean = false) {
-    /** Not built: a page that says what will be here. Test builds only. */
+    /** Today against a stand-in with made-up days, until sign-in exists. Test builds only. */
     TODAY("Today", "Today", R.drawable.ic_today, testOnly = true),
 
     /** Not built: a page that says what will be here. Test builds only. */
@@ -95,7 +96,13 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
     ) {
         Box(Modifier.statusBarsPadding()) {
             when (place) {
-                Place.TODAY -> ComingScreen("Today", "Your own work for the day and what is waiting for you: your attendance, your team, what was returned to you, and counts that lead to Inbox, Chat and Mail.")
+                Place.TODAY -> TodayPreviewScreen(onOpen = {
+                    place = when (it) {
+                        Lead.INBOX -> Place.INBOX
+                        Lead.CHAT -> Place.CHAT
+                        Lead.MAIL -> Place.MAIL
+                    }
+                })
                 Place.INBOX -> ComingScreen("Inbox", "Everything that waits for your decision: attendance to verify or approve, purchases, payments, leave. Oldest first, each approved with your fingerprint.")
                 Place.CHAT -> ChatPreviewScreen()
                 Place.MAIL -> MailPreviewScreen()

@@ -1,6 +1,5 @@
 package com.example.erp.core
 
-import java.net.IDN
 import java.net.URI
 import java.time.LocalDateTime
 
@@ -53,12 +52,23 @@ object Mails {
         return domain.isEmpty() || domain !in company
     }
 
-    private val ADDRESS = Regex("[^@\\s<>\"(),;:]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+")
+    // The name before the "@" may use the characters the mail standard allows without quotes (also an apostrophe).
+    private const val NAME = "[A-Za-z0-9!#\$%&'*+/=?^_`{|}~-]+"
+    private val ADDRESS = Regex("$NAME(\\.$NAME)*@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?\\.)+([A-Za-z]{2,}|xn--[A-Za-z0-9-]+)")
+
+    /** No real address is longer; anything longer is refused unread, so a huge pasted text cannot stall or crash the check. */
+    private const val MAX_ADDRESS = 254
+
+    /** Every kind of line break, also the ones a plain "white space" search misses. */
+    val LINE_BREAK = Regex("[\\r\\n\\u000B\\u000C\\u0085\\u2028\\u2029]")
+
+    /** A subject as it is sent: one line, single spaces. */
+    fun oneLine(text: String): String = text.replace(LINE_BREAK, " ").replace(Regex("\\s+"), " ").trim()
     private val BETWEEN = Regex("[,;\\s]+")
 
     /** What was typed in "To", as addresses: the ones that can be sent to, and the ones that cannot. */
     fun addresses(typed: String): Pair<List<String>, List<String>> =
-        typed.split(BETWEEN).filter { it.isNotEmpty() }.distinct().partition { ADDRESS.matches(it) }
+        typed.split(BETWEEN).filter { it.isNotEmpty() }.distinct().partition { it.length <= MAX_ADDRESS && ADDRESS.matches(it) }
 
     private val PREFIX = Regex("^((re|fwd?|fw)\\s*:\\s*)+", RegexOption.IGNORE_CASE)
 
@@ -82,17 +92,22 @@ object Mails {
     fun links(body: String): List<String> = LINK.findAll(body).map { it.value.trimEnd('.', ',', ';', ':', '!', '?') }.distinct().toList()
 
     /**
-     * Where a link really leads: the host the browser would go to, in plain letters. A name written with
-     * look-alike letters shows in its coded form ("xn--..."), and a name placed before an "@" is ignored, because
-     * the browser ignores it too. Null when it is not a web address; such a link is never opened.
+     * Where a link really leads: the host the browser would go to. A name placed before an "@" is ignored, because
+     * the browser ignores it too. Null when the app cannot be sure, and such a link is never opened:
+     * - anything that is not a plain web address (other kinds of link, a host the parser cannot read);
+     * - a link with any character outside plain printable ASCII. Converting look-alike or special letters is not
+     *   done here on purpose: programs disagree on the result (one turns "ß" into "ss", browsers keep it), so the
+     *   name shown could differ from the site opened. A name already in its coded form ("xn--...") is shown as it is;
+     * - a host written as a number, which a browser reads as a network address the person would not recognise;
+     * - a name without a dot ("localhost", "intranet"): that is the phone itself or its own network.
      */
     fun realHost(link: String): String? = try {
-        val uri = URI(link)
-        // A name with letters outside plain ASCII is not read as a host by the parser; it is taken from the raw
-        // address part, without anything before an "@" and without a port.
-        val named = uri.host ?: uri.rawAuthority?.substringAfterLast('@')?.substringBefore(':')
-        val host = if (uri.scheme?.lowercase() in setOf("http", "https") && !named.isNullOrEmpty()) IDN.toASCII(named).lowercase() else null
-        host?.takeIf { HOST.matches(it) }
+        val uri = if (link.all { it in '!'..'~' }) URI(link) else null
+        val host = uri?.host?.lowercase()
+        val last = host?.substringAfterLast('.').orEmpty()
+        val numeric = last.isNotEmpty() && (last.all { it.isDigit() } || last.startsWith("0x"))
+        val local = host == null || '.' !in host
+        if (uri?.scheme?.lowercase() in setOf("http", "https") && host != null && HOST.matches(host) && !numeric && !local) host else null
     } catch (e: Exception) {
         null
     }

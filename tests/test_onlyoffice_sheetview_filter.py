@@ -1,4 +1,4 @@
-"""A saved sheet view with an empty column filter must not crash the editor (SRN workbook, 20-21 Nov 2026).
+"""A saved sheet view with an empty column filter must not crash the editor (a shared workbook, 20-21 Nov 2026).
 
 ONLYOFFICE 10.0.0 (build 169): CT_NsvFilter.IU() calls `.filter.IU()` on every column filter, but a
 column filter may have no filter (saved as <columnFilter ...></columnFilter>), which throws

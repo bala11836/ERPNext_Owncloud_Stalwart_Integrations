@@ -110,9 +110,9 @@
     },
     {
       "name": "Production proxy routes",
-      "paths": ["deployment/config/proxy/**", "deployment/config/proxy-inputs.json", "deployment/production/**", "tools/prepare_auth_bridge.py", "tools/sso_proxy_trust.py", "tools/coolify_proxy_hosts.py", "tools/coolify_proxy_http3.py", "tools/coolify_proxy_image.py", "deployment/coolify-proxy.json"],
+      "paths": ["deployment/config/proxy/**", "deployment/config/proxy-inputs.json", "deployment/production/**", "tools/prepare_auth_bridge.py", "tools/sso_proxy_trust.py", "tools/coolify_proxy_hosts.py", "tools/coolify_proxy_http3.py", "tools/coolify_proxy_image.py", "tools/coolify_proxy_tls_resolver.py", "deployment/coolify-proxy.json"],
       "stacks": ["proxy"],
-      "steps": ["install the changed route or proxy files on the production proxy (keep a copy of the old ones)", "when deployment/coolify-proxy.json changed: run tools/coolify_proxy_image.py --restart on the host, then --check"],
+      "steps": ["install the changed route or proxy files on the production proxy (keep a copy of the old ones)", "when deployment/coolify-proxy.json changed: run tools/coolify_proxy_image.py --restart on the host, then --check", "when tools/coolify_proxy_tls_resolver.py is new or changed (or the running proxy lacks the resolver: --check): run it with --restart on the host at a quiet moment (about 16 seconds without the proxy), then --check"],
       "not_covered": "production-only route and proxy files: browser and protocol check right after promotion"
     },
     {

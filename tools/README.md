@@ -49,6 +49,7 @@ refresh worker) do not change; this index groups them by module.
 - `sso_proxy_trust.py` — On the SSO host, trust forwarded headers on the private (tailnet) entry point used by the test sign-in bridge, from exact addresses only (normally the test VM; `prepare_auth_bridge.py --print-forwarded-trust`), so the sign-in gateway returns to the requested page (P65). Writes the proxy compose file and Coolify's saved proxy configuration; never touches public entry points; the proxy restart is a separate step.
 - `prepare_test_relay.py` — Render a pass-through relay (SNI, PROXY protocol, port 80) for the six test hostnames on another Traefik host, for a test host without a public address.
 - `coolify_proxy_http3.py` — Switch HTTP/3 off on a relay host's Coolify proxy (saved configuration and compose file).
+- `coolify_proxy_tls_resolver.py` — Add the TLS-ALPN Let's Encrypt resolver (`letsencrypt-tls`) to a relay host's Coolify proxy, for the relayed test names (P11); `--restart`, `--check`.
 - `coolify_proxy_hosts.py` — Persist the proxy's workspace network/aliases and optional private (tailnet) host pins in Coolify's saved proxy configuration and compose file.
 - `prepare_erp_image.py` — Prepare an ERP build entirely from pinned public sources, with no private image; every change to frappe_docker's Containerfile must find its upstream line exactly once (P91).
 - `prepare_ingress.py` — Render complete workspace ingress for a controller's existing Traefik proxy.

@@ -232,18 +232,31 @@ class Reconstruction(unittest.TestCase):
         for host in hosts.values():
             key='cloud-test-relay-'+host.split('.')[0]
             self.assertEqual(http['routers'][key]['rule'],'Host(`'+host+'`)')
-            self.assertEqual(http['routers'][key]['tls'],{'certResolver':'letsencrypt'},'own certificate per name (P11)')
+            self.assertEqual(http['routers'][key]['tls'],{'certResolver':'letsencrypt-tls'},
+                             'own certificate per name, proved on port 443 (P11)')
             self.assertEqual(http['serversTransports'][key],{'serverName':host},'verify the test host certificate per name')
             self.assertEqual(http['services'][key]['loadBalancer']['servers'],[{'url':'https://100.64.0.20'}])
-            self.assertIn('Host(`'+host+'`)',http['routers']['cloud-test-relay-acme']['rule'])
-        acme=http['routers']['cloud-test-relay-acme']
-        self.assertEqual((acme['service'],acme['entryPoints']),('acme-http@internal',['http']))
-        self.assertTrue(acme['rule'].endswith('&& PathPrefix(`/.well-known/acme-challenge/`)'))
-        self.assertGreater(acme['priority'],http['routers']['cloud-test-relay-http']['priority'],
-                           'the relay host answers its own challenges, not the test host')
+        port80=[r for r in http['routers'].values() if 'http' in r['entryPoints']]
+        self.assertEqual([r['service'] for r in port80],['cloud-test-relay-http'],
+                         'port 80, challenges included, goes to the test host, which renews through the relay')
         self.assertNotIn('sso.example.net',yaml.safe_dump(out))
         with self.assertRaises(ValueError):relay({'tier':'production','hosts':hosts,'relay_target':'100.64.0.20'})
         with self.assertRaises(ValueError):relay({'tier':'test','hosts':dict(hosts,erp='erp.example.net'),'relay_target':'100.64.0.20'})
+    def test_tls_resolver_flags_are_added_once_and_keep_the_rest(self):
+        sys.path.insert(0,str(ROOT/'tools'))
+        from coolify_proxy_hosts import apply
+        from coolify_proxy_tls_resolver import running_has
+        text="services:\n  traefik:\n    command:\n    - --ping=true\n    - --certificatesresolvers.letsencrypt.acme.httpchallenge=true\n"
+        once=apply(text,{},tls_resolver='letsencrypt-tls')
+        command=yaml.safe_load(apply(once,{},tls_resolver='letsencrypt-tls'))['services']['traefik']['command']
+        self.assertEqual(command,['--ping=true','--certificatesresolvers.letsencrypt.acme.httpchallenge=true',
+                                  '--certificatesresolvers.letsencrypt-tls.acme.tlschallenge=true',
+                                  '--certificatesresolvers.letsencrypt-tls.acme.storage=/traefik/acme.json'])
+        with self.assertRaises(ValueError):apply(text,{},tls_resolver='bad name')
+        import types
+        run=lambda argv,**kw:types.SimpleNamespace(stdout=json.dumps(command))
+        self.assertTrue(running_has(run=run))
+        self.assertFalse(running_has(run=lambda argv,**kw:types.SimpleNamespace(stdout=json.dumps(command[:2]))))
     def test_relayed_ingress_clears_remembered_http3(self):
         import inspect
         source=inspect.getsource(ingress)

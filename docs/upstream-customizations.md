@@ -1236,21 +1236,28 @@ Made against: 3.4.2.
   router needs an explicit priority (`tools/prepare_test_relay.py`).
 - **Upgrade:** **re-check** on a major Traefik upgrade (loud: configuration refused).
 
-### PROXY-6 Own certificate per name; challenge routes above every port-80 route (P11)
+### PROXY-6 Own certificate per name; two Let's Encrypt resolvers (P11)
 
-- **What:** every public name gets a Let's Encrypt certificate from Traefik's HTTP
-  challenge (`acme-http@internal`). The challenge routes have priorities above all
-  other port-80 routes for those names: `own-certificate-acme-validation` in
-  `deployment/config/proxy/office-acme.yml`, and `<prefix>-relay-acme` from
-  `tools/prepare_test_relay.py`. They rely on Traefik skipping any name that a loaded
-  certificate already covers, without checking its expiry date (`getUncheckedDomains`
-  in 3.7.20). That is why no copied certificate may be loaded for these names. A
-  manual live item, removing the copied wildcard from production, is in the private
-  companion.
+- **What:** every public name gets a Let's Encrypt certificate from Traefik.
+  - **Production names:** HTTP challenge (`acme-http@internal`), with challenge routes
+    above all other port-80 routes for those names (`own-certificate-acme-validation`
+    in `deployment/config/proxy/office-acme.yml`).
+  - **Relayed test names:** a second resolver `letsencrypt-tls` with the TLS-ALPN
+    challenge (proxy flags from `tools/coolify_proxy_tls_resolver.py`; it shares the
+    ACME storage), so their port-80 challenges keep reaching the test host.
+  - **Relies on:** Traefik skips any name that a loaded certificate covers, without
+    checking its expiry date (`getUncheckedDomains` in 3.7.20). So no copied
+    certificate may be loaded for these names. The challenge handler answers only its
+    own tokens.
+  - The manual live item, removing the copied wildcard from production, is in the
+    private companion.
 - **Upgrade:** **re-check** on a Traefik upgrade: certificates renew (dates in the
-  HTTPS probe) and the challenge path on port 80 still reaches Traefik for each name.
+  HTTPS probe), each production name's port-80 challenge path still reaches Traefik,
+  and the running proxy still has the second resolver (`--check`). **Re-apply** if
+  Coolify resets the proxy configuration.
 - **Tests:** `tests/test_rebuild_templates.py::test_every_certificate_name_answers_its_http_challenge`,
-  `test_test_relay_terminates_and_forwards_only_test_hosts`.
+  `test_test_relay_terminates_and_forwards_only_test_hosts`,
+  `test_tls_resolver_flags_are_added_once_and_keep_the_rest`.
 
 ## Coolify
 

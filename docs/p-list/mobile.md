@@ -27,6 +27,11 @@ Recheck native Raven login/chat/refresh and revoked-token refusal, and coordinat
 **Status:** opened 19 November 2026. The Expo app (module `mobile-app`) is the app in use on test. The native
 Android rebuild (module `mobile-native`, Kotlin with Jetpack Compose) is under way: Phase 0 (foundation, no
 sign-in, no server calls) in the colleague's draft PR #114, review fixes added 27 November 2026.
+**Test-site request (27 November 2026):** the developer asked for the five-phone test preparation (PR #114,
+issuecomment-7214300268). The owner said "go for rest of all"; the answers were posted (issuecomment-7214761500): Part D
+decided (P95, PR #131); A5 and B4 answered from the code; B1 not needed (two bootstrap calls exist); B2 and B3 opened as
+P102 and P103; the test-site preparation as P104 (blocked on the testers' mail addresses and the test build's signing
+fingerprint).
 Own app (not the colleague's P38 app), native on Android and iOS, one codebase
 for phones and tablets, in this repository as a self-contained module. No
 Supabase: ERPNext is the data backend, authentik the sign-in (native-client

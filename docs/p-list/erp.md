@@ -392,4 +392,55 @@ public PR #101 (`p95/pm-queue`).
   owner's P93 browser check on the test ERP. **Switching P95 on in production waits for the legal opinion and the
   owner's decision.**
 
+**Owner decisions, 27 November 2026 (Part D of the native app's request on public PR #114):**
+- **Who may enrol:** also the supervisor and the engineer, besides HR and the project manager. Built as: the worker's
+  responsible supervisor, or the engineer assigned to that supervisor at that site; another team's supervisor or
+  engineer is refused; withdrawal follows the same rule.
+- **Consent text:** English by default; the worker may choose to read a translation in the language of their choice;
+  the language read is recorded (agreement draft 2). Open for the lawyer: which version governs if a translation and
+  the English differ.
+- **Public PR #131** (`p95/enrol-by-team`, `5ae5cd0`, CI passed, ready for the owner). On the test ERP since
+  09:27 UTC (receipt `p95-test-erp-enrol-by-team-5ae5cd0`): 71 suites in the image; face queue live 36/36 (7 new);
+  field attendance 79/79. Not covered: a phone (the enrolment and agreement screens are not built).
+- **Merged, not deployed** once merged: joins the next ERP release (P95 stays off in production).
+
 **Status:** in progress.
+
+### P102 — Request ID on every app action, and "what happened to my request"
+
+**App:** erp · **Also touches:** mobile · **State:** open
+
+**Why (owner, 27 November 2026: "go" on Part B of the native app's request on public PR #114):** the native app's
+data-flow tracker (P50, Phase 0) can follow a save only as far as the gateway. Nothing on the server returns or stores a
+request or correlation ID (checked 27 November: no such header; `request_id` exists only as the attendance retry key on
+Field Attendance Entry). A failed save cannot be pinned to one point without someone reading server logs.
+
+**What:**
+1. The app sends one request ID with every save; the server returns it in the answer and writes it on the record
+   created (reuse the existing unique client ID fields: `request_id`/`capture_id` on Field Attendance Entry,
+   `client_id` on Drive Photo, `capture_id` on Field Face Capture).
+2. The same ID on the calls that have none today and are repeat-safe only by the record's state: `self_check_out`,
+   `submit`, `review_many`, `verify`, `apply_workflow` (B4 of the request).
+3. A read-only function "what happened to my request ID": for the signed-in person's own IDs only, it answers the
+   record, its state and which notices were made; never other people's values.
+
+**Acceptance (test site):** every app save carries an ID that is returned and found on the record; the lookup answers
+for one's own IDs and refuses others'; repeating a call with the same ID returns the first result.
+
+**Related:** P50 (native app), P103 (version handshake), P104 (five-phone test round).
+
+### P103 — Version handshake between the server and the mobile apps
+
+**App:** erp · **Also touches:** mobile · **State:** open
+
+**Why (owner, 27 November 2026: "go" on Part B of the request on public PR #114):** an app that is older than the
+server's functions should say "update needed" instead of showing strange errors.
+
+**What:** `custom_hr.api.bootstrap` already returns `version` (`0.2.0`); add a short fingerprint of the fields and
+functions the mobile apps depend on (generated from the code, checked by a test so it cannot drift), and the oldest app
+version the server accepts. The apps compare at sign-in and on resume.
+
+**Acceptance:** a test fails when a mobile-facing function or field changes without the fingerprint changing; an app
+below the minimum shows "update needed" on the test site.
+
+**Related:** P50, P102, P104.

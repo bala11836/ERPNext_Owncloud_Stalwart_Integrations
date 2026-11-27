@@ -27,7 +27,7 @@ ENV = {
     'UPSTREAM_CLIENT_ID': 'chat', 'UPSTREAM_CLIENT_SECRET': 'placeholder-g', 'UPSTREAM_NAME': 'Company sign-in',
     'LOCALPART_TEMPLATE': '{{ user.chat_name }}',
     'BRIDGE_AS_TOKEN': 'placeholder-h', 'BRIDGE_HS_TOKEN': 'placeholder-i',
-    'ADMIN_CLIENT_ID': '01KBCHATSSADM1NCL1ENTAAAAA', 'ADMIN_CLIENT_SECRET': 'placeholder-j',
+    'ADMIN_CLIENT_ID': '01KBCHATSSADM1NC11ENTAAAAA', 'ADMIN_CLIENT_SECRET': 'placeholder-j',
 }
 STACK = json.loads((ROOT / 'deployment/stacks/chat.compose.json').read_text(encoding='utf-8'))
 INPUTS = json.loads((ROOT / 'deployment/stacks/inputs.json').read_text(encoding='utf-8'))
@@ -86,10 +86,10 @@ class Configuration(unittest.TestCase):
         self.assertTrue(re.fullmatch(alias, '#site-north-yard:chat.example.net'))
         self.assertFalse(re.fullmatch(alias, '#lunch:chat.example.net'))
         self.assertNotEqual(bridge['as_token'], bridge['hs_token'])
-        self.assertEqual(self.mas['clients'], [{'client_id': '01KBCHATSSADM1NCL1ENTAAAAA',
+        self.assertEqual(self.mas['clients'], [{'client_id': '01KBCHATSSADM1NC11ENTAAAAA',
                                                 'client_auth_method': 'client_secret_basic',
                                                 'client_secret': 'placeholder-j'}])
-        self.assertEqual(self.mas['policy'], {'data': {'admin_clients': ['01KBCHATSSADM1NCL1ENTAAAAA']}},
+        self.assertEqual(self.mas['policy'], {'data': {'admin_clients': ['01KBCHATSSADM1NC11ENTAAAAA']}},
                          'only that one client may use the admin interface')
         self.assertEqual(self.synapse['server_notices']['system_mxid_localpart'], 'notices')
         with self.assertRaises(ValueError):

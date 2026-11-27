@@ -690,13 +690,5 @@
   "CI_CHAT_CONFIGURE_BRIDGE_HS_TOKEN": {
     "kind": "secret",
     "generate": true
-  },
-  "CI_CHAT_CONFIGURE_ADMIN_CLIENT_ID": {
-    "kind": "setting",
-    "default": "01KBCHATSSADM1NC11ENTAAAAA"
-  },
-  "CI_CHAT_CONFIGURE_ADMIN_CLIENT_SECRET": {
-    "kind": "secret",
-    "generate": true
   }
 }

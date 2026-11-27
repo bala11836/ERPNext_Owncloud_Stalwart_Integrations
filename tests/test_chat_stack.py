@@ -27,7 +27,6 @@ ENV = {
     'UPSTREAM_CLIENT_ID': 'chat', 'UPSTREAM_CLIENT_SECRET': 'placeholder-g', 'UPSTREAM_NAME': 'Company sign-in',
     'LOCALPART_TEMPLATE': '{{ user.chat_name }}',
     'BRIDGE_AS_TOKEN': 'placeholder-h', 'BRIDGE_HS_TOKEN': 'placeholder-i',
-    'ADMIN_CLIENT_ID': '01KBCHATSSADM1NC11ENTAAAAA', 'ADMIN_CLIENT_SECRET': 'placeholder-j',
 }
 STACK = json.loads((ROOT / 'deployment/stacks/chat.compose.json').read_text(encoding='utf-8'))
 INPUTS = json.loads((ROOT / 'deployment/stacks/inputs.json').read_text(encoding='utf-8'))
@@ -71,7 +70,7 @@ class Configuration(unittest.TestCase):
         names = [name for listener in self.synapse['listeners'] for r in listener['resources'] for name in r['names']]
         self.assertEqual(names, ['client'], 'no federation resource is served')
 
-    def test_the_business_system_has_a_bot_an_admin_client_and_a_notices_room(self):
+    def test_the_business_system_has_a_bot_and_needs_no_admin_right(self):
         bridge = configure.bridge(self.values)
         self.assertEqual(self.synapse['app_service_config_files'], ['/config/bridge.yaml'])
         self.assertIsNone(bridge['url'], 'Synapse never calls the business system')
@@ -86,14 +85,14 @@ class Configuration(unittest.TestCase):
         self.assertTrue(re.fullmatch(alias, '#site-north-yard:chat.example.net'))
         self.assertFalse(re.fullmatch(alias, '#lunch:chat.example.net'))
         self.assertNotEqual(bridge['as_token'], bridge['hs_token'])
-        self.assertEqual(self.mas['clients'], [{'client_id': '01KBCHATSSADM1NC11ENTAAAAA',
-                                                'client_auth_method': 'client_secret_basic',
-                                                'client_secret': 'placeholder-j'}])
-        self.assertEqual(self.mas['policy'], {'data': {'admin_clients': ['01KBCHATSSADM1NC11ENTAAAAA']}},
-                         'only that one client may use the admin interface')
-        self.assertEqual(self.synapse['server_notices']['system_mxid_localpart'], 'notices')
         with self.assertRaises(ValueError):
-            configure.settings({**ENV, 'ADMIN_CLIENT_ID': ENV['UPSTREAM_ID']})
+            configure.settings({**ENV, 'BRIDGE_HS_TOKEN': ENV['BRIDGE_AS_TOKEN']})
+        self.assertEqual(self.synapse['auto_accept_invites'],
+                         {'enabled': True, 'only_for_direct_messages': False, 'only_from_local_users': True},
+                         'the bot puts people into rooms by inviting them; only this server can invite')
+        self.assertNotIn('clients', self.mas, 'no client with admin rights exists')
+        self.assertNotIn('policy', self.mas)
+        self.assertNotIn('server_notices', self.synapse, 'the bot makes the Notices room of each person itself')
 
     def test_both_sides_share_one_value_and_name_each_other(self):
         self.assertEqual(self.synapse['matrix_authentication_service']['secret'], self.mas['matrix']['secret'])
@@ -157,7 +156,7 @@ class Stack(unittest.TestCase):
     def test_the_client_value_is_never_generated_and_the_others_are(self):
         self.assertEqual(INPUTS['CI_CHAT_CONFIGURE_UPSTREAM_CLIENT_SECRET'], {'kind': 'secret', 'generate': False})
         for name in ('SYNAPSE_DB_PASSWORD', 'MAS_DB_PASSWORD', 'SHARED_SECRET', 'MACAROON_SECRET', 'FORM_SECRET',
-                     'MAS_ENCRYPTION_SECRET', 'BRIDGE_AS_TOKEN', 'BRIDGE_HS_TOKEN', 'ADMIN_CLIENT_SECRET'):
+                     'MAS_ENCRYPTION_SECRET', 'BRIDGE_AS_TOKEN', 'BRIDGE_HS_TOKEN'):
             self.assertEqual(INPUTS['CI_CHAT_CONFIGURE_' + name], {'kind': 'secret', 'generate': True}, name)
         self.assertTrue(configure.ULID.fullmatch(INPUTS['CI_CHAT_CONFIGURE_UPSTREAM_ID']['default']))
 

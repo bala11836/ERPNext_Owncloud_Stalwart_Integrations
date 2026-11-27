@@ -25,10 +25,10 @@ SYNAPSE_UID, MAS_UID = 991, 65532
 REQUIRED = ('CHAT_SERVER_NAME', 'CHAT_PUBLIC_URL', 'CHAT_AUTH_URL', 'SYNAPSE_DB_PASSWORD', 'MAS_DB_PASSWORD',
             'SHARED_SECRET', 'MACAROON_SECRET', 'FORM_SECRET', 'MAS_ENCRYPTION_SECRET', 'UPSTREAM_ID',
             'UPSTREAM_ISSUER', 'UPSTREAM_CLIENT_ID', 'UPSTREAM_CLIENT_SECRET', 'UPSTREAM_NAME', 'LOCALPART_TEMPLATE',
-            'BRIDGE_AS_TOKEN', 'BRIDGE_HS_TOKEN', 'ADMIN_CLIENT_ID', 'ADMIN_CLIENT_SECRET')
-# The business system's bot (P73): it creates the rooms and posts into them; people cannot use its name.
+            'BRIDGE_AS_TOKEN', 'BRIDGE_HS_TOKEN')
+# The business system's bot (P73): it creates the rooms, invites people into them and posts; people cannot use
+# its name. It needs no admin right: Synapse accepts its invitations for people (auto_accept_invites, below).
 BRIDGE_USER = 'erp'
-NOTICES_USER = 'notices'
 ULID = re.compile(r'[0-7][0-9A-HJKMNP-TV-Z]{25}')
 HOST = re.compile(r'[a-z0-9]([a-z0-9.-]*[a-z0-9])?')
 
@@ -46,11 +46,10 @@ def settings(env):
             raise ValueError(name + ' must be an https address')
         if not values[name].endswith('/'):
             values[name] += '/'
-    for name in ('UPSTREAM_ID', 'ADMIN_CLIENT_ID'):
-        if not ULID.fullmatch(values[name]):
-            raise ValueError(name + ' must be a ULID (26 characters)')
-    if values['UPSTREAM_ID'] == values['ADMIN_CLIENT_ID']:
-        raise ValueError('ADMIN_CLIENT_ID must differ from UPSTREAM_ID')
+    if not ULID.fullmatch(values['UPSTREAM_ID']):
+        raise ValueError('UPSTREAM_ID must be a ULID (26 characters)')
+    if values['BRIDGE_AS_TOKEN'] == values['BRIDGE_HS_TOKEN']:
+        raise ValueError('BRIDGE_AS_TOKEN and BRIDGE_HS_TOKEN must differ')
     return values
 
 
@@ -85,9 +84,9 @@ def homeserver(values):
         'enable_room_list_search': True,
         # The business system's bot signs in with its own token (bridge(), below).
         'app_service_config_files': ['/config/bridge.yaml'],
-        # One read-only room per person for messages that only inform, sent by the server itself.
-        'server_notices': {'system_mxid_localpart': NOTICES_USER, 'system_mxid_display_name': 'Notices',
-                           'room_name': 'Notices'},
+        # An invitation from someone on this server is accepted at once, so the bot can put a person into their
+        # site room (and a colleague's one-to-one chat opens) without a tap. Nobody outside can invite: no federation.
+        'auto_accept_invites': {'enabled': True, 'only_for_direct_messages': False, 'only_from_local_users': True},
     }
 
 
@@ -123,11 +122,6 @@ def mas(values):
         'secrets': {'encryption': encryption_key(values['MAS_ENCRYPTION_SECRET']),
                     'keys': [{'kid': 'chat-1', 'key_file': '/config/signing.pem'}]},
         'passwords': {'enabled': False},
-        # The business system's own client: it asks for a token with its ID and secret (no person involved) and may
-        # use Synapse's admin interface, to put people into their rooms and send notices.
-        'clients': [{'client_id': values['ADMIN_CLIENT_ID'], 'client_auth_method': 'client_secret_basic',
-                     'client_secret': values['ADMIN_CLIENT_SECRET']}],
-        'policy': {'data': {'admin_clients': [values['ADMIN_CLIENT_ID']]}},
         'account': {'email_change_allowed': False, 'displayname_change_allowed': False,
                     'password_registration_enabled': False, 'password_change_allowed': False,
                     'password_recovery_enabled': False, 'account_deactivation_allowed': False},

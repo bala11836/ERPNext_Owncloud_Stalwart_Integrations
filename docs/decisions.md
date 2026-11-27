@@ -14,7 +14,8 @@ discussion that led to a decision is not repeated here.
   The face attendance agreement opens in English; the worker may choose to read a translation in the language of
   their choice, and the language they read is recorded with their consent (as before, every acceptance records the
   agreement version and language). If a translation and the English differ, the English version governs, and the
-  agreement tells the worker so.
+  agreement tells the worker so. By ticking "I agree" the worker also confirms that the person enrolling them
+  explained the terms in a language they understand; the consent record names that person and the language.
 - **Why:** owner, 27 November 2026, answering the native app's request on PR #114. Supervisors and engineers are the
   ones at the site with the team, so enrolment does not wait for HR or the project manager to visit. Limiting it to
   the worker's own team keeps it to people who know the worker; the consent record names who recorded it, and the

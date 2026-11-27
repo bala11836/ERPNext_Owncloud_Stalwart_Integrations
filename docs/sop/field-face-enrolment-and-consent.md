@@ -33,7 +33,10 @@ person, or without consent, makes attendance records wrong and breaks the worker
    translation and the English differ, the English version governs. Explain what is kept (encrypted face
    templates on the company's server, no photographs), why, for how long (until they withdraw or leave), and that they
    may refuse or withdraw at any time: their attendance is then marked by the supervisor and approved by the
-   project manager. The worker ticks the separate acceptance box themselves.
+   project manager. **You explain all of this to the worker yourself, in a language they understand**, and answer
+   their questions: by ticking "I agree" the worker confirms that you did (owner, 27 November 2026). If you cannot
+   explain it in their language, do not enrol them; ask HR or someone who speaks it. The worker ticks the separate
+   acceptance box themselves.
 4. If the worker refuses: do not enrol them; tell the supervisor they use attendance without a face.
 5. If the worker accepts: record the agreement version and the language the worker read, confirm the identity check, and capture the
    face from every angle the app asks for (front, left, right, up, down). Repeat if the app reports that the angles do
@@ -48,8 +51,8 @@ person, or without consent, makes attendance records wrong and breaks the worker
 ## Checks
 
 - Identity document seen in original.
-- The worker ticked the acceptance box themselves, after reading or hearing the agreement in English or in the
-  language they chose.
+- The worker ticked the acceptance box themselves, after you explained the agreement in a language they understand
+  and they read or heard it in English or in the language they chose.
 - A supervisor or engineer who enrolled their own team: the project manager looks over the new enrolments in the
   next approval round (the consent record names who recorded it).
 - The app confirmed the enrolment with the number of angles.

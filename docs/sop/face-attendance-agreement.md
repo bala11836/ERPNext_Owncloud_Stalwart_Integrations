@@ -40,8 +40,9 @@ permanently. We keep a record that you agreed and when it ended.
 - Questions or complaints: <Company>'s contact for personal data, `<contact>`. You may also complain to the Data
   Protection Board of India.
 
-**Your agreement.** I have read this, or it was read to me in a language I understand. I agree that my face is
-recorded for attendance as described above.
+**Your agreement.** By ticking "I agree", I confirm that the person enrolling me (HR, the project manager, or my
+supervisor or engineer) explained these terms to me in a language I understand, that I could ask questions and
+they were answered, and that I agree that my face is recorded for attendance as described above.
 
 [ ] I agree (ticked by the worker)  ·  Language I read it in (chosen by the worker; English unless they chose
 another)  ·  Date and time (recorded by the system)  ·  Recorded by (HR, project manager, or the worker's own
@@ -58,6 +59,10 @@ supervisor or engineer; recorded by the system)  ·  Identity document checked (
   language of the Eighth Schedule. The proposed list and the translator are in the private companion; each
   translation is checked by translating it back. **If a translation and the English differ, the English version
   governs** (owner, 27 November 2026); the text says so to the worker.
+- Explanation in the worker's language (owner, 27 November 2026): ticking "I agree" also confirms that the person
+  enrolling them explained the terms in a language they understand. The system records who enrolled and the language,
+  which backs the statement up. To confirm with the lawyer: that this acknowledgement, with those records, is enough
+  for informed consent when the worker cannot read the text themselves.
 - Retention of the consent record after it ends: proposed **3 years** (to answer a later dispute); to confirm.
 - Attendance photographs are already kept today with each attendance entry; their retention is a separate point for
   the same opinion.

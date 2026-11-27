@@ -25,7 +25,7 @@ ENV = {
     'FORM_SECRET': 'placeholder-e', 'MAS_ENCRYPTION_SECRET': 'placeholder-f',
     'UPSTREAM_ID': '01KBCHATSS0PR0V1DERAAAAAAA', 'UPSTREAM_ISSUER': 'https://sso.example.net/application/o/chat/',
     'UPSTREAM_CLIENT_ID': 'chat', 'UPSTREAM_CLIENT_SECRET': 'placeholder-g', 'UPSTREAM_NAME': 'Company sign-in',
-    'LOCALPART_TEMPLATE': '{{ user.preferred_username }}',
+    'LOCALPART_TEMPLATE': '{{ user.chat_name }}',
 }
 STACK = json.loads((ROOT / 'deployment/stacks/chat.compose.json').read_text(encoding='utf-8'))
 INPUTS = json.loads((ROOT / 'deployment/stacks/inputs.json').read_text(encoding='utf-8'))
@@ -46,6 +46,12 @@ class Configuration(unittest.TestCase):
         providers = self.mas['upstream_oauth2']['providers']
         self.assertEqual(len(providers), 1, 'one provider and no passwords: MAS goes straight to it')
         self.assertEqual(providers[0]['claims_imports']['localpart']['action'], 'require')
+        self.assertIn('chat', providers[0]['scope'].split(), 'the chat name comes with its own scope')
+        self.assertEqual(INPUTS['CI_CHAT_CONFIGURE_LOCALPART_TEMPLATE']['default'], '{{ user.chat_name }}')
+        mappings = json.loads((ROOT / 'deployment/scope-mappings.example.json').read_text(encoding='utf-8'))
+        chat = [m for m in mappings if m['scope_name'] == 'chat']
+        self.assertEqual(len(chat), 1)
+        self.assertIn('chat_name', chat[0]['expression'])
 
     def test_people_cannot_change_what_the_sign_in_service_says(self):
         account = self.mas['account']
@@ -185,6 +191,36 @@ class Rendering(unittest.TestCase):
         self.assertNotIn('/_synapse/admin', routers['isolated-chat']['rule'], 'the admin interface is not routed')
         self.assertEqual(http['services']['isolated-chat']['loadBalancer']['servers'][0]['url'], 'http://chat-synapse:8008')
         self.assertEqual(http['services']['isolated-chat-auth']['loadBalancer']['servers'][0]['url'], 'http://chat-mas:8080')
+
+
+    def test_the_relay_and_the_host_block_carry_the_chat_names_only_when_the_profile_has_them(self):
+        try:
+            import yaml  # noqa: F401
+        except ImportError:
+            self.skipTest('needs PyYAML, as the relay renderer does')
+        sys.path.insert(0, str(ROOT / 'tools'))
+        try:
+            from prepare_test_relay import prepare as relay
+            try:
+                from test_host_aliases import render as aliases
+            except ImportError:  # the host tool needs Linux (fcntl)
+                aliases = None
+        finally:
+            sys.path.pop(0)
+        base = {'tier': 'test', 'instance': 'trial', 'relay_target': '100.64.0.20', 'hosts': dict(self.HOSTS)}
+        without = relay(base)['http']['routers']
+        self.assertFalse([name for name in without if 'chat' in name])
+        chat = dict(self.HOSTS, **{'chat': 'test-chat.example.net', 'chat-auth': 'test-chat-auth.example.net'})
+        routers = relay(dict(base, hosts=chat))['http']['routers']
+        self.assertEqual(routers['cloud-test-relay-test-chat']['rule'], 'Host(`test-chat.example.net`)')
+        self.assertEqual(routers['cloud-test-relay-test-chat-auth']['rule'], 'Host(`test-chat-auth.example.net`)')
+        self.assertIn('Host(`test-chat-auth.example.net`)', routers['cloud-test-relay-http']['rule'],
+                      'port 80 too, for the certificate challenge of the test host')
+        with self.assertRaises(ValueError):
+            relay(dict(base, hosts=dict(chat, chat='chat.example.net')))
+        if aliases:
+            self.assertIn('test-chat.example.net test-chat-auth.example.net', aliases('', dict(base, hosts=chat)))
+            self.assertNotIn('chat', aliases('', base))
 
 
 if __name__ == '__main__':

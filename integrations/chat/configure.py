@@ -105,7 +105,7 @@ def mas(values):
         'upstream_oauth2': {'providers': [{
             'id': values['UPSTREAM_ID'], 'human_name': values['UPSTREAM_NAME'], 'issuer': values['UPSTREAM_ISSUER'],
             'client_id': values['UPSTREAM_CLIENT_ID'], 'client_secret': values['UPSTREAM_CLIENT_SECRET'],
-            'token_endpoint_auth_method': 'client_secret_basic', 'scope': 'openid profile email',
+            'token_endpoint_auth_method': 'client_secret_basic', 'scope': 'openid profile email chat',
             'claims_imports': {
                 'localpart': {'action': 'require', 'template': values['LOCALPART_TEMPLATE']},
                 'displayname': {'action': 'force', 'template': '{{ user.name }}'},

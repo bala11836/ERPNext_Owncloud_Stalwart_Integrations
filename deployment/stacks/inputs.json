@@ -673,7 +673,7 @@
   },
   "CI_CHAT_CONFIGURE_LOCALPART_TEMPLATE": {
     "kind": "setting",
-    "default": "{{ user.preferred_username }}"
+    "default": "{{ user.chat_name }}"
   },
   "CI_CHAT_SYNAPSE_HOST_PORT": {
     "kind": "setting",

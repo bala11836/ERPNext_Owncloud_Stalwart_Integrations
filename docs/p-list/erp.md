@@ -258,6 +258,13 @@ commit still carry the old number.
 **Progress (26 November 2026):** public PR #89 (`p90/job-offer-button`), CI passed; the new test fails on the old path.
 Waiting for a test-site slot (test ERP runs #77, used by the P74 phone test; owner decides).
 
+**Progress (27 November 2026): second fix merged, not deployed.** The owner's browser check on test found the
+button still missing: the script asked `rule_status` (GET only) with `frappe.xcall`, which sends POST, so Frappe
+answered "Not permitted" on Job Offer and Purchase Order. Public PR #123 asks with GET and adds
+`tests/test_js_call_methods.py`; tested on test at `b5f9c5d`, the owner saw the button on a Job Offer; merged at
+`086552f` (owner's go). **Merged, not deployed:** goes to production with the prepared ERP release (image rebuilt
+from main first).
+
 ### P95 — Face recognition for field team attendance
 
 **App:** erp · **Also touches:** mobile, signin, test-site · **State:** in progress

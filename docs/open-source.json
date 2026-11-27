@@ -810,6 +810,47 @@
       ],
       "status": "evaluating",
       "note": "Let's Encrypt's ACME test server, for a local rehearsal of the certificate switch (P11) only; not shipped. v2.10.3 (11 Nov 2026), release checksums verified."
+    },
+    {
+      "name": "Synapse",
+      "repo": "https://github.com/element-hq/synapse",
+      "licence": "AGPL-3.0-only (to verify)",
+      "used_in": [
+        "P73"
+      ],
+      "status": "evaluating",
+      "note": "Matrix server for the internal chat (owner, 27 November 2026); adoption check before the test site"
+    },
+    {
+      "name": "Matrix Authentication Service",
+      "repo": "https://github.com/element-hq/matrix-authentication-service",
+      "licence": "AGPL-3.0-only (to verify)",
+      "used_in": [
+        "P73"
+      ],
+      "status": "evaluating",
+      "note": "sign-in for Synapse through authentik; adoption check before the test site"
+    },
+    {
+      "name": "matrix-rust-sdk",
+      "repo": "https://github.com/matrix-org/matrix-rust-sdk",
+      "licence": "Apache-2.0",
+      "used_in": [
+        "P73",
+        "P50"
+      ],
+      "status": "evaluating",
+      "note": "Matrix client library for the phone app, through its Kotlin bindings"
+    },
+    {
+      "name": "Ltt.rs",
+      "repo": "https://codeberg.org/iNPUTmice/lttrs-android",
+      "licence": "Apache-2.0 (to verify)",
+      "used_in": [
+        "P109"
+      ],
+      "status": "evaluating",
+      "note": "Android JMAP client; its mail-server code may be borrowed for the light mail client (proof of concept, last release March 2026)"
     }
   ]
 }

@@ -254,5 +254,5 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P106 | Short video clips with site incidents | [Mobile](p-list/mobile.md) | drive, erp · **State:** open | open |
 | P107 | User support: "Report a problem" in the apps, and an admin support desk | [General](p-list/general.md) | erp, mobile, portal, signin · **State:** parked | parked |
 | P108 | Remove Raven from ERPNext; all messages through our own channels | [General](p-list/general.md) | raven, mail, mobile, portal, signin, general · **State:** open | open |
-| P109 | A light mail client in the phone app (JMAP) | [Mobile](p-list/mobile.md) | mail, signin · **State:** open · **Category:** later | open |
+| P109 | A light mail client in the phone app (JMAP) | [Mobile](p-list/mobile.md) | mail, signin · **State:** open · **Category:** now | open |
 <!-- APP-INDEX-END -->

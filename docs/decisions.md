@@ -6,26 +6,38 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
-### No chat or mail in the phone app for now; Raven leaves ERPNext; Matrix and a light mail client later (P108, P109, P73)
+### Raven leaves ERPNext; Matrix chat and a light mail client in the phone app, all now (P108, P73, P109)
 
-- **Decision:**
-  1. The phone app offers no chat and no mail for now.
-  2. Raven is removed from ERPNext. Every message the system sends to people goes through one notification service in
-     our add-on, which picks the channel per person and urgency: in the app, mail, WhatsApp, or an SMS gateway.
-  3. Later, Matrix becomes the internal chat inside the app, with a light JMAP mail client (read and reply first).
+- **Decision (owner, 27 November 2026), all started now and in parallel:**
+  1. **Raven is removed from ERPNext.** System messages to people go through one notification service in our add-on,
+     which picks the channel for each person and message: in the app, mail, or WhatsApp. SMS is used only where those
+     don't reach. Outside the company: mail, forms (the Respond app and ERPNext web forms) and WhatsApp.
+  2. **Matrix is the internal chat, built into the phone app.** The server is Synapse, with the Matrix Authentication
+     Service signing in through authentik. The app uses Matrix's Rust SDK through its Kotlin bindings. Company rooms
+     are unencrypted so the company can keep and search them.
+  3. **A light JMAP mail client in the phone app**, read and reply first. It borrows the mail-server code of Ltt.rs
+     (Apache-2.0); the screens are our own.
+  4. **The app's sign-in** (Phase 1) is built so one passkey sign-in gives every token: ERPNext's, and the sign-in
+     service's for mail and Matrix.
 
   This replaces three earlier decisions: "Chat, Mail and Drive stay separate apps" (22 November) for chat and mail;
-  "incidents go to Raven threads"; and "Raven inside the company" for notifications (P22).
-- **Why:** owner, 27 November 2026.
-  - The app holds each person's key in the phone's secure hardware. Android cannot share it with Raven's or a mail
-    app's own phone apps, so a second app would need its own key and its own approvals.
-  - One notification service sends each event once, keeps a record of what was sent, and lets a channel be swapped
-    (WhatsApp for SMS, later Matrix) without touching every sender.
-  - Matrix (over XMPP) for its apps, bridges and federation (P73).
+  "incidents go to Raven threads"; and "Raven inside the company" (P22).
+- **Why:**
+  - The app holds each person's key in the phone's secure hardware, and Android cannot share it with another app. So
+    chat and mail must be inside our app, whichever server they use.
+  - Matrix over Raven: an open standard, independent of ERPNext's uptime, able to connect separate companies later,
+    with a maintained Android library and calls. The costs are a new server (with monitoring, backups and a test
+    copy), an ERPNext bot for document messages, and about three months of work.
+  - Synapse because the Matrix Authentication Service supports only Synapse today. The lighter Tuwunel and
+    continuwuity are on record as alternatives.
+  - Production is not in real use, so no live chats need moving.
+  - The owner chose parallel work over the agent's suggestion to build the app parts after attendance and approvals.
 - **Kept:** the phone sign-in check (`portal/mobile.py`). It was written for Raven's app but signs in every phone app
   now, so its settings are renamed, not removed.
-- **Accepted for now:** until Matrix chat exists there is no chat between people inside our system.
-- **Where:** P108 (removal and the notification service), P109 (mail client), P73 (Matrix), P04 (WhatsApp).
+- **Before adoption:** the licence, maintenance and security-history checks for Synapse, the Matrix Authentication
+  Service, the Rust SDK, the push gateway and Ltt.rs, recorded here. They are `evaluating` in the open-source list
+  until then.
+- **Where:** P108, P73, P109, P50, P04.
 
 ### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)
 

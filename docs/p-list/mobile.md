@@ -109,7 +109,13 @@ sentences and no longer crashes on sign-out during a save. Still open in Phase 0
 comparison, texts in one file, a real tablet, vibration, icon and start screen, detekt, crash reports. Not for
 merging yet; nothing to deploy (no server stack).
 
-**No chat and no mail in the app for now (owner, 27 November 2026):** the key the app holds cannot be shared with
+**Chat and mail in the app now (owner, 27 November 2026, evening; replaces "for now" below):** Matrix chat (P73) and
+the light mail client (P109) are built now, in parallel with Phase 1. **Sign-in design for Phase 1 part 4:** one
+passkey sign-in in the browser gives the app every token it needs: ERPNext's now, and later the sign-in service's
+tokens for mail and for Matrix (through the same browser session, so no second passkey). Build the safe and the
+connection layer to hold several tokens from the start.
+
+**No chat and no mail in the app for now (owner, 27 November 2026, afternoon; replaced above):** the key the app holds cannot be shared with
 Raven's or a mail app's own phone apps, and Raven is being removed (P108). Later the app gets Matrix chat (P73) and a
 light mail client (P109). This replaces "Chat, Mail and Drive stay separate apps" of 22 November for chat and mail.
 
@@ -329,10 +335,15 @@ it, otherwise offered as a download), and is refused for a site the person does 
 
 ### P109 — A light mail client in the phone app (JMAP)
 
-**App:** mobile · **Also touches:** mail, signin · **State:** open · **Category:** later
+**App:** mobile · **Also touches:** mail, signin · **State:** open · **Category:** now
 
-**Why (owner, 27 November 2026):** mail on the phone without sharing the app's key with another mail app; later, after
-P108 and alongside Matrix chat (P73).
+**Owner, 27 November 2026, evening: all at once and now.** Production is not in real use yet, so there are no live
+chats to move. Raven's removal with the notification service (P108), Matrix chat (P73) and the light mail client
+(P109) start now, in parallel. The agent had recommended deciding all together but building the app parts after
+attendance and approvals, because the same app developer builds Phase 1 to 3; the owner chose parallel work and
+accepts that risk.
+
+**Why (owner, 27 November 2026):** mail on the phone without sharing the app's key with another mail app.
 
 **What (agent's proposal for the owner to confirm when it starts):**
 - **Read and reply first:** inbox, open a mail, reply, see attachments; everything else in webmail in the phone's
@@ -340,7 +351,12 @@ P108 and alongside Matrix chat (P73).
 - **Through JMAP,** the mail server's modern interface that our webmail already uses, signed in with the same sign-in
   service (to prove on the test site first).
 - **Mail from strangers is shown safely:** a locked-down view, remote images blocked until the person allows them.
-- **Reuse:** look for an open-source Android JMAP client to reuse parts of; check its licence and upkeep first.
+- **Reuse:** **Ltt.rs** (Android JMAP client, Apache-2.0) is the best candidate: borrow its mail-server code (its
+  JMAP library), not its screens (older Android style; ours are Compose). It calls itself a proof of concept and its
+  last release was March 2026, so check its code and upkeep before copying; copied files keep their notices and go
+  into the open-source list as `borrowed`. Thunderbird for Android plans JMAP only for 2027.
+- **Sign-in:** the mail server already accepts the sign-in service's tokens (that is how webmail works); add the app
+  as an accepted client.
 - **With it, decide P18:** whether other mail apps (the external mail provider, Outlook) are refused once mail works in our app (agent
   recommends refusing them).
 

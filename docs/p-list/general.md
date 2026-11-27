@@ -718,6 +718,27 @@ places or networks (P82) reach the admin the same way: on the widget, by mail, o
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
 
+**Owner, 27 November 2026, evening: all at once and now.** Production is not in real use yet, so there are no live
+chats to move. Raven's removal with the notification service (P108), Matrix chat (P73) and the light mail client
+(P109) start now, in parallel. The agent had recommended deciding all together but building the app parts after
+attendance and approvals, because the same app developer builds Phase 1 to 3; the owner chose parallel work and
+accepts that risk.
+
+**Matrix now (owner, 27 November 2026, evening):**
+- **Server: Synapse** with the **Matrix Authentication Service** (MAS) signing in through authentik: the proven
+  route for an outside sign-in service (MAS works only with Synapse today). Lighter servers (Tuwunel, continuwuity)
+  stay on record as alternatives. Synapse needs about 1 to 2 GB of memory at minimum: check room on the test VM and
+  the production server first.
+- **App library:** Matrix's Rust SDK through its Kotlin bindings (Apache-2.0). Element X Android's screens may be
+  reused (AGPL-3.0-only, compatible with this repository's AGPL; reused files keep their notices).
+- **Company rooms unencrypted** so the company can keep, search and export them (record keeping); direct messages
+  the same unless the owner decides otherwise.
+- **ERPNext bot:** posts document events and approvals into the right rooms, rooms per project or site, people and
+  groups from ERPNext and authentik.
+- **Every new server part gets** monitoring, backups and a test copy from the first deployment (working agreements).
+- **First step:** the adoption check (licence, maintenance, security history, how fixes are published) for Synapse,
+  MAS, the Rust SDK and the push gateway, recorded in the decision log; then Synapse and MAS on the test site.
+
 **Owner, 27 November 2026 (amends the plan below):** **Matrix**, not XMPP, as the internal chat, built into the
 native app (P50) later. Raven is removed from ERPNext **before** this chat exists (P108), so step 4 below becomes "use
 the Raven export from P108", and "run both for a period" no longer applies. The app is now native Kotlin, so the
@@ -1229,6 +1250,12 @@ record of finished ones, and reach server alerts and logs.
 
 **App:** erp · **Also touches:** raven, mail, mobile, portal, signin, general · **State:** open
 
+**Owner, 27 November 2026, evening: all at once and now.** Production is not in real use yet, so there are no live
+chats to move. Raven's removal with the notification service (P108), Matrix chat (P73) and the light mail client
+(P109) start now, in parallel. The agent had recommended deciding all together but building the app parts after
+attendance and approvals, because the same app developer builds Phase 1 to 3; the owner chose parallel work and
+accepts that risk.
+
 **Why (owner, 27 November 2026):** the phone app holds the person's key, and sharing it with Raven's and a mail app's
 own phone apps is not possible. The owner's plan: (1) no Raven and no mail in the phone app for now; (2) remove Raven
 from ERPNext and send every message through our own channels: mail, WhatsApp (P04) and an SMS gateway; (3) later,
@@ -1256,8 +1283,11 @@ Matrix chat (P73) and a light mail client (P109) inside the app.
    template) with a telecom operator, and costs per message. Choose a provider after the licence and adoption checks;
    use SMS only where WhatsApp and mail do not reach.
 
-**Open for the owner:** the gap between removing Raven and Matrix chat (see the decision log entry of 27 November);
-the Raven history (export or delete); where incident reports go.
+**Settled (owner, 27 November 2026, evening):** no gap to manage and no history to export, because production is not
+in real use (count Raven's messages on production before uninstalling all the same, read-only). **External messages:**
+mail, forms (the Respond app and ERPNext web forms) and WhatsApp (P04); SMS only where those do not reach.
+
+**Open for the owner:** where incident reports go (agent proposes ERPNext records with notifications).
 
 **Closes when done (owner decides each):** P16 (Raven attachments); the Raven parts of P14; the "Raven Mobile" client
 question in P64; P22's "Raven inside the company" channel.

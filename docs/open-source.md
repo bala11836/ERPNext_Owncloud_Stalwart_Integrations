@@ -81,6 +81,10 @@
 | [JUnit 4](https://github.com/junit-team/junit4) | EPL-1.0 | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 4.13.2, tests only |
 | [Google code scanner (play-services-code-scanner)](https://developers.google.com/ml-kit/vision/barcode-scanning/code-scanner) | Android Software Development Kit licence (not open source) | P82 | — | P82 trial app (mobile/trials/passkey-android), never shipped; 16.1.0 reads the QR code; needs Google Play services, so the real app needs another reader for phones without them |
 | [Pebble](https://github.com/letsencrypt/pebble) | MPL-2.0 | P11 | — | Let's Encrypt's ACME test server, for a local rehearsal of the certificate switch (P11) only; not shipped. v2.10.3 (11 Nov 2026), release checksums verified. |
+| [Synapse](https://github.com/element-hq/synapse) | AGPL-3.0-only (to verify) | P73 | — | Matrix server for the internal chat (owner, 27 November 2026); adoption check before the test site |
+| [Matrix Authentication Service](https://github.com/element-hq/matrix-authentication-service) | AGPL-3.0-only (to verify) | P73 | — | sign-in for Synapse through authentik; adoption check before the test site |
+| [matrix-rust-sdk](https://github.com/matrix-org/matrix-rust-sdk) | Apache-2.0 | P73, P50 | — | Matrix client library for the phone app, through its Kotlin bindings |
+| [Ltt.rs](https://codeberg.org/iNPUTmice/lttrs-android) | Apache-2.0 (to verify) | P109 | — | Android JMAP client; its mail-server code may be borrowed for the light mail client (proof of concept, last release March 2026) |
 
 ## Used before
 

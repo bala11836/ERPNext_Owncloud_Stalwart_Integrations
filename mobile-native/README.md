@@ -4,7 +4,8 @@ The Android app rebuilt in Kotlin with Jetpack Compose (owner and developer deci
 replace the Expo app in `mobile/` when it does everything that app does and passes the same checks; until then
 the Expo app stays the app in use and this one is installed beside it for testing.
 
-**State: Phase 0, foundation.** It signs in nowhere and reads no business data yet.
+**State: Phase 0 (foundation) and the first part of Phase 1 (the fingerprint lock).** It signs in nowhere and
+reads no business data yet.
 
 ## Purpose
 
@@ -42,6 +43,26 @@ tap leads to a finished screen. This folder currently holds the foundation every
   comes from these: a cool white page with white **row cards** (an icon in a tinted square, a title, one line, and
   a status **pill** that moves under the text at large font sizes), tinted **notice cards**, and one wide main
   button. The tints behind a status are part of the tested palette; Outdoor mode uses heavy lines and no tints.
+- **The Welcome screens** (`core` `Welcome`, `app` `WelcomeScreen.kt`): the app's first screen is decided by a
+  rule, never by the person, from what the phone knows (its key) and what the server says about this phone's
+  access request: request access, pending approval (two approvers, with cancel that asks once more), refused with
+  the reason, ran out, approved and make your key, unlock, and "your key is gone" with the reason. A key on the
+  phone always wins; "approved" needs both approvers in any order. "How it works" opens from every situation and
+  leads back. **Not live:** the server part for access requests and the fingerprint lock do not exist yet, so the
+  screens run against a stand-in (`WelcomePreview.kt`) that only test builds can reach; no key is made and
+  nothing is sent.
+
+- **The fingerprint lock** (`core` `Lock`, `app` `PhoneLock.kt`): the app opens only after a strong fingerprint
+  match. A key is made inside the phone's secure chip (StrongBox where the phone has one) that can be used only
+  for the moment of one match: no PIN, no pattern, no weak face unlock. After making it the app reads back what
+  the phone really did and deletes a key that is protected less than asked. That key locks a random data key, and
+  holding the data key (in memory only, overwritten when dropped) is what "open" means. Today the data key locks
+  nothing yet, so "open" is still a check inside the app; from the next part the app's stored data is encrypted
+  with it and cannot be read without a match. Rules: 5 misses in a row erase the key (each miss is written at once, so closing the app does
+  not give tries back; the miss that makes the phone lock its own sensor counts too); a fingerprint added to the phone destroys it (the chip does this); away from the app for
+  5 minutes, or the app's process ended, and the fingerprint is asked again. The real "Welcome back", "Make your
+  key" and "Your key is gone" screens are in use. **Stand-in until sign-in exists:** a phone without a key goes
+  straight to "Make your key" as if approved; the key protects nothing but the app's own screens yet.
 
 ## Contents
 
@@ -75,7 +96,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (32), Android lint with warnings as errors, the app's screen tests (11) and a
+runs the rules module's unit tests (40), Android lint with warnings as errors, the app's screen tests (13) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 
@@ -89,6 +110,12 @@ screenshot protection, and keeps the "no action words without an action" buildin
 Checked by hand on a phone on 26 November 2026 (Oppo, Android 15): the app starts, Data trace shows a failed and a
 complete sample trace, and the detail shows the eight points with the failed one and its reason; the look turns
 dark and light with the phone's night mode, the Outdoor switch changes the look, and the light sensor is read.
+The key store and the fingerprint question cannot run on a computer: the lock's rules are unit-tested and its
+protections are checked as text by `tests/test_mobile_native.py`. No automated test yet proves that a miss is
+stored, that the fifth erases, or that leaving the app locks it; those are checked by hand on phones. Open points
+from the second review: growing waits between tries (in the decision record, not built), a second copy of the
+screen opened by another app can lock the app early, and a stored data key that can no longer be opened after a
+match has no way out except clearing the app's data.
 Not yet covered: picture comparison (the robot measures sizes and positions, it does not see overlapping or
 ugly layouts), Android 9 to 14, a real tablet. Not yet looked at by a person in real sunlight or at the largest
 font size.

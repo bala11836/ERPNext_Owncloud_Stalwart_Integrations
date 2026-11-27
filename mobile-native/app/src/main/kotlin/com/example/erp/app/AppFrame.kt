@@ -16,10 +16,13 @@ import com.example.erp.core.Palette
 import com.example.erp.core.Trace
 
 /** Every destination the frame can show. A screen that is not finished is not in this list, so it cannot be reached. */
-enum class Place(val label: String, val title: String, val icon: Int) {
+enum class Place(val label: String, val title: String, val icon: Int, val testOnly: Boolean = false) {
     TRACE("Data trace", "Data trace", R.drawable.ic_trace),
     PHONE("This phone", "This phone", R.drawable.ic_phone),
     DISPLAY("Display", "Display", R.drawable.ic_display),
+
+    /** The Welcome screens against a stand-in, until the server part for access requests exists. Test builds only. */
+    WELCOME("Welcome", "Welcome preview", R.drawable.ic_key, testOnly = true),
 }
 
 /** What the frame shows, handed in from outside, so the whole frame can be drawn in a test without a phone's sensors. */
@@ -45,7 +48,7 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
     var place by rememberSaveable { mutableStateOf(Place.TRACE) }
     NavigationSuiteScaffold(
         navigationSuiteItems = {
-            for (item in Place.entries) {
+            for (item in Place.entries.filter { !it.testOnly || state.testBuild }) {
                 item(
                     selected = place == item,
                     onClick = { place = item },
@@ -59,6 +62,7 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
             when (place) {
                 Place.TRACE -> TraceScreen(state.traces, showValues = state.testBuild, onAddSample = if (state.testBuild) onAddSample else null)
                 Place.PHONE -> PhoneScreen(state.phone, state.model, state.version)
+                Place.WELCOME -> WelcomePreviewScreen()
                 Place.DISPLAY -> DisplayScreen(
                     state.palette,
                     hasLightSensor = state.hasLightSensor,

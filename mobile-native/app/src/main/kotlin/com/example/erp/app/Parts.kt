@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -27,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /** The shared building blocks. Screens are made only from these, so every screen keeps the same rules. */
 
@@ -36,12 +41,13 @@ enum class StatusKind(val mark: String, val word: String) {
     BAD("✕", "Failed"),
     NONE("–", "Not reached"),
     INFO("i", "Note"),
+    WAIT("…", "Waiting"),
 }
 
 @Composable
 private fun StatusKind.color(): Color = when (this) {
     StatusKind.OK -> Look.Ok
-    StatusKind.WARN -> Look.Warn
+    StatusKind.WARN, StatusKind.WAIT -> Look.Warn
     StatusKind.BAD -> Look.Bad
     StatusKind.NONE -> Look.Muted
     StatusKind.INFO -> Look.Accent
@@ -51,7 +57,7 @@ private fun StatusKind.color(): Color = when (this) {
 @Composable
 private fun StatusKind.tint(): Color = when (this) {
     StatusKind.OK -> Look.OkSoft
-    StatusKind.WARN -> Look.WarnSoft
+    StatusKind.WARN, StatusKind.WAIT -> Look.WarnSoft
     StatusKind.BAD -> Look.BadSoft
     StatusKind.NONE, StatusKind.INFO -> Look.Soft
 }
@@ -156,10 +162,66 @@ fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     }
 }
 
+/** The one main button of a screen. [forward] adds the arrow of a step that leads on. */
 @Composable
-fun MainButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun MainButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, forward: Boolean = false) {
     Button(onClick, modifier.fillMaxWidth().heightIn(min = Look.Touch), shape = RoundedCornerShape(Look.Corner)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
+        if (forward) Icon(painterResource(R.drawable.ic_forward), contentDescription = null, modifier = Modifier.padding(start = 10.dp))
+    }
+}
+
+/** A second, quieter button. [danger] is for an action that takes something away; it never sits beside the main button. */
+@Composable
+fun OutlineButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, danger: Boolean = false) {
+    val ink = if (danger) Look.Bad else Look.Accent
+    OutlinedButton(
+        onClick,
+        modifier.fillMaxWidth().heightIn(min = Look.Touch),
+        shape = RoundedCornerShape(Look.Corner),
+        border = BorderStroke(2.dp, ink),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = ink),
+    ) {
+        Text(label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/**
+ * The bar at the top of a step: back at the left, the step chip in the middle, help at the right, always in the
+ * same places. A part is drawn only when it has somewhere to lead.
+ */
+@Composable
+fun TopBar(modifier: Modifier = Modifier, step: Pair<Int, Int>? = null, onBack: (() -> Unit)? = null, onHelp: (() -> Unit)? = null) {
+    Row(modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(48.dp)) {
+            if (onBack != null) IconButton(onBack, Modifier.size(48.dp)) { Icon(painterResource(R.drawable.ic_back), contentDescription = "Back", tint = Look.Ink) }
+        }
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            if (step != null) {
+                Surface(shape = RoundedCornerShape(50), color = Look.Soft, contentColor = Look.Ink) {
+                    Text("STEP ${step.first} OF ${step.second}", Modifier.padding(horizontal = 14.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+        Box(Modifier.size(48.dp)) {
+            if (onHelp != null) IconButton(onHelp, Modifier.size(48.dp)) { Icon(painterResource(R.drawable.ic_help), contentDescription = "Help", tint = Look.Ink) }
+        }
+    }
+}
+
+/** The small label in capitals above a title. */
+@Composable
+fun Eyebrow(text: String, modifier: Modifier = Modifier) {
+    Text(text.uppercase(), modifier, color = Look.Accent, style = MaterialTheme.typography.labelMedium, letterSpacing = 1.sp)
+}
+
+/** The large fingerprint mark in soft rings. A picture only: the phone shows its own fingerprint box. */
+@Composable
+fun FingerprintMark(modifier: Modifier = Modifier) {
+    Box(modifier.size(196.dp).background(Look.Soft.copy(alpha = 0.45f), CircleShape), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(150.dp).background(Look.Soft, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(painterResource(R.drawable.ic_fingerprint), contentDescription = null, modifier = Modifier.size(92.dp), tint = Look.Accent)
+        }
     }
 }
 

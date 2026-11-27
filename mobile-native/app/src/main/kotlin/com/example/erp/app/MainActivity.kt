@@ -9,28 +9,79 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.core.content.edit
+import androidx.fragment.app.FragmentActivity
+import com.example.erp.core.AccessRequest
+import com.example.erp.core.Approval
+import com.example.erp.core.KeyLoss
+import com.example.erp.core.KeyState
+import com.example.erp.core.LockRules
 import com.example.erp.core.OutdoorSwitch
 import com.example.erp.core.Palettes
 import com.example.erp.core.Point
 import com.example.erp.core.Trace
 import com.example.erp.core.Tracer
+import com.example.erp.core.welcomeFor
+import java.time.LocalDateTime
 import java.util.UUID
 
-class MainActivity : ComponentActivity() {
+/** What the lock screen shows: read from the phone each time the app comes into sight and after every touch. */
+private class LockView(val key: KeyState, val loss: KeyLoss?, val misses: Int, val phone: PhoneCheck, val trouble: String? = null)
+
+// FragmentActivity: the fingerprint question of the AndroidX library needs it.
+class MainActivity : FragmentActivity() {
     private val tracer = Tracer()
     private val outdoorSwitch = OutdoorSwitch()
+    private val lock by lazy { PhoneLock(this) }
+    private var lockView by mutableStateOf<LockView?>(null)
+    private var asking = false
+
+    private fun readLock(trouble: String? = null) {
+        lockView = LockView(lock.state(), lock.loss, lock.misses, checkPhone(this), trouble)
+    }
+
+    private fun touch(ask: (FragmentActivity, (LockResult) -> Unit) -> Unit) {
+        if (asking) return
+        asking = true
+        Session.askOnArrival = false
+        ask(this) { result ->
+            asking = false
+            if (result is LockResult.Opened) Session.open(result.dataKey)
+            readLock((result as? LockResult.Trouble)?.sentence)
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Session.back()
+        if (!asking) readLock()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The daily path: arrive, touch the sensor. After the person closed the question it waits for a tap.
+        if (!Session.isOpen && Session.askOnArrival && lockView?.key == KeyState.PRESENT) touch(lock::open)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Session.left()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +92,6 @@ class MainActivity : ComponentActivity() {
         val settings = getSharedPreferences("display", Context.MODE_PRIVATE)
         val sensors = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val lightSensor: Sensor? = sensors.getDefaultSensor(Sensor.TYPE_LIGHT)
-        val phone = checkPhone(this)
 
         setContent {
             var automatic by remember { mutableStateOf(settings.getBoolean("outdoor-automatic", true)) }
@@ -74,9 +124,12 @@ class MainActivity : ComponentActivity() {
             }
 
             ErpTheme(palette) {
-                AppFrame(
+                val view = lockView
+                if (!Session.isOpen) {
+                    if (view != null) Box(Modifier.fillMaxSize().background(Look.Ground).safeDrawingPadding()) { LockScreen(view) }
+                } else if (view != null) AppFrame(
                     FrameState(
-                        palette, testBuild, traces, phone, "${Build.MANUFACTURER} ${Build.MODEL}", BuildConfig.VERSION_NAME,
+                        palette, testBuild, traces, view.phone, "${Build.MANUFACTURER} ${Build.MODEL}", BuildConfig.VERSION_NAME,
                         hasLightSensor = lightSensor != null, automaticOutdoor = automatic, forcedOutdoor = forced, lux = lux,
                     ),
                     onAddSample = { addSample(); traces = tracer.all() },
@@ -85,6 +138,40 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    /**
+     * The locked app. Which screen is shown is decided by the rule [welcomeFor], from this phone's key.
+     * Until sign-in exists (Phase 1 part 4) nothing can say "approved", so a phone without a key is treated as
+     * approved and goes straight to "Make your key" (cleanup list). A key made this way opens nothing but the
+     * app's own screens: there is no sign-in to protect yet.
+     */
+    @androidx.compose.runtime.Composable
+    private fun LockScreen(view: LockView) {
+        // The stand-in below must never reach people: a real build waits for sign-in.
+        check(BuildConfig.DEBUG || view.key != KeyState.NONE) { "sign-in is not built yet" }
+        val now = LocalDateTime.now()
+        val approved = AccessRequest(now, Approval.CONFIRMED, now, Approval.CONFIRMED, now)
+        WelcomeScreen(
+            welcomeFor(view.key, view.loss, if (view.key == KeyState.NONE) approved else null),
+            WelcomeFacts(
+                account = "",
+                mobile = "",
+                now = now,
+                triesLeft = if (view.misses > 0) LockRules.triesLeft(view.misses) else null,
+                keyProblem = if (view.phone.usable) null else "its fingerprint sensor is not ready. Save your fingerprint in the phone's Settings, then come back.",
+                trouble = view.trouble,
+            ),
+            WelcomeActions(
+                // The three request buttons belong to screens this rule cannot reach before the server part exists.
+                requestAccess = {},
+                checkAgain = {},
+                cancelRequest = {},
+                requestAgain = { lock.forgetLoss(); readLock() },
+                makeKey = { touch(lock::make) },
+                unlock = { touch(lock::open) },
+            ),
+        )
     }
 
     /** Test builds only: one failed and one complete trace, so the screen can be checked before real calls exist (Phase 1). */

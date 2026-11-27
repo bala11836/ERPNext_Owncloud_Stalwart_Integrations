@@ -61,6 +61,49 @@ class MobileNativeTests(unittest.TestCase):
         for place in places:
             self.assertRegex(main, rf'Place\.{place} -> \w+Screen\(', f'{place} has no screen')
 
+    def test_the_welcome_stand_in_stays_out_of_the_real_app(self):
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertRegex(frame, r'WELCOME\("Welcome", "Welcome preview", R\.drawable\.ic_key, testOnly = true\)')
+        self.assertIn('Place.entries.filter { !it.testOnly || state.testBuild }', frame)
+        # The first screen is decided in the rules module, never by the person, and a key on the phone wins.
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Welcome.kt').read_text(encoding='utf-8')
+        self.assertIn('key == KeyState.PRESENT -> Welcome.Unlock', rules.split('fun welcomeFor(')[1].split('\n')[1])
+        # Every button of a Welcome screen needs its action: none has a default.
+        screen = (KOTLIN / 'WelcomeScreen.kt').read_text(encoding='utf-8')
+        actions = screen.split('class WelcomeActions(')[1].split(')\n')[0]
+        self.assertEqual(actions.count('() -> Unit,'), 6)
+        self.assertNotIn('= {', actions)
+
+    def test_the_lock_opens_only_for_a_strong_fingerprint(self):
+        lock = (KOTLIN / 'PhoneLock.kt').read_text(encoding='utf-8')
+        for needed in ('.setUserAuthenticationRequired(true)', '.setInvalidatedByBiometricEnrollment(true)',
+                       'setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)',
+                       '.setAllowedAuthenticators(BIOMETRIC_STRONG)', 'isUserAuthenticationRequirementEnforcedBySecureHardware',
+                       'BiometricPrompt.CryptoObject(cipher)'):
+            self.assertIn(needed, lock)
+        # No PIN, pattern or weak face unlock anywhere in the app.
+        kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
+        self.assertNotRegex(kotlin, r'DEVICE_CREDENTIAL|BIOMETRIC_WEAK|setDeviceCredentialAllowed')
+        # A miss is written before anything else happens, and the fifth erases.
+        count = lock.split('fun countMiss(): Boolean {')[1].split('lateinit var prompt')[0]
+        self.assertLess(count.index('prefs.edit(commit = true) { putInt(MISSES, now) }'), count.index('erase(KeyLoss.MISSES)'))
+        self.assertIn('countMiss()', lock.split('override fun onAuthenticationFailed()')[1].split('override fun')[0])
+        self.assertIn('countMiss()', lock.split('override fun onAuthenticationError(')[1].split('when (errorCode)')[0])
+        self.assertIn('info.userAuthenticationValidityDurationSeconds <= 0', lock)
+        # A fingerprint question is never answered to a rebuilt screen, and the stand-in cannot reach a real build.
+        manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
+        for change in ('orientation', 'screenSize', 'uiMode', 'fontScale'):
+            self.assertIn(change, manifest.split('android:configChanges="')[1].split('"')[0])
+        # The open app exists in memory only, and the app is shown only while it is open.
+        self.assertNotRegex(lock.split('object Session')[1], r'prefs|SharedPreferences|File')
+        main = (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8')
+        self.assertIn('if (!Session.isOpen) {', main)
+        self.assertIn('check(BuildConfig.DEBUG || view.key != KeyState.NONE)', main)
+        self.assertIn('Session.left()', main.split('override fun onStop()')[1].split('}')[0])
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Lock.kt').read_text(encoding='utf-8')
+        self.assertIn('const val MAX_MISSES = 5', rules)
+        self.assertIn('const val AWAY_MS = 5 * 60 * 1000L', rules)
+
     def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
         kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
         self.assertIn('isSystemInDarkTheme()', kotlin, 'day and night follow the phone')

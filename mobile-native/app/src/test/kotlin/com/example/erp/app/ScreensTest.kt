@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -104,6 +105,86 @@ class ScreensTest {
             if (!wide) compose.onNodeWithText("Back to the list").performScrollTo().performClick()
             compose.onNode(hasText("Data trace") and !hasClickAction()).assertIsDisplayed()
         }
+        // Every situation of the Welcome screens, and the help screen behind each one and the way back.
+        place(Place.WELCOME).performClick()
+        for (situation in Situation.entries) {
+            compose.onNodeWithText("Situation: ${situation.label}").assertIsDisplayed()
+            checkLayout("$name / welcome, ${situation.label}")
+            compose.onNodeWithContentDescription("Help").performClick()
+            compose.onNodeWithText("How it works").assertIsDisplayed()
+            checkLayout("$name / how it works")
+            compose.onNodeWithText("Back").performScrollTo().performClick()
+            compose.onNodeWithText("Situation: ${situation.label}").performClick()
+        }
+        compose.onNodeWithText("Situation: ${Situation.NEW.label}").assertIsDisplayed()
+    }
+
+    private fun tap(label: String) = compose.onNode(hasText(label) and hasClickAction()).performScrollTo().performClick()
+
+    private fun shown(text: String) = compose.onNodeWithText(text, substring = true).performScrollTo().assertIsDisplayed()
+
+    /** Every button of the Welcome screens leads to the situation it names; none is a dead end. */
+    @Test
+    fun everyWelcomeButtonLeadsSomewhere() {
+        show(Palettes.LIGHT)
+        place(Place.WELCOME).performClick()
+        shown("Your phone becomes your key.")
+        tap("Request access")
+        shown("Request sent")
+        shown("Meet them with this phone and your ID.")
+        shown("+91 90••• ••000")
+        // Cancelling asks once more, and "keep" really keeps.
+        tap("Cancel my request")
+        shown("Cancel this request?")
+        tap("Keep my request")
+        shown("Request sent")
+        tap("Check again") // the project manager confirmed
+        shown("Checks your request next.")
+        tap("Check again") // the admin approved
+        shown("Approved. Make your key")
+        shown("STEP 5 OF 5")
+        tap("Make my key")
+        shown("Welcome back")
+        shown("This phone's key belongs to name@example.com.")
+        tap("Open with fingerprint") // the stand-in answers with a miss
+        shown("3 tries left")
+        tap("Open with fingerprint") // and then with the last one
+        shown("not recognised 5 times in a row")
+        compose.onNodeWithText("Situation: ${Situation.GONE.label}").performClick() // round to "new here"
+        repeat(Situation.UNLOCK.ordinal) { compose.onNodeWithText("Situation:", substring = true).performClick() }
+        // From waiting, a confirmed cancel leads back to the start.
+        compose.onNodeWithText("Situation: ${Situation.UNLOCK.label}").performClick() // after a miss
+        shown("3 tries left")
+        repeat(Situation.entries.size - Situation.MISS.ordinal + Situation.WAITING.ordinal) { compose.onNodeWithText("Situation:", substring = true).performClick() }
+        tap("Cancel my request")
+        tap("Yes, cancel my request")
+        shown("Your phone becomes your key.")
+    }
+
+    @Test
+    fun refusedRanOutAndKeyGoneSayWhyAndLeadToANewRequest() {
+        show(Palettes.LIGHT)
+        place(Place.WELCOME).performClick()
+        fun go(to: Situation) {
+            while (compose.onAllNodesWithText("Situation: ${to.label}").fetchSemanticsNodes().isEmpty()) compose.onNodeWithText("Situation:", substring = true).performClick()
+        }
+        go(Situation.OFFLINE)
+        shown("Cannot check right now: no connection.")
+        go(Situation.REFUSED)
+        shown("The admin refused this request. Reason given: The mobile number does not match our records.")
+        tap("Request again")
+        shown("Your phone becomes your key.")
+        go(Situation.EXPIRED)
+        shown("not approved in the allowed time")
+        tap("Request again")
+        shown("Your phone becomes your key.")
+        go(Situation.WEAK_PHONE)
+        shown("No key was made.")
+        assertEquals(0, compose.onAllNodesWithText("Make my key").fetchSemanticsNodes().size)
+        go(Situation.GONE)
+        shown("not recognised 5 times in a row")
+        tap("Request a new key")
+        shown("Your phone becomes your key.")
     }
 
     @Test fun everyLinkLight() = walk(Palettes.LIGHT, wide = false)
@@ -143,6 +224,7 @@ class ScreensTest {
             }
         }
         assertEquals(0, compose.onAllNodesWithText("Add a sample trace", substring = true).fetchSemanticsNodes().size)
+        assertEquals("the Welcome stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.WELCOME.label).fetchSemanticsNodes().size)
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
         assertEquals(0, compose.onAllNodesWithText("sample values", substring = true).fetchSemanticsNodes().size)
         place(Place.DISPLAY).performClick()

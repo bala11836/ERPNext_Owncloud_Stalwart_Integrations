@@ -809,7 +809,7 @@
         "P50"
       ],
       "status": "evaluating",
-      "note": "mobile-native (in progress, not shipped): Compose BOM 2026.09.00, Activity 1.12.4, Biometric 1.1.0; no open advisories (OSV, 26 November 2026)"
+      "note": "mobile-native (in progress, not shipped): Compose BOM 2026.09.00, Activity 1.12.4, Biometric 1.1.0 (which brings Fragment 1.2.5, used for the fingerprint question); no open advisories (OSV, 26 November 2026)"
     },
     {
       "name": "Kotlin",

@@ -11,7 +11,12 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppStart">
-        <activity android:name=".MainActivity" android:exported="true">
+        <!-- The screen redraws itself on these changes and is not rebuilt, so the answer to a fingerprint question
+             always reaches the screen that asked. -->
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|navigation|uiMode|density|fontScale"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

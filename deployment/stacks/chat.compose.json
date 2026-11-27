@@ -197,11 +197,7 @@
       "ports": [],
       "networks": {
         "default": {},
-        "workspace": {
-          "aliases": [
-            "chat-alerts"
-          ]
-        }
+        "outbound": {}
       }
     }
   },
@@ -219,7 +215,8 @@
           }
         ]
       }
-    }
+    },
+    "outbound": {}
   },
   "volumes": {
     "synapse-config": {},

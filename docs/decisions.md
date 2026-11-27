@@ -13,6 +13,8 @@ discussion that led to a decision is not repeated here.
     placed Google's service-account key and asked for the `alerts` profile.
   - It has no port on the host and no public route. Synapse reaches it inside the stack's own network, which has
     a fixed range that Synapse is told it may call.
+  - It is the only service on a second network of the stack, `outbound`, its way to Google. It is not on the
+    workspace network, so a test site's block on outbound connections from that network stays whole.
   - The key lives in a root-only folder on the host. The one-time `configure` service copies it into the
     gateway's own volume and writes the gateway's configuration for one app ID.
   - The app asks for alerts that carry only the event's ID.

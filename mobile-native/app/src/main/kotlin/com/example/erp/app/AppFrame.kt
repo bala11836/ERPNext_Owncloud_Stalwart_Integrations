@@ -23,6 +23,9 @@ enum class Place(val label: String, val title: String, val icon: Int, val testOn
 
     /** The Welcome screens against a stand-in, until the server part for access requests exists. Test builds only. */
     WELCOME("Welcome", "Welcome preview", R.drawable.ic_key, testOnly = true),
+
+    /** The chat screens against a stand-in, until the chat server and sign-in exist. Test builds only. */
+    CHAT("Chat", "Chat", R.drawable.ic_chat, testOnly = true),
 }
 
 /** What the frame shows, handed in from outside, so the whole frame can be drawn in a test without a phone's sensors. */
@@ -65,6 +68,7 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
                 Place.TRACE -> TraceScreen(state.traces, showValues = state.testBuild, onAddSample = if (state.testBuild) onAddSample else null, onTryConnection = if (state.testBuild) onTryConnection else null)
                 Place.PHONE -> PhoneScreen(state.phone, state.model, state.version, state.safeNote, if (state.testBuild) onSafeNote else null)
                 Place.WELCOME -> WelcomePreviewScreen()
+                Place.CHAT -> ChatPreviewScreen()
                 Place.DISPLAY -> DisplayScreen(
                     state.palette,
                     hasLightSensor = state.hasLightSensor,

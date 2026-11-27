@@ -82,6 +82,15 @@ tap leads to a finished screen. This folder currently holds the foundation every
   so an amount of a crore or more stays an amount. **No sign-in yet**, so no token is sent; test
   builds have "Try the connection" on Data trace, which makes one real call and shows where it stopped.
 
+- **Chat screens** (`core` `Chat`, `app` `ChatScreen.kt`): the list of rooms (Notices first, then the person's site,
+  then the newest), a room (read, write, answer one message by tapping it), and starting a one-to-one chat with a
+  colleague. Rooms are made by the server, never in the app. Company rooms say that their messages are kept by the
+  company; Notices cannot be written to; a message written without a connection waits, marked in words, and is
+  sent later. Phone: list, then room; tablet: side by side. **Not live:** there is no chat server and no sign-in
+  yet, so the screens run against a stand-in (`ChatPreview.kt`) that only test builds can reach, with made-up
+  rooms in memory; nothing is sent or stored. Not built yet: photos, the unread badge on the place, keeping 7
+  days on the phone, alerts.
+
 ## Contents
 
 - `core/`: the rules module and its tests.
@@ -117,7 +126,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (44), Android lint with warnings as errors, the app's screen and connection tests (26) and a
+runs the rules module's unit tests (49), Android lint with warnings as errors, the app's screen and connection tests (27) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 
@@ -140,8 +149,8 @@ match has no way out except clearing the app's data.
 Checked by hand by the developer on 27 November 2026 (same phone): a key is made and opens the app; a test note
 stays in the safe across a full close and reopen; five wrong fingers count the tries down, end in "Your key is
 gone", and the safe is empty after a new key; the fingerprint is asked again after more than 5 minutes away and
-not before; "Try the connection" without a server address stops at the network point. Not reported yet: a
-fingerprint added in the phone's Settings.
+not before; "Try the connection" without a server address stops at the network point. The same checks were repeated by the developer on a
+second phone (Samsung, Android 13) the same day. Not reported yet: a fingerprint added in the phone's Settings.
 The connection tests run on the computer's own HTTP client; the phone's differs in details and has not met a real
 server yet. `Safe` itself has no behaviour test (its sealing has, in `core`); its rules are checked as text.
 Not yet covered: picture comparison (the robot measures sizes and positions, it does not see overlapping or

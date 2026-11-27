@@ -147,6 +147,21 @@ class MobileNativeTests(unittest.TestCase):
         self.assertIn('SecureRandom().nextBytes(it)', seal)
         self.assertEqual(seal.count('cipher.updateAAD(name.toByteArray())'), 2)
 
+    def test_the_chat_stand_in_stays_out_of_the_real_app_and_sends_nothing(self):
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertRegex(frame, r'CHAT\("Chat", "Chat", R\.drawable\.ic_chat, testOnly = true\)')
+        # The stand-in keeps everything in memory: no storage, no network, no safe.
+        preview = (KOTLIN / 'ChatPreview.kt').read_text(encoding='utf-8')
+        self.assertNotRegex(preview, r'Safe|SharedPreferences|HttpTransport|Saver|File\(')
+        screen = (KOTLIN / 'ChatScreen.kt').read_text(encoding='utf-8')
+        # People are told that company rooms are kept, and every chat button needs its action.
+        self.assertIn('if (room.company) Text("Company room. Messages here are kept by the company."', screen)
+        actions = screen.split('class ChatActions(')[1].split('\n)')[0]
+        self.assertEqual(actions.count('->'), 3)
+        self.assertNotIn('= {', actions)
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Chat.kt').read_text(encoding='utf-8')
+        self.assertIn('const val KEEP_DAYS = 7L', rules)
+
     def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
         kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
         self.assertIn('isSystemInDarkTheme()', kotlin, 'day and night follow the phone')

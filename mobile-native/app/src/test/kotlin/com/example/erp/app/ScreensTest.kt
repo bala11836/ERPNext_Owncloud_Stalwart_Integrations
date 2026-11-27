@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
 import com.example.erp.core.Palette
 import com.example.erp.core.Palettes
@@ -114,17 +115,77 @@ class ScreensTest {
             compose.onNodeWithText("Situation: ${situation.label}").assertIsDisplayed()
             checkLayout("$name / welcome, ${situation.label}")
             compose.onNodeWithContentDescription("Help").performClick()
-            compose.onNodeWithText("How it works").assertIsDisplayed()
+            shown("How it works")
             checkLayout("$name / how it works")
             compose.onNodeWithText("Back").performScrollTo().performClick()
             compose.onNodeWithText("Situation: ${situation.label}").performClick()
         }
         compose.onNodeWithText("Situation: ${Situation.NEW.label}").assertIsDisplayed()
+        // Every chat room opens and leads back, and so does the list of colleagues.
+        place(Place.CHAT).performClick()
+        for (room in listOf("Notices", "Site A", "Site A engineers", "Project manager")) {
+            tap(room)
+            reach(compose.onNode(hasText(room) and !hasClickAction())).assertIsDisplayed()
+            checkLayout("$name / chat room $room")
+            if (!wide) reach(compose.onNodeWithContentDescription("Back")).performClick()
+        }
+        tap("New chat with a colleague")
+        compose.onNodeWithText("New chat").assertIsDisplayed()
+        checkLayout("$name / new chat")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        compose.onNode(hasText("Chat") and !hasClickAction()).assertIsDisplayed()
     }
 
-    private fun tap(label: String) = compose.onNode(hasText(label) and hasClickAction()).performScrollTo().performClick()
+    @Test
+    fun aMessageIsSentWaitsWithoutSignalAndNoticesCannotBeWrittenTo() {
+        show(Palettes.LIGHT)
+        place(Place.CHAT).performClick()
+        // Notices first, then my site; unread shown in words.
+        compose.onNode(hasText("Site A") and hasText("2 new") and hasClickAction()).assertIsDisplayed()
+        compose.onNode(hasText("Site A") and hasClickAction()).performClick()
+        shown("Company room. Messages here are kept by the company.")
+        assertEquals("nothing to send yet, so no Send button", 0, compose.onAllNodesWithText("Send").fetchSemanticsNodes().size)
+        compose.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("On my way")
+        tap("Send")
+        shown("On my way")
+        assertEquals(0, compose.onAllNodesWithText("Waiting to send").fetchSemanticsNodes().size)
+        // A tap on a message answers it.
+        reach(compose.onNode(hasText("Two more vibrators", substring = true) and hasClickAction())).performClick()
+        shown("Replying to Store keeper")
+        tap("Signal: on (stand-in)") // now without signal
+        compose.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("I have it")
+        tap("Send")
+        shown("Reply to Store keeper")
+        shown("Waiting to send")
+        tap("Signal: off (stand-in)") // back online: it is sent
+        assertEquals(0, compose.onAllNodesWithText("Waiting to send").fetchSemanticsNodes().size)
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // Opening the room read its messages; the list shows my last line.
+        assertEquals(0, compose.onAllNodesWithText("2 new").fetchSemanticsNodes().size)
+        reach(compose.onNode(hasText("You: I have it", substring = true) and hasClickAction())).assertIsDisplayed()
+        // Nobody writes in Notices.
+        tap("Notices")
+        shown("Nobody can write in this room.")
+        assertEquals(0, compose.onAllNodes(androidx.compose.ui.test.hasSetTextAction()).fetchSemanticsNodes().size)
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // A new one-to-one chat opens empty, is not a company room, and the same colleague opens the same chat again.
+        tap("New chat with a colleague")
+        tap("HR")
+        shown("No messages yet.")
+        assertEquals(0, compose.onAllNodesWithText("Company room", substring = true).fetchSemanticsNodes().size)
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        tap("New chat with a colleague")
+        tap("HR")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        assertEquals(1, compose.onAllNodes(hasText("HR") and hasClickAction()).fetchSemanticsNodes().size)
+    }
 
-    private fun shown(text: String) = compose.onNodeWithText(text, substring = true).performScrollTo().assertIsDisplayed()
+    /** Scrolled to as a person would; something outside any scrolling area is simply where it is. */
+    private fun reach(node: androidx.compose.ui.test.SemanticsNodeInteraction) = node.also { runCatching { it.performScrollTo() } }
+
+    private fun tap(label: String) = reach(compose.onNode(hasText(label) and hasClickAction())).performClick()
+
+    private fun shown(text: String) = reach(compose.onNodeWithText(text, substring = true)).assertIsDisplayed()
 
     /** Every button of the Welcome screens leads to the situation it names; none is a dead end. */
     @Test
@@ -229,6 +290,7 @@ class ScreensTest {
         assertEquals(0, compose.onAllNodesWithText("Add a sample trace", substring = true).fetchSemanticsNodes().size)
         assertEquals(0, compose.onAllNodesWithText("Try the connection", substring = true).fetchSemanticsNodes().size)
         assertEquals("the Welcome stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.WELCOME.label).fetchSemanticsNodes().size)
+        assertEquals("the chat stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.CHAT.label).fetchSemanticsNodes().size)
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
         assertEquals(0, compose.onAllNodesWithText("sample values", substring = true).fetchSemanticsNodes().size)
         place(Place.PHONE).performClick()

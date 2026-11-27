@@ -726,6 +726,10 @@ places or networks (P82) reach the admin the same way: on the widget, by mail, o
 **Public draft #134 brought up to date with main (27 November 2026): `ffd4d96`, CI passed, no conflicts.** Its
 first test-site run shares one build with #142 (P53), because both change the Desk; it waits for the test host.
 
+**Stage 1 on test (28 November 2026):** in the combined test build `70636f4`. The report endpoint, the mail logic (captured;
+the test site sends no mail), the Desk entry and the page pass their server-side checks (receipt
+`p53-p72-p69-test-combined-70636f4`). Open: the owner's look at the Alerts page; stage 2 (route, tokens, wiring the checks).
+
 ### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
@@ -770,7 +774,8 @@ accepts that risk.
   #144, merged at `f30c4e2` (18:23 UTC, 27 November; tested commit `3c8aff5`): tried live against the test chat
   server and for four minutes on the test ERP (receipt `p73-test-erp-chat-rooms-3c8aff5`). **Merged, not deployed:**
   the test ERP is back on another session's build (#142) and gets the module with its next build from main;
-  production has no chat stack yet (P70). Waiting: the Firebase key for the alert gateway. Not built:
+  production has no chat stack yet (P70). The Firebase project `unformat-erp` exists since 28 November 2026 (app `in.unformat.erp`); its server key is on
+  the test VM and Google accepts it. Next for alerts: the gateway (Sygnal) in the chat stack, and #82 for approvals. Not built:
   the push gateway, the ERPNext bot and rooms, monitoring, backups and the drift check for the stack, the production
   route file.
 - **First step:** the adoption check (licence, maintenance, security history, how fixes are published) for Synapse,

@@ -271,8 +271,12 @@ and test (SSO webmail, mail to an outside address, nightly backup contains the a
 measurement, a real phone mail app with the owner); (4) open the PR with the evidence. Production promotion needs a
 separate go.
 
-**Owner decided (27 November 2026): a dedicated archive-reader sign-in reads the archive** (not the owner's own
-mailbox). Public draft #69 was brought up to date with main the same evening (`60e5875`, CI passed; its 16 webmail
+**Owner confirmed (27 November 2026): a dedicated archive-reader sign-in reads the archive** (not the owner's own
+mailbox), as first decided on 24 November; it is already applied on test and proven by the owner's sign-in. Public draft #69 was brought up to date with main the same evening (`60e5875`, CI passed; its 16 webmail
 text replacements still match the pinned webmail 1.21.2). Still open before it leaves draft: setting the reader on
 the test mail server and a real-user look at the new texts. Both wait for the test host; the webmail image is built
 together with #142 (P53), which changes the same image.
+
+**On test (28 November 2026):** the combined test build `70636f4` (with #142 and #134) carries #69. Retention status on
+the test mail server: no problems; the running webmail has all 16 replaced texts. The only open point before #69
+leaves draft is a real-user look at those texts (receipt `p53-p72-p69-test-combined-70636f4`).

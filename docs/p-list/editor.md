@@ -124,6 +124,10 @@ browser check of one document and one spreadsheet right after.
 alert mail (P57) and this item's editor check are both kept in `tools/host_check.py`. The earlier test-host evidence
 (`c68db04`) predates the combined file, so **a retest on the test host is needed before merge**.
 
+**Retest passed on the test host (28 November 2026)** with the combined host check `92b41fe` (receipt
+`p80-test-host-check-retest-92b41fe`). Found there: the installed host check was main's, without the editor commands, so
+the editor timer had been failing every five minutes unnoticed. #76 is ready for the owner to merge.
+
 ### P81 — Editor follow-ups: Compose safety net and release rule
 
 **App:** editor · **Also touches:** drive, general · **State:** open

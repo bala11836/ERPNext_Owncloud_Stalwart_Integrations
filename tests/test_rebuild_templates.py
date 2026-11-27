@@ -203,6 +203,24 @@ class Reconstruction(unittest.TestCase):
         self.assertEqual(allowed_sso_addresses(profile,lambda h:{'192.0.2.5'}),{'192.0.2.5','100.64.0.10'})
         self.assertEqual(allowed_sso_addresses({'hosts':{'sso':'sso.example.net'}},lambda h:{'192.0.2.5'}),{'192.0.2.5'})
         with self.assertRaises(ValueError):allowed_sso_addresses(dict(profile,proxy_hosts={'sso.example.net':'::1'}),lambda h:set())
+    def test_every_certificate_name_answers_its_http_challenge(self):
+        # P11: a name whose route asks for a certificate must have a port-80 challenge route that outranks
+        # every other port-80 route for that name; otherwise a host-wide redirect takes the challenge.
+        files=[*sorted((ROOT/'deployment/config/proxy').glob('*.y*ml')),*sorted((ROOT/'deployment/production').glob('*.traefik.yaml'))]
+        routers=[]
+        for f in files:
+            routers+=list(((yaml.safe_load(f.read_text()) or {}).get('http') or {}).get('routers',{}).values())
+        hosts=lambda r:set(re.findall(r'Host\([`"]([^`"]+)[`"]\)',r['rule']))
+        challenge=lambda r:'PathPrefix(`/.well-known/acme-challenge/`)' in r['rule']
+        priority=lambda r:r.get('priority',len(r['rule']))
+        named=set().union(*(hosts(r) for r in routers if (r.get('tls') or {}).get('certResolver')))
+        self.assertTrue({'erp.example.com','sso.example.com','drive.example.com','respond.example.com','www.example.com'}<=named)
+        for host in sorted(named):
+            port80=[r for r in routers if 'http' in r.get('entryPoints',[]) and host in hosts(r)]
+            answers=[priority(r) for r in port80 if challenge(r)]
+            others=[priority(r) for r in port80 if not challenge(r)]
+            self.assertTrue(answers,host+': no port-80 challenge route')
+            self.assertGreater(max(answers),max(others,default=0),host+': another port-80 route outranks the challenge')
     def test_test_relay_terminates_and_forwards_only_test_hosts(self):
         sys.path.insert(0,str(ROOT/'tools'))
         from prepare_test_relay import prepare as relay
@@ -214,9 +232,15 @@ class Reconstruction(unittest.TestCase):
         for host in hosts.values():
             key='cloud-test-relay-'+host.split('.')[0]
             self.assertEqual(http['routers'][key]['rule'],'Host(`'+host+'`)')
-            self.assertEqual(http['routers'][key]['tls'],{})
+            self.assertEqual(http['routers'][key]['tls'],{'certResolver':'letsencrypt'},'own certificate per name (P11)')
             self.assertEqual(http['serversTransports'][key],{'serverName':host},'verify the test host certificate per name')
             self.assertEqual(http['services'][key]['loadBalancer']['servers'],[{'url':'https://100.64.0.20'}])
+            self.assertIn('Host(`'+host+'`)',http['routers']['cloud-test-relay-acme']['rule'])
+        acme=http['routers']['cloud-test-relay-acme']
+        self.assertEqual((acme['service'],acme['entryPoints']),('acme-http@internal',['http']))
+        self.assertTrue(acme['rule'].endswith('&& PathPrefix(`/.well-known/acme-challenge/`)'))
+        self.assertGreater(acme['priority'],http['routers']['cloud-test-relay-http']['priority'],
+                           'the relay host answers its own challenges, not the test host')
         self.assertNotIn('sso.example.net',yaml.safe_dump(out))
         with self.assertRaises(ValueError):relay({'tier':'production','hosts':hosts,'relay_target':'100.64.0.20'})
         with self.assertRaises(ValueError):relay({'tier':'test','hosts':dict(hosts,erp='erp.example.net'),'relay_target':'100.64.0.20'})

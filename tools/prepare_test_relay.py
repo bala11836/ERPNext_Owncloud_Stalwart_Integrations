@@ -5,8 +5,9 @@ Used when the test host has no public address (e.g. a home server reached over
 a tailnet): public DNS for the test hostnames points to the relay host, whose
 proxy terminates TLS and forwards each request over HTTPS to the test host
 (verifying its certificate per hostname); the test host trusts the relay's
-X-Forwarded-For. Port 80 is forwarded so the test host's HTTP certificate
-challenges and redirects work.
+X-Forwarded-For. Port 80 is forwarded for redirects; certificate challenges
+for the relayed names are answered by the relay host itself (P11), so the
+test host cannot obtain certificates for them through the relay.
 
 Only the six test hostnames from a test profile are relayed; nothing else.
 """
@@ -30,9 +31,12 @@ def prepare(profile):
         if not re.fullmatch(r'test[a-z0-9-]*\.[a-z0-9.-]+', host):
             raise ValueError('Only test hostnames may be relayed: ' + host)
     target = str(ipaddress.ip_address(profile['relay_target']))
-    # The relay host terminates TLS for the test hostnames (its certificate,
-    # e.g. a wildcard, must cover them) and forwards HTTP over HTTPS to the
-    # test host, verifying the test host's certificate for each hostname.
+    resolver = profile.get('cert_resolver', 'letsencrypt')
+    # The relay host terminates TLS for the test hostnames with its own
+    # certificate per name (P11: issued by its resolver through the HTTP
+    # challenge, which the relay host answers itself; no copied wildcard) and
+    # forwards HTTP over HTTPS to the test host, verifying the test host's
+    # certificate for each hostname.
     # TCP pass-through by SNI is not used: browsers reuse ("coalesce") an
     # existing connection to the relay host for any hostname its certificate
     # covers, so requests for test hostnames arrive inside connections opened
@@ -41,13 +45,18 @@ def prepare(profile):
     for host in hosts:
         key = prefix + '-relay-' + host.split('.')[0]
         routers[key] = {'rule': 'Host(`' + host + '`)', 'entryPoints': ['https'], 'priority': 100000,
-                        'service': key, 'tls': {}}
+                        'service': key, 'tls': {'certResolver': resolver}}
         transports[key] = {'serverName': host}
         services[key] = {'loadBalancer': {'servers': [{'url': 'https://' + target}], 'passHostHeader': True,
                                           'serversTransport': key}}
     routers[prefix + '-relay-http'] = {'rule': ' || '.join('Host(`' + h + '`)' for h in hosts), 'entryPoints': ['http'],
                                        'priority': 52000, 'service': prefix + '-relay-http'}
     services[prefix + '-relay-http'] = {'loadBalancer': {'servers': [{'url': 'http://' + target}], 'passHostHeader': True}}
+    # The relay host's own certificate challenges for these names are answered
+    # here, above the port-80 relay, so its renewals never reach the test host.
+    routers[prefix + '-relay-acme'] = {'rule': '(' + ' || '.join('Host(`' + h + '`)' for h in hosts) + ')'
+                                               ' && PathPrefix(`/.well-known/acme-challenge/`)',
+                                       'entryPoints': ['http'], 'priority': 100001, 'service': 'acme-http@internal'}
     return {'http': {'routers': routers, 'services': services, 'serversTransports': transports}}
 
 

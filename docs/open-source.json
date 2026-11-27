@@ -800,6 +800,16 @@
       ],
       "status": "evaluating",
       "note": "P82 trial app (mobile/trials/passkey-android), never shipped; 16.1.0 reads the QR code; needs Google Play services, so the real app needs another reader for phones without them"
+    },
+    {
+      "name": "Pebble",
+      "repo": "https://github.com/letsencrypt/pebble",
+      "licence": "MPL-2.0",
+      "used_in": [
+        "P11"
+      ],
+      "status": "evaluating",
+      "note": "Let's Encrypt's ACME test server, for a local rehearsal of the certificate switch (P11) only; not shipped. v2.10.3 (11 Nov 2026), release checksums verified."
     }
   ]
 }

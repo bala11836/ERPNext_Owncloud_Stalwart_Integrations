@@ -6,6 +6,19 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### Face attendance has an off switch, and it is off unless the site turns it on (P95)
+
+- **Decision:** every face function that takes in or uses a face (enrolment, identification, the capture queue's
+  intake, its lists and its decisions) refuses unless the site config has `custom_hr_face` -> `enabled: true`. The
+  check is the first line, so nothing is read or stored while off. Withdrawing consent, deleting face data when an
+  employee leaves or is deleted, and the daily removal of rejected photographs never depend on it.
+- **Why:** owner, 27 November 2026. The ERP ships as one image, so a release of main for other merged changes (P93,
+  #77) also ships P95. Without face settings, matching and enrolment already refused, but the capture queue still took
+  in photographs for manual review: a working face-photo intake on production before the legal opinion. An
+  explicit switch, off by default, lets the code be released while nothing can use it.
+- **Where:** `custom_hr/face_service.py` (`enabled`, `require_enabled`), `custom_hr/face_queue.py`,
+  `custom_hr/face_queue_integration_tests.py`, `tests/test_custom_hr_face_switch.py`, the module README.
+
 ### The boot check's alert mail may connect to the mail server's private address (P57)
 
 - **Decision:** the alert sender's settings take an optional `address` (an IP address). The boot check then connects

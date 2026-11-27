@@ -20,7 +20,7 @@ import re
 import frappe
 from frappe.utils import add_days, cint, now_datetime
 
-from erpnext_drive_integrations.custom_hr import domain, face, face_queue_rules as rules, service
+from erpnext_drive_integrations.custom_hr import domain, face, face_queue_rules as rules, face_service, service
 from erpnext_drive_integrations.custom_hr.access import require_site, require_user, site_access, supervised_users
 
 QUEUE = 'Field Face Capture'
@@ -109,6 +109,7 @@ def _record(doc, employee, work_mode='Not applicable', asset=None, remarks=''):
 
 
 def add(payload):
+    face_service.require_enabled()
     user = require_user()
     site = require_site(payload.get('site'))
     if not (site_access(site.name, 'Supervisor', user) or supervised_users(site.name, user)):
@@ -169,6 +170,7 @@ def _rows(filters, limit):
 
 def pending(site):
     """Captures waiting for the project manager at this site."""
+    face_service.require_enabled()
     require_user()
     require_site(site, 'Approver')
     return _rows({'site': site, 'state': 'Needs review'}, 200)
@@ -176,12 +178,14 @@ def pending(site):
 
 def mine(site):
     """The signed-in supervisor's own captures of the last three days, so they can see what became of them."""
+    face_service.require_enabled()
     user = require_user()
     require_site(site)
     return _rows({'site': site, 'captured_by': user, 'captured_at': ['>=', add_days(now_datetime(), -3)]}, 200)
 
 
 def _decide(name, user):
+    face_service.require_enabled()
     doc = _lock(name)
     require_site(doc.site, 'Approver')
     if doc.state != 'Needs review':

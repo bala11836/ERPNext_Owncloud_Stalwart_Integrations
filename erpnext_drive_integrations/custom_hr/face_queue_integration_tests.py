@@ -95,8 +95,28 @@ def run():
         def item(name):
             return frappe.get_doc('Field Face Capture', name)
 
-        # 1. Face recognition off: the capture waits for the project manager.
-        frappe.conf['custom_hr_face'] = {}
+        # 0. Face attendance switched off (owner, 27 November 2026; production's state until the legal opinion):
+        #    every face intake refuses and nothing is stored; withdrawal still works.
+        frappe.conf['custom_hr_face'] = {'engine': ENGINE}  # an engine alone does not switch it on
+        before = (frappe.db.count('Field Face Capture'), frappe.db.count('File'), frappe.db.count('Field Face Enrolment'),
+                  frappe.db.count('Biometric Consent'))
+        frappe.set_user(b)
+        denied('switched off: a capture is refused', lambda: face_queue.add(payload()))
+        denied('switched off: identification is refused', lambda: face_service.identify(site.name, day.name, photo))
+        denied('switched off: the supervisor\'s own list is refused', lambda: face_queue.mine(site.name))
+        frappe.set_user(boss)
+        denied('switched off: the review queue is refused', lambda: face_queue.pending(site.name))
+        frappe.set_user('Administrator')
+        consent = {'accepted': True, 'agreement_version': 'test', 'language': 'English', 'identity_checked': True}
+        denied('switched off: enrolment is refused', lambda: face_service.enrol(plain.name, [photo, photo, photo], consent))
+        check('switched off: no capture, file, enrolment or consent was stored',
+              (frappe.db.count('Field Face Capture'), frappe.db.count('File'), frappe.db.count('Field Face Enrolment'),
+               frappe.db.count('Biometric Consent')) == before)
+        check('switched off: withdrawing consent still works',
+              face_service.withdraw(plain.name, 'test withdrawal')['templates_deleted'] is False)
+
+        # 1. Face recognition off (switched on, no engine): the capture waits for the project manager.
+        frappe.conf['custom_hr_face'] = {'enabled': True}
         frappe.set_user(b)
         first = payload()
         queued = face_queue.add(first)
@@ -140,7 +160,7 @@ def run():
         check('the supervisor is told', frappe.db.exists('Notification Log', {'for_user': a, 'document_name': own.name}))
 
         # 3. Face recognition on (stand-in engine): a recognised worker is recorded at once.
-        frappe.conf['custom_hr_face'] = {'engine': ENGINE}
+        frappe.conf['custom_hr_face'] = {'enabled': True, 'engine': ENGINE}
         frappe.set_user('Administrator')
         consent = {'accepted': True, 'agreement_version': 'test', 'language': 'English', 'identity_checked': True}
         face_service.enrol(second.name, [photo, photo, photo], consent)

@@ -534,7 +534,7 @@ piece or find another free tool). Agent research, primary sources; decided below
 - **Chat name** (owner, 27 November 2026, night): the sign-up service also makes each person's chat name,
   `firstname.initial` with a number on a clash, and stores it as the attribute `chat_name` (P73). **The initial is
   the surname's first letter; when no surname was entered, the service asks for it and never guesses** (found on
-  test, 27 November: an account named only "Rajesh" was given `rajesh.r`; the owner's is `rajesh.d`). A chat
+  test, 27 November: an account named only "Asha" was given `asha.r`; the owner's is `asha.d`). A chat
   address cannot be renamed once the person has signed in, so the name is shown to the person to confirm first.
 - **Mail address verified** with a **6-digit code** sent by **our own mail server** (not Firebase, which only sends
   sign-in links). The code expires after 10 minutes, allows 5 tries, and a new one can be asked after 60 seconds.

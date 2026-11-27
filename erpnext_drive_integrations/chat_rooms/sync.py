@@ -39,7 +39,7 @@ def validate_user(doc, method=None):
     name = (doc.get(CHAT_NAME_FIELD) or '').strip() or None
     doc.set(CHAT_NAME_FIELD, name)
     if name and not rules.valid_chat_name(name):
-        frappe.throw('A chat name is firstname.initial, with an optional number: rajesh.d, rajesh.d2')
+        frappe.throw('A chat name is firstname.initial, with an optional number: asha.d, asha.d2')
     before = doc.get_doc_before_save() if hasattr(doc, 'get_doc_before_save') else None
     if before and before.get(CHAT_NAME_FIELD) and before.get(CHAT_NAME_FIELD) != name:
         frappe.throw('A chat name is not changed once it is set: the chat address cannot be renamed.')

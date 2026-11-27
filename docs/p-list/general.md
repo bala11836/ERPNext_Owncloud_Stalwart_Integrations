@@ -752,8 +752,8 @@ accepts that risk.
   well-known files for ever): the chat server stands on its own address, separate and replaceable. The name can
   never be changed afterwards, so production starts on the company domain people keep (P70's split), not the demo
   domain. The test server has its own throwaway name.
-- **Chat name (owner, 27 November 2026, night): `firstname.initial`**, with a number on a clash (`rajesh.d`, then
-  `rajesh.d2`); made once at onboarding, never changed and never reused; addresses are `@rajesh.d:chat.<domain>`.
+- **Chat name (owner, 27 November 2026, night): `firstname.initial`**, with a number on a clash (`asha.d`, then
+  `asha.d2`); made once at onboarding, never changed and never reused; addresses are `@asha.d:chat.<domain>`.
   The sign-in user name stays the full mail address (which Matrix does not accept as a name). The sign-in service
   holds the chat name as a user attribute `chat_name` and gives it to the chat sign-in as a claim; without it a
   person cannot sign in to chat. The sign-up service (P82) generates it; until P82 is built it is set by hand.
@@ -763,10 +763,14 @@ accepts that risk.
   #139 merged at `5f3a897` (14:45 UTC); the production relay carries the two test names since 14:46 UTC (receipt
   `p73-production-test-relay-chat-names-735b117`), so the test chat answers from outside with valid certificates.
   13 test people have a chat name. **Merged, on test only:** production gets a chat stack only on the company domain
-  people keep (P70). The owner signed in on test (`@rajesh.d`). **The business system's bot** (`@erp`, no admin
+  people keep (P70). The owner signed in on test (`@asha.d`). **The business system's bot** (`@erp`, no admin
   token; people join by automatic acceptance of its invitations) is public PR #143, on test since 17:57 UTC
-  (receipt `p73-test-chat-bot-92b77c4`). Next: the ERPNext module that makes rooms from sites and teams. Waiting:
-  the Firebase key for the alert gateway; the meaning of a "team" room. Not built:
+  (receipt `p73-test-chat-bot-92b77c4`), merged as #143 (`2f296e2`). **The room module** (site, team and Notices
+  rooms from Field Sites, nothing stored in ERPNext; a team is the supervisor's team at a site) is public draft PR
+  #144, merged at `f30c4e2` (18:23 UTC, 27 November; tested commit `3c8aff5`): tried live against the test chat
+  server and for four minutes on the test ERP (receipt `p73-test-erp-chat-rooms-3c8aff5`). **Merged, not deployed:**
+  the test ERP is back on another session's build (#142) and gets the module with its next build from main;
+  production has no chat stack yet (P70). Waiting: the Firebase key for the alert gateway. Not built:
   the push gateway, the ERPNext bot and rooms, monitoring, backups and the drift check for the stack, the production
   route file.
 - **First step:** the adoption check (licence, maintenance, security history, how fixes are published) for Synapse,

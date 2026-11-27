@@ -94,9 +94,9 @@ fun Notice(kind: StatusKind, text: String, modifier: Modifier = Modifier) {
 }
 
 /**
- * The row card: an icon in a tinted square, a title, one line of text and, when it has a state, a pill on the
- * right. With large text on the phone the pill moves under the text, so nothing is squeezed. With [onClick] the
- * whole card is one tap target.
+ * The row card: an icon in a tinted square, a title on its own line and under it one line of text with, when
+ * the card has a state, a pill at the right. With large text on the phone the pill moves under the text, so
+ * nothing is squeezed. With [onClick] the whole card is one tap target.
  */
 @Composable
 fun RowCard(
@@ -117,12 +117,19 @@ fun RowCard(
             Box(Modifier.size(46.dp).background(if (selected) Look.Surface else Look.Soft, RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
                 Icon(painterResource(icon), contentDescription = null, tint = Look.Accent)
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            // The title keeps the card's full width; the pill shares the smaller second line.
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
-                if (text.isNotEmpty()) Text(text, style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
-                if (pill != null && pillBelow) Pill(pill.first, pill.second)
+                if (pill == null || pillBelow) {
+                    if (text.isNotEmpty()) Text(text, style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+                    if (pill != null) Pill(pill.first, pill.second)
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+                        Pill(pill.first, pill.second)
+                    }
+                }
             }
-            if (pill != null && !pillBelow) Pill(pill.first, pill.second)
         }
     }
     val size = modifier.fillMaxWidth().heightIn(min = Look.Touch)

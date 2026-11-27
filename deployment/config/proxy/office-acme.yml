@@ -5,7 +5,7 @@ http:
       - http
       rule: Host(`mx.example.com`) && PathPrefix(`/.well-known/acme-challenge/`)
       priority: 2000
-      service: office-mail-jmap@docker
+      service: mail-stalwart@file
     office-web-acme-validation:
       entryPoints:
       - http

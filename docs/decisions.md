@@ -6,6 +6,19 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### Chat: the business system acts through a bot that invites; nothing holds an admin token (P73)
+
+- **Decision:** the business system has one chat identity, the bot `@erp`, with its own token. It creates the site
+  and team rooms and each person's read-only Notices room, invites people, posts, and removes people whose
+  assignment ended. Synapse accepts invitations from this server automatically, so people are in their rooms
+  without a tap. There is no admin client and no admin user for this.
+- **Why:** tried on the test site on 27 November 2026: the authentication service gives a client its own admin
+  scope but not Synapse's, which needs an admin person's token. Inviting needs no such right, and one credential
+  less with full power over every room is safer. With no federation, only people on this server can invite, so
+  automatic acceptance cannot be used from outside. Synapse's own "server notices" need the admin interface too,
+  so the Notices room is an ordinary room in which only the bot may write.
+- **Where:** `integrations/chat/configure.py` (`bridge`, `auto_accept_invites`), register CHAT-4, the chat README.
+
 ### The chat stack: two settings files written by a one-time service; the server name is `chat.<domain>` (P73)
 
 - **Decision:**

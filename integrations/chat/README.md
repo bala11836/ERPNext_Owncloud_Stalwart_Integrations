@@ -11,6 +11,7 @@ Fixed choices, set in `configure.py`:
 - **Sign-in only through the sign-in service.** No passwords, no registration; people cannot change the name or mail address that comes from the sign-in service, or deactivate their account.
 - **No federation at first.** No other Matrix server is contacted or answered.
 - **Rooms are not encrypted by default,** so the company can keep, search and export them.
+- **The business system has a bot, `@erp`, and no admin right.** It signs in with its own token (an application service registration without a call-back address), creates the rooms, invites people and posts. Invitations from this server are accepted automatically (`auto_accept_invites`), so a person is in their site room, or in a one-to-one chat a colleague opened, without a tap. The bot cannot act as a person, and people cannot take its name.
 - **The server name is permanent.** It is part of every address (`@name:chat.<domain>`) and Matrix does not allow renaming a server. Choose it before the first start.
 
 ## Contents
@@ -48,6 +49,10 @@ Settings are in `deployment/stacks/inputs.json` as `CI_CHAT_CONFIGURE_*`:
 - **Secrets made by the renderer:** the two database passwords, the secret Synapse and MAS share, Synapse's macaroon and form secrets, and the secret MAS's encryption key is derived from. Do not change the last one after the first start.
 
 The `configure` service rewrites both files at every deployment and keeps the signing key. Private ports: `CI_CHAT_SYNAPSE_HOST_PORT` (8040) and `CI_CHAT_MAS_HOST_PORT` (8050), on 127.0.0.1 only.
+
+**For the business system** (the module that makes rooms from sites and teams; not in this module): the bot's token is `CI_CHAT_CONFIGURE_BRIDGE_AS_TOKEN` in the runtime's private inputs. It reaches Synapse inside the workspace network at `http://chat-synapse:8008` and uses only the client interface: create a room (alias `#site-…` or `#team-…`; give everyone else no right to invite, rename or change rules), invite, post, remove. A read-only room is one where writing needs a higher level than members have. Rooms use the server's default room version, in which the creator has full rights and must not be listed in the power levels.
+
+After the `configure` service has rewritten the files, restart `synapse` and `mas` so they read them. When a client or provider is removed from the authentication service's configuration, run its `config sync --prune` once.
 
 Backups: both databases (`pg_dumpall` in each database container) and the volumes `synapse-data` (media and Synapse's signing key) and `mas-config` (MAS's signing key).
 

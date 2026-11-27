@@ -24,7 +24,11 @@ from pathlib import Path
 SYNAPSE_UID, MAS_UID = 991, 65532
 REQUIRED = ('CHAT_SERVER_NAME', 'CHAT_PUBLIC_URL', 'CHAT_AUTH_URL', 'SYNAPSE_DB_PASSWORD', 'MAS_DB_PASSWORD',
             'SHARED_SECRET', 'MACAROON_SECRET', 'FORM_SECRET', 'MAS_ENCRYPTION_SECRET', 'UPSTREAM_ID',
-            'UPSTREAM_ISSUER', 'UPSTREAM_CLIENT_ID', 'UPSTREAM_CLIENT_SECRET', 'UPSTREAM_NAME', 'LOCALPART_TEMPLATE')
+            'UPSTREAM_ISSUER', 'UPSTREAM_CLIENT_ID', 'UPSTREAM_CLIENT_SECRET', 'UPSTREAM_NAME', 'LOCALPART_TEMPLATE',
+            'BRIDGE_AS_TOKEN', 'BRIDGE_HS_TOKEN')
+# The business system's bot (P73): it creates the rooms, invites people into them and posts; people cannot use
+# its name. It needs no admin right: Synapse accepts its invitations for people (auto_accept_invites, below).
+BRIDGE_USER = 'erp'
 ULID = re.compile(r'[0-7][0-9A-HJKMNP-TV-Z]{25}')
 HOST = re.compile(r'[a-z0-9]([a-z0-9.-]*[a-z0-9])?')
 
@@ -44,6 +48,8 @@ def settings(env):
             values[name] += '/'
     if not ULID.fullmatch(values['UPSTREAM_ID']):
         raise ValueError('UPSTREAM_ID must be a ULID (26 characters)')
+    if values['BRIDGE_AS_TOKEN'] == values['BRIDGE_HS_TOKEN']:
+        raise ValueError('BRIDGE_AS_TOKEN and BRIDGE_HS_TOKEN must differ')
     return values
 
 
@@ -76,6 +82,23 @@ def homeserver(values):
         'encryption_enabled_by_default_for_room_type': 'off',
         'url_preview_enabled': False,
         'enable_room_list_search': True,
+        # The business system's bot signs in with its own token (bridge(), below).
+        'app_service_config_files': ['/config/bridge.yaml'],
+        # An invitation from someone on this server is accepted at once, so the bot can put a person into their
+        # site room (and a colleague's one-to-one chat opens) without a tap. Nobody outside can invite: no federation.
+        'auto_accept_invites': {'enabled': True, 'only_for_direct_messages': False, 'only_from_local_users': True},
+    }
+
+
+def bridge(values):
+    """The bot's registration with Synapse: its two tokens, its one user and the room addresses it owns. No
+    address to call back: the business system only calls Synapse, never the other way round."""
+    server = re.escape(values['CHAT_SERVER_NAME'])
+    return {
+        'id': 'business-system', 'url': None, 'sender_localpart': BRIDGE_USER, 'rate_limited': False,
+        'as_token': values['BRIDGE_AS_TOKEN'], 'hs_token': values['BRIDGE_HS_TOKEN'],
+        'namespaces': {'users': [{'exclusive': True, 'regex': '@' + BRIDGE_USER + ':' + server}],
+                       'aliases': [{'exclusive': True, 'regex': '#(site|team)-.*:' + server}], 'rooms': []},
     }
 
 
@@ -143,6 +166,7 @@ def main(env=os.environ, synapse_dir=Path('/synapse-config'), mas_dir=Path('/mas
         print(str(error), file=sys.stderr)
         return 1
     write(synapse_dir / 'homeserver.yaml', (json.dumps(homeserver(values), indent=1) + '\n').encode(), SYNAPSE_UID)
+    write(synapse_dir / 'bridge.yaml', (json.dumps(bridge(values), indent=1) + '\n').encode(), SYNAPSE_UID)
     write(mas_dir / 'config.yaml', (json.dumps(mas(values), indent=1) + '\n').encode(), MAS_UID)
     key = mas_dir / 'signing.pem'
     if not key.exists():

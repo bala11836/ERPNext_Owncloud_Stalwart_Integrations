@@ -1105,3 +1105,116 @@ checklist and the admin's daily line are recorded.
   - the backup door is tried at every quarterly recovery check (P41), with an SOP.
 - **Order:** after the admin alerts (P72 with P53); one tool at a time, test first.
 
+
+### P107 — User support: "Report a problem" in the apps, and an admin support desk
+
+**App:** general · **Also touches:** erp, mobile, portal, signin · **State:** parked
+
+**Status:** parked by the owner, 27 November 2026 ("we'll take this up later"). Nothing is built or decided beyond the
+owner's decisions below. Do not start until the owner says.
+
+**Why (owner, 27 November 2026):** support users without a remote-control tool. The owner first asked whether
+RustDesk (a free server with single sign-on) would help, then chose help built into the apps. Admin work has grown
+beyond a few Desk widgets: the admin needs one place to receive user problems, organise and track cases, keep a
+record of finished ones, and reach server alerts and logs.
+
+**Owner decisions (27 November 2026):**
+- **No RustDesk.** No paid tool ("paying is not an option").
+- **Not every user can be on the tailnet.** Field phones and some users stay off it.
+- **Help built into the apps is the way forward**, on the phone app and on the web app (desktops).
+- **An admin app is needed** for user complaints as well as server logs and alerts, "instead of just a few widgets
+  over the Desk".
+
+**What was found (research of 27 November 2026; re-check before taking this up):**
+- **RustDesk** (rejected by the owner):
+  - the free server (`hbbs`/`hbbr`, AGPL-3.0, version 1.1.16) only connects and relays devices: no user accounts, no
+    web console, no single sign-on, no audit log, and no documented browser client;
+  - single sign-on (OIDC) needs Server Pro "Basic", USD 23.88 a month billed yearly (10 staff, 100 devices);
+  - the browser client needs a plan with (staff × 10) + devices of 400 or more ("Customized", about USD 48 a month,
+    our own sum);
+  - commercial use is allowed (AGPL-3.0; Pro is licensed for internal business use);
+  - Android can be controlled (screen-capture and input permissions, granted again at every start); iPhones can only
+    control;
+  - 2026 security record: a batch of client CVEs in March (CVE-2026-30797 rated 9.3, some later lowered or
+    withdrawn), CVE-2026-57850 (fixed in 1.4.9), CVE-2026-58056 (fix not confirmed), CVE-2026-131827 (Windows local
+    privilege escalation, November, fixed);
+  - its server ports (21115 to 21119) would have to be public for users off the tailnet.
+- **Alternatives looked at** (not chosen):
+  - MeshCentral: Apache-2.0, free, OIDC with authentik, browser-based for the helper. 1.3.1 (October 2026) was an
+    urgent security update, released while servers were being actively attacked. Its server would have to be public
+    for users off the tailnet. Android agent abilities not confirmed.
+  - Apache Guacamole: Apache-2.0, browser-based RDP, VNC and SSH, OIDC (implicit flow). Suited to reaching servers,
+    not to helping users; no phones; last release 1.6.0 on 22 June 2025.
+- **Phones:** no remote-control app on workers' phones. Remote input on a phone that holds the ERP Mobile passkeys
+  (P82) could approve things in the app, and the phones may be personal.
+
+**What (proposal, to settle when taken up):**
+1. **"Report a problem" in the native Android app (P50):**
+   - a screenshot of the app's own screen (no special permission; other apps are never captured); the user sees it
+     and can blur parts before sending;
+   - diagnostics, shown to the user before sending:
+     - app version, Android version, phone model, network type, offline or not;
+     - the current screen;
+     - the last request IDs and their results (P103);
+     - the data-flow tracker state (P50 Phase 0);
+     - saves waiting to upload;
+     - a short app log with personal values removed;
+   - never sent: passkeys, sign-in tokens, passwords, face images or location history;
+   - sent with the user's own sign-in; queued when offline; a crash report offered at the next start.
+2. **"Report a problem" in the ERP web app (desktops):**
+   - in the Desk help menu: page, record, browser, user, recent browser errors, request IDs;
+   - the server adds its own error log entries for that user and time;
+   - screenshot: the browser's own "share this tab" prompt (recommended; accurate, no new library), with paste or
+     attach as a fallback; a page-redrawing library is not recommended (inaccurate, a new dependency);
+   - apps we did not write (Drive, the editor, webmail, DMS): no button inside them; the same form in ERP with a
+     choice of app, and a support mail address that opens a case; their server logs come from Loki.
+3. **The admin support desk: Frappe Helpdesk** (recommended over building our own):
+   - free and open source (AGPL-3.0 on the repository page; licence file not yet read), no paid self-hosted edition,
+     same framework as the ERP; a version-16 branch, v16.2.2 released 25 November 2026;
+   - an agent screen, a portal where users follow and reply to their case, statuses, assignment rules, response and
+     resolution targets, saved replies, a knowledge base, analytics;
+   - advisories: GHSA-xf93-jjcj-44vm (moderate, fixed in 1.26.0, September 2026); a breaking change in 1.31.1 fixed
+     agent-only fields set through the REST API; the install page still names the old `main` branch, so install the
+     version-16 branch;
+   - alternative on record: ERPNext's built-in Issue (statuses and response targets, a weaker agent screen, no user
+     portal).
+4. **Case flow:**
+   - a report becomes a ticket, with the screenshot as a private attachment and the diagnostics stored with it;
+   - the server adds its error log entries for the request IDs and a Grafana or Loki link filtered to that user,
+     time and request;
+   - assignment by app or type, with repeats grouped;
+   - the admin replies inside the ticket, and the user is told in the app and by mail;
+   - a bug is linked to a P item or a public issue with personal details removed;
+   - resolved, then closed, and kept as the record; analytics show what keeps going wrong.
+5. **One admin home: an "Operations" workspace in the ERP Desk for the admin role:**
+   - user cases (Helpdesk);
+   - system alerts (P72, public #134); critical alerts can also open a case;
+   - links to Grafana, Loki, TrueNAS, Coolify and Frigate;
+   - logs and metrics stay in Grafana and Loki, tailnet-only (P102), and are not copied into the public ERP;
+   - later, an admin section in the native app for alerts and cases.
+
+**Decisions for the owner when taken up:**
+1. Case system: Frappe Helpdesk (recommended), ERPNext Issue, or our own.
+2. Whether critical system alerts also open a case (recommended: yes).
+3. The web screenshot method (recommended: "share this tab", with attach as a fallback).
+4. How long screenshots and diagnostics are kept after a case closes (suggested: 90 days for attachments, case text
+   kept).
+5. Who handles cases: admin only, or also first-line helpers (HR for HR questions, supervisors for field problems).
+
+**How it is tested (when built):**
+- on the test site, report from a phone and from a desktop browser;
+- check that the ticket holds the screenshot and diagnostics and that nothing listed as "never sent" appears;
+- check that the server's evidence and the filtered log link are added;
+- reply, resolve and close, and check what the user sees;
+- check that a non-admin cannot see other people's cases.
+
+**Depends on / with:**
+- P103 (request IDs) first; P50 (native app);
+- P72 and public #134 (alert inbox); P53's admin part (becomes the Operations workspace); P102 (admin tools
+  tailnet-only).
+
+**When taken up:**
+- the adoption check for Frappe Helpdesk (licence file, maintenance, security history) in the decision log and the
+  open-source list;
+- a row in the working-agreements stack table (support desk);
+- SOPs for handling a support case and for screenshot privacy (`docs/sop/`).

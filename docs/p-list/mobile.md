@@ -30,7 +30,7 @@ sign-in, no server calls) in the colleague's draft PR #114, review fixes added 2
 **Test-site request (27 November 2026):** the developer asked for the five-phone test preparation (PR #114,
 issuecomment-7214300268). The owner said "go for rest of all"; the answers were posted (issuecomment-7214761500): Part D
 decided (P95, PR #131); A5 and B4 answered from the code; B1 not needed (two bootstrap calls exist); B2 and B3 opened as
-P102 and P103; the test-site preparation as P104 (blocked on the testers' mail addresses and the test build's signing
+P103 and P104; the test-site preparation as P105 (blocked on the testers' mail addresses and the test build's signing
 fingerprint).
 Own app (not the colleague's P38 app), native on Android and iOS, one codebase
 for phones and tablets, in this repository as a self-contained module. No
@@ -109,6 +109,17 @@ sentences and no longer crashes on sign-out during a save. Still open in Phase 0
 comparison, texts in one file, a real tablet, vibration, icon and start screen, detekt, crash reports. Not for
 merging yet; nothing to deploy (no server stack).
 
+**Phase 1 plan and owner decisions (27 November 2026; the colleague's plan of five parts: the lock, the safe, the
+connection, sign-in, home):**
+- Parts 4 (sign-in: browser, passkey, tokens straight into the encrypted store) and 5 (home: name, roles, sign out):
+  agreed. Part 4 waits for P105's sign-in client on the test site.
+- **Fingerprint again after 3 minutes away** (another app opened or the screen off).
+- **Without a connection the app still opens for 12 hours** (one site shift, 07:00 to 19:00 or 19:00 to 07:00), then
+  it needs a connection. The owner first said 5 hours; the agent pointed out that a supervisor without signal could
+  not mark the afternoon's attendance, and the owner accepted 12 hours. A switched-off person is refused at the
+  next connection; the 3-minute fingerprint lock covers a lost phone meanwhile.
+- **Photos offline:** see P74 (cache decision of 27 November).
+
 ### P64 — Native app sign-in on production: latent auth-hook crash and a stale client list
 
 **App:** mobile · **Also touches:** signin, erp · **State:** in progress
@@ -165,6 +176,11 @@ when the app goes to production (P50), and whether Raven Mobile should be a nati
 - **Open:** the rest of the phone test with #64 and #66 (checklist on #66); backups and disk growth with P72 (about 1 MB per photo
   before compression; the app sends about 200 KB); privacy (photos show workers and the public: project access only,
   no public links); the daily token renewal needs the scheduler (test has none).
+- **Viewing photos without a connection (owner, 27 November 2026; amends "phone storage only for the encrypted offline
+  queue" of 24 November):** the app also keeps previews and the photos the person has opened, of their own sites
+  only, inside the app's encrypted store; at most **200 MB** and **7 days**; wiped at sign-out, when the key is lost,
+  and for a site the person no longer belongs to. The send queue stays as before (at most 1 day).
+- **Short videos for incidents:** P106.
 
 ### P86 — Personal business files in the app, with a quota per user
 
@@ -280,3 +296,30 @@ direct dependencies.
 
 **Owner (26 November 2026):** ranked in tier 1 (row 5a, next to P62). The second review by a different AI model stays
 for sensitive screens only (sign-in, security, payments, personal or biometric data); the guide says so.
+
+### P106 — Short video clips with site incidents
+
+**App:** mobile · **Also touches:** drive, erp · **State:** open
+
+**Why (owner, 27 November 2026):** people reporting an incident in the app attach photos; a short video often shows
+what happened better.
+
+**What:**
+- Clips of **at most 60 seconds**, with Incident photos (P74); the same tags, site check and Drive folder.
+- **Compressed on the phone** before upload; the server does not re-encode. **Owner, 27 November 2026: HEVC (H.265)
+  when the phone can record it, otherwise H.264**, at 720p with mono AAC sound. HEVC is about 40% smaller (about 9
+  MB a minute against about 15 MB for H.264 at 2 Mbit/s). Consequence: a browser that cannot play HEVC (older
+  computers, some Firefox set-ups) offers the clip as a download instead of playing it in Drive. The app checks
+  the phone's hardware encoder before recording. Android's Media3 Transformer does the conversion (licence and
+  advisory check before adoption).
+- **New upload path:** today's photo upload takes files under 3 MB in one request; clips need an upload that resumes
+  after a dropped connection, and a size limit on the server.
+- Offline: a clip waits in the encrypted send queue like a photo (at most 1 day); the queue's size limit needs a
+  decision.
+
+**Acceptance (test site):** a 60-second clip recorded on a mid-range phone is under 16 MB, uploads over a poor
+connection after an interruption, plays in Drive in a browser (H.264 everywhere; HEVC where the browser supports
+it, otherwise offered as a download), and is refused for a site the person does not belong to.
+
+**Related:** P74, P50 (Phase 2 or later, not Phase 1), P72 (disk growth and backups).
+

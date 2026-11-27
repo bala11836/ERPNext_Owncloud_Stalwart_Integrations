@@ -248,7 +248,7 @@ sign-in server; the production test entries are retired.
 
 **Related:** P76 and P77 (test sign-in server), P63, P70, P25, P69 (test webmail reader), P98 (where it was found).
 
-### P104 — Test site ready for the native app's five-phone test round
+### P105 — Test site ready for the native app's five-phone test round
 
 **App:** test-site · **Also touches:** erp, signin, mobile · **State:** blocked
 
@@ -277,4 +277,4 @@ signing fingerprint from the developer.
 screens; every "must be refused" call in the request is refused by ERPNext itself; the sixth account gets the clear
 "signed in but not allowed" message.
 
-**Related:** P50, P82, P95, P102, P103.
+**Related:** P50, P82, P95, P103, P104.

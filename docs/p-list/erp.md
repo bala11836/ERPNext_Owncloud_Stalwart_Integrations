@@ -24,7 +24,9 @@ Confirm compatibility with the running Frappe/ERP versions, install and configur
 
 **Status:** official source staged; WhatsApp app/connector not installed. No Meta WhatsApp Business account or business number is ready.
 
-Set up the provider/business number, deploy/configure the connector, prepare approved message templates and webhooks, and implement authenticated reply-to-record mapping. Verify sending onboarding links and recording vendor yes/no responses against the intended response request or PO with an audit trail. No live sending is currently established.
+Set up the provider/business number, deploy/configure the connector, prepare approved message templates and webhooks, and implement authenticated reply-to-record mapping.
+
+**Also (owner, 27 November 2026):** a WhatsApp verification flow for onboarding (P82): a 6-digit code to the mobile number the person gave, valid 10 minutes, 5 tries, a new code after 60 seconds; an authentication message template approved by Meta. No SMS and no Firebase for phone checks; mail codes stay on our own mail server. Verify sending onboarding links and recording vendor yes/no responses against the intended response request or PO with an audit trail. No live sending is currently established.
 
 ### P05 — Live GSTIN lookup and form prefill
 
@@ -411,7 +413,7 @@ public PR #101 (`p95/pm-queue`).
 
 **Status:** in progress.
 
-### P102 — Request ID on every app action, and "what happened to my request"
+### P103 — Request ID on every app action, and "what happened to my request"
 
 **App:** erp · **Also touches:** mobile · **State:** open
 
@@ -432,9 +434,9 @@ Field Attendance Entry). A failed save cannot be pinned to one point without som
 **Acceptance (test site):** every app save carries an ID that is returned and found on the record; the lookup answers
 for one's own IDs and refuses others'; repeating a call with the same ID returns the first result.
 
-**Related:** P50 (native app), P103 (version handshake), P104 (five-phone test round).
+**Related:** P50 (native app), P104 (version handshake), P105 (five-phone test round).
 
-### P103 — Version handshake between the server and the mobile apps
+### P104 — Version handshake between the server and the mobile apps
 
 **App:** erp · **Also touches:** mobile · **State:** open
 
@@ -448,4 +450,4 @@ version the server accepts. The apps compare at sign-in and on resume.
 **Acceptance:** a test fails when a mobile-facing function or field changes without the fingerprint changing; an app
 below the minimum shows "update needed" on the test site.
 
-**Related:** P50, P102, P104.
+**Related:** P50, P103, P105.

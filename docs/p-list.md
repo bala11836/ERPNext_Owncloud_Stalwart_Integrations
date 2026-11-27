@@ -154,13 +154,13 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 27 | 27 |
+| General | [pending/general.md](p-list/general.md) | 28 | 28 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
 | ERP | [pending/erp.md](p-list/erp.md) | 15 | 15 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 7 | 7 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 8 | 8 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
@@ -209,7 +209,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P49 | Bring production's sign-in pages and templates into the repository | [Sign-in](p-list/signin.md) | none · **State:** open | open |
 | P50 | Native mobile app for phones and tablets (modules `mobile-app` and `mobile-native`) | [Mobile](p-list/mobile.md) | none · **State:** open | open |
 | P51 | Data refresh runs at 8 pm, not on demand | [Test site](p-list/test-site.md) | none · **State:** open | open |
-| P53 | Desk: day-planning widgets and dashboards from all apps | [Portal (eZone)](p-list/portal.md) | signin, mail, drive, dms · **State:** parked | parked |
+| P53 | Desk: day-planning widgets and dashboards from all apps | [Portal (eZone)](p-list/portal.md) | signin, mail, drive, dms · **State:** in progress | in progress |
 | P54 | Branch deploy button for the "developer" group on the test site | [Test site](p-list/test-site.md) | none · **State:** blocked | blocked |
 | P57 | The platform survives restarts and reboots without an outage | [General](p-list/general.md) | drive, mail, editor · **State:** in progress | in progress |
 | P61 | Editor file safety: a document is never left unusable or its edits lost | [Editor](p-list/editor.md) | drive · **State:** in progress | in progress |
@@ -246,7 +246,9 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P96 | SOPs for every manual procedure, written alongside the build | [General](p-list/general.md) | signin, mobile, erp, portal, drive, editor, mail, dms, raven, test-site · **State:** in progress | in progress |
 | P100 | Mobile app checks in CI, and the app's dependencies in the daily watch | [Mobile](p-list/mobile.md) | general · **State:** open | open |
 | P101 | Test Drive, test Paperless, test mail and the test editor sign in through the test sign-in server | [Test site](p-list/test-site.md) | signin, drive, dms, mail, editor · **State:** open | open |
-| P102 | Request ID on every app action, and "what happened to my request" | [ERP](p-list/erp.md) | mobile · **State:** open | open |
-| P103 | Version handshake between the server and the mobile apps | [ERP](p-list/erp.md) | mobile · **State:** open | open |
-| P104 | Test site ready for the native app's five-phone test round | [Test site](p-list/test-site.md) | erp, signin, mobile · **State:** blocked | blocked |
+| P102 | Admin tools: single sign-on by default, the tailnet as the backup door | [General](p-list/general.md) | signin, test-site · **State:** open | open |
+| P103 | Request ID on every app action, and "what happened to my request" | [ERP](p-list/erp.md) | mobile · **State:** open | open |
+| P104 | Version handshake between the server and the mobile apps | [ERP](p-list/erp.md) | mobile · **State:** open | open |
+| P105 | Test site ready for the native app's five-phone test round | [Test site](p-list/test-site.md) | erp, signin, mobile · **State:** blocked | blocked |
+| P106 | Short video clips with site incidents | [Mobile](p-list/mobile.md) | drive, erp · **State:** open | open |
 <!-- APP-INDEX-END -->

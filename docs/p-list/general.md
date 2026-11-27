@@ -692,6 +692,28 @@ owner; phone delivery as decided above), and the person with authentik admin rig
 in a widget on their Desk (scope added to P53). Who watches daily: the admin (P96, SOP F5). Sign-ins from unusual
 places or networks (P82) reach the admin the same way: on the widget, by mail, or both.
 
+**Taken up (owner's go, 27 November 2026), with the admin part of P53: one alert inbox for the admin.**
+- **Inbox:** one alert inbox in ERP. Each alert records its source, server, severity, title and detail (no secrets),
+  first and last seen, and a repeat count. A repeat updates the same alert. When the problem clears, the alert
+  resolves itself.
+- **Sources:** every check sends to it through one shared sender, with a separate key per server that can only
+  create alerts:
+  - boot check and restart watch;
+  - HTTPS and certificate probes;
+  - backup monitor and audit, and the restore drill;
+  - drift check;
+  - editor file safety;
+  - the upstream watch's "upgrade now";
+  - later, P82's unusual sign-ins.
+- **Who:** people with the admin role (from the sign-in admin group). Set in the deployment profile, not in code.
+- **Desk:** the alerts widget and the monitoring links panel are in P53.
+- **Mail (owner: "yes, mail as well as desk"):** at once for serious alerts (a site down, a failed backup, a
+  certificate under 14 days), and one daily summary for the rest. It uses P57's alert sender.
+- **Fallback:** when ERP is down, the servers mail the admin directly. Production and the test VM keep watching each
+  other.
+- **Order:** test site first, then production. Follows the working-agreements rule "What every project's system
+  has" (4).
+
 ### P73 — Federated chat (Matrix or XMPP) in the mobile app, replacing Raven
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
@@ -1057,3 +1079,29 @@ checklist and the admin's daily line are recorded.
   exceptions in a Desk widget (scope added to P53).
 
 **Status:** in progress.
+
+### P102 — Admin tools: single sign-on by default, the tailnet as the backup door
+
+**App:** general · **Also touches:** signin, test-site · **State:** open
+
+**Why (owner, 27 November 2026):** easy everyday access to the admin tools, and a way in when the sign-in service
+(authentik) is down. This follows the working-agreements rule "What every project's system has" (3).
+
+- **Two doors per tool:**
+  - single sign-on for the admin group;
+  - one local administrator account, reachable only over the tailnet, with its password in the owner's password
+    manager.
+- **Tools:**
+  - Grafana (built-in SSO);
+  - Coolify on production and on the test VM (its own sign-in options; otherwise an SSO gate in front);
+  - TrueNAS (if it has no SSO for its screens: an SSO gate on one address, the direct tailnet address with its local
+    admin as the backup);
+  - Frigate (an SSO gate in front; the direct tailnet address as the backup).
+  - The test VM's SSH keys stay as they are.
+  - Check each tool's current SSO support before building.
+- **Rules:**
+  - admin tools are never published on the internet, even with SSO;
+  - the tailnet's own login never depends on authentik (also when Headscale replaces hosted Tailscale, P29);
+  - the backup door is tried at every quarterly recovery check (P41), with an SOP.
+- **Order:** after the admin alerts (P72 with P53); one tool at a time, test first.
+

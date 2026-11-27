@@ -122,7 +122,7 @@ only; mobile devices are handled separately (P50, and its own portal rules).
 
 ### P53 — Desk: day-planning widgets and dashboards from all apps
 
-**App:** portal · **Also touches:** signin, mail, drive, dms · **State:** parked
+**App:** portal · **Also touches:** signin, mail, drive, dms · **State:** in progress
 
 **Status:** parked, owner request 20 November 2026; **do not start now**, take up later when the owner says (planning not started). After
 sign-in the portal's Desk becomes the user's quick day-planning page:
@@ -175,5 +175,13 @@ with authentik admin rights has a widget on their Desk showing the system's aler
 backup alerts (P72), and the sign-in exceptions of P82 (keys removed for no use, erases after wrong attempts,
 pending or refused onboardings, unknown computers, failed certificate checks, and sign-ins from unusual places or
 networks). Shown only to that role; each item
-links to where it is handled. The admin also receives these alerts directly (owner). The item stays **parked**
-until the owner says to start; this records the scope.
+links to where it is handled. The admin also receives these alerts directly (owner).
+
+**Taken up (owner's go, 27 November 2026): only the admin alerts widget and a monitoring links panel; everything else
+in P53 stays parked.**
+- **Alerts widget:** for the admin role only. It shows open alerts from P72's inbox, newest first, read or unread,
+  each linked to where it is handled.
+- **Links panel** (owner: yes): Grafana (disk, memory, CPU, containers, logs), TrueNAS, Coolify (production and test)
+  and Frigate.
+  - The panel says these are reachable only over the tailnet and use their own administrator sign-in until P102.
+  - The addresses come from the deployment profile, not the code.

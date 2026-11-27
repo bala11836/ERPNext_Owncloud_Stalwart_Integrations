@@ -6,6 +6,32 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)
+
+- **Decision:**
+  - The app asks for the fingerprint again after **3 minutes** away (another app opened or the screen off).
+  - Without a connection it still opens for **12 hours**, then it needs a connection.
+  - **Photos offline:** the app keeps previews and the photos a person has opened, of their own sites only, in its
+    encrypted store: at most 200 MB and 7 days. They are wiped at sign-out, when the key is lost, and for a site the
+    person no longer belongs to.
+  - **Sign-up:** full name (first name required, surname optional). The **user name is the full mail address**. The
+    mail address is verified with a **6-digit code from our own mail server**, the mobile number with a **6-digit
+    code over WhatsApp**. Each code expires after 10 minutes, allows 5 tries, and a new one can be asked after 60
+    seconds.
+  - **Incident videos:** clips of up to 60 seconds, compressed on the phone at 720p, **HEVC where the phone records
+    it, otherwise H.264**.
+- **Why:** owner, 27 November 2026.
+  - 12 hours covers one site shift. Offline attendance must work for a whole shift without signal, and a switched-off
+    person is refused at the next connection.
+  - The mail address is already ERPNext's user ID, so one identity runs through every app.
+  - Six digits suit a phone's number pad. The expiry and the try limit, not the alphabet, protect the code.
+  - Our mail server sends codes for free, while Firebase only sends sign-in links by mail and charges for SMS.
+    WhatsApp replaces SMS later as well.
+  - HEVC is about 40% smaller than H.264. H.264 remains as the fallback, and a browser without HEVC offers the clip
+    as a download.
+- **Where:** the native app (`mobile-native`, PR #114) for the lock, offline window and cache; P82 sign-up; P04
+  (WhatsApp); P106 (video upload, to build).
+
 ### Face attendance has an off switch, and it is off unless the site turns it on (P95)
 
 - **Decision:** every face function that takes in or uses a face (enrolment, identification, the capture queue's

@@ -386,6 +386,11 @@
           "name": "Matrix Authentication Service",
           "license": "AGPL-3.0",
           "url": "https://github.com/element-hq/matrix-authentication-service"
+        },
+        {
+          "name": "Sygnal",
+          "license": "AGPL-3.0",
+          "url": "https://github.com/element-hq/sygnal"
         }
       ]
     },

@@ -4,6 +4,26 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-28
+
+### Chat alerts: the gateway runs inside the chat stack, optional and private (P73)
+
+- **Decision:**
+  - The alert gateway (Sygnal v0.17.0) is a service of the chat stack. It starts only where an operator has
+    placed Google's service-account key and asked for the `alerts` profile.
+  - It has no port on the host and no public route. Synapse reaches it inside the stack's own network, which has
+    a fixed range that Synapse is told it may call.
+  - The key lives in a root-only folder on the host. The one-time `configure` service copies it into the
+    gateway's own volume and writes the gateway's configuration for one app ID.
+  - The app asks for alerts that carry only the event's ID.
+- **Why:**
+  - Owner, 27 and 28 November 2026: alerts carry no content, and the Firebase project `unformat-erp` with the app
+    `in.unformat.erp` exists.
+  - A public gateway address would let anyone who learned a phone's address send it alerts; an address inside the
+    stack cannot be reached from outside.
+  - Without the key nothing is written and nothing starts, so a site without phone alerts is unaffected.
+- **Where:** `integrations/chat/configure.py`, `deployment/stacks/chat.compose.json`, register CHAT-5, the chat README.
+
 ## 2026-11-27
 
 ### Chat rooms follow the sites, and the business system stores nothing about them (P73)

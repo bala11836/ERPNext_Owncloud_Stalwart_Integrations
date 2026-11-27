@@ -397,9 +397,10 @@ public PR #101 (`p95/pm-queue`).
   responsible supervisor, or the engineer assigned to that supervisor at that site; another team's supervisor or
   engineer is refused; withdrawal follows the same rule.
 - **Consent text:** English by default; the worker may choose to read a translation in the language of their choice;
-  the language read is recorded (agreement draft 2). Open for the lawyer: which version governs if a translation and
-  the English differ.
-- **Public PR #131** (`p95/enrol-by-team`, `5ae5cd0`, CI passed, ready for the owner). On the test ERP since
+  the language read is recorded (agreement draft 2). **If a translation and the English differ, the English version
+  governs** (owner, 27 November 2026; in #131 at `777a5fd`, documentation only).
+- **Public PR #131** (`p95/enrol-by-team`, tested at `5ae5cd0`, head `777a5fd` adds only the English-governs text in
+  `docs/`, CI passed, ready for the owner). On the test ERP since
   09:27 UTC (receipt `p95-test-erp-enrol-by-team-5ae5cd0`): 71 suites in the image; face queue live 36/36 (7 new);
   field attendance 79/79. Not covered: a phone (the enrolment and agreement screens are not built).
 - **Merged, not deployed** once merged: joins the next ERP release (P95 stays off in production).

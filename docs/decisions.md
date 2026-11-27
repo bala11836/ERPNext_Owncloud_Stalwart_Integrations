@@ -4,6 +4,41 @@ What we decided and why, for anyone building a similar setup from scratch.
 Newest first. Each entry: **decision**, **why**, and where it lives. The
 discussion that led to a decision is not repeated here.
 
+## 2026-11-28
+
+### The phone app is named "UNformat ERP" (P85, P50)
+
+- **Decision:** the phone app's name is **UNformat ERP**, replacing "ERP Mobile". It is the default brand's app name
+  (`branding/unformat/brand.json`, `mobile_app.name`), with the app ID `in.unformat.erp`, which test builds use
+  from now on as well. A deployment that ships the app as its own product replaces both through its brand settings.
+- **Why:** owner, 28 November 2026. The earlier rule (22 November) was one universal, neutral app name; since P85 our
+  own brand is the public default and is replaceable, so the app carries the brand's name like the rest.
+- **Not changed:** earlier entries of this log and of the work list keep "ERP Mobile", the name in use when they
+  were written. The Expo app's tests keep their sample name: that app is being replaced by the native one, and
+  three open pull requests touch those files. The native app's own texts are changed in its pull request (#114).
+- **Where:** `branding/unformat/brand.json`, `docs/sop/` (five procedures), `mobile/BUILD-GUIDE.md`,
+  `mobile/README.md`, `deployment/test-runtime.example.json`, `tests/test_test_oauth_clients.py`.
+
+### Chat alerts: the gateway runs inside the chat stack, optional and private (P73)
+
+- **Decision:**
+  - The alert gateway (Sygnal v0.17.0) is a service of the chat stack. It starts only where an operator has
+    placed Google's service-account key and asked for the `alerts` profile.
+  - It has no port on the host and no public route. Synapse reaches it inside the stack's own network, which has
+    a fixed range that Synapse is told it may call.
+  - It is the only service on a second network of the stack, `outbound`, its way to Google. It is not on the
+    workspace network, so a test site's block on outbound connections from that network stays whole.
+  - The key lives in a root-only folder on the host. The one-time `configure` service copies it into the
+    gateway's own volume and writes the gateway's configuration for one app ID.
+  - The app asks for alerts that carry only the event's ID.
+- **Why:**
+  - Owner, 27 and 28 November 2026: alerts carry no content, and the Firebase project `unformat-erp` with the app
+    `in.unformat.erp` exists.
+  - A public gateway address would let anyone who learned a phone's address send it alerts; an address inside the
+    stack cannot be reached from outside.
+  - Without the key nothing is written and nothing starts, so a site without phone alerts is unaffected.
+- **Where:** `integrations/chat/configure.py`, `deployment/stacks/chat.compose.json`, register CHAT-5, the chat README.
+
 ## 2026-11-27
 
 ### Chat rooms follow the sites, and the business system stores nothing about them (P73)
@@ -649,6 +684,31 @@ Release notes: [authentik 2026.8.7](https://docs.goauthentik.io/releases/2026.8#
 - **Where:** `erpnext_drive_integrations/mobile_push/` (server), `mobile/` (app).
 
 ## 2026-11-25
+
+### The office editor stays registered with Drive after every Drive restart (P80)
+
+- **Decision:** (1) every script that recreates, restarts or starts Drive (oCIS)
+  runs one shared step afterwards, `host_check.py editor-restart`: wait until
+  Drive is healthy, restart the editor bridge, confirm the editor is registered;
+  (2) the nightly backup starts its stopped containers in order, each after the
+  previous one is healthy (Drive before the bridge); (3) a signed-in check every
+  five minutes reads Drive's app list with its own low-rights account, restarts
+  the bridge once when the editor is missing while Drive is healthy (at most every
+  30 minutes) and reports every such run as failed in the journal.
+- **Why:** Drive learns which editors exist only when the bridge starts and
+  registers; restarting Drive alone empties the list without any error, and
+  office files then only download. On 25 November a release recreated Drive
+  alone and editing was down for about 6.5 hours; the step was known but lived
+  in prose, and no check could see it. The nightly backup's simultaneous start
+  made the bridge's first registration fail on 24 and 25 November (only Docker's
+  restart policy recovered it). The automatic repair turns a silent outage into
+  at most about five minutes; the failed run keeps it visible.
+- **Account:** a normal Drive user (no admin or space role), created with a
+  10-minute admin app token from Drive's own CLI; its own app token is stored
+  root-only and renewed by the check through the same CLI. No new software.
+- **Where:** `tools/host_check.py`, `tools/render_host_checks.py`,
+  `integrations/backup/backup.py`, `docs/production-moves.md`. Follow-ups:
+  a Compose dependency safety net and the release rule (P81). AI-assisted by Claude.
 
 ### Invitation links allow 1 to 5 attempts (P78)
 

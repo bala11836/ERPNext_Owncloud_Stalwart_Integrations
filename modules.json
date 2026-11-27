@@ -399,6 +399,11 @@
           "name": "Matrix Authentication Service",
           "license": "AGPL-3.0",
           "url": "https://github.com/element-hq/matrix-authentication-service"
+        },
+        {
+          "name": "Sygnal",
+          "license": "AGPL-3.0",
+          "url": "https://github.com/element-hq/sygnal"
         }
       ]
     },
@@ -576,6 +581,7 @@
         "tools/render_host_checks.py",
         "tests/test_reboot_resilience.py",
         "tests/test_host_checks.py",
+        "tests/test_editor_registration.py",
         "tools/upstream_watch.py",
         "tests/test_upstream_watch.py",
         "tools/open_source.py",
@@ -614,6 +620,7 @@
         "tests/test_sso_proxy_trust.py",
         "tests/test_reboot_resilience.py",
         "tests/test_host_checks.py",
+        "tests/test_editor_registration.py",
         "tests/test_upstream_watch.py",
         "tests/test_open_source.py",
         "tests/test_upstream_posts.py"

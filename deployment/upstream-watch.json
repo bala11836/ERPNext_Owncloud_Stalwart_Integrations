@@ -215,9 +215,6 @@
       "endoflife": "python",
       "exposure": "internal"
     },
-    "raven": {
-      "exposure": "public"
-    },
     "razorpayx_integration": {
       "exposure": "public"
     },

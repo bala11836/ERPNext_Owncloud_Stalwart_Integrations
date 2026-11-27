@@ -14,7 +14,6 @@
 | [India Compliance](https://github.com/resilient-tech/india-compliance) | GPL-3.0 | onboarding | daily watch: `india_compliance` |  |
 | [India Payroll](https://github.com/frappe/india-payroll) | GPL-3.0 | erp image | daily watch: `india_payroll` |  |
 | [Frappe Insights](https://github.com/frappe/insights) | AGPL-3.0 | insights-adapter | daily watch: `insights` |  |
-| [Raven](https://github.com/frappe/raven) | AGPL-3.0 | erp image | daily watch: `raven` |  |
 | [Payment Integration Utils](https://github.com/resilient-tech/payment_integration_utils) | GPL-3.0 | erp image | daily watch: `payment_integration_utils` |  |
 | [RazorpayX Integration](https://github.com/resilient-tech/razorpayx-integration) | GPL-3.0 | erp image | daily watch: `razorpayx_integration` |  |
 | [Frappe Bench](https://github.com/frappe/bench) | GPL-3.0 | deployment (build) | daily watch: `frappe-bench` |  |
@@ -85,9 +84,15 @@
 | [Robolectric](https://github.com/robolectric/robolectric) | MIT | P50 | — | mobile-native tests only (screen tests on the computer): 4.18, no open advisories (OSV, 26 November 2026) |
 | [Gradle](https://github.com/gradle/gradle) | Apache-2.0 | P50 | — | mobile-native build tool (developers and the CI job): 9.9.2 or newer; 9.9.2 fixes the critical and high advisories published up to 19 November 2026 (GitHub Security Advisories, 27 November 2026) |
 | [Pebble](https://github.com/letsencrypt/pebble) | MPL-2.0 | P11 | — | Let's Encrypt's ACME test server, for a local rehearsal of the certificate switch (P11) only; not shipped. v2.10.3 (11 Nov 2026), release checksums verified. |
+| [Synapse](https://github.com/element-hq/synapse) | AGPL-3.0 | P73 | — | Matrix server for the internal chat (owner, 27 November 2026); adoption check passed 27 November 2026 (v1.166.0, no open advisories); to deploy on the test site |
+| [Matrix Authentication Service](https://github.com/element-hq/matrix-authentication-service) | AGPL-3.0 | P73 | — | sign-in for Synapse through authentik; adoption check passed 27 November 2026 (v1.30.0); to deploy on the test site |
+| [matrix-rust-sdk](https://github.com/matrix-org/matrix-rust-sdk) | Apache-2.0 | P73, P50 | — | Matrix client library for the phone app, through its Kotlin bindings; adoption check passed 27 November 2026 (use 0.20.0 or later) |
+| [Ltt.rs](https://codeberg.org/iNPUTmice/lttrs-android) | Apache-2.0 | P109 | — | Android JMAP client; its JMAP library code may be borrowed for the light mail client. Little upkeep (library last changed April 2025), so we maintain our copy |
+| [Sygnal](https://github.com/element-hq/sygnal) | AGPL-3.0 | P73 | — | Matrix push gateway for chat alerts on phones; adoption check passed 27 November 2026 (v0.17.0; the matrix-org repository is archived) |
 
 ## Used before
 
 | Project | Licence | Used in | Tracked | Note |
 |---|---|---|---|---|
+| [Raven](https://github.com/frappe/raven) | AGPL-3.0 | erp image | — | removed from the ERP image in P108 (owner, 27 November 2026); Matrix replaces it as the internal chat (P73) |
 | [Collabora Online](https://github.com/CollaboraOnline/online) | MPL-2.0 (to verify; GitHub reports no standard licence) | editor | — | used until November 2026, replaced by ONLYOFFICE Docs, P42 |

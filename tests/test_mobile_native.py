@@ -162,6 +162,27 @@ class MobileNativeTests(unittest.TestCase):
         rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Chat.kt').read_text(encoding='utf-8')
         self.assertIn('const val KEEP_DAYS = 7L', rules)
 
+    def test_the_mail_stand_in_stays_out_of_the_real_app_and_the_protections_are_built_in(self):
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertRegex(frame, r'MAIL\("Mail", "Mail", R\.drawable\.ic_mail, testOnly = true\)')
+        preview = (KOTLIN / 'MailPreview.kt').read_text(encoding='utf-8')
+        self.assertNotRegex(preview, r'Safe|SharedPreferences|HttpTransport|Saver|File\(|UriHandler|Intent')
+        screen = (KOTLIN / 'MailScreen.kt').read_text(encoding='utf-8')
+        # A link is opened only from the question that shows its real host, and nowhere else.
+        self.assertEqual(screen.count('onOpenLink(link)'), 1)
+        asked = screen.split('if (asked == link && host != null) {')[1].split('\n            }')[0]
+        self.assertIn('It leads to $host.', asked)
+        self.assertIn('onOpenLink(link)', asked)
+        self.assertNotRegex(screen, r'WebView|UriHandler|Intent\(')
+        # No "save to phone": the owner's decision is a setting that is off.
+        self.assertNotRegex(screen, r'[Ss]ave to (the )?phone"\s*,')
+        self.assertIn('This mail goes outside the company', screen)
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Mail.kt').read_text(encoding='utf-8')
+        self.assertIn('RECEIVED("Received")', rules)
+        self.assertNotIn('"Inbox"', rules.split('enum class Folder')[1].split('}')[0])
+        self.assertIn('domain.isEmpty() || domain !in company', rules)
+        self.assertIn('IDN.toASCII(named)', rules)
+
     def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
         kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
         self.assertIn('isSystemInDarkTheme()', kotlin, 'day and night follow the phone')

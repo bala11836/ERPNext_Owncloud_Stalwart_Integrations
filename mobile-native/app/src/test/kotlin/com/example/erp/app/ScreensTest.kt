@@ -134,6 +134,95 @@ class ScreensTest {
         checkLayout("$name / new chat")
         reach(compose.onNodeWithContentDescription("Back")).performClick()
         compose.onNode(hasText("Chat") and !hasClickAction()).assertIsDisplayed()
+        // Every mail conversation opens and leads back; so do the folders, a new mail and an attachment.
+        place(Place.MAIL).performClick()
+        for (sender in listOf("Project manager", "Supplier accounts", "IT Support", "HR (2)")) {
+            tap(sender)
+            reach(compose.onNode(hasText("Reply") and hasClickAction())).assertIsDisplayed()
+            checkLayout("$name / mail from $sender")
+            if (!wide) reach(compose.onNodeWithContentDescription("Back")).performClick()
+        }
+        tap("Folder: Received")
+        shown("Folders")
+        checkLayout("$name / mail folders")
+        tap("Sent")
+        shown("Folder: Sent")
+        tap("Write a mail")
+        shown("New mail")
+        checkLayout("$name / new mail")
+        tap("Discard this mail")
+        tap("Folder: Sent")
+        tap("Received")
+        tap("Project manager")
+        tap("pour-checklist.pdf")
+        shown("Attachments open here, inside the app.")
+        checkLayout("$name / attachment")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        reach(compose.onNode(hasText("Reply") and hasClickAction())).assertIsDisplayed()
+    }
+
+    private fun type(label: String, text: String) = reach(compose.onNode(androidx.compose.ui.test.hasSetTextAction() and hasText(label))).performTextInput(text)
+
+    private fun absent(text: String) = assertEquals(text, 0, compose.onAllNodesWithText(text, substring = true).fetchSemanticsNodes().size)
+
+    @Test
+    fun mailFromOutsideSaysSoAndALinkShowsWhereItLeadsBeforeItOpens() {
+        show(Palettes.LIGHT)
+        place(Place.MAIL).performClick()
+        // Unread is said in words; an outside sender too.
+        reach(compose.onNode(hasText("Project manager") and hasText("New") and hasClickAction())).assertIsDisplayed()
+        reach(compose.onNode(hasText("IT Support") and hasText("Outside") and hasClickAction())).assertIsDisplayed()
+        tap("Supplier accounts")
+        shown("This sender is not in the company.")
+        // Pictures from the internet wait for a tap.
+        shown("2 pictures from the internet are not loaded")
+        tap("Show pictures")
+        shown("2 pictures from the internet shown.")
+        // The link says where it leads, asks, and "do not open" opens nothing.
+        tap("Link to portal.supplier-example.net")
+        shown("It leads to portal.supplier-example.net.")
+        tap("Do not open")
+        shown("Stand-in: nothing is sent.")
+        tap("Link to portal.supplier-example.net")
+        tap("Open portal.supplier-example.net")
+        shown("the browser would open portal.supplier-example.net")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // Opening read it. The company's name in front of another domain is shown as what it is.
+        tap("IT Support")
+        shown("Link to example.com.account-check.net")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        assertEquals(0, compose.onAllNodes(hasText("Supplier accounts") and hasText("New")).fetchSemanticsNodes().size)
+        // A sender inside the company carries no warning.
+        tap("Project manager")
+        absent("This sender is not in the company.")
+    }
+
+    @Test
+    fun aReplyIsFilledInWarnsBeforeLeavingTheCompanyAndLandsInSent() {
+        show(Palettes.LIGHT)
+        place(Place.MAIL).performClick()
+        tap("Project manager")
+        tap("Reply to all") // the sender and the engineer in copy, not me
+        shown("pm@example.com, engineer@example.com")
+        shown("Re: Pour checklist for Friday")
+        shown("Project manager wrote:")
+        absent("goes outside the company")
+        tap("Send")
+        shown("Stand-in: put in Sent, not sent.")
+        tap("Folder: Received")
+        tap("Sent")
+        reach(compose.onNode(hasText("To: pm@example.com, engineer@example.com") and hasClickAction())).assertIsDisplayed()
+        // A new mail: no Send until it can be sent, an unreadable address is named, an outside one is warned about.
+        tap("Write a mail")
+        assertEquals(0, compose.onAllNodes(hasText("Send") and hasClickAction()).fetchSemanticsNodes().size)
+        type("To", "engineer")
+        type("Subject", "Tomorrow")
+        shown("Not a mail address: engineer.")
+        assertEquals(0, compose.onAllNodes(hasText("Send") and hasClickAction()).fetchSemanticsNodes().size)
+        type("To", "@supplier-example.net")
+        shown("This mail goes outside the company: engineer@supplier-example.net")
+        tap("Send")
+        reach(compose.onNode(hasText("To: engineer@supplier-example.net") and hasClickAction())).assertIsDisplayed()
     }
 
     @Test
@@ -291,6 +380,7 @@ class ScreensTest {
         assertEquals(0, compose.onAllNodesWithText("Try the connection", substring = true).fetchSemanticsNodes().size)
         assertEquals("the Welcome stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.WELCOME.label).fetchSemanticsNodes().size)
         assertEquals("the chat stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.CHAT.label).fetchSemanticsNodes().size)
+        assertEquals("the mail stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.MAIL.label).fetchSemanticsNodes().size)
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
         assertEquals(0, compose.onAllNodesWithText("sample values", substring = true).fetchSemanticsNodes().size)
         place(Place.PHONE).performClick()

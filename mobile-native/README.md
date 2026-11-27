@@ -91,6 +91,16 @@ tap leads to a finished screen. This folder currently holds the foundation every
   rooms in memory; nothing is sent or stored. Not built yet: photos, the unread badge on the place, keeping 7
   days on the phone, alerts.
 
+- **Mail screens** (`core` `Mail`, `app` `MailScreen.kt`): the received mail as conversations (the list is called
+  "Received", because "Inbox" is the approvals place), folders, reading, reply, reply to all, forward and a new
+  mail. Built in: mail from outside the company says so (only an exact company domain counts as inside);
+  pictures from the internet are not loaded until asked for; a link shows the host it really leads to (look-alike
+  letters in their coded form, a name before an "@" ignored) and is opened only after a yes; a mail to someone
+  outside says so before it is sent; Send exists only when the mail can be sent. Attachments open inside the app;
+  there is no "save to phone" (a setting that is off, owner's decision). **Not live:** there is no mail sign-in
+  yet, so the screens run against a stand-in (`MailPreview.kt`) that only test builds can reach; nothing is sent,
+  no link is opened, and there is no file viewer and no picture loading yet.
+
 ## Contents
 
 - `core/`: the rules module and its tests.
@@ -126,7 +136,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (49), Android lint with warnings as errors, the app's screen and connection tests (27) and a
+runs the rules module's unit tests (54), Android lint with warnings as errors, the app's screen and connection tests (29) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 

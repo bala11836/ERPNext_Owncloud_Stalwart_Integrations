@@ -26,6 +26,9 @@ enum class Place(val label: String, val title: String, val icon: Int, val testOn
 
     /** The chat screens against a stand-in, until the chat server and sign-in exist. Test builds only. */
     CHAT("Chat", "Chat", R.drawable.ic_chat, testOnly = true),
+
+    /** The mail screens against a stand-in, until the mail sign-in exists. Test builds only. */
+    MAIL("Mail", "Mail", R.drawable.ic_mail, testOnly = true),
 }
 
 /** What the frame shows, handed in from outside, so the whole frame can be drawn in a test without a phone's sensors. */
@@ -69,6 +72,7 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
                 Place.PHONE -> PhoneScreen(state.phone, state.model, state.version, state.safeNote, if (state.testBuild) onSafeNote else null)
                 Place.WELCOME -> WelcomePreviewScreen()
                 Place.CHAT -> ChatPreviewScreen()
+                Place.MAIL -> MailPreviewScreen()
                 Place.DISPLAY -> DisplayScreen(
                     state.palette,
                     hasLightSensor = state.hasLightSensor,

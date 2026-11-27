@@ -409,7 +409,8 @@ public PR #101 (`p95/pm-queue`).
   explained-in-your-language text in `docs/`, CI passed, ready for the owner). On the test ERP since
   09:27 UTC (receipt `p95-test-erp-enrol-by-team-5ae5cd0`): 71 suites in the image; face queue live 36/36 (7 new);
   field attendance 79/79. Not covered: a phone (the enrolment and agreement screens are not built).
-- **Merged, not deployed** once merged: joins the next ERP release (P95 stays off in production).
+- **Merged, not deployed:** #131 merged at `de1feaf` (10:28 UTC, 27 November; head `0cf7865`, tested image
+  `5ae5cd0`, later commits `docs/` only). Joins the next ERP release from main (P95 stays off in production).
 
 **Status:** in progress.
 

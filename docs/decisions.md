@@ -797,7 +797,6 @@ own policies, hosts and mail transport.
   licence and credit question and loads in a few kilobytes.
 - **Where:** `integrations/website/`, `deployment/stacks/website.compose.json`,
   `deployment/production/website.traefik.yaml`, `tools/prepare_ingress.py`.
-
 ### No "All apps" item in the app sidebars
 - **Decision:** the sidebar of ERPNext, HRMS, Onboarding, India Compliance and
   every other module-sidebar app has no "All apps" item. The app's logo at the

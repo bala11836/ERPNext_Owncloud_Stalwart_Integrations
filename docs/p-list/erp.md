@@ -72,7 +72,10 @@ Agree pilot project reports, approvals and attendance summaries; evaluate instal
   workflows with AI steps; n8n was set aside because its Sustainable Use License is not open source and restricts
   offering it to other organisations (future tenants). Single sign-on is paid in both, so the Activepieces admin screen
   sits behind the authentik gateway instead.
-- **Channels (owner decision): Raven inside the company, WhatsApp for outside vendors.** Activepieces can post to
+- **Changed by the owner, 27 November 2026:** Raven is removed (P108); messages inside the company go through our
+  own notification service (in the app, mail, WhatsApp, SMS) instead of Raven, and later Matrix chat (P73). The
+  vendor part below stays.
+- **Channels (owner decision, 22 November; superseded inside the company):** Raven inside the company, WhatsApp for outside vendors. Activepieces can post to
   Raven through Raven's incoming webhook / REST API (generic HTTP step) and to WhatsApp through the WhatsApp Business
   Cloud API; WhatsApp needs the Meta business number (P04's blocker), approved templates for messages vendors did not
   start, and has per-conversation charges. One sender per event, so vendors never get duplicates (Activepieces or the

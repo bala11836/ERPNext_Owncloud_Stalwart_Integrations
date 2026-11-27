@@ -361,6 +361,35 @@
       ]
     },
     {
+      "id": "chat",
+      "title": "Chat (Matrix: Synapse and its authentication service)",
+      "summary": "The internal chat server: Synapse with the Matrix Authentication Service, signing in through the sign-in service; its stack and the script that writes both configurations.",
+      "readme": "integrations/chat/README.md",
+      "paths": [
+        "integrations/chat/**",
+        "deployment/stacks/chat.compose.json",
+        "tests/test_chat_stack.py"
+      ],
+      "depends_on": [
+        "authentik-identity"
+      ],
+      "tests": [
+        "tests/test_chat_stack.py"
+      ],
+      "upstream": [
+        {
+          "name": "Synapse",
+          "license": "AGPL-3.0",
+          "url": "https://github.com/element-hq/synapse"
+        },
+        {
+          "name": "Matrix Authentication Service",
+          "license": "AGPL-3.0",
+          "url": "https://github.com/element-hq/matrix-authentication-service"
+        }
+      ]
+    },
+    {
       "id": "document-worker",
       "title": "Drive to DMS document worker",
       "summary": "Moves new Drive uploads into Paperless with owner-preserving permissions and generated links; enrollment and link retargeting tools.",
@@ -520,6 +549,7 @@
         "deployment/config/onlyoffice-local-production-linux.json",
         "deployment/stacks/drive.compose.json",
         "deployment/stacks/mail.compose.json",
+        "deployment/stacks/chat.compose.json",
         "deployment/stacks/dms.compose.json",
         "deployment/stacks/processing.compose.json",
         "deployment/stacks/identity.compose.json",

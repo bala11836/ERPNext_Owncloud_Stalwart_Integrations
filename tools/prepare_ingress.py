@@ -101,6 +101,17 @@ def prepare(source, profile):
     route('mail-public-policy',hosts['mail'],'mail',450,
           '(Path(`/api/admin/policy`) && Method(`GET`))')
     route('dms',hosts['dms'],'dms',middleware=['dms-frame'])
+    # Chat (P73), only where the profile names its two hosts. The sign-in service (MAS) answers its own host and
+    # the three client paths Synapse delegates to it; everything else on the chat host is Synapse. No frame
+    # middleware: nothing here is shown inside the portal.
+    if 'chat' in hosts and 'chat-auth' in hosts:
+        service('chat','http://chat-synapse:8008')
+        service('chat-auth','http://chat-mas:8080')
+        route('chat',hosts['chat'],'chat',
+              path='(PathPrefix(`/_matrix`) || PathPrefix(`/_synapse/client`) || PathPrefix(`/_synapse/mas`))')
+        route('chat-delegated',hosts['chat'],'chat-auth',300,
+              'PathRegexp(`^/_matrix/client/[^/]+/(login|logout|refresh)$`)')
+        route('chat-auth',hosts['chat-auth'],'chat-auth')
     middlewares['office-home']={'redirectRegex':{'regex':'^https://'+re.escape(hosts['office'])+'/?$',
         'replacement':'https://'+hosts['drive']+'/files/spaces/personal','permanent':False}}
     route('office-home',hosts['office'],'noop@internal',1000,'Path(`/`)',middleware=['office-home'])

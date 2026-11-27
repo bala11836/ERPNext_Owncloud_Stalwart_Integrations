@@ -20,15 +20,18 @@ it is loaded Traefik does not request its own certificates for those names (it d
 Mail, docs and the bare domain have their own Traefik certificates (February 2027), renewing by HTTP challenge; the
 mail ports carry Stalwart's own `mx` certificate (11 February 2027; its renewal not yet confirmed).
 
-**Owner's decision (27 November):** every name gets its own certificate through the HTTP challenge; the copied wildcard
-is removed; the certificate warning moves to 30 days ahead.
+**Owner's decisions (27 November):** every name gets its own certificate; the copied wildcard is removed; the
+certificate warning moves to 30 days ahead. Production names: HTTP challenge. Relayed test names: a second resolver with
+the TLS-ALPN challenge (port 443), because the test host renews its own certificates for them through the port-80 relay
+(found when it came back after the office power cut). One proxy restart (about 16 seconds) is **acceptable** (owner).
 
-- **Done:** public PR #126 (draft; challenge routes above every port-80 route, relay names with the resolver, a test);
-  private relay route for test-sso; monitoring targets at 30 days with Respond added.
-- **Next:** test host back online (it was offline on 27 November; check where its own certificates come from, now that
-  the relay answers challenges for the relayed names); local rehearsal of the switch (Traefik 3.7.20 + Pebble) to
-  measure the gap; on production: install the routes, check each name's challenge path, then remove the wildcard at a
-  quiet moment and check every name's certificate; release record.
+- **Done:** public PR #126 (draft; challenge routes above every port-80 route, the `letsencrypt-tls` resolver tool,
+  relay names on it, tests); private relay route for test-sso on `letsencrypt-tls`; monitoring targets at 30 days with
+  Respond added.
+- **Next:** local rehearsal of the switch (Traefik 3.7.20 + Pebble) to measure the gap (needs the owner's permission);
+  test-site check of the relay and the test host's renewals; on production at a quiet moment: install the routes,
+  check each production name's challenge path, add the resolver with one restart, then remove the wildcard and check
+  every name's certificate; release record.
 - **Open:** the HTTPS probe's failures are not delivered anywhere (no alert on the unit; P72); `docs` has no DNS record,
   so its certificate will not renew (harmless if unused); `mx` on 443 will serve Traefik's default certificate after the
   switch (no HTTPS route asks for it; mail ports unaffected); confirm Stalwart renews its `mx` certificate before

@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 from prepare_ingress import prepare as ingress  # noqa: E402
 from prepare_runtime import prepare  # noqa: E402
 from render_runtime import FAVICON_FILES  # noqa: E402
+from check_client_identity import hits as client_identity_hits, load as load_client_fingerprints  # noqa: E402
 
 HOSTS = {k: ("test.example.net" if k == "erp" else "test-" + k + ".example.net")
          for k in ["erp", "sso", "drive", "office", "mail", "dms", "respond"]}
@@ -38,7 +39,7 @@ class WebsiteModule(unittest.TestCase):
         page = (ROOT / "integrations/website/site/index.html").read_text()
         for token in ("__SITE_TITLE__", "__SITE_NAME__", "__EMPLOYEE_ZONE_URL__"):
             self.assertIn(token, page)
-        self.assertNotIn("sriramki", page.lower())
+        self.assertEqual(client_identity_hits(page, load_client_fingerprints()), [])  # P84
         self.assertNotIn("unsplash", page.lower())          # our own drawing, no photo credit
         self.assertIn("text-transform: uppercase", page)     # EMPLOYEE / ZONE in capitals
         self.assertIn('data-text="__SITE_TAGLINE__"', page)     # tagline from the profile (default "Launching soon...")
@@ -84,15 +85,18 @@ class WebsiteModule(unittest.TestCase):
         self.assertEqual(compose["networks"]["workspace"]["aliases"], ["website-web"])
         self.assertTrue((output / "mounts/website_web_1").is_file())
 
-    def test_neutral_defaults_without_branding(self):
+    def test_unformat_defaults_without_branding(self):
         output = render()
         site = output / "mounts/website_web_0"
         page = (site / "index.html").read_text()
-        self.assertIn("<title>Welcome</title>", page)
+        self.assertIn("<title>Unformat</title>", page)          # default brand (P85)
         self.assertIn('href="https://test.example.net/"', page)   # the ERP host: staff sign-in
         self.assertTrue((site / "front/logo.svg").is_file())
         for name in FAVICON_FILES:
             self.assertTrue((site / "front" / name).is_file(), name)
+        brand = ROOT / "branding/unformat"
+        self.assertEqual((site / "front/logo.svg").read_bytes(), (brand / "logo.svg").read_bytes())
+        self.assertEqual((site / "front/favicon.svg").read_bytes(), (brand / "favicon.svg").read_bytes())
 
     def test_unsafe_profile_values_are_refused(self):
         for key, value in (("website_zone_url", "javascript:alert(1)"), ("website_zone_url", "//evil.example"),

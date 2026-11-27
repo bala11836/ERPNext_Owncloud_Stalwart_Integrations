@@ -6,6 +6,53 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### Raven leaves ERPNext; Matrix chat and a light mail client in the phone app, all now (P108, P73, P109)
+
+- **Decision (owner, 27 November 2026), all started now and in parallel:**
+  1. **Raven is removed from ERPNext.** System messages to people go through one notification service in our add-on,
+     which picks the channel for each person and message: in the app, mail, or WhatsApp. SMS is used only where those
+     don't reach. Outside the company: mail, forms (the Respond app and ERPNext web forms) and WhatsApp.
+  2. **Matrix is the internal chat, built into the phone app.** The server is Synapse, with the Matrix Authentication
+     Service signing in through authentik. The app uses Matrix's Rust SDK through its Kotlin bindings. Company rooms
+     are unencrypted so the company can keep and search them.
+  3. **A light JMAP mail client in the phone app**, read and reply first. It borrows the mail-server code of Ltt.rs
+     (Apache-2.0); the screens are our own.
+  4. **The app's sign-in** (Phase 1) is built so one passkey sign-in gives every token: ERPNext's, and the sign-in
+     service's for mail and Matrix.
+
+  This replaces three earlier decisions: "Chat, Mail and Drive stay separate apps" (22 November) for chat and mail;
+  "incidents go to Raven threads"; and "Raven inside the company" (P22).
+- **Why:**
+  - The app holds each person's key in the phone's secure hardware, and Android cannot share it with another app. So
+    chat and mail must be inside our app, whichever server they use.
+  - Matrix over Raven: an open standard, independent of ERPNext's uptime, able to connect separate companies later,
+    with a maintained Android library and calls. The costs are a new server (with monitoring, backups and a test
+    copy), an ERPNext bot for document messages, and about three months of work.
+  - Synapse because the Matrix Authentication Service supports only Synapse today. The lighter Tuwunel and
+    continuwuity are on record as alternatives.
+  - Production is not in real use, so no live chats need moving.
+  - The owner chose parallel work over the agent's suggestion to build the app parts after attendance and approvals.
+- **Kept:** the phone sign-in check (`portal/mobile.py`). It was written for Raven's app but signs in every phone app
+  now, so its settings are renamed, not removed.
+- **Adoption check (27 November 2026; GitHub and Codeberg repositories and GitHub Security Advisories):**
+  - **Synapse** (element-hq/synapse): AGPL-3.0, a release every one to two weeks (v1.166.0 on 24 November 2026).
+    13 advisories in the last 12 months (7 high), published in two batches with the fixed versions (1.152.1 and
+    1.157.2); none open at 1.166.0. Verdict: adopt, pinned by version and digest, in the daily upstream watch.
+  - **Matrix Authentication Service** (element-hq/matrix-authentication-service): AGPL-3.0, v1.30.0 on 24 November
+    2026, no advisories in the last 12 months. Verdict: adopt.
+  - **matrix-rust-sdk** (matrix-org/matrix-rust-sdk): Apache-2.0, v0.20.0 on 25 November 2026. 4 advisories in the
+    last 12 months (1 high), all fixed by 0.19.0. Verdict: adopt at 0.20.0 or later.
+  - **Sygnal**, the push gateway: the matrix-org repository is archived; it continues at element-hq/sygnal
+    (AGPL-3.0, v0.17.0 of 5 November 2025, commits in November 2026, no advisories). Verdict: adopt from element-hq
+    when the app's chat alerts are built.
+  - **Ltt.rs** and its JMAP library (codeberg.org/iNPUTmice): Apache-2.0. Little upkeep: the library's last commit
+    was April 2025, the app's last code change October 2025. Verdict: borrow the JMAP library code with caution and
+    maintain our copy ourselves; do not depend on upstream fixes.
+  - All stay `evaluating` in the open-source list until each is deployed or copied.
+  - **Room on the test VM:** 8 GB memory with about 3.5 GB available, 3 CPUs, 120 GB disk free: enough for Synapse,
+    its database and the authentication service on test. Production's room is checked before promotion.
+- **Where:** P108, P73, P109, P50, P04.
+
 ### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)
 
 - **Decision:**

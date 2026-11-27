@@ -584,10 +584,16 @@ Made against: v16.60.0 (`1b2d7e0`). See also FRAPPE-5, -7, -8.
   same script as Purchase Order. The button shows only when a response rule for
   Job Offer is enabled.
 - **Upgrade:** **re-check** the button on a Job Offer.
-- **Tests:** `tests/test_hook_asset_paths.py` (every script a hook names must exist).
+- **Tests:** `tests/test_hook_asset_paths.py` (every script a hook names must exist);
+  `tests/test_js_call_methods.py` (every browser call uses an HTTP method its function accepts).
 - **Fixed in P93:** the hook pointed at `client/request_response.js`, which does not
   exist, and Frappe skips a missing file without an error, so the button never
   loaded.
+- **Fixed in P93 (27 November 2026):** the script asked `rule_status` with
+  `frappe.xcall`, which sends POST by default; `rule_status` accepts GET only, so
+  Frappe answered "Not permitted" and the button never showed, on Job Offer and on
+  Purchase Order. The script now asks with GET. **Relies on** Frappe's `xcall`
+  default (POST) and its refusal of a method the whitelist does not allow.
 
 ### HRMS-5 Script injected into the HRMS mobile pages
 

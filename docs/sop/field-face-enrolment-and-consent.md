@@ -29,7 +29,8 @@ person, or without consent, makes attendance records wrong and breaks the worker
    plain background. Not the supervisor's own phone for their own team.
 2. For each worker: check their original identity document against the person and the employee record.
 3. Show the **face attendance agreement** ([draft](face-attendance-agreement.md)). It opens in **English**; offer the
-   worker the other languages and let them choose the one they want to read (owner, 27 November 2026). Explain what is kept (encrypted face
+   worker the other languages and let them choose the one they want to read (owner, 27 November 2026). If a
+   translation and the English differ, the English version governs. Explain what is kept (encrypted face
    templates on the company's server, no photographs), why, for how long (until they withdraw or leave), and that they
    may refuse or withdraw at any time: their attendance is then marked by the supervisor and approved by the
    project manager. The worker ticks the separate acceptance box themselves.

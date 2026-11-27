@@ -13,7 +13,8 @@ translation of a version carries the same version).
 ## Face attendance at <Company> sites
 
 This agreement is shown in English. If you prefer, choose another language and read it in that language, or ask
-someone to read it to you, before you decide.
+someone to read it to you, before you decide. If a translation and the English differ, the English version
+applies.
 
 **What we ask.** At your sites, your supervisor can mark your attendance by taking a photograph of your face. To
 recognise you, we need to record your face once, from several sides (front, left, right, up, down).
@@ -55,8 +56,8 @@ supervisor or engineer; recorded by the system)  ·  Identity document checked (
 - Languages (owner, 27 November 2026): **English by default**; the worker may choose to read a translation in the
   language of their choice, and the language they read is recorded. This fits DPDP's choice of English or a
   language of the Eighth Schedule. The proposed list and the translator are in the private companion; each
-  translation is checked by translating it back. To confirm: which version governs if a translation and the
-  English differ.
+  translation is checked by translating it back. **If a translation and the English differ, the English version
+  governs** (owner, 27 November 2026); the text says so to the worker.
 - Retention of the consent record after it ends: proposed **3 years** (to answer a later dispute); to confirm.
 - Attendance photographs are already kept today with each attendance entry; their retention is a separate point for
   the same opinion.

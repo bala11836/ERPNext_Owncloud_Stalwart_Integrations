@@ -56,6 +56,8 @@
 | [React](https://github.com/react/react) | MIT | mobile-app | app dependencies follow the app lock file; not yet in the daily watch (gap, P35) |  |
 | [OpenCV (opencv-python-headless)](https://github.com/opencv/opencv) | Apache-2.0 | custom-hr (P95), erp image | already in the ERP image through an upstream app, pinned at 5.0.0.93 in deployment/python-constraints.txt (no advisories, OSV, 26 November 2026); Python packages are not in the daily watch yet (gap) | runs the face models on the server |
 | [OpenCV Zoo: SFace and YuNet](https://github.com/opencv/opencv_zoo) | Apache-2.0 (SFace), MIT (YuNet) | custom-hr (P95) | daily watch: `opencv_zoo` | model files pinned by commit and SHA-256 (deployment/face-models.json); SFace training data unverified, asked upstream (opencv/opencv_zoo#313) |
+| [Synapse](https://github.com/element-hq/synapse) | AGPL-3.0 | chat | daily watch: `ghcr.io/element-hq/synapse` |  |
+| [Matrix Authentication Service](https://github.com/element-hq/matrix-authentication-service) | AGPL-3.0 | chat | daily watch: `ghcr.io/element-hq/matrix-authentication-service` |  |
 
 ## Being evaluated or chosen, not in the code yet
 
@@ -84,8 +86,6 @@
 | [Robolectric](https://github.com/robolectric/robolectric) | MIT | P50 | — | mobile-native tests only (screen tests on the computer): 4.18, no open advisories (OSV, 26 November 2026) |
 | [Gradle](https://github.com/gradle/gradle) | Apache-2.0 | P50 | — | mobile-native build tool (developers and the CI job): 9.9.2 or newer; 9.9.2 fixes the critical and high advisories published up to 19 November 2026 (GitHub Security Advisories, 27 November 2026) |
 | [Pebble](https://github.com/letsencrypt/pebble) | MPL-2.0 | P11 | — | Let's Encrypt's ACME test server, for a local rehearsal of the certificate switch (P11) only; not shipped. v2.10.3 (11 Nov 2026), release checksums verified. |
-| [Synapse](https://github.com/element-hq/synapse) | AGPL-3.0 | P73 | — | Matrix server for the internal chat (owner, 27 November 2026); adoption check passed 27 November 2026 (v1.166.0, no open advisories); to deploy on the test site |
-| [Matrix Authentication Service](https://github.com/element-hq/matrix-authentication-service) | AGPL-3.0 | P73 | — | sign-in for Synapse through authentik; adoption check passed 27 November 2026 (v1.30.0); to deploy on the test site |
 | [matrix-rust-sdk](https://github.com/matrix-org/matrix-rust-sdk) | Apache-2.0 | P73, P50 | — | Matrix client library for the phone app, through its Kotlin bindings; adoption check passed 27 November 2026 (use 0.20.0 or later) |
 | [Ltt.rs](https://codeberg.org/iNPUTmice/lttrs-android) | Apache-2.0 | P109 | — | Android JMAP client; its JMAP library code may be borrowed for the light mail client. Little upkeep (library last changed April 2025), so we maintain our copy |
 | [Sygnal](https://github.com/element-hq/sygnal) | AGPL-3.0 | P73 | — | Matrix push gateway for chat alerts on phones; adoption check passed 27 November 2026 (v0.17.0; the matrix-org repository is archived) |

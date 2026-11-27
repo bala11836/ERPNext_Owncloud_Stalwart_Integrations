@@ -139,7 +139,7 @@ not ranked or scheduled; the owner decides if and when one starts)
 | **P22** AI assistant | read-only first; provider and data policy undecided |
 | **P29**, **P30**, **P48** Headscale, Technitium DNS, branch router | one chain, P48 depends on P29 and P30; nothing is broken today |
 | **P46** TrueNAS NVR | one-camera trial started 26 Nov; hardware for more cameras after the trial |
-| **P53** Desk widgets and universal search | **parked by the owner**: do not start |
+| **P53** Desk widgets and universal search | **taken up 27 Nov:** the admin alerts widget (with P72), and help, notifications, search and sign-out moved from the apps to the Desk; the day-planning widgets stay **parked** |
 | **P107** user support: "Report a problem" in the apps, and an admin support desk (Frappe Helpdesk proposed) | **parked by the owner** 27 Nov: take up later; no RustDesk, no paid tool; P103 first |
 
 **Done, closed, redundant or irrelevant items** are not in the lists any more: see [the closed log](p-closed.md) (one line each; numbers are never reused).

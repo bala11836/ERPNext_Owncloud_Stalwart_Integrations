@@ -109,6 +109,25 @@ sentences and no longer crashes on sign-out during a save. Still open in Phase 0
 comparison, texts in one file, a real tablet, vibration, icon and start screen, detekt, crash reports. Not for
 merging yet; nothing to deploy (no server stack).
 
+**Incident reports go to Matrix (owner, 27 November 2026, evening):** the person picks one or more rooms, as the
+22 November design did with Raven threads; the photos (and later clips, P106) still go to the project's Drive
+through ERPNext (P74) and the room message links to them. Reason: the long-term plan is not to use ERPNext for
+everything; modules stay separate and replaceable. The agent had proposed ERPNext records; it noted that chat
+does not track whether an incident is open or closed, so a small separate incident tracker can be added later
+if that is needed.
+
+**Today, Inbox and alerts: the developer's plan and the owner's answers (27 November 2026, night; public #114,
+issuecomment-7220894102):**
+- **Every approval rings, round the clock** (owner; the agent had recommended 07:00 to 21:00 only).
+- **Reminders every 4 hours, only between 07:00 and 21:00** (owner); the server applies the hours.
+- Agreed as proposed: no decision without a connection; no amounts on Today; every thing has one home (Today,
+  Inbox, Notices, Chat, Mail); alerts carry no content; the numbers on the places come from the server.
+- **Server side owes the app (P108 part 2 unless noted):** one "what waits for me" call for everything ERPNext
+  knows (count, longest wait, nearest deadline per kind); a content-free "remove this alert" signal; the reminder;
+  a per-site summary for people who look after sites. Chat and mail unread are asked from their own servers, not
+  through ERPNext.
+- **Open for the owner, later:** who decides while someone is on leave.
+
 **The developer's screen plan and the owner's answers (27 November 2026; public #114, issuecomment-7219041831 and
 issuecomment-7219386949):**
 - **Bottom bar: Today, Inbox, Chat, Mail, More** (owner; replaces Today, Inbox, My HR, Menu of 22 November; "Inbox"

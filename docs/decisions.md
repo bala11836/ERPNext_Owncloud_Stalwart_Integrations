@@ -6,6 +6,28 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### The chat stack: two settings files written by a one-time service; the server name is `chat.<domain>` (P73)
+
+- **Decision:**
+  - The server name is `chat.<domain>`, so addresses are `@name:chat.<domain>`. It can never be changed, so
+    production starts on the domain people keep.
+  - The stack is Synapse, the Matrix Authentication Service and one PostgreSQL each. A `configure` service runs
+    once before them, in the Synapse image, and writes both configuration files from the stack's settings; it makes
+    the authentication service's signing key the first time and keeps it afterwards.
+  - Fixed in that script: sign-in only through the sign-in service, no federation at first, rooms not encrypted by
+    default, and people cannot change the name or mail address the sign-in service gives.
+  - The stack is opt-in (`chat` in the profile's `projects`) and needs two host names, `chat` and `chat-auth`.
+- **Why:**
+  - Owner, 27 November 2026: `chat.<domain>` over the bare domain, which would tie chat to the website serving two
+    files for ever. The chat server stands on its own address, separate and replaceable.
+  - Neither service reads secrets from environment variables, and the authentication service's image has no shell.
+    The renderer only fills values into stack files, so a service that turns its environment into the two files
+    keeps every secret where the other stacks keep theirs, with no new mechanism in the renderer.
+  - The configuration is written as JSON, which both services read as YAML, so the script needs no YAML library
+    and is tested offline.
+- **Where:** `deployment/stacks/chat.compose.json`, `integrations/chat/configure.py`, `tools/prepare_ingress.py`
+  (test routes), `tools/prepare_runtime.py` (the two host names), `tests/test_chat_stack.py`, register CHAT-1 to -3.
+
 ### Raven leaves ERPNext; Matrix chat and a light mail client in the phone app, all now (P108, P73, P109)
 
 - **Decision (owner, 27 November 2026), all started now and in parallel:**

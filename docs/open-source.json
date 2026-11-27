@@ -814,20 +814,24 @@
       "repo": "https://github.com/element-hq/synapse",
       "licence": "AGPL-3.0",
       "used_in": [
-        "P73"
+        "chat"
       ],
-      "status": "evaluating",
-      "note": "Matrix server for the internal chat (owner, 27 November 2026); adoption check passed 27 November 2026 (v1.166.0, no open advisories); to deploy on the test site"
+      "status": "adopted",
+      "watch": [
+        "ghcr.io/element-hq/synapse"
+      ]
     },
     {
       "name": "Matrix Authentication Service",
       "repo": "https://github.com/element-hq/matrix-authentication-service",
       "licence": "AGPL-3.0",
       "used_in": [
-        "P73"
+        "chat"
       ],
-      "status": "evaluating",
-      "note": "sign-in for Synapse through authentik; adoption check passed 27 November 2026 (v1.30.0); to deploy on the test site"
+      "status": "adopted",
+      "watch": [
+        "ghcr.io/element-hq/matrix-authentication-service"
+      ]
     },
     {
       "name": "matrix-rust-sdk",

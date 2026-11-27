@@ -57,6 +57,7 @@ them before an upgrade of Frappe, authentik, Drive, Coolify or the host.
 - [ERPNext](#erpnext)
 - [HRMS (Frappe HR)](#hrms-frappe-hr)
 - [India Compliance](#india-compliance)
+- [Chat (Synapse and the Matrix Authentication Service)](#chat-synapse-and-the-matrix-authentication-service)
 - [Insights](#insights)
 - [Payment apps and India Payroll](#payment-apps-and-india-payroll)
 - [authentik](#authentik)
@@ -624,6 +625,39 @@ Made against: v16.11.1 (`6898239`).
   anchored after Supplier `pan`.
 - **How:** `onboarding/kyc.py`, `onboarding/setup.py`.
 - **Upgrade:** **re-check.**
+
+## Chat (Synapse and the Matrix Authentication Service)
+
+Made against: Synapse v1.166.0, Matrix Authentication Service v1.30.0. Both run unmodified; everything here is
+configuration we write (`integrations/chat/configure.py`).
+
+### CHAT-1 Sign-in delegated to the authentication service, which uses only the sign-in service
+
+- **What and why:** Synapse's `matrix_authentication_service` block; passwords and registration off on both sides;
+  one upstream OAuth2 provider; people cannot change name or mail address or deactivate their account. One passkey
+  sign-in for everything (P73).
+- **How:** `integrations/chat/configure.py` (`homeserver`, `mas`), `deployment/stacks/chat.compose.json`.
+- **Upgrade:** **re-check:** **loud** if a key is renamed (the service refuses to start); **silent** if a new
+  sign-in or registration path is added upstream with a default of "on". Read both release notes for new
+  account, registration and login options.
+- **Tests:** `tests/test_chat_stack.py`.
+
+### CHAT-2 No federation; rooms not encrypted by default
+
+- **What and why:** `federation_domain_whitelist: []`, no trusted key servers, no federation listener;
+  `encryption_enabled_by_default_for_room_type: off`, so the company can keep and search rooms.
+- **How:** `integrations/chat/configure.py` (`homeserver`).
+- **Upgrade:** **re-check:** **silent** if a default changes. People can still switch encryption on in a room
+  they manage until the room rules made by the server side forbid it (P73, not built).
+- **Tests:** `tests/test_chat_stack.py`.
+
+### CHAT-3 Proxy paths that name Matrix endpoints
+
+- **What:** `/_matrix`, `/_synapse/client` and `/_synapse/mas` go to Synapse; `/_matrix/client/*/login`, `logout`
+  and `refresh` go to the authentication service; `/_synapse/admin` is not routed.
+- **How:** `tools/prepare_ingress.py` (test site). Production route file: not written yet.
+- **Upgrade:** **re-check:** **silent** if upstream adds a delegated path (sign-in from an app then fails).
+- **Tests:** `tests/test_chat_stack.py`.
 
 ## Insights
 

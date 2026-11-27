@@ -178,7 +178,7 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P08 | Latest global logout and fresh passkey sign-in | [Sign-in](p-list/signin.md) | portal, erp, drive, mail, dms · **State:** in progress | in progress |
 | P09 | Portal fullscreen toggle | [Portal (eZone)](p-list/portal.md) | none · **State:** open | open |
 | P10 | Desktop/iPhone Drive and calendar/contact clients | [Drive](p-list/drive.md) | mail · **State:** open | open |
-| P11 | Certificate issuance and renewal acceptance | [General](p-list/general.md) | none · **State:** open | open |
+| P11 | Certificate issuance and renewal acceptance | [General](p-list/general.md) | none · **State:** in progress | in progress |
 | P12 | PTR and external mail delivery | [Mail](p-list/mail.md) | none · **State:** blocked | blocked |
 | P13 | Remaining users, app permissions and worker enrollment | [General](p-list/general.md) | signin, mail, dms · **State:** in progress | in progress |
 | P14 | Retained mobile/browser push acceptance | [Mobile](p-list/mobile.md) | erp, raven · **State:** open | open |

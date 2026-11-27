@@ -651,6 +651,19 @@ configuration we write (`integrations/chat/configure.py`).
   they manage until the room rules made by the server side forbid it (P73, not built).
 - **Tests:** `tests/test_chat_stack.py`.
 
+### CHAT-4 The business system's bot; invitations accepted automatically
+
+- **What and why:** an application service registration (`bridge.yaml`) for one user, `@erp`, with the aliases
+  `#site-…` and `#team-…`, and no call-back address; `auto_accept_invites` for invitations from this server. The
+  bot puts people into rooms by inviting them, so nothing holds an admin token. (A client of the authentication
+  service cannot get Synapse's admin scope; tried on the test site, 27 November 2026.)
+- **How:** `integrations/chat/configure.py` (`bridge`, `homeserver`).
+- **Upgrade:** **re-check:** **silent** if `auto_accept_invites` changes its meaning or default (people would
+  stop appearing in their rooms); **loud** if the registration format changes (Synapse refuses to start). The room
+  rules the bot sets depend on the default room version (12 on the test site: the creator is not listed in the
+  power levels).
+- **Tests:** `tests/test_chat_stack.py`; live: create, invite, post, remove on the test site.
+
 ### CHAT-3 Proxy paths that name Matrix endpoints
 
 - **What:** `/_matrix`, `/_synapse/client` and `/_synapse/mas` go to Synapse; `/_matrix/client/*/login`, `logout`

@@ -83,6 +83,7 @@
 | [Jetpack Compose and AndroidX (native app)](https://github.com/androidx/androidx) | Apache-2.0 | P50 | — | mobile-native (in progress, not shipped): Compose BOM 2026.09.00, Activity 1.12.4, Biometric 1.1.0; no open advisories (OSV, 26 November 2026) |
 | [Kotlin](https://github.com/JetBrains/kotlin) | Apache-2.0 | P50 | — | mobile-native (in progress, not shipped): 2.2.10 with the Android Gradle plugin 9.2.1; the two old standard-library advisories in OSV were fixed before 1.6 |
 | [Robolectric](https://github.com/robolectric/robolectric) | MIT | P50 | — | mobile-native tests only (screen tests on the computer): 4.18, no open advisories (OSV, 26 November 2026) |
+| [Gradle](https://github.com/gradle/gradle) | Apache-2.0 | P50 | — | mobile-native build tool (developers and the CI job): 9.9.2 or newer; 9.9.2 fixes the critical and high advisories published up to 19 November 2026 (GitHub Security Advisories, 27 November 2026) |
 
 ## Used before
 

@@ -76,6 +76,56 @@ class SaverTest {
     }
 
     @Test
+    fun aRedirectIsSignedOutNotAServerFailure() {
+        // The sign-in service in front answers an expired session with a redirect to its login page.
+        val result = save(Reply.Answer(302))
+        assertEquals(Outcome.NOT_SIGNED_IN, result.outcome)
+        assertEquals("You are signed out. Sign in again; nothing was saved.", result.sentence)
+        assertEquals(Point.GATEWAY, result.trace.fault?.point)
+        assertNull(result.trace.marks.firstOrNull { it.point == Point.SERVER })
+    }
+
+    @Test
+    fun onlyAReadableServerSentenceIsShown() {
+        // Tags and entities go; the sentence stays.
+        val bold = save(Reply.Answer(403, message = "You cannot check in at <b>SITE-0001</b>&nbsp;today."))
+        assertEquals("You cannot check in at SITE-0001 today.", bold.sentence)
+        val tagBeforeStop = save(Reply.Answer(403, message = "You cannot check in at <b>SITE-0001</b>."))
+        assertEquals("You cannot check in at SITE-0001.", tagBeforeStop.sentence)
+        assertEquals("Leave & overtime overlap.", readable("Leave &amp; overtime&nbsp;overlap ."))
+
+        // Code, error dumps, JSON and long pages are replaced by the fixed sentence.
+        val technical = listOf(
+            "Traceback (most recent call last): File \"apps/frappe/frappe/app.py\"",
+            "frappe.exceptions.ValidationError: Missing value",
+            "ValidationError: Missing value",
+            "{\"exc_type\": \"ValidationError\"}",
+            "<html><body>" + "x ".repeat(200) + "</body></html>",
+            "<div></div>",
+        )
+        for (message in technical) {
+            val refused = save(Reply.Answer(417, message = message))
+            assertEquals(message, "The server did not accept this, and gave no reason.", refused.sentence)
+            val notAllowed = save(Reply.Answer(403, message = message))
+            assertEquals(message, "You are not allowed to do this.", notAllowed.sentence)
+        }
+        // The original text is still in the test-build detail, for the developer.
+        val kept = save(Reply.Answer(417, message = "ValidationError: Missing value"))
+        assertTrue(kept.trace.report(withValues = true).contains("ValidationError: Missing value"))
+    }
+
+    @Test
+    fun aSignOutWhileASaveWaitsDoesNotCrash() {
+        val tracer = Tracer()
+        val saver = Saver(tracer) { _, _, _ -> tracer.clear(); Reply.Answer(200) }
+        val result = saver.save(id, "Check-in", "hr.self_check_in", args)
+        assertEquals(Outcome.SAVED, result.outcome)
+        assertEquals(id, result.trace.id)
+        assertTrue(result.trace.marks.isEmpty()) // the wipe removed the marks, as sign-out must
+        assertTrue(tracer.all().isEmpty()) // nothing stays after sign-out
+    }
+
+    @Test
     fun aCrashInTheNetworkLayerIsAFailedPointNotACrashedApp() {
         val saver = Saver(Tracer()) { _, _, _ -> throw IllegalStateException("socket closed") }
         val result = saver.save(id, "Check-in", "hr.self_check_in", args)

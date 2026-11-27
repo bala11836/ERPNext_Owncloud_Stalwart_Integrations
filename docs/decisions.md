@@ -32,7 +32,7 @@ discussion that led to a decision is not repeated here.
   tracker (one tracking number per action, a mark at each of eight points, a read-back comparison after every
   save), building blocks that cannot show an action word without an action, no backup or screenshot of app data,
   one command that runs every check, and a pinned checksum for every library.
-- **Why:** developer's decision with the owner's agreement, 26 November 2026, after the P82 trial showed the
+- **Why:** developer's decision with the owner's agreement, 26 November 2026 (confirmed by the owner on 27 November), after the P82 trial showed the
   sign-in key, the fingerprint lock and the computer sign-in must be native code anyway. Testing the Expo app
   showed taps that led nowhere and failures without a reason; the tracker and the building blocks make those two
   faults visible or impossible. Crash reports will use Google's free service (developer's choice, not added yet).
@@ -43,6 +43,18 @@ discussion that led to a decision is not repeated here.
   support this Kotlin version; Android lint runs with warnings as errors meanwhile. Added for the screen tests
   (tests only, not in the app): Robolectric 4.18 (MIT, active, released 13 November 2026) and Compose's UI test
   library; OSV, 26 November 2026: none open.
+- **Checked in CI (owner's go after review, 27 November 2026; P100):** `gradle checkAll` runs in the `native-app`
+  job of `.github/workflows/check.yml` on every push and pull request, so the app's tests, lint and checksum check
+  no longer run only on the developer's computer. Gradle is downloaded at 9.9.2 and checked against its published
+  SHA-256. GitHub Security Advisories for Gradle, checked 27 November 2026: one critical (GHSA-3cfg-jpcr-gfp3) and
+  seven high (GHSA-7f7r-77ff-fr6f, GHSA-99wf-vhq9-wm2x, GHSA-4mf6-7pm2-6wm8, GHSA-35pj-rg5r-8rpv, GHSA-gqrr-4j89-5267,
+  GHSA-pcp8-98xm-c6pr, GHSA-j5m7-59rp-24f5) affect versions before 9.9.2 (released 19 November 2026), which fixes them all; the README now asks for 9.9.2 or newer.
+  The checksum list gains the Linux and Mac copies of the Android build tool aapt2 (from Google Maven; the Windows
+  copy matched the existing entry), which a list made on Windows lacks.
+- **Review fixes (27 November 2026):** the calling layer treats a redirect as signed out (the sign-in service in
+  front sends an expired session to its login page), shows the server's refusal sentence only when it is readable
+  text (no error dump, code or page; the original stays in the test-build detail), and no longer crashes when
+  sign-out clears the tracker while a save waits.
 - **Where:** `mobile-native/` (README), `tests/test_mobile_native.py`. AI-assisted by Claude Code.
 
 

@@ -50,7 +50,8 @@ tap leads to a finished screen. This folder currently holds the foundation every
 
 ## Requirements
 
-JDK 17, the Android SDK (platform 37) and Gradle 9.4 or newer. No Gradle wrapper is committed. The app needs
+JDK 17, the Android SDK (platform 37) and Gradle 9.9.2 or newer (older Gradle versions have open security
+advisories, see `docs/decisions.md`). No Gradle wrapper is committed. The app needs
 Android 9 or newer.
 
 ## Reuse
@@ -71,8 +72,9 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (29), Android lint with warnings as errors, the app's screen tests (11) and a
-debug build.
+runs the rules module's unit tests (32), Android lint with warnings as errors, the app's screen tests (11) and a
+debug build. CI runs the same command on every push and pull request (job `native-app` in
+`.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 
 The screen tests run on the computer (Robolectric). **The robot that walks every link** opens every place in the
 frame and every item on it, in the light, dark and outdoor looks, at phone and tablet width and at normal and

@@ -3751,5 +3751,10 @@
             <sha256 value="03b0df67c0cd74a948a45c5b03c4bbcfb31ab9b9879fb380adf7c187b6594b7f" origin="Maven Central, SHA-1 cross-checked, 27 November 2026 (pulled by Gradle 9.9.2)"/>
          </artifact>
       </component>
+      <component group="org.jetbrains.kotlinx" name="kotlinx-coroutines-bom" version="1.8.1">
+         <artifact name="kotlinx-coroutines-bom-1.8.1.pom">
+            <sha256 value="563e4aa29fa8fe09a6e1746d0a5b51308f7c7dedc468dc5a0ca810a485877030" origin="Maven Central, SHA-1 cross-checked, 27 November 2026 (pulled by Gradle 9.9.2)"/>
+         </artifact>
+      </component>
    </components>
 </verification-metadata>

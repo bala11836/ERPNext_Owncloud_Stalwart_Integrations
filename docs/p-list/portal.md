@@ -199,6 +199,8 @@ These four leave every app's own screen and become universal on the Desk; the da
      sign-out or help item.
   5. **Unsaved work:** warn before signing out when an app has an open editor or draft.
 - **Build order:** sign-out, help, notifications (grouped by app), search (one box, results show the app).
+- **Where the four sit (owner, 27 November 2026):** at the top right of the Desk, sign-out last.
+- **Step 1 (sign-out):** public draft #142; not yet on the test site.
 - **Read-only check on the test site (27 November 2026, test ERP at `5cc6d1a`; nothing changed):**
   - **ERP** (Frappe 16.60.2): global search answers and is permission-aware (32 record types indexed); the
     notification list has read, unread and mark-as-read calls. The help menu's three items can be hidden in
@@ -207,7 +209,8 @@ These four leave every app's own screen and become universal on the Desk; the da
     by name.
   - **Drive** (ownCloud Infinite Scale 8.2.3): the search, notification and live-event services run. **Content
     search is off** (no text extractor configured): search finds names and tags only. Turning it on means pointing
-    Drive at the Tika service we already run, and a re-index. **Owner to decide.**
+    Drive at the Tika service we already run, and a re-index. **Owner (27 November 2026): turn it on**, as its
+    own change, tested first.
   - **Mail** (Stalwart 1.1.1, webmail 1.21.2): the mail interface answers; the webmail has its own search,
     notification centre, help links and shortcuts screen, in source we already build from.
   - **DMS** (Paperless-ngx 3.4.2): a global search call exists; inbox counts and import tasks exist; no

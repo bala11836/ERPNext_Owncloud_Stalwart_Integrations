@@ -14,28 +14,22 @@ Part of the P list: back to the [index and priority order](../p-list.md). Items 
 
 **App:** general · **Also touches:** none · **State:** in progress
 
-**Status (27 November 2026):** survey done. **Finding:** ERP, SSO, Drive, Respond, the website, mx (on 443) and every
-test name are served one copied wildcard (`*.example.com`, expires **30 January 2027**) that nothing renews, and while
-it is loaded Traefik does not request its own certificates for those names (it does not check the expiry). Office, DMS,
-Mail, docs and the bare domain have their own Traefik certificates (February 2027), renewing by HTTP challenge; the
-mail ports carry Stalwart's own `mx` certificate (11 February 2027; its renewal not yet confirmed).
+**Status (27 November 2026):** **issuance done on production.** Every public name has its own Let's Encrypt certificate
+from Traefik (to 25 February 2027). Production names use the HTTP challenge, with challenge routes above every port-80
+route. The relayed test names use the `letsencrypt-tls` resolver (TLS-ALPN), so the test host keeps renewing its own
+certificates through the port-80 relay. The copied wildcard is no longer loaded. Records: release log 27 November,
+receipts `p11-production-challenge-routes-662aaf9` and `p11-production-own-certificates-662aaf9`; public #126 and #128.
 
-**Owner's decisions (27 November):** every name gets its own certificate; the copied wildcard is removed; the
-certificate warning moves to 30 days ahead. Production names: HTTP challenge. Relayed test names: a second resolver with
-the TLS-ALPN challenge (port 443), because the test host renews its own certificates for them through the port-80 relay
-(found when it came back after the office power cut). One proxy restart (about 16 seconds) is **acceptable** (owner).
-
-- **Done:** public PR #126 (draft; challenge routes above every port-80 route, the `letsencrypt-tls` resolver tool,
-  relay names on it, tests); private relay route for test-sso on `letsencrypt-tls`; monitoring targets at 30 days with
-  Respond added.
-- **Next:** local rehearsal of the switch (Traefik 3.7.20 + Pebble) to measure the gap (needs the owner's permission);
-  test-site check of the relay and the test host's renewals; on production at a quiet moment: install the routes,
-  check each production name's challenge path, add the resolver with one restart, then remove the wildcard and check
-  every name's certificate; release record.
-- **Open:** the HTTPS probe's failures are not delivered anywhere (no alert on the unit; P72); `docs` has no DNS record,
-  so its certificate will not renew (harmless if unused); `mx` on 443 will serve Traefik's default certificate after the
-  switch (no HTTPS route asks for it; mail ports unaffected); confirm Stalwart renews its `mx` certificate before
-  11 February.
+- **Left to accept:**
+  - the first automatic renewal, due about 26 January 2027 (check the dates in the HTTPS probe);
+  - the production probe list (30 days, Respond added) installed on the test VM;
+  - Stalwart's own `mx` certificate renewing before 11 February;
+  - the test host's own certificates renewing (from 9 February).
+- **Clean-up:** remove the copied certificate files from the proxy folder after a week (the rollback set keeps a copy);
+  then delete register PROXY-P5.
+- **Notes:** the HTTPS probe's failures still reach nobody (P72, separate decision). `docs` has no DNS record (its
+  certificate will lapse; harmless if unused). mx on 443 serves Traefik's default certificate (no HTTPS route asks for
+  it).
 
 ### P13 — Remaining users, app permissions and worker enrollment
 

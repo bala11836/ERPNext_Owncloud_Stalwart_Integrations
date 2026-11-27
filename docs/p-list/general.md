@@ -22,7 +22,6 @@ receipts `p11-production-challenge-routes-662aaf9` and `p11-production-own-certi
 
 - **Left to accept:**
   - the first automatic renewal, due about 26 January 2027 (check the dates in the HTTPS probe);
-  - the production probe list (30 days, Respond added) installed on the test VM;
   - Stalwart's own `mx` certificate renewing before 11 February;
   - the test host's own certificates renewing (from 9 February).
 - **Clean-up:** remove the copied certificate files from the proxy folder after a week (the rollback set keeps a copy);

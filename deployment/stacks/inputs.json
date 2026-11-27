@@ -682,5 +682,21 @@
   "CI_CHAT_MAS_HOST_PORT": {
     "kind": "setting",
     "default": "8050"
+  },
+  "CI_CHAT_CONFIGURE_BRIDGE_AS_TOKEN": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_CHAT_CONFIGURE_BRIDGE_HS_TOKEN": {
+    "kind": "secret",
+    "generate": true
+  },
+  "CI_CHAT_CONFIGURE_ADMIN_CLIENT_ID": {
+    "kind": "setting",
+    "default": "01KBCHATSSADM1NCL1ENTAAAAA"
+  },
+  "CI_CHAT_CONFIGURE_ADMIN_CLIENT_SECRET": {
+    "kind": "secret",
+    "generate": true
   }
 }

@@ -14,7 +14,6 @@
 | [India Compliance](https://github.com/resilient-tech/india-compliance) | GPL-3.0 | onboarding | daily watch: `india_compliance` |  |
 | [India Payroll](https://github.com/frappe/india-payroll) | GPL-3.0 | erp image | daily watch: `india_payroll` |  |
 | [Frappe Insights](https://github.com/frappe/insights) | AGPL-3.0 | insights-adapter | daily watch: `insights` |  |
-| [Raven](https://github.com/frappe/raven) | AGPL-3.0 | erp image | daily watch: `raven` |  |
 | [Payment Integration Utils](https://github.com/resilient-tech/payment_integration_utils) | GPL-3.0 | erp image | daily watch: `payment_integration_utils` |  |
 | [RazorpayX Integration](https://github.com/resilient-tech/razorpayx-integration) | GPL-3.0 | erp image | daily watch: `razorpayx_integration` |  |
 | [Frappe Bench](https://github.com/frappe/bench) | GPL-3.0 | deployment (build) | daily watch: `frappe-bench` |  |
@@ -86,4 +85,5 @@
 
 | Project | Licence | Used in | Tracked | Note |
 |---|---|---|---|---|
+| [Raven](https://github.com/frappe/raven) | AGPL-3.0 | erp image | — | removed from the ERP image in P108 (owner, 27 November 2026); Matrix replaces it as the internal chat (P73) |
 | [Collabora Online](https://github.com/CollaboraOnline/online) | MPL-2.0 (to verify; GitHub reports no standard licence) | editor | — | used until November 2026, replaced by ONLYOFFICE Docs, P42 |

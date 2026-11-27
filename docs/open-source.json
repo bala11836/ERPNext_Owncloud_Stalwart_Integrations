@@ -85,10 +85,8 @@
       "used_in": [
         "erp image"
       ],
-      "status": "adopted",
-      "watch": [
-        "raven"
-      ]
+      "status": "retired",
+      "note": "removed from the ERP image in P108 (owner, 27 November 2026); Matrix replaces it as the internal chat (P73)"
     },
     {
       "name": "Payment Integration Utils",

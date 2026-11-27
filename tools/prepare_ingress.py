@@ -123,11 +123,11 @@ def prepare(source, profile):
         if value['service']!='noop@internal':value['service']='erp'
         routers[name]=value
     middlewares.update(response.get('middlewares',{}))
-    # Native apps (mobile-app, Raven) get exactly production's routes, read from the
-    # same files: the token POST, Bearer requests checked by portal.mobile.check_access
-    # (identity headers stripped) and the Raven preflight / client-ID discovery.
+    # Native apps (our phone apps) get exactly production's routes, read from the
+    # same file: the token POST and Bearer requests checked by portal.mobile.check_access
+    # (identity headers stripped).
     # Without them the outpost answers the app with the passkey page instead of JSON.
-    for name in ['cloud-raven-native.yaml','cloud-raven-mobile.yaml']:
+    for name in ['cloud-native-clients.yaml']:
         native=replace(yaml.safe_load((source/'deployment/config/proxy'/name).read_text())['http'])
         for key,value in native['routers'].items():
             value.update({'priority':50000+value['priority'],'service':'erp',

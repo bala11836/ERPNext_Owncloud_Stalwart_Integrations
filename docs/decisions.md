@@ -6,6 +6,27 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### Removing Raven: the phone sign-in keeps working under a neutral name; uninstall before the new image (P108)
+
+- **Decision:** Raven leaves the ERP build (the app list, the version lock, the daily watch), the portal's app
+  frames, onboarding's app rules, the phone menu and the proxy (its discovery route and its preflight route). The
+  phone sign-in check stays: its switch is now `cloud_native_mobile_enabled`, the old name
+  `cloud_raven_mobile_enabled` is still read when the new one is absent, and the single-client setting
+  `cloud_raven_mobile_client` approves nothing any more. The proxy file is `cloud-native-clients.yaml`
+  (routers `cloud-native-token` and `cloud-native-bearer`, middleware `cloud-native-auth`).
+- **Order on each site (it matters):** (1) with the **old** image still running, `bench --site <site> uninstall-app
+  raven` after a database backup (this deletes Raven's messages and channels); (2) deploy the new image, built on a
+  core without Raven; (3) set `cloud_native_mobile_enabled` in the site config and remove the two old keys;
+  (4) install the renamed proxy file and remove the two old ones. An image without Raven's code on a site that
+  still lists Raven as installed does not start.
+- **Why:** owner, 27 November 2026 (see the decision on Matrix and the notification service). The sign-in check
+  was written for Raven's phone app but signs in every phone app; reading the old switch name keeps a site working
+  between the image and the config change.
+- **Where:** `portal/mobile.py` (`enabled`, `clients`), `deployment/config/proxy/cloud-native-clients.yaml`,
+  `tools/prepare_ingress.py`, `deployment/upstream-lock.json`, `deployment/stacks/erp.compose.json`,
+  `tools/initialize_erp.py`, `portal/sso.py`, `public/session.js`, `www/place_holder.html`, `onboarding/access.py`,
+  `tests/portal/test_mobile.py`, `tests/test_portal_deep_link.py`, the register (Raven section removed).
+
 ### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)
 
 - **Decision:**

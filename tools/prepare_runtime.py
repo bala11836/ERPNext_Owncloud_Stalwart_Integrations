@@ -211,7 +211,7 @@ def prepare(source, output, profile):
         raise ValueError('The chat stack needs the host names chat and chat-auth')
     mounts = json.loads((source/'deployment/stacks/mounts.json').read_text())
     # Which mount is made from which repository file: tools/runtime_mounts.py (shared with the drift check).
-    persistent_targets = {'/var/lib/cloud-integration','/var/lib/ocis','/state',
+    persistent_targets = {'/var/lib/cloud-integration','/var/lib/ocis','/state','/alerts-key',
         '/usr/src/paperless/data','/usr/src/paperless/media','/usr/src/paperless/consume','/usr/src/paperless/export'}
     # Office editor: ONLYOFFICE only. Collabora was retired after the P42
     # production switch (19 November 2026).

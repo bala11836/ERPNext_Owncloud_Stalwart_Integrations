@@ -664,6 +664,17 @@ configuration we write (`integrations/chat/configure.py`).
   power levels).
 - **Tests:** `tests/test_chat_stack.py`; live: create, invite, post, remove on the test site.
 
+### CHAT-5 Alert gateway inside the stack; Synapse may call only the stack's own network
+
+- **What and why:** Sygnal as an optional service (`alerts`, compose profile `alerts`) with one Google (FCM v1)
+  app; Synapse's `ip_range_whitelist` names the stack's own network, because Synapse refuses alerts to private
+  addresses otherwise. The stack's network has a fixed range for this. The gateway alone is on a second
+  network, `outbound`, to reach Google.
+- **How:** `integrations/chat/configure.py` (`alerts`, `write_alerts`, `homeserver`), `deployment/stacks/chat.compose.json`.
+- **Upgrade:** **re-check:** **silent** if Sygnal renames a configuration key (alerts stop; its log says so) or if
+  Synapse changes what the whitelist covers.
+- **Tests:** `tests/test_chat_stack.py`; live: the gateway asks Google about a made-up phone address.
+
 ### CHAT-3 Proxy paths that name Matrix endpoints
 
 - **What:** `/_matrix`, `/_synapse/client` and `/_synapse/mas` go to Synapse; `/_matrix/client/*/login`, `logout`

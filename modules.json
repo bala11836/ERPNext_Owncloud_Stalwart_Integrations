@@ -474,6 +474,7 @@
         "tools/coolify_proxy_hosts.py",
         "tools/prepare_test_relay.py",
         "tools/coolify_proxy_http3.py",
+        "tools/coolify_proxy_tls_resolver.py",
         "tools/coolify_proxy_image.py",
         "tests/test_coolify_proxy_image.py",
         "tools/test_host_aliases.py",

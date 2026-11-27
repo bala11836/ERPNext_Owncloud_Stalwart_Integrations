@@ -6,7 +6,9 @@ a tailnet): public DNS for the test hostnames points to the relay host, whose
 proxy terminates TLS and forwards each request over HTTPS to the test host
 (verifying its certificate per hostname); the test host trusts the relay's
 X-Forwarded-For. Port 80 is forwarded so the test host's HTTP certificate
-challenges and redirects work.
+challenges and redirects work; the relay host proves the same names on port
+443 instead (TLS-ALPN resolver, P11), so both hosts renew their own
+certificates.
 
 Only the six test hostnames from a test profile are relayed; nothing else.
 """
@@ -30,9 +32,14 @@ def prepare(profile):
         if not re.fullmatch(r'test[a-z0-9-]*\.[a-z0-9.-]+', host):
             raise ValueError('Only test hostnames may be relayed: ' + host)
     target = str(ipaddress.ip_address(profile['relay_target']))
-    # The relay host terminates TLS for the test hostnames (its certificate,
-    # e.g. a wildcard, must cover them) and forwards HTTP over HTTPS to the
-    # test host, verifying the test host's certificate for each hostname.
+    resolver = profile.get('relay_cert_resolver', 'letsencrypt-tls')
+    # The relay host terminates TLS for the test hostnames with its own
+    # certificate per name (P11: no copied wildcard). It must not use the
+    # port-80 challenge for them, which belongs to the test host (Traefik's
+    # challenge handler answers only its own tokens), so its resolver uses the
+    # TLS-ALPN challenge (tools/coolify_proxy_tls_resolver.py). It forwards
+    # HTTP over HTTPS to the test host, verifying the test host's certificate
+    # for each hostname.
     # TCP pass-through by SNI is not used: browsers reuse ("coalesce") an
     # existing connection to the relay host for any hostname its certificate
     # covers, so requests for test hostnames arrive inside connections opened
@@ -41,7 +48,7 @@ def prepare(profile):
     for host in hosts:
         key = prefix + '-relay-' + host.split('.')[0]
         routers[key] = {'rule': 'Host(`' + host + '`)', 'entryPoints': ['https'], 'priority': 100000,
-                        'service': key, 'tls': {}}
+                        'service': key, 'tls': {'certResolver': resolver}}
         transports[key] = {'serverName': host}
         services[key] = {'loadBalancer': {'servers': [{'url': 'https://' + target}], 'passHostHeader': True,
                                           'serversTransport': key}}

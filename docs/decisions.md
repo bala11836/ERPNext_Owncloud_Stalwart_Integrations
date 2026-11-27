@@ -1259,3 +1259,34 @@ check themselves in keep their existing workflows.
 - **Where:** `integrations/drive/README.md`, `deployment/README.md`,
   `tools/prepare_ingress.py`, `.client-identity-fingerprints`, `docs/retained.md`,
   register entry OFFICE-7. AI-assisted by Claude Code.
+
+### Every public name has its own certificate; no copied wildcard (P11)
+
+- **Decision:** The production proxy obtains a Let's Encrypt certificate for every
+  public name itself. The production names use the HTTP challenge it already used
+  for some of them: a port-80 challenge route with a priority above every other
+  port-80 route sends each name's challenge to Traefik
+  (`own-certificate-acme-validation`). The relayed test names use a second resolver,
+  `letsencrypt-tls`, with the TLS-ALPN challenge on port 443
+  (`tools/coolify_proxy_tls_resolver.py`), because their port-80 challenges belong
+  to the test host, which renews its own certificates through the relay. The
+  wildcard certificate copied onto the proxy at the November migration is removed
+  once both are live. A test checks that every name using the HTTP resolver has a
+  challenge route that outranks the rest, and that the relay leaves port 80,
+  challenges included, to the test host.
+- **Why:** The copied wildcard had no renewal: Traefik cannot issue a wildcard with
+  the HTTP challenge, and the DNS host has no API it can use. While any loaded
+  certificate covers a name, Traefik does not request its own, and it does not look
+  at the expiry date (Traefik 3.7.20, `getUncheckedDomains`). So ERP, sign-in, Drive,
+  Respond, the website and the test site would all have failed on the wildcard's
+  expiry. The wildcard was once needed for the test relay. That reason is gone,
+  because the relay ends TLS on production and has its own certificate per name.
+  Respond's host-wide port-80 redirect also sent challenges to HTTPS, where they
+  fail. Traefik's HTTP challenge handler answers only its own tokens (404
+  otherwise), so two hosts cannot share port-80 challenges for one name.
+- **Consequence:** Adding the resolver restarts the proxy once (about 16 seconds).
+  Removing the wildcard leaves a short gap: Traefik requests the new certificates
+  only once nothing covers the names.
+- **Where:** `deployment/config/proxy/office-acme.yml`, `tools/prepare_test_relay.py`,
+  `tools/coolify_proxy_hosts.py`, `tools/coolify_proxy_tls_resolver.py`,
+  `tests/test_rebuild_templates.py`, register entry PROXY-6. AI-assisted by Claude Code.

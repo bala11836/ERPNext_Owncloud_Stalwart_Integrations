@@ -37,7 +37,9 @@ tap leads to a finished screen. This folder currently holds the foundation every
   targets, status always as a mark and words, edge to edge with readable system bar icons in every look, no white
   flash at start in night mode. The app's icon is its own mark, a white key on the accent colour, as one drawing
   for every phone's icon shape and for themed icons; Android 12 and newer show it on the page colour while the
-  app starts (Android 9 to 11 show the plain page colour). A frame that shows a bottom bar on phones and a side rail on tablets, and three
+  app starts (Android 9 to 11 show the plain page colour). A frame that shows a bottom bar on phones and a side rail on tablets with the
+  five agreed places (Today, Inbox, Chat, Mail, More; only More is finished, the others are in test builds only:
+  Today and Inbox as a page that says what will be there, Chat and Mail against stand-ins), and behind More three
   finished screens: **Data trace** (list and detail; side by side on a tablet), **This phone** (fingerprint sensor,
   secure chip, Android version, checked for real) and **Display** (the look in use and the two Outdoor switches).
 - **Building blocks with rules built in** (`Parts.kt`): a plain status line cannot be tapped and must not name an
@@ -136,7 +138,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (54), Android lint with warnings as errors, the app's screen and connection tests (29) and a
+runs the rules module's unit tests (54), Android lint with warnings as errors, the app's screen and connection tests (30) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 

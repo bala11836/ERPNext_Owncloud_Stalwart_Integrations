@@ -68,6 +68,19 @@ class MobileNativeTests(unittest.TestCase):
             self.assertIn(f'val {tint}: Long', palette)
             self.assertIn(f'look.{tint}', look, f'the contrast test covers {tint}')
 
+    def test_the_bar_is_the_five_agreed_places_and_unfinished_ones_stay_out_of_the_real_app(self):
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        block = frame.split('enum class Place')[1].split('\n}')[0]
+        self.assertEqual(re.findall(r'^    ([A-Z]+)\("(\w+)"', block, re.M),
+                         [('TODAY', 'Today'), ('INBOX', 'Inbox'), ('CHAT', 'Chat'), ('MAIL', 'Mail'), ('MORE', 'More')])
+        # Only More is finished; the others exist in test builds only until their real screens do.
+        self.assertEqual(re.findall(r'^    ([A-Z]+)\([^\n]*testOnly = true\)', block, re.M), ['TODAY', 'INBOX', 'CHAT', 'MAIL'])
+        # Everything behind More has a screen.
+        tools = re.findall(r'^    ([A-Z]+)\("', frame.split('enum class Tool')[1].split('\n}')[0], re.M)
+        self.assertEqual(tools, ['DISPLAY', 'PHONE', 'TRACE', 'WELCOME'])
+        for tool in tools:
+            self.assertRegex(frame, rf'Tool\.{tool} -> \w+Screen\(')
+
     def test_every_destination_in_the_frame_has_a_screen(self):
         main = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
         places = re.findall(r'^\s+([A-Z_]+)\("', main.split('enum class Place')[1].split('}')[0], re.M)
@@ -77,8 +90,9 @@ class MobileNativeTests(unittest.TestCase):
 
     def test_the_welcome_stand_in_stays_out_of_the_real_app(self):
         frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
-        self.assertRegex(frame, r'WELCOME\("Welcome", "Welcome preview", R\.drawable\.ic_key, testOnly = true\)')
+        self.assertRegex(frame, r'WELCOME\("Welcome preview", "[^"]+", R\.drawable\.ic_key, testOnly = true\)')
         self.assertIn('Place.entries.filter { !it.testOnly || state.testBuild }', frame)
+        self.assertIn('Tool.entries.filter { !it.testOnly || state.testBuild }', frame)
         # The first screen is decided in the rules module, never by the person, and a key on the phone wins.
         rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Welcome.kt').read_text(encoding='utf-8')
         self.assertIn('key == KeyState.PRESENT -> Welcome.Unlock', rules.split('fun welcomeFor(')[1].split('\n')[1])

@@ -73,6 +73,12 @@ class ScreensTest {
 
     private fun place(place: Place) = compose.onNode(hasText(place.label) and hasClickAction())
 
+    /** Opens one of the screens behind More, from wherever the app is. */
+    private fun tool(tool: Tool) {
+        place(Place.MORE).performClick()
+        tap(tool.title)
+    }
+
     /** Everything that can be tapped is at least 48 dp tall, and no text reaches past the screen's side. */
     private fun checkLayout(where: String) {
         val root = compose.onRoot().fetchSemanticsNode()
@@ -93,14 +99,22 @@ class ScreensTest {
     private fun walk(palette: Palette, wide: Boolean) {
         show(palette)
         val name = "${palette.name}${if (wide) " wide" else ""}"
-        // Every place in the frame opens its own finished screen.
+        // Every place in the bar opens its own screen.
         for (place in Place.entries) {
             place(place).performClick()
             compose.onNode(hasText(place.title) and !hasClickAction()).assertIsDisplayed()
             checkLayout("$name / ${place.label}")
         }
+        // Everything behind More opens its own screen and leads back to More.
+        for (tool in Tool.entries) {
+            tool(tool)
+            reach(compose.onNode(hasText(tool.title) and !hasClickAction())).assertIsDisplayed()
+            checkLayout("$name / ${tool.title}")
+            compose.onNodeWithContentDescription("Back").performClick()
+            compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()
+        }
         // Every item on Data trace opens its detail, and the way back works.
-        place(Place.TRACE).performClick()
+        tool(Tool.TRACE)
         for (action in listOf("Sample: check-out refused", "Sample: check-in saved")) {
             compose.onNode(hasText(action, substring = true) and hasClickAction()).performScrollTo().performClick()
             compose.onNodeWithText("1. Screen: OK").assertIsDisplayed()
@@ -110,7 +124,7 @@ class ScreensTest {
             compose.onNode(hasText("Data trace") and !hasClickAction()).assertIsDisplayed()
         }
         // Every situation of the Welcome screens, and the help screen behind each one and the way back.
-        place(Place.WELCOME).performClick()
+        tool(Tool.WELCOME)
         for (situation in Situation.entries) {
             compose.onNodeWithText("Situation: ${situation.label}").assertIsDisplayed()
             checkLayout("$name / welcome, ${situation.label}")
@@ -280,7 +294,7 @@ class ScreensTest {
     @Test
     fun everyWelcomeButtonLeadsSomewhere() {
         show(Palettes.LIGHT)
-        place(Place.WELCOME).performClick()
+        tool(Tool.WELCOME)
         shown("Your phone becomes your key.")
         tap("Request access")
         shown("Request sent")
@@ -317,7 +331,7 @@ class ScreensTest {
     @Test
     fun refusedRanOutAndKeyGoneSayWhyAndLeadToANewRequest() {
         show(Palettes.LIGHT)
-        place(Place.WELCOME).performClick()
+        tool(Tool.WELCOME)
         fun go(to: Situation) {
             while (compose.onAllNodesWithText("Situation: ${to.label}").fetchSemanticsNodes().isEmpty()) compose.onNodeWithText("Situation:", substring = true).performClick()
         }
@@ -357,6 +371,7 @@ class ScreensTest {
     @Test
     fun aFailedTraceNamesItsPointAndKeepsValuesToTestBuilds() {
         show(Palettes.LIGHT, testBuild = true)
+        tool(Tool.TRACE)
         // The row card says the state in words (a pill) and where it stopped, before anything is opened.
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasText("Failed") and hasText("Stopped at 5. Server function") and hasClickAction()).assertIsDisplayed()
         compose.onNode(hasText("Sample: check-in saved", substring = true) and hasText("Saved") and hasClickAction()).performScrollTo().assertIsDisplayed()
@@ -376,23 +391,27 @@ class ScreensTest {
                 AppFrame(FrameState(Palettes.LIGHT, testBuild = false, tracer.all(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), {}, {}, {})
             }
         }
+        // The real app opens on More, its only finished place; no unfinished place and no stand-in can be reached.
+        compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()
+        for (unfinished in listOf(Place.TODAY, Place.INBOX, Place.CHAT, Place.MAIL)) {
+            assertEquals("${unfinished.label} is not in the real app", 0, compose.onAllNodesWithText(unfinished.label).fetchSemanticsNodes().size)
+        }
+        assertEquals("the Welcome stand-in is not in the real app", 0, compose.onAllNodesWithText(Tool.WELCOME.title).fetchSemanticsNodes().size)
+        tool(Tool.TRACE)
         assertEquals(0, compose.onAllNodesWithText("Add a sample trace", substring = true).fetchSemanticsNodes().size)
         assertEquals(0, compose.onAllNodesWithText("Try the connection", substring = true).fetchSemanticsNodes().size)
-        assertEquals("the Welcome stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.WELCOME.label).fetchSemanticsNodes().size)
-        assertEquals("the chat stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.CHAT.label).fetchSemanticsNodes().size)
-        assertEquals("the mail stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.MAIL.label).fetchSemanticsNodes().size)
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
         assertEquals(0, compose.onAllNodesWithText("sample values", substring = true).fetchSemanticsNodes().size)
-        place(Place.PHONE).performClick()
+        tool(Tool.PHONE)
         assertEquals(0, compose.onAllNodesWithText("Safe", substring = true).fetchSemanticsNodes().size)
-        place(Place.DISPLAY).performClick()
+        tool(Tool.DISPLAY)
         assertEquals(0, compose.onAllNodesWithText("lux", substring = true).fetchSemanticsNodes().size)
     }
 
     @Test
     fun theSafeTestCardSaysWhatIsInTheSafeAndOnlyInTestBuilds() {
         show(Palettes.LIGHT)
-        place(Place.PHONE).performClick()
+        tool(Tool.PHONE)
         shown("Empty.")
         tap("Save a test note in the safe")
         shown("was read back from the safe")
@@ -402,14 +421,31 @@ class ScreensTest {
     @Test
     fun tryingTheConnectionAddsARowThatSaysWhereItStopped() {
         show(Palettes.LIGHT, withTraces = false)
+        tool(Tool.TRACE)
         tap("Try the connection (test builds)")
         compose.onNode(hasText("Connection test") and hasText("Failed") and hasText("Stopped at 3. Network") and hasClickAction()).assertIsDisplayed()
         checkLayout("after a connection test")
     }
 
     @Test
+    fun theBarHasTheFivePlacesAndMoreAlwaysLeadsBackToItsList() {
+        show(Palettes.LIGHT)
+        // The app opens on Today. The unfinished places say so and offer nothing to tap.
+        compose.onNode(hasText("Today") and !hasClickAction()).assertIsDisplayed()
+        shown("Not built yet. It comes after sign-in.")
+        place(Place.INBOX).performClick()
+        shown("Everything that waits for your decision")
+        // A tap on More shows More's list, also from inside one of its screens.
+        tool(Tool.DISPLAY)
+        place(Place.MORE).performClick()
+        compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()
+        for (item in Tool.entries) reach(compose.onNode(hasText(item.title) and hasClickAction())).assertIsDisplayed()
+    }
+
+    @Test
     fun anEmptyTraceListSaysWhatWillAppear() {
         show(Palettes.LIGHT, withTraces = false)
+        tool(Tool.TRACE)
         compose.onNodeWithText("No actions yet", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Add a sample trace (test builds)").performClick()
         compose.onNode(hasText("Sample: check-in saved", substring = true) and hasClickAction()).assertIsDisplayed()
@@ -418,7 +454,7 @@ class ScreensTest {
     @Test
     fun theOutdoorSwitchChangesTheLookAndSaysSo() {
         show(Palettes.DARK)
-        place(Place.DISPLAY).performClick()
+        tool(Tool.DISPLAY)
         compose.onNodeWithText("Dark: follows your phone's night mode").assertIsDisplayed()
         compose.onNode(hasText("Outdoor mode now", substring = true) and hasClickAction()).performClick()
         compose.onNodeWithText("Outdoor: strongest contrast, larger text").assertIsDisplayed()

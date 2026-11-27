@@ -20,11 +20,13 @@ Verify the new portal's per-device opt-in controls, ERP/HR notification receipt 
 
 Recheck native Raven login/chat/refresh and revoked-token refusal, and coordinate realtime recovery with P01. Preserve exact validated callbacks and existing workers/drafts. See [push and Raven scope](../roadmap.md#1-push-and-session-bound-native-raven).
 
-### P50 — Native mobile app for phones and tablets (module `mobile-app`)
+### P50 — Native mobile app for phones and tablets (modules `mobile-app` and `mobile-native`)
 
 **App:** mobile · **Also touches:** none · **State:** open
 
-**Status:** planning with the owner (opened 19 November 2026); nothing built.
+**Status:** opened 19 November 2026. The Expo app (module `mobile-app`) is the app in use on test. The native
+Android rebuild (module `mobile-native`, Kotlin with Jetpack Compose) is under way: Phase 0 (foundation, no
+sign-in, no server calls) in the colleague's draft PR #114, review fixes added 27 November 2026.
 Own app (not the colleague's P38 app), native on Android and iOS, one codebase
 for phones and tablets, in this repository as a self-contained module. No
 Supabase: ERPNext is the data backend, authentik the sign-in (native-client
@@ -53,9 +55,15 @@ login already exists).
 - Pilot module: HR attendance and checkout (sets the shared look and
   components).
 - Distribution: Android signed APK hosted by us; iOS needs an Apple Developer
-  account (TestFlight or Ad Hoc); no store listing. Framework recommended:
-  React Native with Expo (TypeScript); Flutter is the runner-up, final choice
-  after asking what the colleague and owner can maintain.
+  account (TestFlight or Ad Hoc); no store listing.
+- Framework (owner, 27 November 2026, confirming the agreement with the
+  colleague on 26 November; replaces the earlier Expo recommendation): the
+  Android app is rebuilt natively in Kotlin with Jetpack Compose (module
+  `mobile-native`), because the P82 trial showed the sign-in key, the
+  fingerprint lock and the computer sign-in need native code anyway. The Expo
+  app stays in use until the native one does everything it does and passes
+  the same checks. The rules live in a plain Kotlin module so an iPhone app,
+  which follows after Android, can share them.
 
 **Still to decide:** look and feel (logo, colours, languages, light/dark),
 sign-in and security details (biometrics, session length, lost-device wipe),
@@ -86,6 +94,15 @@ log with the first pull request.
 **Passkeys in the app (owner, 25 November 2026):** ERP Mobile becomes the phone's passkey
 provider and holds each person's sign-in key; Android first. Scope, decisions and the decision
 path are in **P82** (sign-in list).
+
+**Update (27 November 2026): native rebuild, Phase 0 review.** Draft PR #114 (colleague's fork, branch
+`native/phase-0`) reviewed; the owner confirmed the native rebuild (above) and gave the go to fix the review
+points on the colleague's branch: CI now runs the app's own checks (`gradle checkAll`, P100) with Gradle 9.9.2
+(older Gradle has one critical and seven high advisories), the checksum list gained the Linux and Mac copies of
+the Android build tool, and the calling layer treats a redirect as signed out, shows only readable server
+sentences and no longer crashes on sign-out during a save. Still open in Phase 0 (the colleague's list): picture
+comparison, texts in one file, a real tablet, vibration, icon and start screen, detekt, crash reports. Not for
+merging yet; nothing to deploy (no server stack).
 
 ### P64 — Native app sign-in on production: latent auth-hook crash and a stale client list
 

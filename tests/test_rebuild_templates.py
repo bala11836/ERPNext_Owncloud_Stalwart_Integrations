@@ -221,6 +221,14 @@ class Reconstruction(unittest.TestCase):
             others=[priority(r) for r in port80 if not challenge(r)]
             self.assertTrue(answers,host+': no port-80 challenge route')
             self.assertGreater(max(answers),max(others,default=0),host+': another port-80 route outranks the challenge')
+    def test_mail_host_challenge_goes_to_the_repository_mail_service(self):
+        # Stalwart renews its own SMTP/IMAP certificate for the mail host; the challenge route must name the
+        # service the repository's mail routes define (the pre-repository Docker-label service is gone, P45).
+        acme=yaml.safe_load((ROOT/'deployment/config/proxy/office-acme.yml').read_text())['http']['routers']
+        mail=yaml.safe_load((ROOT/'deployment/production/mail.traefik.yaml').read_text())['http']
+        service=acme['office-smtp-acme-validation']['service']
+        self.assertTrue(service.endswith('@file'),service)
+        self.assertIn(service.split('@')[0],mail['services'])
     def test_test_relay_terminates_and_forwards_only_test_hosts(self):
         sys.path.insert(0,str(ROOT/'tools'))
         from prepare_test_relay import prepare as relay

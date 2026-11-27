@@ -170,6 +170,7 @@
         "tests/test_custom_hr_face.py",
         "tests/test_custom_hr_face_queue.py",
         "tests/test_custom_hr_face_switch.py",
+        "tests/test_custom_hr_face_enrolers.py",
         "deployment/face-models.json",
         "tools/fetch_face_models.py",
         "tests/test_custom_hr_face_engine.py"
@@ -183,6 +184,7 @@
         "tests/test_custom_hr_face.py",
         "tests/test_custom_hr_face_queue.py",
         "tests/test_custom_hr_face_switch.py",
+        "tests/test_custom_hr_face_enrolers.py",
         "tests/test_custom_hr_face_engine.py"
       ],
       "upstream": [

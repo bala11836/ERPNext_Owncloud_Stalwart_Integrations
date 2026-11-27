@@ -6,6 +6,51 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)
+
+- **Decision:**
+  - The app asks for the fingerprint again after **3 minutes** away (another app opened or the screen off).
+  - Without a connection it still opens for **12 hours**, then it needs a connection.
+  - **Photos offline:** the app keeps previews and the photos a person has opened, of their own sites only, in its
+    encrypted store: at most 200 MB and 7 days. They are wiped at sign-out, when the key is lost, and for a site the
+    person no longer belongs to.
+  - **Sign-up:** full name (first name required, surname optional). The **user name is the full mail address**. The
+    mail address is verified with a **6-digit code from our own mail server**, the mobile number with a **6-digit
+    code over WhatsApp**. Each code expires after 10 minutes, allows 5 tries, and a new one can be asked after 60
+    seconds.
+  - **Incident videos:** clips of up to 60 seconds, compressed on the phone at 720p, **HEVC where the phone records
+    it, otherwise H.264**.
+- **Why:** owner, 27 November 2026.
+  - 12 hours covers one site shift. Offline attendance must work for a whole shift without signal, and a switched-off
+    person is refused at the next connection.
+  - The mail address is already ERPNext's user ID, so one identity runs through every app.
+  - Six digits suit a phone's number pad. The expiry and the try limit, not the alphabet, protect the code.
+  - Our mail server sends codes for free, while Firebase only sends sign-in links by mail and charges for SMS.
+    WhatsApp replaces SMS later as well.
+  - HEVC is about 40% smaller than H.264. H.264 remains as the fallback, and a browser without HEVC offers the clip
+    as a download.
+- **Where:** the native app (`mobile-native`, PR #114) for the lock, offline window and cache; P82 sign-up; P04
+  (WhatsApp); P106 (video upload, to build).
+
+### Face enrolment: also the worker's own supervisor or engineer; the agreement in English, other languages on choice (P95)
+
+- **Decision:** besides HR, a Field Attendance Manager and the project manager of the worker's site, the worker's own
+  supervisor (the responsible supervisor on their Field Worker Assignment) and the engineer assigned to that
+  supervisor at that site may enrol a face and record a withdrawal. Another team's supervisor or engineer is refused.
+  The face attendance agreement opens in English; the worker may choose to read a translation in the language of
+  their choice, and the language they read is recorded with their consent (as before, every acceptance records the
+  agreement version and language). If a translation and the English differ, the English version governs, and the
+  agreement tells the worker so. By ticking "I agree" the worker also confirms that the person enrolling them
+  explained the terms in a language they understand; the consent record names that person and the language.
+- **Why:** owner, 27 November 2026, answering the native app's request on PR #114. Supervisors and engineers are the
+  ones at the site with the team, so enrolment does not wait for HR or the project manager to visit. Limiting it to
+  the worker's own team keeps it to people who know the worker; the consent record names who recorded it, and the
+  project manager looks over new enrolments (SOP). English as the default with a free choice of translation keeps one
+  reference text and still lets every worker read it in a language they understand.
+- **Where:** `custom_hr/face_service.py` (`may_enrol`, `require_enroller`), `tests/test_custom_hr_face_enrolers.py`,
+  `custom_hr/face_queue_integration_tests.py` (part 6), the module README, `docs/sop/field-face-enrolment-and-consent.md`,
+  `docs/sop/face-attendance-agreement.md` (draft 2), `docs/sop/README.md`.
+
 ### Face attendance has an off switch, and it is off unless the site turns it on (P95)
 
 - **Decision:** every face function that takes in or uses a face (enrolment, identification, the capture queue's

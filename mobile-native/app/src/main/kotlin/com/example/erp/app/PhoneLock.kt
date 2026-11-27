@@ -55,6 +55,7 @@ sealed interface LockResult {
  * is what opens the app: without a match there is nothing in the app's storage that can be read.
  */
 class PhoneLock(context: Context) {
+    private val app = context.applicationContext
     private val prefs = context.getSharedPreferences("lock", Context.MODE_PRIVATE)
     private val hasStrongBox = context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
 
@@ -80,6 +81,8 @@ class PhoneLock(context: Context) {
 
     private fun erase(why: KeyLoss) {
         runCatching { store().deleteEntry(ALIAS) }
+        Safe.wipe(app) // what the lost key protected can never be opened again
+        Session.lock() // also when the key went while the app was open
         val first = loss ?: why // a later look at the empty store must not replace the real reason
         prefs.edit(commit = true) { clear(); putString(LOSS, first.name) }
     }
@@ -139,6 +142,7 @@ class PhoneLock(context: Context) {
         }) { matched ->
             val dataKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
             val locked = matched.iv + matched.doFinal(dataKey)
+            Safe.wipe(app) // a new key starts with an empty safe
             prefs.edit(commit = true) { clear(); putString(WRAPPED, Base64.encodeToString(locked, Base64.NO_WRAP)) }
             LockResult.Opened(dataKey)
         }
@@ -284,10 +288,19 @@ object Session {
 
     val isOpen: Boolean get() = dataKey != null
 
+    @Synchronized
     fun open(key: ByteArray) {
         dataKey = key
     }
 
+    /**
+     * The only way to use the data key. It cannot be wiped in the middle of [use], from any thread, so nothing is
+     * ever sealed with a key that is half or fully zeroed. Null when the app is locked.
+     */
+    @Synchronized
+    fun <T> withKey(use: (ByteArray) -> T): T? = dataKey?.let(use)
+
+    @Synchronized
     fun lock() {
         dataKey?.fill(0)
         dataKey = null

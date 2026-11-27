@@ -42,7 +42,7 @@ fun checkPhone(context: Context): PhoneCheck {
 }
 
 @Composable
-fun PhoneScreen(check: PhoneCheck, model: String, version: String) {
+fun PhoneScreen(check: PhoneCheck, model: String, version: String, safeNote: String? = null, onSafeNote: (() -> Unit)? = null) {
     // One centred column, so text lines stay readable on a tablet.
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.widthIn(max = 640.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -53,6 +53,10 @@ fun PhoneScreen(check: PhoneCheck, model: String, version: String) {
                 if (check.usable) StatusKind.OK else StatusKind.WARN,
                 if (check.usable) "This phone can keep a fingerprint-locked key." else "This phone cannot keep a fingerprint-locked key yet.",
             )
+            if (onSafeNote != null) {
+                RowCard(R.drawable.ic_lock, "Safe (test builds)", safeNote ?: "Empty.")
+                OutlineButton("Save a test note in the safe", onSafeNote)
+            }
             Text("App version $version", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
         }
     }

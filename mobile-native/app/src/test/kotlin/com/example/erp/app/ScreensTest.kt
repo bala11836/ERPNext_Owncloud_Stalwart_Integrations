@@ -56,12 +56,15 @@ class ScreensTest {
             var traces by androidx.compose.runtime.remember { mutableStateOf(tracer.all()) }
             var automatic by androidx.compose.runtime.remember { mutableStateOf(true) }
             var forced by androidx.compose.runtime.remember { mutableStateOf(false) }
+            var note by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
             ErpTheme(if (forced) Palettes.OUTDOOR else palette) {
                 AppFrame(
-                    FrameState(if (forced) Palettes.OUTDOOR else palette, testBuild, traces, phone, "Test Phone", "0.1.0", hasLightSensor = true, automaticOutdoor = automatic, forcedOutdoor = forced, lux = 24f),
+                    FrameState(if (forced) Palettes.OUTDOOR else palette, testBuild, traces, phone, "Test Phone", "0.1.0", hasLightSensor = true, automaticOutdoor = automatic, forcedOutdoor = forced, lux = 24f, safeNote = note),
                     onAddSample = { sampleTraces(tracer); traces = tracer.all() },
                     onAutomaticOutdoor = { automatic = it },
                     onForcedOutdoor = { forced = it },
+                    onTryConnection = { tracer.start("req_0123456789abcdef", "Connection test"); tracer.mark("req_0123456789abcdef", com.example.erp.core.Point.NETWORK, false, "no answer"); traces = tracer.all() },
+                    onSafeNote = { note = "A note saved Today, 10:42 was read back from the safe." },
                 )
             }
         }
@@ -224,11 +227,32 @@ class ScreensTest {
             }
         }
         assertEquals(0, compose.onAllNodesWithText("Add a sample trace", substring = true).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodesWithText("Try the connection", substring = true).fetchSemanticsNodes().size)
         assertEquals("the Welcome stand-in is not in the real app", 0, compose.onAllNodesWithText(Place.WELCOME.label).fetchSemanticsNodes().size)
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
         assertEquals(0, compose.onAllNodesWithText("sample values", substring = true).fetchSemanticsNodes().size)
+        place(Place.PHONE).performClick()
+        assertEquals(0, compose.onAllNodesWithText("Safe", substring = true).fetchSemanticsNodes().size)
         place(Place.DISPLAY).performClick()
         assertEquals(0, compose.onAllNodesWithText("lux", substring = true).fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun theSafeTestCardSaysWhatIsInTheSafeAndOnlyInTestBuilds() {
+        show(Palettes.LIGHT)
+        place(Place.PHONE).performClick()
+        shown("Empty.")
+        tap("Save a test note in the safe")
+        shown("was read back from the safe")
+        checkLayout("safe test card")
+    }
+
+    @Test
+    fun tryingTheConnectionAddsARowThatSaysWhereItStopped() {
+        show(Palettes.LIGHT, withTraces = false)
+        tap("Try the connection (test builds)")
+        compose.onNode(hasText("Connection test") and hasText("Failed") and hasText("Stopped at 3. Network") and hasClickAction()).assertIsDisplayed()
+        checkLayout("after a connection test")
     }
 
     @Test

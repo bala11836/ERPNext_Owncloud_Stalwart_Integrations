@@ -28,17 +28,22 @@ import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
 import com.example.erp.core.AccessRequest
 import com.example.erp.core.Approval
+import com.example.erp.core.Format
 import com.example.erp.core.KeyLoss
 import com.example.erp.core.KeyState
 import com.example.erp.core.LockRules
 import com.example.erp.core.OutdoorSwitch
 import com.example.erp.core.Palettes
 import com.example.erp.core.Point
+import com.example.erp.core.Reply
+import com.example.erp.core.Saver
 import com.example.erp.core.Trace
 import com.example.erp.core.Tracer
+import com.example.erp.core.Transport
 import com.example.erp.core.welcomeFor
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.concurrent.thread
 
 /** What the lock screen shows: read from the phone each time the app comes into sight and after every touch. */
 private class LockView(val key: KeyState, val loss: KeyLoss?, val misses: Int, val phone: PhoneCheck, val trouble: String? = null)
@@ -50,6 +55,30 @@ class MainActivity : FragmentActivity() {
     private val lock by lazy { PhoneLock(this) }
     private var lockView by mutableStateOf<LockView?>(null)
     private var asking = false
+    private var traces by mutableStateOf(emptyList<Trace>())
+
+    /** Every call of the app goes through this one saving layer and this one connection. */
+    private val saver by lazy {
+        val server = BuildConfig.SERVER
+        Saver(tracer, if (server.isEmpty()) Transport { _, _, _ -> Reply.NoConnection("no server address is set in this build") } else HttpTransport(server))
+    }
+
+    /** Test builds: one real call to the server's "are you there" function, so the path can be seen in Data trace. */
+    private fun tryConnection() {
+        // ponytail: one thread per tap is enough for a test button; real features get a shared worker with sign-in.
+        thread {
+            saver.save(UUID.randomUUID().toString(), "Connection test", "frappe.ping", emptyMap())
+            runOnUiThread { traces = tracer.all() }
+        }
+    }
+    private val safe by lazy { Safe(this) }
+    private var safeNote by mutableStateOf<String?>(null)
+
+    /** Test builds: the note is stored as a time and shown the app's way of writing times. */
+    private fun readSafeNote() {
+        val saved = safe.get(TEST_NOTE)?.let { runCatching { LocalDateTime.parse(it) }.getOrNull() }
+        safeNote = saved?.let { "A note saved ${Format.dateTime(it, LocalDateTime.now())} was read back from the safe." }
+    }
 
     private fun readLock(trouble: String? = null) {
         lockView = LockView(lock.state(), lock.loss, lock.misses, checkPhone(this), trouble)
@@ -62,6 +91,7 @@ class MainActivity : FragmentActivity() {
         ask(this) { result ->
             asking = false
             if (result is LockResult.Opened) Session.open(result.dataKey)
+            readSafeNote()
             readLock((result as? LockResult.Trouble)?.sentence)
         }
     }
@@ -70,6 +100,7 @@ class MainActivity : FragmentActivity() {
         super.onStart()
         Session.back()
         if (!asking) readLock()
+        readSafeNote()
     }
 
     override fun onResume() {
@@ -98,7 +129,6 @@ class MainActivity : FragmentActivity() {
             var forced by remember { mutableStateOf(settings.getBoolean("outdoor-forced", false)) }
             var bright by remember { mutableStateOf(false) }
             var lux by remember { mutableStateOf<Float?>(null) }
-            var traces by remember { mutableStateOf(tracer.all()) }
 
             // The light sensor is listened to only while the automatic switch is on and the app is on screen.
             DisposableEffect(automatic, lightSensor) {
@@ -131,10 +161,13 @@ class MainActivity : FragmentActivity() {
                     FrameState(
                         palette, testBuild, traces, view.phone, "${Build.MANUFACTURER} ${Build.MODEL}", BuildConfig.VERSION_NAME,
                         hasLightSensor = lightSensor != null, automaticOutdoor = automatic, forcedOutdoor = forced, lux = lux,
+                        safeNote = safeNote,
                     ),
                     onAddSample = { addSample(); traces = tracer.all() },
                     onAutomaticOutdoor = { automatic = it; settings.edit { putBoolean("outdoor-automatic", it) } },
                     onForcedOutdoor = { forced = it; settings.edit { putBoolean("outdoor-forced", it) } },
+                    onTryConnection = ::tryConnection,
+                    onSafeNote = { safe.put(TEST_NOTE, LocalDateTime.now().toString()); readSafeNote() },
                 )
             }
         }
@@ -177,6 +210,8 @@ class MainActivity : FragmentActivity() {
     /** Test builds only: one failed and one complete trace, so the screen can be checked before real calls exist (Phase 1). */
     private fun addSample(): Trace? = sampleTraces(tracer)
 }
+
+private const val TEST_NOTE = "test-note"
 
 /** One failed and one complete made-up trace. Used by the test-build button and by the screen tests. */
 fun sampleTraces(tracer: Tracer): Trace? {

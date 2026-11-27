@@ -37,6 +37,8 @@ class FrameState(
     val automaticOutdoor: Boolean,
     val forcedOutdoor: Boolean,
     val lux: Float?,
+    /** Test builds: what the test note in the safe says, or null when the safe is empty. */
+    val safeNote: String? = null,
 )
 
 /**
@@ -44,7 +46,7 @@ class FrameState(
  * chosen by the window's width.
  */
 @Composable
-fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Boolean) -> Unit, onForcedOutdoor: (Boolean) -> Unit) {
+fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Boolean) -> Unit, onForcedOutdoor: (Boolean) -> Unit, onSafeNote: (() -> Unit)? = null, onTryConnection: (() -> Unit)? = null) {
     var place by rememberSaveable { mutableStateOf(Place.TRACE) }
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -60,8 +62,8 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
     ) {
         Box(Modifier.statusBarsPadding()) {
             when (place) {
-                Place.TRACE -> TraceScreen(state.traces, showValues = state.testBuild, onAddSample = if (state.testBuild) onAddSample else null)
-                Place.PHONE -> PhoneScreen(state.phone, state.model, state.version)
+                Place.TRACE -> TraceScreen(state.traces, showValues = state.testBuild, onAddSample = if (state.testBuild) onAddSample else null, onTryConnection = if (state.testBuild) onTryConnection else null)
+                Place.PHONE -> PhoneScreen(state.phone, state.model, state.version, state.safeNote, if (state.testBuild) onSafeNote else null)
                 Place.WELCOME -> WelcomePreviewScreen()
                 Place.DISPLAY -> DisplayScreen(
                     state.palette,

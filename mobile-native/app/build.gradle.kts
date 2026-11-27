@@ -13,6 +13,11 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        // The one server this build talks to. Set privately (erpServer=... in the user's own gradle.properties),
+        // never in this repository. Empty: the build reaches no server.
+        val server = providers.gradleProperty("erpServer").getOrElse("")
+        require(server.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:\\d{1,5})?").matches(server)) { "erpServer must be https, a host and nothing else" }
+        buildConfigField("String", "SERVER", "\"$server\"")
     }
     buildFeatures {
         compose = true

@@ -27,14 +27,14 @@ import com.example.erp.core.Trace
  * with the reason at the point that failed. Phone: list, then detail. Tablet (wide): list and detail side by side.
  */
 @Composable
-fun TraceScreen(traces: List<Trace>, showValues: Boolean, onAddSample: (() -> Unit)?) {
+fun TraceScreen(traces: List<Trace>, showValues: Boolean, onAddSample: (() -> Unit)?, onTryConnection: (() -> Unit)? = null) {
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     val open = traces.firstOrNull { it.id == openId }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 840.dp
         if (wide) {
             Row(Modifier.fillMaxSize().padding(Look.Gap), horizontalArrangement = Arrangement.spacedBy(Look.Gap)) {
-                TraceList(traces, open?.id, onAddSample, Modifier.weight(1f)) { openId = it }
+                TraceList(traces, open?.id, onAddSample, onTryConnection, Modifier.weight(1f)) { openId = it }
                 Column(Modifier.weight(1.4f)) {
                     if (open != null) TraceDetail(open, showValues, onBack = null)
                     else Text("Choose an action on the left.", style = MaterialTheme.typography.bodyLarge, color = Look.Muted)
@@ -43,13 +43,20 @@ fun TraceScreen(traces: List<Trace>, showValues: Boolean, onAddSample: (() -> Un
         } else if (open != null) {
             Column(Modifier.fillMaxSize().padding(Look.Gap)) { TraceDetail(open, showValues, onBack = { openId = null }) }
         } else {
-            TraceList(traces, null, onAddSample, Modifier.fillMaxSize().padding(Look.Gap)) { openId = it }
+            TraceList(traces, null, onAddSample, onTryConnection, Modifier.fillMaxSize().padding(Look.Gap)) { openId = it }
         }
     }
 }
 
 @Composable
-private fun TraceList(traces: List<Trace>, selected: String?, onAddSample: (() -> Unit)?, modifier: Modifier, onOpen: (String) -> Unit) {
+private fun TraceList(
+    traces: List<Trace>,
+    selected: String?,
+    onAddSample: (() -> Unit)?,
+    onTryConnection: (() -> Unit)?,
+    modifier: Modifier,
+    onOpen: (String) -> Unit,
+) {
     Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Data trace", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
         if (traces.isEmpty()) {
@@ -75,6 +82,7 @@ private fun TraceList(traces: List<Trace>, selected: String?, onAddSample: (() -
             )
         }
         if (onAddSample != null) MainButton("Add a sample trace (test builds)", onAddSample)
+        if (onTryConnection != null) OutlineButton("Try the connection (test builds)", onTryConnection)
     }
 }
 

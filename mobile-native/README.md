@@ -4,8 +4,8 @@ The Android app rebuilt in Kotlin with Jetpack Compose (owner and developer deci
 replace the Expo app in `mobile/` when it does everything that app does and passes the same checks; until then
 the Expo app stays the app in use and this one is installed beside it for testing.
 
-**State: Phase 0 (foundation) and the first part of Phase 1 (the fingerprint lock).** It signs in nowhere and
-reads no business data yet.
+**State: Phase 0 (foundation) and the first three parts of Phase 1 (the fingerprint lock, the safe, the
+connection).** It signs in nowhere and reads no business data yet.
 
 ## Purpose
 
@@ -56,13 +56,29 @@ tap leads to a finished screen. This folder currently holds the foundation every
   match. A key is made inside the phone's secure chip (StrongBox where the phone has one) that can be used only
   for the moment of one match: no PIN, no pattern, no weak face unlock. After making it the app reads back what
   the phone really did and deletes a key that is protected less than asked. That key locks a random data key, and
-  holding the data key (in memory only, overwritten when dropped) is what "open" means. Today the data key locks
-  nothing yet, so "open" is still a check inside the app; from the next part the app's stored data is encrypted
-  with it and cannot be read without a match. Rules: 5 misses in a row erase the key (each miss is written at once, so closing the app does
+  holding the data key (in memory only, overwritten when dropped) is what "open" means, and the safe (below) is
+  locked with it. Rules: 5 misses in a row erase the key (each miss is written at once, so closing the app does
   not give tries back; the miss that makes the phone lock its own sensor counts too); a fingerprint added to the phone destroys it (the chip does this); away from the app for
   5 minutes, or the app's process ended, and the fingerprint is asked again. The real "Welcome back", "Make your
   key" and "Your key is gone" screens are in use. **Stand-in until sign-in exists:** a phone without a key goes
   straight to "Make your key" as if approved; the key protects nothing but the app's own screens yet.
+
+- **The safe** (`core` `Seal`, `app` `Safe.kt`): the one place for anything secret on the phone (the sign-in tokens
+  from the sign-in part on). Each value is sealed with AES-256-GCM under the data key, with its own random starting
+  number and its name bound in, so a stored value cannot be read without a fingerprint match, passed off under
+  another name, or changed unnoticed. A locked app writes nothing, and the data key cannot be wiped in the middle of a use. The safe is emptied when the key is erased and
+  when a new key is made; nothing is in a backup. **Today it holds only a test note** that test builds can save
+  from "This phone", so the behaviour can be checked on a phone before sign-in exists.
+
+- **The connection** (`app` `HttpTransport.kt`): the one real `Transport` behind `Saver`, built on the platform's own
+  HTTP client (no added library). It talks to the one configured server and to nothing else (a redirect is handed
+  back, never followed, and reads as "signed out"), encrypted only (the device's own loopback address is the single
+  exception, for the tests' pretend server; the manifest forbids cleartext as well), sends the tracking number with
+  every call (`X-Request-ID`) and the sign-in token only as a header. It reads ERPNext's answers: the record's
+  fields, the server's own refusal sentence, 401 as signed out, 403 as not allowed; a page where an answer should
+  be (a hotspot's or a sign-in page) is never taken for "saved". Numbers are written out in full (never "1.25E7"),
+  so an amount of a crore or more stays an amount. **No sign-in yet**, so no token is sent; test
+  builds have "Try the connection" on Data trace, which makes one real call and shows where it stopped.
 
 ## Contents
 
@@ -85,6 +101,9 @@ building blocks in `app` depend only on Compose Material 3.
 
 ## Configuration
 
+The server address is set privately as well (`erpServer=https://...` in the user's own Gradle properties, outside
+this repository). Without it the build reaches no server.
+
 The app ID defaults to the neutral `com.example.erp.next`. A deployment sets its own in a private
 `gradle.properties` (`erpAppId=...`), never in this repository. Signing keys and service files stay outside the
 repository (`.gitignore`).
@@ -96,7 +115,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (40), Android lint with warnings as errors, the app's screen tests (13) and a
+runs the rules module's unit tests (44), Android lint with warnings as errors, the app's screen and connection tests (26) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 
@@ -116,13 +135,20 @@ stored, that the fifth erases, or that leaving the app locks it; those are check
 from the second review: growing waits between tries (in the decision record, not built), a second copy of the
 screen opened by another app can lock the app early, and a stored data key that can no longer be opened after a
 match has no way out except clearing the app's data.
+Checked by hand by the developer on 27 November 2026 (same phone): a key is made and opens the app; a test note
+stays in the safe across a full close and reopen; five wrong fingers count the tries down, end in "Your key is
+gone", and the safe is empty after a new key; the fingerprint is asked again after more than 5 minutes away and
+not before; "Try the connection" without a server address stops at the network point. Not reported yet: a
+fingerprint added in the phone's Settings.
+The connection tests run on the computer's own HTTP client; the phone's differs in details and has not met a real
+server yet. `Safe` itself has no behaviour test (its sealing has, in `core`); its rules are checked as text.
 Not yet covered: picture comparison (the robot measures sizes and positions, it does not see overlapping or
 ugly layouts), Android 9 to 14, a real tablet. Not yet looked at by a person in real sunlight or at the largest
 font size.
 
 ## Licenses
 
-Our own code, AGPL-3.0-or-later like the repository. Libraries (all Apache-2.0 unless noted): Kotlin 2.2.10
+Our own code, AGPL-3.0-or-later like the repository. Libraries (all Apache-2.0 unless noted; the connection uses Android's own HTTP client and JSON reader): Kotlin 2.2.10
 (JetBrains), Jetpack Compose (BOM 2026.09.00: UI, Material 3, adaptive navigation suite), AndroidX Activity
 1.12.4 and Biometric 1.1.0, the Android Gradle plugin 9.2.1; for tests only: JUnit 4.13.2 (EPL-1.0), Robolectric
 4.18 (MIT) and Compose's UI test library.

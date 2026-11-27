@@ -34,7 +34,7 @@ class MobileNativeTests(unittest.TestCase):
 
     def test_only_the_permissions_the_app_uses(self):
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
-        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['USE_BIOMETRIC'])
+        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'USE_BIOMETRIC'])
         self.assertEqual(manifest.count('android:exported="true"'), 1, 'only the launcher screen is open to other apps')
 
     def test_a_message_that_names_an_action_must_carry_one(self):
@@ -104,6 +104,35 @@ class MobileNativeTests(unittest.TestCase):
         self.assertIn('const val MAX_MISSES = 5', rules)
         self.assertIn('const val AWAY_MS = 5 * 60 * 1000L', rules)
 
+    def test_the_safe_stores_nothing_in_the_clear_and_goes_with_the_key(self):
+        safe = (KOTLIN / 'Safe.kt').read_text(encoding='utf-8')
+        # Every write is sealed with the data key first, and a locked app writes nothing.
+        put = safe.split('fun put(')[1].split('\n    }')[0]
+        self.assertIn('Session.withKey { Seal.seal(it, name, value.toByteArray()) } ?: return false', put)
+        self.assertLess(put.index('Seal.seal(it, name,'), put.index('putString('))
+        self.assertIn('.commit()', put)
+        self.assertEqual(safe.count('putString('), 1)
+        self.assertIn('Session.withKey { Seal.open(it, name, sealed) }', safe)
+        # The data key is used only through the one guarded door, which a wipe cannot interrupt.
+        self.assertNotIn('Session.dataKey', safe)
+        session = (KOTLIN / 'PhoneLock.kt').read_text(encoding='utf-8').split('object Session')[1]
+        self.assertEqual(session.count('@Synchronized'), 3)
+        # The safe is emptied when the key is erased and when a new one is made.
+        lock = (KOTLIN / 'PhoneLock.kt').read_text(encoding='utf-8')
+        erase = lock.split('private fun erase(')[1].split('\n    }')[0]
+        self.assertIn('Safe.wipe(app)', erase)
+        self.assertIn('Session.lock()', erase)
+        self.assertIn('Safe.wipe(app)', lock.split('fun make(')[1].split('fun open(')[0])
+        # Only the lock's own state and the display settings are stored unsealed.
+        kotlin = {p.name: p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt')}
+        writers = sorted(name for name, text in kotlin.items() if 'getSharedPreferences(' in text)
+        self.assertEqual(writers, ['MainActivity.kt', 'PhoneLock.kt', 'Safe.kt'])
+        self.assertEqual(re.findall(r'getSharedPreferences\("(\w+)"', kotlin['MainActivity.kt']), ['display'])
+        seal = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Seal.kt').read_text(encoding='utf-8')
+        self.assertIn('"AES/GCM/NoPadding"', seal)
+        self.assertIn('SecureRandom().nextBytes(it)', seal)
+        self.assertEqual(seal.count('cipher.updateAAD(name.toByteArray())'), 2)
+
     def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
         kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
         self.assertIn('isSystemInDarkTheme()', kotlin, 'day and night follow the phone')
@@ -143,6 +172,25 @@ class MobileNativeTests(unittest.TestCase):
             self.assertIn(point, saver)
         # A raw server error text is never the sentence a person reads.
         self.assertIn('"The server has a problem right now.', saver)
+
+    def test_the_app_reaches_one_server_encrypted_and_follows_no_redirect(self):
+        net = (KOTLIN / 'HttpTransport.kt').read_text(encoding='utf-8')
+        self.assertIn('connection.instanceFollowRedirects = false', net)
+        self.assertIn('uri.scheme == "https" || (uri.scheme == "http" && uri.host == LOOPBACK)', net)
+        self.assertIn('const val LOOPBACK = "127.0.0.1"', net)
+        self.assertIn('connection.setRequestProperty("X-Request-ID", trackingId)', net)
+        self.assertIn('"Authorization", "Bearer $it"', net)
+        # The network is opened in this one file only, and the phone itself refuses unencrypted traffic too.
+        kotlin = {p.name: p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt')}
+        opens = sorted(name for name, text in kotlin.items() if re.search(r'openConnection|HttpURLConnection|java\.net\.Socket|OkHttp', text))
+        self.assertEqual(opens, ['HttpTransport.kt'])
+        manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
+        self.assertIn('android:usesCleartextTraffic="false"', manifest)
+        self.assertNotIn('networkSecurityConfig', manifest)
+        # The server's address is set privately, never here.
+        build = (NATIVE / 'app/build.gradle.kts').read_text(encoding='utf-8')
+        self.assertIn('providers.gradleProperty("erpServer").getOrElse("")', build)
+        self.assertNotIn('erpServer', (NATIVE / 'gradle.properties').read_text(encoding='utf-8'))
 
     def test_reports_leave_values_out_by_default(self):
         trace = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Trace.kt').read_text(encoding='utf-8')

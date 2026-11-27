@@ -34,9 +34,23 @@ discussion that led to a decision is not repeated here.
   - The owner chose parallel work over the agent's suggestion to build the app parts after attendance and approvals.
 - **Kept:** the phone sign-in check (`portal/mobile.py`). It was written for Raven's app but signs in every phone app
   now, so its settings are renamed, not removed.
-- **Before adoption:** the licence, maintenance and security-history checks for Synapse, the Matrix Authentication
-  Service, the Rust SDK, the push gateway and Ltt.rs, recorded here. They are `evaluating` in the open-source list
-  until then.
+- **Adoption check (27 November 2026; GitHub and Codeberg repositories and GitHub Security Advisories):**
+  - **Synapse** (element-hq/synapse): AGPL-3.0, a release every one to two weeks (v1.166.0 on 24 November 2026).
+    13 advisories in the last 12 months (7 high), published in two batches with the fixed versions (1.152.1 and
+    1.157.2); none open at 1.166.0. Verdict: adopt, pinned by version and digest, in the daily upstream watch.
+  - **Matrix Authentication Service** (element-hq/matrix-authentication-service): AGPL-3.0, v1.30.0 on 24 November
+    2026, no advisories in the last 12 months. Verdict: adopt.
+  - **matrix-rust-sdk** (matrix-org/matrix-rust-sdk): Apache-2.0, v0.20.0 on 25 November 2026. 4 advisories in the
+    last 12 months (1 high), all fixed by 0.19.0. Verdict: adopt at 0.20.0 or later.
+  - **Sygnal**, the push gateway: the matrix-org repository is archived; it continues at element-hq/sygnal
+    (AGPL-3.0, v0.17.0 of 5 November 2025, commits in November 2026, no advisories). Verdict: adopt from element-hq
+    when the app's chat alerts are built.
+  - **Ltt.rs** and its JMAP library (codeberg.org/iNPUTmice): Apache-2.0. Little upkeep: the library's last commit
+    was April 2025, the app's last code change October 2025. Verdict: borrow the JMAP library code with caution and
+    maintain our copy ourselves; do not depend on upstream fixes.
+  - All stay `evaluating` in the open-source list until each is deployed or copied.
+  - **Room on the test VM:** 8 GB memory with about 3.5 GB available, 3 CPUs, 120 GB disk free: enough for Synapse,
+    its database and the authentication service on test. Production's room is checked before promotion.
 - **Where:** P108, P73, P109, P50, P04.
 
 ### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)

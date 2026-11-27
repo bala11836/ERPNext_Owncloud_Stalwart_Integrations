@@ -735,7 +735,22 @@ accepts that risk.
   the same unless the owner decides otherwise.
 - **ERPNext bot:** posts document events and approvals into the right rooms, rooms per project or site, people and
   groups from ERPNext and authentik.
+- **Server name (owner, 27 November 2026, evening): `chat.<company domain>`**, so addresses are
+  `@name:chat.<company domain>`. Chosen over the bare domain (which would tie chat to the website serving two
+  well-known files for ever): the chat server stands on its own address, separate and replaceable. The name can
+  never be changed afterwards, so production starts on the company domain people keep (P70's split), not the demo
+  domain. The test server has its own throwaway name.
+- **Chat name (owner, 27 November 2026, night): `firstname.initial`**, with a number on a clash (`rajesh.d`, then
+  `rajesh.d2`); made once at onboarding, never changed and never reused; addresses are `@rajesh.d:chat.<domain>`.
+  The sign-in user name stays the full mail address (which Matrix does not accept as a name). The sign-in service
+  holds the chat name as a user attribute `chat_name` and gives it to the chat sign-in as a claim; without it a
+  person cannot sign in to chat. The sign-up service (P82) generates it; until P82 is built it is set by hand.
 - **Every new server part gets** monitoring, backups and a test copy from the first deployment (working agreements).
+- **Progress (27 November 2026, night):** the stack is public PR #139 (`p73/matrix-stack`, `9890da2`) and runs on the
+  test VM since 14:41 UTC (receipt `p73-test-chat-stack-9890da2`), with sign-in set up in the test sign-in service.
+  Not reachable from outside until #139 is on main and the production relay carries the two test names. Not built:
+  the push gateway, the ERPNext bot and rooms, monitoring, backups and the drift check for the stack, the production
+  route file.
 - **First step:** the adoption check (licence, maintenance, security history, how fixes are published) for Synapse,
   MAS, the Rust SDK and the push gateway, recorded in the decision log; then Synapse and MAS on the test site.
 
@@ -1268,8 +1283,8 @@ Matrix chat (P73) and a light mail client (P109) inside the app.
    records what was sent and delivered, and follows the test-site safeguards (allow list, test marker). P72's alert
    inbox and P22's notifications use it rather than their own senders.
 2. **Replace what Raven does today:** Raven document notifications (P22 step 1) become ERPNext notifications through
-   the service; incident reports that were to go to Raven threads (decision of 22 November) become ERPNext records with
-   notifications to the right people (agent's proposal, owner to confirm).
+   the service; incident reports that were to go to Raven threads (decision of 22 November) go to Matrix rooms
+   (owner, 27 November; see below).
 3. **Remove Raven:** from the ERP image and app list, the portal's app frames, onboarding's app rules, the phone menu,
    the Raven proxy route, tests and documents. **Keep the phone sign-in check** (`portal/mobile.py`): it was written for
    Raven but now signs in every phone app, ours included; rename its settings (`cloud_raven_mobile_enabled`,
@@ -1282,12 +1297,28 @@ Matrix chat (P73) and a light mail client (P109) inside the app.
 6. **SMS gateway:** sending SMS to Indian numbers needs DLT registration (the company, a sender name and every message
    template) with a telecom operator, and costs per message. Choose a provider after the licence and adoption checks;
    use SMS only where WhatsApp and mail do not reach.
+7. **For the phone app (owner, 27 November 2026, night; public #114):** every message carries its kind ("needs a
+   decision" or "informs"); a "what waits for me" call (per kind: count, longest wait, nearest deadline); a
+   content-free "remove this alert" signal when something is decided anywhere; a reminder for a waiting decision
+   every 4 hours between 07:00 and 21:00 only, counted by the server; approvals themselves alert round the clock; a
+   per-site summary.
 
 **Settled (owner, 27 November 2026, evening):** no gap to manage and no history to export, because production is not
 in real use (count Raven's messages on production before uninstalling all the same, read-only). **External messages:**
 mail, forms (the Respond app and ERPNext web forms) and WhatsApp (P04); SMS only where those do not reach.
 
-**Open for the owner:** where incident reports go (agent proposes ERPNext records with notifications).
+**Progress (27 November 2026):** part 1, the removal, is public PR #138, merged at `86d5cd9` (13:59 UTC; tested commit
+`5cc6d1a`, later commits documents only). On the test ERP since 13:52 UTC on a new core image without Raven (receipt
+`p108-test-erp-remove-raven-5cc6d1a`). **Merged, not deployed** to production: it needs a new core image there, the
+uninstall with the old image first, the config keys and the proxy files, at a quiet moment (decision log, 27 November).
+Not yet built: the notification service (part 2); the SMS gateway choice.
+
+**Incident reports go to Matrix (owner, 27 November 2026, evening):** the person picks one or more rooms, as the
+22 November design did with Raven threads; the photos (and later clips, P106) still go to the project's Drive
+through ERPNext (P74) and the room message links to them. Reason: the long-term plan is not to use ERPNext for
+everything; modules stay separate and replaceable. The agent had proposed ERPNext records; it noted that chat
+does not track whether an incident is open or closed, so a small separate incident tracker can be added later
+if that is needed.
 
 **Closes when done (owner decides each):** P16 (Raven attachments); the Raven parts of P14; the "Raven Mobile" client
 question in P64; P22's "Raven inside the company" channel.

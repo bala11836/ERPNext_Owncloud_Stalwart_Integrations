@@ -6,6 +6,27 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-27
 
+### No chat or mail in the phone app for now; Raven leaves ERPNext; Matrix and a light mail client later (P108, P109, P73)
+
+- **Decision:**
+  1. The phone app offers no chat and no mail for now.
+  2. Raven is removed from ERPNext. Every message the system sends to people goes through one notification service in
+     our add-on, which picks the channel per person and urgency: in the app, mail, WhatsApp, or an SMS gateway.
+  3. Later, Matrix becomes the internal chat inside the app, with a light JMAP mail client (read and reply first).
+
+  This replaces three earlier decisions: "Chat, Mail and Drive stay separate apps" (22 November) for chat and mail;
+  "incidents go to Raven threads"; and "Raven inside the company" for notifications (P22).
+- **Why:** owner, 27 November 2026.
+  - The app holds each person's key in the phone's secure hardware. Android cannot share it with Raven's or a mail
+    app's own phone apps, so a second app would need its own key and its own approvals.
+  - One notification service sends each event once, keeps a record of what was sent, and lets a channel be swapped
+    (WhatsApp for SMS, later Matrix) without touching every sender.
+  - Matrix (over XMPP) for its apps, bridges and federation (P73).
+- **Kept:** the phone sign-in check (`portal/mobile.py`). It was written for Raven's app but signs in every phone app
+  now, so its settings are renamed, not removed.
+- **Accepted for now:** until Matrix chat exists there is no chat between people inside our system.
+- **Where:** P108 (removal and the notification service), P109 (mail client), P73 (Matrix), P04 (WhatsApp).
+
 ### Native app Phase 1 and sign-up: lock, offline window, photo cache, user name, verification codes, video (P50, P74, P82, P04, P106)
 
 - **Decision:**

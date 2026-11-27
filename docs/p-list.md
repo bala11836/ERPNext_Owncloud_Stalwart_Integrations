@@ -155,13 +155,13 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 
 | App | List | Items | Not done |
 |---|---|---|---|
-| General | [pending/general.md](p-list/general.md) | 29 | 29 |
+| General | [pending/general.md](p-list/general.md) | 30 | 30 |
 | DMS | [pending/dms.md](p-list/dms.md) | 1 | 1 |
 | Drive | [pending/drive.md](p-list/drive.md) | 1 | 1 |
 | Editor | [pending/editor.md](p-list/editor.md) | 3 | 3 |
 | ERP | [pending/erp.md](p-list/erp.md) | 15 | 15 |
 | Mail | [pending/mail.md](p-list/mail.md) | 6 | 6 |
-| Mobile | [pending/mobile.md](p-list/mobile.md) | 8 | 8 |
+| Mobile | [pending/mobile.md](p-list/mobile.md) | 9 | 9 |
 | Portal (eZone) | [pending/portal.md](p-list/portal.md) | 4 | 4 |
 | Raven and Insights | [pending/raven.md](p-list/raven.md) | 1 | 1 |
 | Sign-in | [pending/signin.md](p-list/signin.md) | 8 | 8 |
@@ -253,4 +253,6 @@ its app's list (copy the `**App:**` line from a neighbour), then run `python3 to
 | P105 | Test site ready for the native app's five-phone test round | [Test site](p-list/test-site.md) | erp, signin, mobile · **State:** blocked | blocked |
 | P106 | Short video clips with site incidents | [Mobile](p-list/mobile.md) | drive, erp · **State:** open | open |
 | P107 | User support: "Report a problem" in the apps, and an admin support desk | [General](p-list/general.md) | erp, mobile, portal, signin · **State:** parked | parked |
+| P108 | Remove Raven from ERPNext; all messages through our own channels | [General](p-list/general.md) | raven, mail, mobile, portal, signin, general · **State:** open | open |
+| P109 | A light mail client in the phone app (JMAP) | [Mobile](p-list/mobile.md) | mail, signin · **State:** open · **Category:** later | open |
 <!-- APP-INDEX-END -->

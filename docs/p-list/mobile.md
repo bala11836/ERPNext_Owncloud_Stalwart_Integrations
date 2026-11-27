@@ -16,7 +16,7 @@ Part of the P list: back to the [index and priority order](../p-list.md). Items 
 
 **Status:** approved-session OAuth/PKCE binding, refresh/revocation and push modules are retained; current-stack native Raven and fresh-device acceptance remain incomplete. Earlier ERP/HR notification receipt is recorded at its earlier deployment checkpoint, not re-certified on the current portal.
 
-Verify the new portal's per-device opt-in controls, ERP/HR notification receipt and tapping, and Raven background delivery from another user on actual devices. Native relay credentials and registrations stay private. Mocked tests and a provider HTTP success do not prove device delivery. No notification test or business approval message was sent during consolidation.
+Verify the new portal's per-device opt-in controls, ERP/HR notification receipt and tapping, and Raven background delivery from another user on actual devices. (Owner, 27 November 2026: the Raven parts fall away with P108.) Native relay credentials and registrations stay private. Mocked tests and a provider HTTP success do not prove device delivery. No notification test or business approval message was sent during consolidation.
 
 Recheck native Raven login/chat/refresh and revoked-token refusal, and coordinate realtime recovery with P01. Preserve exact validated callbacks and existing workers/drafts. See [push and Raven scope](../roadmap.md#1-push-and-session-bound-native-raven).
 
@@ -108,6 +108,10 @@ the Android build tool, and the calling layer treats a redirect as signed out, s
 sentences and no longer crashes on sign-out during a save. Still open in Phase 0 (the colleague's list): picture
 comparison, texts in one file, a real tablet, vibration, icon and start screen, detekt, crash reports. Not for
 merging yet; nothing to deploy (no server stack).
+
+**No chat and no mail in the app for now (owner, 27 November 2026):** the key the app holds cannot be shared with
+Raven's or a mail app's own phone apps, and Raven is being removed (P108). Later the app gets Matrix chat (P73) and a
+light mail client (P109). This replaces "Chat, Mail and Drive stay separate apps" of 22 November for chat and mail.
 
 **Phase 1 plan and owner decisions (27 November 2026; the colleague's plan of five parts: the lock, the safe, the
 connection, sign-in, home):**
@@ -322,4 +326,23 @@ connection after an interruption, plays in Drive in a browser (H.264 everywhere;
 it, otherwise offered as a download), and is refused for a site the person does not belong to.
 
 **Related:** P74, P50 (Phase 2 or later, not Phase 1), P72 (disk growth and backups).
+
+### P109 — A light mail client in the phone app (JMAP)
+
+**App:** mobile · **Also touches:** mail, signin · **State:** open · **Category:** later
+
+**Why (owner, 27 November 2026):** mail on the phone without sharing the app's key with another mail app; later, after
+P108 and alongside Matrix chat (P73).
+
+**What (agent's proposal for the owner to confirm when it starts):**
+- **Read and reply first:** inbox, open a mail, reply, see attachments; everything else in webmail in the phone's
+  browser. More features only when people ask for them.
+- **Through JMAP,** the mail server's modern interface that our webmail already uses, signed in with the same sign-in
+  service (to prove on the test site first).
+- **Mail from strangers is shown safely:** a locked-down view, remote images blocked until the person allows them.
+- **Reuse:** look for an open-source Android JMAP client to reuse parts of; check its licence and upkeep first.
+- **With it, decide P18:** whether other mail apps (the external mail provider, Outlook) are refused once mail works in our app (agent
+  recommends refusing them).
+
+**Related:** P108, P73, P18, P50, P82.
 

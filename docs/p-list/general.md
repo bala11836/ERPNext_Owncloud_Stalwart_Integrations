@@ -718,6 +718,12 @@ places or networks (P82) reach the admin the same way: on the widget, by mail, o
 
 **App:** general · **Also touches:** mobile, raven, erp, signin · **State:** open · **Category:** long-term plan
 
+**Owner, 27 November 2026 (amends the plan below):** **Matrix**, not XMPP, as the internal chat, built into the
+native app (P50) later. Raven is removed from ERPNext **before** this chat exists (P108), so step 4 below becomes "use
+the Raven export from P108", and "run both for a period" no longer applies. The app is now native Kotlin, so the
+client library to check is Matrix's Rust SDK through its Kotlin bindings (as Element X Android uses it; licence and
+maturity to verify), not the React Native packages in the first findings.
+
 **Plan (owner, 26 November 2026; replaces the "idea" below as the goal):** replace Raven with a federated chat
 (Matrix or XMPP), built into ERP Mobile as its Chat tab (P50), and retire Raven once the new chat carries the work.
 It must keep what Raven gives today inside ERPNext: the same users and roles (authentik sign-in), sharing ERP
@@ -1218,3 +1224,43 @@ record of finished ones, and reach server alerts and logs.
   open-source list;
 - a row in the working-agreements stack table (support desk);
 - SOPs for handling a support case and for screenshot privacy (`docs/sop/`).
+
+### P108 — Remove Raven from ERPNext; all messages through our own channels
+
+**App:** erp · **Also touches:** raven, mail, mobile, portal, signin, general · **State:** open
+
+**Why (owner, 27 November 2026):** the phone app holds the person's key, and sharing it with Raven's and a mail app's
+own phone apps is not possible. The owner's plan: (1) no Raven and no mail in the phone app for now; (2) remove Raven
+from ERPNext and send every message through our own channels: mail, WhatsApp (P04) and an SMS gateway; (3) later,
+Matrix chat (P73) and a light mail client (P109) inside the app.
+
+**What:**
+1. **One notification service in our ERP add-on:** every message the system sends to a person (approvals, document
+   changes, attendance, incidents, alerts) goes through one function that picks the channel by the person's
+   preference and the message's urgency (in the app and phone alert, mail, WhatsApp, SMS), sends each event once,
+   records what was sent and delivered, and follows the test-site safeguards (allow list, test marker). P72's alert
+   inbox and P22's notifications use it rather than their own senders.
+2. **Replace what Raven does today:** Raven document notifications (P22 step 1) become ERPNext notifications through
+   the service; incident reports that were to go to Raven threads (decision of 22 November) become ERPNext records with
+   notifications to the right people (agent's proposal, owner to confirm).
+3. **Remove Raven:** from the ERP image and app list, the portal's app frames, onboarding's app rules, the phone menu,
+   the Raven proxy route, tests and documents. **Keep the phone sign-in check** (`portal/mobile.py`): it was written for
+   Raven but now signs in every phone app, ours included; rename its settings (`cloud_raven_mobile_enabled`,
+   `cloud_raven_mobile_client`) on test and production in the same release.
+4. **Raven's data:** uninstalling Raven deletes every message, channel and attachment record for good. Count them on
+   production first (read-only, with the owner's OK), then export to Drive as a read-only archive or let them go
+   (owner decides). Keep the export until P73's retention rule is set.
+5. **Test site first** (uninstall, all checks, the phone app still signs in), then production at a quiet moment with a
+   backup.
+6. **SMS gateway:** sending SMS to Indian numbers needs DLT registration (the company, a sender name and every message
+   template) with a telecom operator, and costs per message. Choose a provider after the licence and adoption checks;
+   use SMS only where WhatsApp and mail do not reach.
+
+**Open for the owner:** the gap between removing Raven and Matrix chat (see the decision log entry of 27 November);
+the Raven history (export or delete); where incident reports go.
+
+**Closes when done (owner decides each):** P16 (Raven attachments); the Raven parts of P14; the "Raven Mobile" client
+question in P64; P22's "Raven inside the company" channel.
+
+**Related:** P73 (Matrix), P04 (WhatsApp), P109 (mail in the app), P22, P72, P107, P50.
+

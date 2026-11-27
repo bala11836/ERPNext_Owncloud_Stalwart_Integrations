@@ -196,7 +196,11 @@
       "mem_limit": "256m",
       "ports": [],
       "networks": {
-        "default": {},
+        "default": {
+          "aliases": [
+            "alerts-gateway"
+          ]
+        },
         "outbound": {}
       }
     }

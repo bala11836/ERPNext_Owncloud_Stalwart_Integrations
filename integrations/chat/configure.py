@@ -29,7 +29,9 @@ REQUIRED = ('CHAT_SERVER_NAME', 'CHAT_PUBLIC_URL', 'CHAT_AUTH_URL', 'SYNAPSE_DB_
             'BRIDGE_AS_TOKEN', 'BRIDGE_HS_TOKEN', 'NETWORK_SUBNET', 'ALERTS_APP_ID')
 # Phone alerts (optional): where an operator has placed Google's service-account key in the key folder, the alert
 # gateway (Sygnal) is configured for one app. The app registers the gateway's address below as its push address.
-ALERTS_URL = 'http://alerts:5000/_matrix/push/v1/notify'
+# The name exists only on the stack's own network, so it always resolves to an address in NETWORK_SUBNET (the
+# service name would also resolve on any other network the deployment tool attaches, which Synapse may not call).
+ALERTS_URL = 'http://alerts-gateway:5000/_matrix/push/v1/notify'
 ALERTS_KEY_NAME = 'fcm-key.json'
 APP_ID = re.compile(r'[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+')
 # The business system's bot (P73): it creates the rooms, invites people into them and posts; people cannot use

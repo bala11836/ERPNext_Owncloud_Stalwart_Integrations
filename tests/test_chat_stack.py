@@ -146,7 +146,7 @@ class Configuration(unittest.TestCase):
 
     def test_alerts_only_go_to_the_gateway_inside_this_stacks_own_network(self):
         self.assertEqual(self.synapse['ip_range_whitelist'], ['172.30.250.0/24'])
-        self.assertTrue(configure.ALERTS_URL.startswith('http://alerts:5000/'))
+        self.assertTrue(configure.ALERTS_URL.startswith('http://alerts-gateway:5000/'))
         for bad, word in (('10.0.0.0/8', 'at most 256'), ('8.8.8.0/24', 'private'), ('not a network', 'network')):
             with self.assertRaises(ValueError) as refused:
                 configure.settings({**ENV, 'NETWORK_SUBNET': bad})
@@ -227,7 +227,7 @@ class Stack(unittest.TestCase):
         self.assertEqual(gateway['ports'], [], 'no port on the host: only Synapse calls it')
         self.assertEqual(gateway['volumes'], ['alerts-config:/config:ro'])
         self.assertEqual(gateway['depends_on'], {'configure': {'condition': 'service_completed_successfully'}})
-        self.assertEqual(gateway['networks'], {'default': {}, 'outbound': {}},
+        self.assertEqual(gateway['networks'], {'default': {'aliases': ['alerts-gateway']}, 'outbound': {}},
                          'its own way out to Google, and not on the shared network of the other applications')
         self.assertEqual(STACK['networks']['outbound'], {})
         self.assertFalse([name for name, s in STACK['services'].items() if name != 'alerts' and 'outbound' in s['networks']],

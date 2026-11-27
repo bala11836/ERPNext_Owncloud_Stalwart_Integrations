@@ -270,8 +270,8 @@ office, one role per phone, against the test site only.
    App Link on the test domain (agent's recommendation over a private scheme), the client ID in
    `cloud_native_mobile_clients`, and `assetlinks.json` with the test build's SHA-256 fingerprint.
 
-**Blocked on:** the five testers' mail addresses (to the owner privately, never in the public PR) and the test build's
-signing fingerprint from the developer.
+**Blocked on:** the testers' mail addresses (to the owner privately, never in the public PR); the colleague collects
+them (owner, 27 November). The signing fingerprint arrived on #114 on 27 November (issuecomment-7216179275).
 
 **Acceptance:** each of the five signs in on their own phone with their own passkey and sees only their role's
 screens; every "must be refused" call in the request is refused by ERPNext itself; the sixth account gets the clear

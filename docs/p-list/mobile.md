@@ -109,6 +109,21 @@ sentences and no longer crashes on sign-out during a save. Still open in Phase 0
 comparison, texts in one file, a real tablet, vibration, icon and start screen, detekt, crash reports. Not for
 merging yet; nothing to deploy (no server stack).
 
+**The developer's screen plan and the owner's answers (27 November 2026; public #114, issuecomment-7219041831 and
+issuecomment-7219386949):**
+- **Bottom bar: Today, Inbox, Chat, Mail, More** (owner; replaces Today, Inbox, My HR, Menu of 22 November; "Inbox"
+  stays the approvals place, not renamed "To do").
+- **Chat kept on the phone for 7 days** (the developer proposed 14), locked with the fingerprint key.
+- **"Save to phone" for mail attachments is a setting, off by default** (the developer proposed it for everyone): a
+  saved file leaves the app's locked store.
+- Agreed as proposed: the "Outside" pill on mail from outside, remote pictures only after a tap, links show their
+  address first; alerts say only "New message" or "New mail"; separate badges for Inbox, Chat and Mail.
+- **Server side owes the app:** rooms made by the server per site and team (P73); a read-only "Notices" room, and
+  every message marked "inform" or "needs a decision" by the notification service (P108); a yes/no "has a mailbox"
+  in the bootstrap answer (P109); client IDs, return paths and addresses for three token issuers (ERPNext, the
+  sign-in service for mail, Matrix's authentication service for chat); the design of mail alerts.
+- The developer posted the test build's signing fingerprint on #114 (issuecomment-7216179275), for P105.
+
 **Chat and mail in the app now (owner, 27 November 2026, evening; replaces "for now" below):** Matrix chat (P73) and
 the light mail client (P109) are built now, in parallel with Phase 1. **Sign-in design for Phase 1 part 4:** one
 passkey sign-in in the browser gives the app every token it needs: ERPNext's now, and later the sign-in service's

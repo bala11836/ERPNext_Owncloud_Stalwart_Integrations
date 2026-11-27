@@ -19,21 +19,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /** What the app needs from this phone, checked for real. The same check opens onboarding later (screen A2). */
-class PhoneCheck(val lines: List<Pair<StatusKind, String>>, val usable: Boolean)
+class PhoneLine(val kind: StatusKind, val icon: Int, val title: String, val text: String)
+
+class PhoneCheck(val lines: List<PhoneLine>, val usable: Boolean)
 
 fun checkPhone(context: Context): PhoneCheck {
-    val lines = mutableListOf<Pair<StatusKind, String>>()
     val strong = BiometricManager.from(context).canAuthenticate(BIOMETRIC_STRONG)
-    lines += when (strong) {
-        BiometricManager.BIOMETRIC_SUCCESS -> StatusKind.OK to "Fingerprint sensor: ready"
-        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> StatusKind.WARN to "Fingerprint sensor: no fingerprint saved yet. Add yours in the phone's Settings."
-        BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> StatusKind.BAD to "Fingerprint sensor: this phone has none. The app cannot keep a key here."
-        else -> StatusKind.BAD to "Fingerprint sensor: not usable right now (code $strong)"
+    val (kind, text) = when (strong) {
+        BiometricManager.BIOMETRIC_SUCCESS -> StatusKind.OK to "Ready to use."
+        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> StatusKind.WARN to "No fingerprint saved yet. Add yours in the phone's Settings."
+        BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> StatusKind.BAD to "This phone has none. The app cannot keep a key here."
+        else -> StatusKind.BAD to "Not usable right now (code $strong)."
     }
     val strongBox = context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
-    lines += StatusKind.OK to if (strongBox) "Secure chip: separate chip (StrongBox)" else "Secure chip: built into the processor"
-    // The app cannot be installed below Android 9, so a running app is always on a supported version.
-    lines += StatusKind.OK to "Android ${Build.VERSION.RELEASE}: supported"
+    val lines = listOf(
+        PhoneLine(kind, R.drawable.ic_fingerprint, "Fingerprint sensor", text),
+        PhoneLine(StatusKind.OK, R.drawable.ic_chip, "Secure chip", if (strongBox) "A separate chip (StrongBox)." else "Built into the processor."),
+        // The app cannot be installed below Android 9, so a running app is always on a supported version.
+        PhoneLine(StatusKind.OK, R.drawable.ic_phone, "Android ${Build.VERSION.RELEASE}", "Supported."),
+    )
     return PhoneCheck(lines, usable = strong == BiometricManager.BIOMETRIC_SUCCESS)
 }
 
@@ -44,8 +48,8 @@ fun PhoneScreen(check: PhoneCheck, model: String, version: String) {
         Column(Modifier.widthIn(max = 640.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("This phone", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
             Text(model, style = MaterialTheme.typography.bodyLarge, color = Look.Ink)
-            Panel { check.lines.forEach { (kind, text) -> Status(kind, text) } }
-            Status(
+            for (line in check.lines) RowCard(line.icon, line.title, line.text, pill = line.kind to line.kind.word)
+            Notice(
                 if (check.usable) StatusKind.OK else StatusKind.WARN,
                 if (check.usable) "This phone can keep a fingerprint-locked key." else "This phone cannot keep a fingerprint-locked key yet.",
             )

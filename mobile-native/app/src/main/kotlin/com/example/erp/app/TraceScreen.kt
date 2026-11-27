@@ -1,20 +1,14 @@
 package com.example.erp.app
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -63,22 +57,22 @@ private fun TraceList(traces: List<Trace>, selected: String?, onAddSample: (() -
         }
         for (trace in traces) {
             val fault = trace.fault
-            Surface(
-                Modifier.fillMaxWidth().heightIn(min = Look.Touch).clickable { onOpen(trace.id) },
-                shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(2.dp, if (trace.id == selected) Look.Accent else Look.Line),
-                color = if (trace.id == selected) Look.Soft else Look.Surface,
-                contentColor = Look.Ink,
-            ) {
-                Column(Modifier.padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(trace.action, style = MaterialTheme.typography.titleMedium)
-                    when {
-                        fault != null -> Status(StatusKind.BAD, "Failed at ${fault.point.ordinal + 1}. ${fault.point.label}")
-                        trace.complete -> Status(StatusKind.OK, "Saved and read back the same")
-                        else -> Status(StatusKind.NONE, "In progress")
-                    }
-                }
-            }
+            RowCard(
+                R.drawable.ic_trace,
+                trace.action,
+                when {
+                    fault != null -> "Stopped at ${fault.point.ordinal + 1}. ${fault.point.label}"
+                    trace.complete -> "Read back the same"
+                    else -> ""
+                },
+                pill = when {
+                    fault != null -> StatusKind.BAD to "Failed"
+                    trace.complete -> StatusKind.OK to "Saved"
+                    else -> StatusKind.NONE to "In progress"
+                },
+                selected = trace.id == selected,
+                onClick = { onOpen(trace.id) },
+            )
         }
         if (onAddSample != null) MainButton("Add a sample trace (test builds)", onAddSample)
     }

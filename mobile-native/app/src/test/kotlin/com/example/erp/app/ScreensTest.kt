@@ -40,7 +40,13 @@ class ScreensTest {
     @get:Rule
     val compose = createComposeRule()
 
-    private val phone = PhoneCheck(listOf(StatusKind.OK to "Fingerprint sensor: ready", StatusKind.OK to "Android 15: supported"), usable = true)
+    private val phone = PhoneCheck(
+        listOf(
+            PhoneLine(StatusKind.OK, R.drawable.ic_fingerprint, "Fingerprint sensor", "Ready to use."),
+            PhoneLine(StatusKind.WARN, R.drawable.ic_phone, "Android 15", "Supported."),
+        ),
+        usable = true,
+    )
 
     private fun show(palette: Palette, testBuild: Boolean = true, withTraces: Boolean = true) {
         val tracer = Tracer()
@@ -117,7 +123,10 @@ class ScreensTest {
     @Test
     fun aFailedTraceNamesItsPointAndKeepsValuesToTestBuilds() {
         show(Palettes.LIGHT, testBuild = true)
-        compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
+        // The row card says the state in words (a pill) and where it stopped, before anything is opened.
+        compose.onNode(hasText("Sample: check-out refused", substring = true) and hasText("Failed") and hasText("Stopped at 5. Server function") and hasClickAction()).assertIsDisplayed()
+        compose.onNode(hasText("Sample: check-in saved", substring = true) and hasText("Saved") and hasClickAction()).performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performScrollTo().performClick()
         compose.onNodeWithText("5. Server function: Failed").assertIsDisplayed()
         compose.onNodeWithText("Usually means: a server rule said no, or the server failed.").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("6. Read-back: Not reached").performScrollTo().assertIsDisplayed() // below the first screenful: scrolled to, as a person would

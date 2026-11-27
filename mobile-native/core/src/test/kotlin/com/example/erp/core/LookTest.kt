@@ -26,6 +26,11 @@ class PaletteTest {
                 assertTrue("${look.name}: $name on a card", Contrast.ratio(ink, look.surface) >= strong)
                 assertTrue("${look.name}: $name on a highlight", Contrast.ratio(ink, look.soft) >= 4.5)
             }
+            // A status on its own tint (pills and notices) stays as readable as on the page.
+            for ((ink, tint) in listOf(look.ok to look.okSoft, look.warn to look.warnSoft, look.bad to look.badSoft)) {
+                assertTrue("${look.name}: a status on its tint", Contrast.ratio(ink, tint) >= strong)
+                assertTrue("${look.name}: text on a status tint", Contrast.ratio(look.text, tint) >= strong)
+            }
             assertTrue("${look.name}: button text", Contrast.ratio(look.onAccent, look.accent) >= 7.0)
             assertTrue("${look.name}: lines on the page", Contrast.ratio(look.line, look.ground) >= 3.0)
             assertTrue("${look.name}: lines on a card", Contrast.ratio(look.line, look.surface) >= 3.0)

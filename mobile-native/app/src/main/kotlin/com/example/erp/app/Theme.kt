@@ -10,6 +10,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.erp.core.Palette
@@ -35,6 +36,13 @@ object Look {
     val Ok: Color @Composable get() = LocalPalette.current.ok.color
     val Warn: Color @Composable get() = LocalPalette.current.warn.color
     val Bad: Color @Composable get() = LocalPalette.current.bad.color
+    val OkSoft: Color @Composable get() = LocalPalette.current.okSoft.color
+    val WarnSoft: Color @Composable get() = LocalPalette.current.warnSoft.color
+    val BadSoft: Color @Composable get() = LocalPalette.current.badSoft.color
+
+    /** Thin lines; heavy ones in Outdoor mode. */
+    val LineWidth: Dp @Composable get() = if (LocalPalette.current == Palettes.OUTDOOR) 2.dp else 1.dp
+    val Corner = 16.dp
 
     /** Touch targets are at least this tall (gloves, one hand). */
     val Touch = 56.dp
@@ -46,7 +54,7 @@ private fun type(outdoor: Boolean): Typography {
     val more = if (outdoor) 2 else 0
     val body = if (outdoor) FontWeight.Medium else FontWeight.Normal
     return Typography(
-        headlineMedium = TextStyle(fontSize = (28 + more).sp, lineHeight = (34 + more).sp, fontWeight = FontWeight.Bold),
+        headlineMedium = TextStyle(fontSize = (30 + more).sp, lineHeight = (36 + more).sp, fontWeight = FontWeight.ExtraBold),
         titleMedium = TextStyle(fontSize = (19 + more).sp, lineHeight = (26 + more).sp, fontWeight = FontWeight.SemiBold),
         bodyLarge = TextStyle(fontSize = (17 + more).sp, lineHeight = (25 + more).sp, fontWeight = body),
         bodyMedium = TextStyle(fontSize = (15 + more).sp, lineHeight = (22 + more).sp, fontWeight = body),

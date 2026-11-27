@@ -32,15 +32,15 @@ fun DisplayScreen(
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.widthIn(max = 640.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Display", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
-            Panel {
-                val now = when (palette) {
+            RowCard(
+                R.drawable.ic_display,
+                "Showing now",
+                when (palette) {
                     Palettes.OUTDOOR -> "Outdoor: strongest contrast, larger text"
                     Palettes.DARK -> "Dark: follows your phone's night mode"
                     else -> "Light: follows your phone's day mode"
-                }
-                Text("Showing now", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
-                Text(now, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
-            }
+                },
+            )
             Panel {
                 SwitchRow(
                     "Outdoor mode in bright light",
@@ -50,11 +50,7 @@ fun DisplayScreen(
                 )
                 SwitchRow("Outdoor mode now", "Keeps Outdoor mode on until you turn it off.", checked = forced, onChange = onForced)
             }
-            Text(
-                "Text size and bold text follow your phone: Settings, Display, Font size. Day and night follow your phone too.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Look.Muted,
-            )
+            Notice(StatusKind.INFO, "Text size and bold text follow your phone: Settings, Display, Font size. Day and night follow your phone too.")
             if (lux != null) Text("Light sensor: ${lux.toInt()} lux (test builds)", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
         }
     }

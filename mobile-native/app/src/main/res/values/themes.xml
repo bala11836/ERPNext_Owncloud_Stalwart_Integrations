@@ -4,5 +4,5 @@
     <style name="AppStart" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/start_ground</item>
     </style>
-    <color name="start_ground">#FFFFFF</color>
+    <color name="start_ground">#F4F7FB</color>
 </resources>

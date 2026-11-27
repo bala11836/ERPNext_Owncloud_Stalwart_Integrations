@@ -38,7 +38,10 @@ tap leads to a finished screen. This folder currently holds the foundation every
   finished screens: **Data trace** (list and detail; side by side on a tablet), **This phone** (fingerprint sensor,
   secure chip, Android version, checked for real) and **Display** (the look in use and the two Outdoor switches).
 - **Building blocks with rules built in** (`Parts.kt`): a plain status line cannot be tapped and must not name an
-  action; a message that needs the person to act cannot be created without its action.
+  action; a message that needs the person to act cannot be created without its action. The look of every screen
+  comes from these: a cool white page with white **row cards** (an icon in a tinted square, a title, one line, and
+  a status **pill** that moves under the text at large font sizes), tinted **notice cards**, and one wide main
+  button. The tints behind a status are part of the tested palette; Outdoor mode uses heavy lines and no tints.
 
 ## Contents
 

@@ -41,9 +41,18 @@ class MobileNativeTests(unittest.TestCase):
         parts = (KOTLIN / 'Parts.kt').read_text(encoding='utf-8')
         # The action message cannot be built without its action; the plain status line has no click.
         self.assertRegex(parts, r'fun ActionMessage\(kind: StatusKind, text: String, actionLabel: String, onAct: \(\) -> Unit')
-        status = parts.split('fun Status(')[1].split('\n}\n')[0]
-        self.assertNotIn('clickable', status)
-        self.assertNotIn('onClick', status)
+        # Status lines, pills and notice cards only tell; none of them can be tapped.
+        for block in ('Status', 'Pill', 'Notice'):
+            body = parts.split(f'fun {block}(')[1].split('\n}\n')[0]
+            self.assertNotIn('clickable', body, block)
+            self.assertNotIn('onClick', body, block)
+
+    def test_status_tints_are_part_of_the_tested_palette(self):
+        palette = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Palette.kt').read_text(encoding='utf-8')
+        look = (NATIVE / 'core/src/test/kotlin/com/example/erp/core/LookTest.kt').read_text(encoding='utf-8')
+        for tint in ('okSoft', 'warnSoft', 'badSoft'):
+            self.assertIn(f'val {tint}: Long', palette)
+            self.assertIn(f'look.{tint}', look, f'the contrast test covers {tint}')
 
     def test_every_destination_in_the_frame_has_a_screen(self):
         main = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')

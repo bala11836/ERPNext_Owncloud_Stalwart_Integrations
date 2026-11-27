@@ -1,15 +1,19 @@
 package com.example.erp.app
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -18,6 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,6 +35,7 @@ enum class StatusKind(val mark: String, val word: String) {
     WARN("!", "Check"),
     BAD("✕", "Failed"),
     NONE("–", "Not reached"),
+    INFO("i", "Note"),
 }
 
 @Composable
@@ -37,6 +44,16 @@ private fun StatusKind.color(): Color = when (this) {
     StatusKind.WARN -> Look.Warn
     StatusKind.BAD -> Look.Bad
     StatusKind.NONE -> Look.Muted
+    StatusKind.INFO -> Look.Accent
+}
+
+/** The quiet colour behind a pill or notice of this kind. */
+@Composable
+private fun StatusKind.tint(): Color = when (this) {
+    StatusKind.OK -> Look.OkSoft
+    StatusKind.WARN -> Look.WarnSoft
+    StatusKind.BAD -> Look.BadSoft
+    StatusKind.NONE, StatusKind.INFO -> Look.Soft
 }
 
 /**
@@ -49,6 +66,68 @@ fun Status(kind: StatusKind, text: String, modifier: Modifier = Modifier) {
         Text(kind.mark, color = kind.color(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
         Text(text, color = kind.color(), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
     }
+}
+
+/** A short status word in a rounded tint, always with its mark, so it never depends on colour alone. */
+@Composable
+fun Pill(kind: StatusKind, word: String, modifier: Modifier = Modifier) {
+    Surface(modifier, shape = RoundedCornerShape(50), color = kind.tint(), border = BorderStroke(Look.LineWidth, kind.color()), contentColor = kind.color()) {
+        Row(Modifier.padding(horizontal = 10.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(kind.mark, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+            Text(word, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+/**
+ * A tinted card that tells the person something: amber for "do this first", blue for "good to know", red for a
+ * fault. Like [Status] it is never tappable, so its text must never name a tap.
+ */
+@Composable
+fun Notice(kind: StatusKind, text: String, modifier: Modifier = Modifier) {
+    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(Look.Corner), color = kind.tint(), border = BorderStroke(Look.LineWidth, kind.color()), contentColor = Look.Ink) {
+        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+            Text(kind.mark, color = kind.color(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+            Text(text, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/**
+ * The row card: an icon in a tinted square, a title, one line of text and, when it has a state, a pill on the
+ * right. With large text on the phone the pill moves under the text, so nothing is squeezed. With [onClick] the
+ * whole card is one tap target.
+ */
+@Composable
+fun RowCard(
+    icon: Int,
+    title: String,
+    text: String,
+    modifier: Modifier = Modifier,
+    pill: Pair<StatusKind, String>? = null,
+    selected: Boolean = false,
+    onClick: (() -> Unit)? = null,
+) {
+    val pillBelow = LocalDensity.current.fontScale > 1.3f
+    val shape = RoundedCornerShape(Look.Corner)
+    val border = BorderStroke(if (selected) 2.dp else Look.LineWidth, if (selected) Look.Accent else Look.Line)
+    val color = if (selected) Look.Soft else Look.Surface
+    val inside = @Composable {
+        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(46.dp).background(if (selected) Look.Surface else Look.Soft, RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
+                Icon(painterResource(icon), contentDescription = null, tint = Look.Accent)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                if (text.isNotEmpty()) Text(text, style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+                if (pill != null && pillBelow) Pill(pill.first, pill.second)
+            }
+            if (pill != null && !pillBelow) Pill(pill.first, pill.second)
+        }
+    }
+    val size = modifier.fillMaxWidth().heightIn(min = Look.Touch)
+    if (onClick != null) Surface(onClick, size, shape = shape, border = border, color = color, contentColor = Look.Ink, content = inside)
+    else Surface(size, shape = shape, border = border, color = color, contentColor = Look.Ink, content = inside)
 }
 
 /**
@@ -65,14 +144,14 @@ fun ActionMessage(kind: StatusKind, text: String, actionLabel: String, onAct: ()
 
 @Composable
 fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(2.dp, Look.Line), color = Look.Surface, contentColor = Look.Ink) {
+    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(Look.Corner), border = BorderStroke(Look.LineWidth, Look.Line), color = Look.Surface, contentColor = Look.Ink) {
         Column(Modifier.padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(10.dp)) { content() }
     }
 }
 
 @Composable
 fun MainButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(onClick, modifier.fillMaxWidth().heightIn(min = Look.Touch), shape = RoundedCornerShape(14.dp)) {
+    Button(onClick, modifier.fillMaxWidth().heightIn(min = Look.Touch), shape = RoundedCornerShape(Look.Corner)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
     }
 }

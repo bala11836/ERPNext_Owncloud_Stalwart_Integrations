@@ -26,20 +26,24 @@ data class Palette(
     val ok: Long,
     val warn: Long,
     val bad: Long,
+    /** Quiet tints behind a status pill or notice of that kind. */
+    val okSoft: Long,
+    val warnSoft: Long,
+    val badSoft: Long,
 ) {
     /** The colours that carry text or a status mark. */
     val inks: Map<String, Long> get() = mapOf("text" to text, "muted" to muted, "accent" to accent, "ok" to ok, "warn" to warn, "bad" to bad)
 }
 
 object Palettes {
-    /** Follows the phone in day mode. Sunlight-first: text contrast of 7:1 or more. */
-    val LIGHT = Palette("light", 0xFFFFFF, 0xFFFFFF, 0x111827, 0x374151, 0x0B4F9E, 0xFFFFFF, 0x6B7280, 0xE8F0FA, 0x0E5A2C, 0x703C00, 0x9B1717)
+    /** Follows the phone in day mode: a cool white page with white cards. Sunlight-first: text contrast of 7:1 or more. */
+    val LIGHT = Palette("light", 0xF4F7FB, 0xFFFFFF, 0x111827, 0x374151, 0x0B4F9E, 0xFFFFFF, 0x6B7280, 0xE8F0FA, 0x0E5A2C, 0x703C00, 0x9B1717, 0xD9F2E1, 0xFDECCB, 0xFDEBEB)
 
     /** Follows the phone in night mode: a near-black ground and softened colours, so it does not glare. */
-    val DARK = Palette("dark", 0x0F141A, 0x18212B, 0xE8EEF3, 0xB4C0CC, 0x8FC1FF, 0x06223F, 0x7C8A99, 0x1E3350, 0x7FD9A0, 0xF3BE72, 0xFFA3A3)
+    val DARK = Palette("dark", 0x0F141A, 0x18212B, 0xE8EEF3, 0xB4C0CC, 0x8FC1FF, 0x06223F, 0x7C8A99, 0x1E3350, 0x7FD9A0, 0xF3BE72, 0xFFA3A3, 0x143524, 0x3A2A10, 0x40191C)
 
-    /** Outdoor mode, for direct sun: always light, the strongest contrast, heavy lines. */
-    val OUTDOOR = Palette("outdoor", 0xFFFFFF, 0xFFFFFF, 0x000000, 0x1F2937, 0x08366E, 0xFFFFFF, 0x111827, 0xDCE9FA, 0x0A4521, 0x5C3200, 0x7A0F0F)
+    /** Outdoor mode, for direct sun: always light, the strongest contrast, heavy lines, no tints behind a status. */
+    val OUTDOOR = Palette("outdoor", 0xFFFFFF, 0xFFFFFF, 0x000000, 0x1F2937, 0x08366E, 0xFFFFFF, 0x111827, 0xDCE9FA, 0x0A4521, 0x5C3200, 0x7A0F0F, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF)
 
     val all = listOf(LIGHT, DARK, OUTDOOR)
 

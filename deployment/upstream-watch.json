@@ -119,7 +119,8 @@
     "matrixdotorg/sygnal": {
       "name": "Sygnal",
       "github": "element-hq/sygnal",
-      "exposure": "internal"
+      "exposure": "internal",
+      "workaround": "docs/upstream-customizations.md CHAT-6 (our own health check: the image's check calls curl, which the image lacks)"
     },
     "gotenberg/gotenberg": {
       "name": "Gotenberg",

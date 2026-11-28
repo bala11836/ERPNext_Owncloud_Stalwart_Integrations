@@ -20,6 +20,7 @@ Account: `rdavuluri44`.
 | 2026-11-26 | [owncloud/ocis#3832](https://github.com/owncloud/ocis/issues/3832#issuecomment-7186892628) | App registry registration lost after a Drive restart (our editor re-registration) | P89, P80 | waiting | 2026-11-28: nothing new |
 | 2026-11-26 | [ONLYOFFICE/DocumentServer#3954](https://github.com/ONLYOFFICE/DocumentServer/issues/3954) | Sheet view with an empty columnFilter crashes the editor; workbook opens blank | P89, P61 | answered | 2026-11-28: 1 new reply, thread open: the maintainers reproduced it and opened their bug 85458; no fix yet, our workaround stays |
 | 2026-11-26 | [opencv/opencv_zoo#313](https://github.com/opencv/opencv_zoo/issues/313#issuecomment-7193191907) | SFace 2021dec: which dataset trained the published weights | P95 | waiting | 2026-11-28: nothing new |
+| 2026-11-28 | [element-hq/sygnal#326](https://github.com/element-hq/sygnal/issues/326#issuecomment-7232356852) | Sygnal image: the built-in health check calls curl, which the image lacks; a Python check as workaround | P73 | waiting | 2026-11-28: nothing new (posted the same day) |
 
 ## Log
 
@@ -86,3 +87,10 @@ Next: The answer decides P95's residual risk before production.
 
 - 2026-11-26: nothing new (posted the same day)
 - 2026-11-28: nothing new
+
+### element-hq/sygnal#326: Sygnal image: the built-in health check calls curl, which the image lacks; a Python check as workaround
+
+Register: CHAT-6.
+Next: When the image ships a check that works, remove our override (CHAT-6).
+
+- 2026-11-28: nothing new (posted the same day)

@@ -651,6 +651,54 @@ configuration we write (`integrations/chat/configure.py`).
   they manage until the room rules made by the server side forbid it (P73, not built).
 - **Tests:** `tests/test_chat_stack.py`.
 
+### CHAT-4 The business system's bot; invitations accepted automatically
+
+- **What and why:** an application service registration (`bridge.yaml`) for one user, `@erp`, with the aliases
+  `#site-…`, `#team-…` and `#notices-…`, and no call-back address; `auto_accept_invites` for invitations from this server. The
+  bot puts people into rooms by inviting them, so nothing holds an admin token. (A client of the authentication
+  service cannot get Synapse's admin scope; tried on the test site, 27 November 2026.)
+- **How:** `integrations/chat/configure.py` (`bridge`, `homeserver`).
+- **Upgrade:** **re-check:** **silent** if `auto_accept_invites` changes its meaning or default (people would
+  stop appearing in their rooms); **loud** if the registration format changes (Synapse refuses to start). The room
+  rules the bot sets depend on the default room version (12 on the test site: the creator is not listed in the
+  power levels).
+- **Tests:** `tests/test_chat_stack.py`; live: create, invite, post, remove on the test site.
+
+### CHAT-5 Alert gateway inside the stack; Synapse may call only the stack's own network
+
+- **What and why:** Sygnal as an optional service (`alerts`, compose profile `alerts`) with one Google (FCM v1)
+  app; Synapse's `ip_range_whitelist` names the stack's own network, because Synapse refuses alerts to private
+  addresses otherwise. The stack's network has a fixed range for this. The gateway alone is on a second
+  network, `outbound`, to reach Google.
+- **How:** `integrations/chat/configure.py` (`alerts`, `write_alerts`, `homeserver`), `deployment/stacks/chat.compose.json`.
+- **Upgrade:** **re-check:** **silent** if Sygnal renames a configuration key (alerts stop; its log says so) or if
+  Synapse changes what the whitelist covers.
+- **Tests:** `tests/test_chat_stack.py`; live: the gateway asks Google about a made-up phone address.
+
+### CHAT-6 Our own health check for the alert gateway (workaround)
+
+- **What and why:** the Sygnal image (v0.17.0) declares a health check that calls `curl`, but the image does not
+  contain `curl`. The container is reported "unhealthy" for ever, although the gateway answers. Our stack file
+  replaces the check with one that uses the image's own Python to ask the same address (`/health`).
+- **How:** `deployment/stacks/chat.compose.json` (`alerts`, `healthcheck`).
+- **Upgrade:** **re-check:** **loud** if the image loses Python on the path or moves the health address (the
+  container turns "unhealthy"). **Retire** the override when the image ships a check that works.
+- **Tests:** `tests/test_chat_stack.py`; live: the container reports "healthy".
+- **Upstream:** element-hq/sygnal#326 (open: the image has neither `curl` nor `wget`); our note is in
+  `docs/upstream-posts.md` (issuecomment-7232356852).
+
+### CHAT-7 The chat screen for browsers: Element Web with our configuration
+
+- **What and why:** the unchanged Element Web image with one configuration file that names only our chat
+  server and switches off everything that calls an outside service (integration manager, calls, identity
+  server, link previews, location sharing, feedback). No file of theirs is replaced.
+- **How:** `integrations/chat/element-config.json` (mounted as `/app/config.json`),
+  `deployment/stacks/chat.compose.json` (`web`), `tools/prepare_ingress.py` (its own host, not frameable).
+- **Upgrade:** **re-check:** **silent** if a setting is renamed or a new feature that calls an outside service
+  is on by default (read the release notes and `docs/config.md` of the new version; watch the browser's
+  network list on the test site for addresses other than ours).
+- **Tests:** `tests/test_chat_stack.py`; live: sign in, open a room, post, sign out on the test site.
+
 ### CHAT-3 Proxy paths that name Matrix endpoints
 
 - **What:** `/_matrix`, `/_synapse/client` and `/_synapse/mas` go to Synapse; `/_matrix/client/*/login`, `logout`

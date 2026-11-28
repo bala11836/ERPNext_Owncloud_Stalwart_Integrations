@@ -27,6 +27,7 @@ Services of the stack:
 | `configure` | runs once before the others; writes both configuration files and, the first time, MAS's signing key | no |
 | `synapse` | the chat server | `chat-synapse:8008` on the workspace network |
 | `mas` | the sign-in service for chat | `chat-mas:8080` on the workspace network |
+| `web` | the chat screen for browsers (Element Web): static pages and one configuration file | `chat-web:8080` on the workspace network |
 | `alerts` | optional: the alert gateway (Sygnal), which passes chat alerts to Google for the phone app | `alerts-gateway:5000` inside the stack only |
 | `database-synapse`, `database-mas` | one PostgreSQL each (Synapse needs the `C` locale) | inside the stack only |
 
@@ -35,6 +36,8 @@ Services of the stack:
 Modules: `authentik-identity`.
 
 Two host names (`chat` and `chat-auth` in the profile's `hosts`), and an OAuth2/OpenID provider in the sign-in service for MAS: confidential client, redirect address `https://<chat-auth host>/upstream/callback/<UPSTREAM_ID>`, scopes `openid profile email chat`. The `chat` scope is a scope mapping that returns the person's `chat_name` attribute (`deployment/scope-mappings.example.json`).
+
+**The chat screen for browsers (optional name).** Give the profile a third host, `chat-web`, and the proxy serves Element Web there. It must be a name of its own, never the chat server's: files people upload are served from the server's name and must not share an origin with the screen. Its configuration (`element-config.json`) names only our chat server: no other server can be picked, no guests, no identity server, no integration manager, no calls, no link previews, no location sharing, nothing sent to its makers. It signs in through the sign-in service for chat (it registers itself there as a client the first time a browser opens it) and goes there at once. It may not be shown inside another page. For the Desk menu, set the site setting `cloud_chat_web_url` to `https://<chat-web host>/`: a "Chat" entry then opens it in its own tab. Signing out of the Desk does not sign out of the chat screen; it has its own sign-out.
 
 ## Reuse
 
@@ -68,6 +71,7 @@ Run all suites offline with `python tools/run_unit_tests.py` in the matching ERP
 ## Licenses
 
 - Synapse — AGPL-3.0 — https://github.com/element-hq/synapse
+- Element Web — AGPL-3.0 — https://github.com/element-hq/element-web
 - Matrix Authentication Service — AGPL-3.0 — https://github.com/element-hq/matrix-authentication-service
 
 Upstream licenses are as published by each project; verify them at the pinned version before redistributing (LICENSES.md).

@@ -687,6 +687,18 @@ configuration we write (`integrations/chat/configure.py`).
 - **Upstream:** element-hq/sygnal#326 (open: the image has neither `curl` nor `wget`); our note is in
   `docs/upstream-posts.md` (issuecomment-7232356852).
 
+### CHAT-7 The chat screen for browsers: Element Web with our configuration
+
+- **What and why:** the unchanged Element Web image with one configuration file that names only our chat
+  server and switches off everything that calls an outside service (integration manager, calls, identity
+  server, link previews, location sharing, feedback). No file of theirs is replaced.
+- **How:** `integrations/chat/element-config.json` (mounted as `/app/config.json`),
+  `deployment/stacks/chat.compose.json` (`web`), `tools/prepare_ingress.py` (its own host, not frameable).
+- **Upgrade:** **re-check:** **silent** if a setting is renamed or a new feature that calls an outside service
+  is on by default (read the release notes and `docs/config.md` of the new version; watch the browser's
+  network list on the test site for addresses other than ours).
+- **Tests:** `tests/test_chat_stack.py`; live: sign in, open a room, post, sign out on the test site.
+
 ### CHAT-3 Proxy paths that name Matrix endpoints
 
 - **What:** `/_matrix`, `/_synapse/client` and `/_synapse/mas` go to Synapse; `/_matrix/client/*/login`, `logout`

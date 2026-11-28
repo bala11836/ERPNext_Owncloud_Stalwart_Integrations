@@ -2,9 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The full page over a locked screen when an approval rings. Android 14 and newer: the person allows it
+         once in the phone's settings; the Alerts screen leads there. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
+        android:name=".ErpApp"
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
         android:dataExtractionRules="@xml/no_backup"
@@ -17,7 +22,7 @@
              always reaches the screen that asked. -->
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|navigation|uiMode|density|fontScale"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|navigation|uiMode|density|fontScale|locale|layoutDirection|fontWeightAdjustment|colorMode|grammaticalGender"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -25,5 +30,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- The full page when an approval rings: its own task, not in the list of recent apps, shown over the
+             locked screen. It shows only the alert's fixed words and decides nothing. Not open to other apps. -->
+        <activity
+            android:name=".RingActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard|navigation|uiMode|density|fontScale|locale|layoutDirection|fontWeightAdjustment|colorMode|grammaticalGender"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:showWhenLocked="true"
+            android:taskAffinity=""
+            android:turnScreenOn="true" />
+        <!-- A scheduled test signal arriving, and "Later" on a ringing alert. Not open to other apps. -->
+        <receiver android:name=".AlertReceiver" android:exported="false" />
+        <!-- Receives alert signals from Google, also while the app is closed. Not open to other apps. -->
+        <service android:name=".AlertService" android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <!-- The phone asks Google for a delivery address only when the app asks for one, never by itself. -->
+        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
     </application>
 </manifest>

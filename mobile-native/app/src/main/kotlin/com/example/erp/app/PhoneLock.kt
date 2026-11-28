@@ -46,6 +46,9 @@ sealed interface LockResult {
 
     /** The key is gone (5 misses, or the phone's fingerprints changed). [PhoneLock.loss] says which. */
     data object Erased : LockResult
+
+    /** A match that signed one decision ([PhoneLock.confirm]). */
+    data object Confirmed : LockResult
 }
 
 /**
@@ -85,6 +88,8 @@ class PhoneLock(context: Context) {
         Session.lock() // also when the key went while the app was open
         val first = loss ?: why // a later look at the empty store must not replace the real reason
         prefs.edit(commit = true) { clear(); putString(LOSS, first.name) }
+        // After the key is marked gone, so a signal arriving now is refused: no alert stays behind for a key that is gone.
+        AlertCenter.clear(app)
     }
 
     private fun generate(strongBox: Boolean) {
@@ -149,7 +154,21 @@ class PhoneLock(context: Context) {
     }
 
     /** One touch opens the app. A miss is counted and kept; the fifth in a row erases the key. */
-    fun open(activity: FragmentActivity, done: (LockResult) -> Unit) {
+    fun open(activity: FragmentActivity, done: (LockResult) -> Unit) =
+        unlock(activity, "Open with your fingerprint", null, done) { LockResult.Opened(it) }
+
+    /**
+     * One touch signs one decision. The question shows [what] is signed. It is the same proof as opening the app:
+     * the chip releases the key only for a real match, and here the released data key is thrown away at once.
+     * Misses count exactly as at the door, so a stranger with the open phone gets no free tries.
+     */
+    fun confirm(activity: FragmentActivity, what: String, done: (LockResult) -> Unit) =
+        unlock(activity, "Confirm with your fingerprint", what, done) {
+            it.fill(0)
+            LockResult.Confirmed
+        }
+
+    private fun unlock(activity: FragmentActivity, title: String, what: String?, done: (LockResult) -> Unit, result: (ByteArray) -> LockResult) {
         val locked = prefs.getString(WRAPPED, null)?.let { runCatching { Base64.decode(it, Base64.NO_WRAP) }.getOrNull() }
         val key = try {
             store().getKey(ALIAS, null) as? SecretKey
@@ -176,10 +195,10 @@ class PhoneLock(context: Context) {
             done(LockResult.Trouble("The phone's secure chip did not answer. Restart the phone and try again."))
             return
         }
-        ask(activity, "Open with your fingerprint", cipher, countMisses = true, done = done) { matched ->
+        ask(activity, title, cipher, countMisses = true, done = done, what = what) { matched ->
             val dataKey = matched.doFinal(locked, IV_BYTES, locked.size - IV_BYTES)
             prefs.edit(commit = true) { remove(MISSES) }
-            LockResult.Opened(dataKey)
+            result(dataKey)
         }
     }
 
@@ -189,6 +208,7 @@ class PhoneLock(context: Context) {
         cipher: Cipher,
         countMisses: Boolean,
         done: (LockResult) -> Unit,
+        what: String? = null,
         onMatch: (Cipher) -> LockResult,
     ) {
         var finished = false
@@ -254,13 +274,16 @@ class PhoneLock(context: Context) {
         )
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
+            .apply { if (what != null) setDescription(what) }
             .setNegativeButtonText("Cancel")
             .setAllowedAuthenticators(BIOMETRIC_STRONG)
             .build()
         prompt.authenticate(info, BiometricPrompt.CryptoObject(cipher))
     }
 
-    private companion object {
+    companion object {
+        /** Whether this phone has its key, read without touching the key itself. For code that runs while the app is closed. */
+        fun hasKey(context: Context): Boolean = context.getSharedPreferences("lock", Context.MODE_PRIVATE).contains(WRAPPED)
         const val STORE = "AndroidKeyStore"
         const val ALIAS = "app-lock"
         const val AES_GCM = "AES/GCM/NoPadding"

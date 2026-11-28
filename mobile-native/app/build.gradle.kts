@@ -18,6 +18,14 @@ android {
         val server = providers.gradleProperty("erpServer").getOrElse("")
         require(server.isEmpty() || Regex("https://[A-Za-z0-9.-]+(:\\d{1,5})?").matches(server)) { "erpServer must be https, a host and nothing else" }
         buildConfigField("String", "SERVER", "\"$server\"")
+        // Alerts: the four values Google's messaging needs to know this app. Set privately like the server address
+        // (erpAlertsApp, erpAlertsKey, erpAlertsProject, erpAlertsSender), never in this repository; there is no
+        // settings file in the project and no build plug-in for it. Empty: the build receives no alerts.
+        for ((field, property) in listOf("ALERTS_APP" to "erpAlertsApp", "ALERTS_KEY" to "erpAlertsKey", "ALERTS_PROJECT" to "erpAlertsProject", "ALERTS_SENDER" to "erpAlertsSender")) {
+            val value = providers.gradleProperty(property).getOrElse("")
+            require(Regex("[A-Za-z0-9:_.-]*").matches(value)) { "$property holds a character that does not belong in it" }
+            buildConfigField("String", field, "\"$value\"")
+        }
     }
     buildFeatures {
         compose = true
@@ -47,6 +55,8 @@ dependencies {
     implementation("androidx.compose.material3:material3-adaptive-navigation-suite")
     implementation("androidx.activity:activity-compose:1.12.4")
     implementation("androidx.biometric:biometric:1.1.0")
+    // Alerts when the app is closed. The messaging part only: no analytics, no crash reports, no advertising ID.
+    implementation("com.google.firebase:firebase-messaging:26.0.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.18")
     testImplementation("androidx.compose.ui:ui-test-junit4")

@@ -16,6 +16,13 @@ object LockRules {
 
     fun triesLeft(misses: Int): Int = (MAX_MISSES - misses).coerceIn(0, MAX_MISSES)
 
+    /** What a miss says where a decision is signed; null before any miss. */
+    fun missWords(misses: Int): String? {
+        if (misses <= 0) return null
+        val left = triesLeft(misses)
+        return "Not signed. " + (if (left == 1) "1 try left" else "$left tries left") + ". After $MAX_MISSES misses in a row the key is erased."
+    }
+
     fun erases(misses: Int): Boolean = misses >= MAX_MISSES
 
     /**

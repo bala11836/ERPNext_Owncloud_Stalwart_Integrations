@@ -48,7 +48,7 @@ class MobileNativeTests(unittest.TestCase):
 
     def test_only_the_permissions_the_app_uses(self):
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
-        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'USE_BIOMETRIC'])
+        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'POST_NOTIFICATIONS', 'USE_FULL_SCREEN_INTENT', 'USE_BIOMETRIC'])
         self.assertEqual(manifest.count('android:exported="true"'), 1, 'only the launcher screen is open to other apps')
 
     def test_a_message_that_names_an_action_must_carry_one(self):
@@ -75,9 +75,10 @@ class MobileNativeTests(unittest.TestCase):
                          [('TODAY', 'Today'), ('INBOX', 'Inbox'), ('CHAT', 'Chat'), ('MAIL', 'Mail'), ('MORE', 'More')])
         # Only More is finished; the others exist in test builds only until their real screens do.
         self.assertEqual(re.findall(r'^    ([A-Z]+)\([^\n]*testOnly = true\)', block, re.M), ['TODAY', 'INBOX', 'CHAT', 'MAIL'])
+        self.assertNotIn('ComingScreen', frame)
         # Everything behind More has a screen.
         tools = re.findall(r'^    ([A-Z]+)\("', frame.split('enum class Tool')[1].split('\n}')[0], re.M)
-        self.assertEqual(tools, ['DISPLAY', 'PHONE', 'TRACE', 'WELCOME'])
+        self.assertEqual(tools, ['ALERTS', 'DISPLAY', 'PHONE', 'TRACE', 'WELCOME'])
         for tool in tools:
             self.assertRegex(frame, rf'Tool\.{tool} -> \w+Screen\(')
 
@@ -156,7 +157,9 @@ class MobileNativeTests(unittest.TestCase):
         # Only the lock's own state and the display settings are stored unsealed.
         kotlin = {p.name: p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt')}
         writers = sorted(name for name, text in kotlin.items() if 'getSharedPreferences(' in text)
-        self.assertEqual(writers, ['MainActivity.kt', 'PhoneLock.kt', 'Safe.kt'])
+        self.assertEqual(writers, ['AlertCenter.kt', 'MainActivity.kt', 'PhoneLock.kt', 'Safe.kt'])
+        # What the alerts remember unsealed are two sets of short fingerprints, nothing else.
+        self.assertEqual(sorted(set(re.findall(r'put\w+\("(\w+)"', kotlin['AlertCenter.kt']))), ['deciding', 'rejected'])
         self.assertEqual(re.findall(r'getSharedPreferences\("(\w+)"', kotlin['MainActivity.kt']), ['display'])
         seal = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Seal.kt').read_text(encoding='utf-8')
         self.assertIn('"AES/GCM/NoPadding"', seal)
@@ -228,6 +231,81 @@ class MobileNativeTests(unittest.TestCase):
         # A card is a button only when it has somewhere to lead.
         self.assertIn('onClick = if (lead != null) ({ onOpen(lead) }) else null', screen)
 
+    def test_a_decision_needs_the_fingerprint_and_inbox_is_a_stand_in(self):
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertRegex(frame, r'INBOX\("Inbox", "Inbox", R\.drawable\.ic_inbox, testOnly = true\)')
+        # The frame cannot be built without the fingerprint question: it has no default.
+        self.assertIn('    sign: (what: String, done: (Boolean, String?) -> Unit) -> Unit,', frame)
+        self.assertIn('    alertActions: AlertActions,', frame)
+        main = (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8')
+        self.assertIn('sign = ::sign,', main)
+        self.assertIn('lock.confirm(this, what)', main)
+        self.assertIn('done(result is LockResult.Confirmed,', main)
+        lock = (KOTLIN / 'PhoneLock.kt').read_text(encoding='utf-8')
+        # Signing is the same proof as opening: the chip's key, misses counted, and the released key thrown away.
+        confirm = lock.split('fun confirm(')[1].split('private fun unlock(')[0]
+        self.assertIn('it.fill(0)', confirm)
+        self.assertIn('ask(activity, title, cipher, countMisses = true, done = done, what = what)', lock)
+        self.assertIn('setDescription(what)', lock)
+        screen = (KOTLIN / 'InboxScreen.kt').read_text(encoding='utf-8')
+        # A decision is sent only from inside the answer to the fingerprint question, and only after a match.
+        self.assertEqual(screen.count('actions.decide('), 1)
+        decide = screen.split('fun decide(')[1].split('\n    }\n')[0]
+        self.assertLess(decide.index('actions.sign(Inbox.question(decision, target))'), decide.index('if (signed) {'))
+        self.assertLess(decide.index('if (signed) {'), decide.index('actions.decide('))
+        # Approve exists only once the person said they looked; nothing typed is kept outside the app's memory.
+        self.assertIn('if (seen) MainButton("Approve with your fingerprint", onApprove)', screen)
+        self.assertNotRegex(screen, r'(typed|quick|until|trouble|result) by rememberSaveable')
+        actions = screen.split('class InboxActions(')[1].split('\n)')[0]
+        self.assertNotIn('= {', actions)
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Inbox.kt').read_text(encoding='utf-8')
+        # Two decisions and no final one; a hold has no latest time.
+        self.assertIn('enum class Decision(val done: String) { APPROVED("Approved"), REJECTED("Rejected") }', rules)
+        self.assertIn('maxOf(wanted, now.plusMinutes(15))', rules)
+        preview = (KOTLIN / 'InboxPreview.kt').read_text(encoding='utf-8')
+        self.assertNotRegex(preview, r'Safe|SharedPreferences|HttpTransport|Saver|File\(')
+
+    def test_an_alert_shows_only_the_apps_own_words_and_decides_nothing(self):
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Alerts.kt').read_text(encoding='utf-8')
+        # Every word comes from a fixed sentence in the rules; an unknown kind is dropped.
+        self.assertIn('else -> return state to AlertAction.Ignore', rules)
+        self.assertNotRegex(rules, r'data\["(title|body|message|text|site_label)"\]')
+        center = (KOTLIN / 'AlertCenter.kt').read_text(encoding='utf-8')
+        self.assertEqual(center.count('.setContentTitle(alert.words)'), 2)
+        # No second line of text, no ready-made notification from the signal, nothing but the short fields.
+        self.assertNotRegex(center, r'setContentText|setStyle|setSubText|message\.notification')
+        # A ringing alert has two choices and neither decides: one stops the ringing, one opens the app.
+        self.assertEqual(re.findall(r'\.addAction\(0, "(\w+)"', center), ['Later', 'Open'])
+        self.assertIn('.setFullScreenIntent(page, true)', center)
+        self.assertIn('.setTimeoutAfter(RING_MS)', center)
+        # The ringing kind never asks to get past the phone's silent mode.
+        self.assertNotRegex(center, r'setBypassDnd|IMPORTANCE_MAX|USAGE_ALARM')
+        ring = (KOTLIN / 'RingActivity.kt').read_text(encoding='utf-8')
+        self.assertNotRegex(ring, r'Approve|Reject|actions\.decide|Safe|Session')
+        self.assertIn('startActivity(AlertCenter.openApp(this, slot))', ring)
+        self.assertIn('AlertCenter.receive(this, message.data)', center)
+        self.assertIn('PendingIntent.FLAG_IMMUTABLE', center)
+        self.assertIn('Intent(context, MainActivity::class.java)', center)
+        manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
+        self.assertIn('<service android:name=".AlertService" android:exported="false">', manifest)
+        self.assertIn('<receiver android:name=".AlertReceiver" android:exported="false" />', manifest)
+        page = manifest.split('android:name=".RingActivity"')[1].split('/>')[0]
+        for needed in ('android:exported="false"', 'android:showWhenLocked="true"', 'android:excludeFromRecents="true"'):
+            self.assertIn(needed, page)
+        self.assertIn('<meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />', manifest)
+        # A lost key takes the alerts with it; a tapped alert only names a place and goes through the lock.
+        lock = (KOTLIN / 'PhoneLock.kt').read_text(encoding='utf-8')
+        self.assertIn('AlertCenter.clear(app)', lock.split('private fun erase(')[1].split('\n    }')[0])
+        frame = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertIn('if (goTo in places) {', frame)
+        # Google's messaging only: no analytics, no settings file, no build plug-in; its values are set privately.
+        build = (NATIVE / 'app/build.gradle.kts').read_text(encoding='utf-8') + (NATIVE / 'build.gradle.kts').read_text(encoding='utf-8')
+        self.assertIn('implementation("com.google.firebase:firebase-messaging:26.0.2")', build)
+        self.assertNotRegex(build, r'google-services|firebase-analytics|firebase-crashlytics|firebase-bom')
+        self.assertIn('"ALERTS_APP" to "erpAlertsApp"', build)
+        self.assertNotIn('erpAlerts', (NATIVE / 'gradle.properties').read_text(encoding='utf-8'))
+        self.assertFalse((NATIVE / 'app/google-services.json').exists() and 'google-services.json' not in (NATIVE / '.gitignore').read_text(encoding='utf-8'))
+
     def test_the_look_follows_the_phone_and_never_the_wallpaper(self):
         kotlin = ''.join(p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt'))
         self.assertIn('isSystemInDarkTheme()', kotlin, 'day and night follow the phone')
@@ -279,6 +357,8 @@ class MobileNativeTests(unittest.TestCase):
         kotlin = {p.name: p.read_text(encoding='utf-8') for p in KOTLIN.glob('*.kt')}
         opens = sorted(name for name, text in kotlin.items() if re.search(r'openConnection|HttpURLConnection|java\.net\.Socket|OkHttp', text))
         self.assertEqual(opens, ['HttpTransport.kt'])
+        # The one other connection is Google's messaging library's own, used in one file only.
+        self.assertEqual(sorted(name for name, text in kotlin.items() if 'com.google.firebase' in text), ['AlertCenter.kt'])
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
         self.assertIn('android:usesCleartextTraffic="false"', manifest)
         self.assertIn('android:windowSoftInputMode="adjustResize"', manifest)

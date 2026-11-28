@@ -1,6 +1,8 @@
 package com.example.erp.app
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color as AndroidColor
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -8,6 +10,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -24,13 +27,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.fragment.app.FragmentActivity
 import com.example.erp.core.AccessRequest
 import com.example.erp.core.Approval
 import com.example.erp.core.Format
 import com.example.erp.core.KeyLoss
 import com.example.erp.core.KeyState
+import com.example.erp.core.Lead
 import com.example.erp.core.LockRules
 import com.example.erp.core.OutdoorSwitch
 import com.example.erp.core.Palettes
@@ -71,6 +77,65 @@ class MainActivity : FragmentActivity() {
             runOnUiThread { traces = tracer.all() }
         }
     }
+    private var alerts by mutableStateOf(AlertsView())
+    private var goTo by mutableStateOf<Place?>(null)
+    private var askedForAlerts = false
+
+    private fun readAlerts() {
+        val blocked = AlertCenter.blocked(this)
+        val connected = AlertCenter.connect(this)
+        alerts = alerts.copy(blocked = blocked?.first, fix = blocked?.second, fullPage = AlertCenter.fullPageAllowed(this), connected = connected)
+        // Test builds only: the delivery address, for one test signal from the owner.
+        if (connected && BuildConfig.DEBUG && alerts.address == null) AlertCenter.address { address -> alerts = alerts.copy(address = address) }
+    }
+
+    /** Some phones lack one of the detailed settings pages; the app's own alert settings are always there. */
+    private fun openSetting(page: Intent) {
+        val appSetting = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        runCatching { startActivity(page) }.onFailure { runCatching { startActivity(appSetting) } }
+    }
+
+    private fun fixAlerts(fix: Fix) {
+        val appSetting = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        when {
+            // The phone shows its own question once or twice; after that only its settings can switch alerts on.
+            fix == Fix.ALLOW && Build.VERSION.SDK_INT >= 33 && !askedForAlerts -> {
+                askedForAlerts = true
+                // The phone's own question. Asked the older way on purpose: the newer way needs a newer part than
+                // the fingerprint library brings, and one more library is not worth it for one question.
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), ASK_ALERTS)
+            }
+            fix == Fix.FULL_PAGE -> if (Build.VERSION.SDK_INT >= 34) openSetting(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, "package:$packageName".toUri()))
+            fix == Fix.KIND_SETTING -> openSetting(
+                Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName).putExtra(Settings.EXTRA_CHANNEL_ID, AlertKind.APPROVALS.id),
+            )
+            else -> openSetting(appSetting)
+        }
+    }
+
+    /** An alert was tapped: remember where it leads. The fingerprint is asked first, as on every opening. */
+    private fun opened(intent: Intent?) {
+        goTo = when (intent?.getStringExtra(AlertCenter.OPEN_PLACE)) {
+            Lead.INBOX.name -> Place.INBOX
+            Lead.CHAT.name -> Place.CHAT
+            Lead.MAIL.name -> Place.MAIL
+            else -> goTo
+        }
+    }
+
+    @Deprecated("The platform's older way of answering a permission question; see fixAlerts.")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        @Suppress("DEPRECATION")
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == ASK_ALERTS) readAlerts()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        opened(intent)
+    }
+
     private val safe by lazy { Safe(this) }
     private var safeNote by mutableStateOf<String?>(null)
 
@@ -96,11 +161,25 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    /** One decision, signed: the fingerprint question shows what is signed. Nothing is signed while another question is open. */
+    private fun sign(what: String, done: (Boolean, String?) -> Unit) {
+        if (asking) return
+        asking = true
+        lock.confirm(this, what) { result ->
+            asking = false
+            // Five misses erase the key here too; the app is then locked and shows why.
+            if (result is LockResult.Erased) readLock()
+            // A miss does not end the phone's question; the person closes it. They are still told how many tries are left.
+            done(result is LockResult.Confirmed, (result as? LockResult.Trouble)?.sentence ?: LockRules.missWords(lock.misses))
+        }
+    }
+
     override fun onStart() {
         super.onStart()
         Session.back()
         if (!asking) readLock()
         readSafeNote()
+        readAlerts()
     }
 
     override fun onResume() {
@@ -123,6 +202,7 @@ class MainActivity : FragmentActivity() {
         val settings = getSharedPreferences("display", Context.MODE_PRIVATE)
         val sensors = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val lightSensor: Sensor? = sensors.getDefaultSensor(Sensor.TYPE_LIGHT)
+        opened(intent)
 
         setContent {
             var automatic by remember { mutableStateOf(settings.getBoolean("outdoor-automatic", true)) }
@@ -162,7 +242,21 @@ class MainActivity : FragmentActivity() {
                         palette, testBuild, traces, view.phone, "${Build.MANUFACTURER} ${Build.MODEL}", BuildConfig.VERSION_NAME,
                         hasLightSensor = lightSensor != null, automaticOutdoor = automatic, forcedOutdoor = forced, lux = lux,
                         safeNote = safeNote,
+                        alerts = alerts,
                     ),
+                    sign = ::sign,
+                    alertActions = AlertActions(
+                        fix = ::fixAlerts,
+                        openKind = { kind ->
+                            openSetting(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName).putExtra(Settings.EXTRA_CHANNEL_ID, kind.id))
+                        },
+                        // A test arrives after a short wait and through the phone's alarm service, so the phone can be
+                        // locked or the app closed first, as with a real signal.
+                        signal = { data -> AlertCenter.schedule(applicationContext, data, TEST_WAIT_SECONDS) },
+                        removeAll = { AlertCenter.clear(this) },
+                    ),
+                    goTo = goTo,
+                    onWent = { goTo = null },
                     onAddSample = { addSample(); traces = tracer.all() },
                     onAutomaticOutdoor = { automatic = it; settings.edit { putBoolean("outdoor-automatic", it) } },
                     onForcedOutdoor = { forced = it; settings.edit { putBoolean("outdoor-forced", it) } },
@@ -212,6 +306,7 @@ class MainActivity : FragmentActivity() {
 }
 
 private const val TEST_NOTE = "test-note"
+private const val ASK_ALERTS = 7
 
 /** One failed and one complete made-up trace. Used by the test-build button and by the screen tests. */
 fun sampleTraces(tracer: Tracer): Trace? {

@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -35,7 +36,7 @@ enum class Place(val label: String, val title: String, val icon: Int, val testOn
     /** Today against a stand-in with made-up days, until sign-in exists. Test builds only. */
     TODAY("Today", "Today", R.drawable.ic_today, testOnly = true),
 
-    /** Not built: a page that says what will be here. Test builds only. */
+    /** Inbox against a stand-in with made-up items, until sign-in exists. Test builds only. */
     INBOX("Inbox", "Inbox", R.drawable.ic_inbox, testOnly = true),
 
     /** The chat screens against a stand-in, until the chat server and sign-in exist. Test builds only. */
@@ -48,6 +49,7 @@ enum class Place(val label: String, val title: String, val icon: Int, val testOn
 
 /** What "More" leads to. Each opens a finished screen and leads back. */
 enum class Tool(val title: String, val text: String, val icon: Int, val testOnly: Boolean = false) {
+    ALERTS("Alerts", "Whether alerts reach this phone, and a test.", R.drawable.ic_bell),
     DISPLAY("Display", "The look in use and Outdoor mode.", R.drawable.ic_display),
     PHONE("This phone", "Fingerprint sensor, secure chip, app version.", R.drawable.ic_phone),
     TRACE("Data trace", "Where the data of each action went.", R.drawable.ic_trace),
@@ -70,17 +72,42 @@ class FrameState(
     val lux: Float?,
     /** Test builds: what the test note in the safe says, or null when the safe is empty. */
     val safeNote: String? = null,
+    val alerts: AlertsView = AlertsView(),
 )
 
 /**
  * The frame around every screen: a bottom bar on a phone, a side rail on a tablet or a phone turned sideways,
  * chosen by the window's width.
+ *
+ * @param sign asks for the fingerprint to sign one decision. Required: no screen may decide anything without it.
+ * @param goTo the place an alert asked for; [onWent] is called once it was looked at.
  */
 @Composable
-fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Boolean) -> Unit, onForcedOutdoor: (Boolean) -> Unit, onSafeNote: (() -> Unit)? = null, onTryConnection: (() -> Unit)? = null) {
+fun AppFrame(
+    state: FrameState,
+    sign: (what: String, done: (Boolean, String?) -> Unit) -> Unit,
+    alertActions: AlertActions,
+    onAddSample: () -> Unit,
+    onAutomaticOutdoor: (Boolean) -> Unit,
+    onForcedOutdoor: (Boolean) -> Unit,
+    onSafeNote: (() -> Unit)? = null,
+    onTryConnection: (() -> Unit)? = null,
+    goTo: Place? = null,
+    onWent: () -> Unit = {},
+) {
     val places = Place.entries.filter { !it.testOnly || state.testBuild }
     var place by rememberSaveable { mutableStateOf(places.first()) }
     var tool by rememberSaveable { mutableStateOf<Tool?>(null) }
+    // A tap on an alert asks for a place. Only a place this build shows is opened; the wish is then forgotten.
+    LaunchedEffect(goTo) {
+        if (goTo != null) {
+            if (goTo in places) {
+                place = goTo
+                tool = null
+            }
+            onWent()
+        }
+    }
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             for (item in places) {
@@ -103,23 +130,11 @@ fun AppFrame(state: FrameState, onAddSample: () -> Unit, onAutomaticOutdoor: (Bo
                         Lead.MAIL -> Place.MAIL
                     }
                 })
-                Place.INBOX -> ComingScreen("Inbox", "Everything that waits for your decision: attendance to verify or approve, purchases, payments, leave. Oldest first, each approved with your fingerprint.")
+                Place.INBOX -> InboxPreviewScreen(sign)
                 Place.CHAT -> ChatPreviewScreen()
                 Place.MAIL -> MailPreviewScreen()
-                Place.MORE -> MoreScreen(state, tool, { tool = it }, onAddSample, onAutomaticOutdoor, onForcedOutdoor, onSafeNote, onTryConnection)
+                Place.MORE -> MoreScreen(state, tool, { tool = it }, alertActions, onAddSample, onAutomaticOutdoor, onForcedOutdoor, onSafeNote, onTryConnection)
             }
-        }
-    }
-}
-
-/** Test builds only: the page of a place whose screen is not built, so the bar can be seen whole. It offers no button. */
-@Composable
-private fun ComingScreen(title: String, what: String) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(Modifier.widthIn(max = 640.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(title, style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
-            Notice(StatusKind.INFO, "Not built yet. It comes after sign-in.")
-            Text(what, style = MaterialTheme.typography.bodyLarge, color = Look.Muted)
         }
     }
 }
@@ -129,6 +144,7 @@ private fun MoreScreen(
     state: FrameState,
     tool: Tool?,
     onTool: (Tool?) -> Unit,
+    alertActions: AlertActions,
     onAddSample: () -> Unit,
     onAutomaticOutdoor: (Boolean) -> Unit,
     onForcedOutdoor: (Boolean) -> Unit,
@@ -152,6 +168,7 @@ private fun MoreScreen(
                 Tool.TRACE -> TraceScreen(state.traces, showValues = state.testBuild, onAddSample = if (state.testBuild) onAddSample else null, onTryConnection = if (state.testBuild) onTryConnection else null)
                 Tool.PHONE -> PhoneScreen(state.phone, state.model, state.version, state.safeNote, if (state.testBuild) onSafeNote else null)
                 Tool.WELCOME -> WelcomePreviewScreen()
+                Tool.ALERTS -> AlertsScreen(state.alerts, state.testBuild, alertActions)
                 Tool.DISPLAY -> DisplayScreen(
                     state.palette,
                     hasLightSensor = state.hasLightSensor,

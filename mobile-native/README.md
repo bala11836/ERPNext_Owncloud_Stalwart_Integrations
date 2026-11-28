@@ -38,8 +38,8 @@ tap leads to a finished screen. This folder currently holds the foundation every
   flash at start in night mode. The app's icon is its own mark, a white key on the accent colour, as one drawing
   for every phone's icon shape and for themed icons; Android 12 and newer show it on the page colour while the
   app starts (Android 9 to 11 show the plain page colour). A frame that shows a bottom bar on phones and a side rail on tablets with the
-  five agreed places (Today, Inbox, Chat, Mail, More; only More is finished, the others are in test builds only:
-  Inbox as a page that says what will be there, Today, Chat and Mail against stand-ins), and behind More three
+  five agreed places (Today, Inbox, Chat, Mail, More; only More is finished, the others are in test builds only,
+  against stand-ins), and behind More three
   finished screens: **Data trace** (list and detail; side by side on a tablet), **This phone** (fingerprint sensor,
   secure chip, Android version, checked for real) and **Display** (the look in use and the two Outdoor switches).
 - **Building blocks with rules built in** (`Parts.kt`): a plain status line cannot be tapped and must not name an
@@ -114,6 +114,38 @@ tap leads to a finished screen. This folder currently holds the foundation every
   its screen exists. **Not live:** it runs against a stand-in (`TodayPreview.kt`) with made-up days for seven
   roles and six situations, in test builds only; nothing is asked from a server.
 
+- **Inbox** (`core` `Inbox`, `app` `InboxScreen.kt`): what waits for the person's decision, what they decided, and
+  where what they sent is now (three views). Waiting: what was rejected back to me first, then what is due today,
+  then each kind with its oldest first, last what I put on hold. An item shows its trail (who did what, when) and
+  its evidence, with what is unusual said in words. **Two decisions only: Approve and Reject.** Each is signed
+  with the fingerprint, and the fingerprint question says what is signed (for money with the amount); a miss
+  counts as at the door. Approve is offered only after the person said they looked at the evidence. A rejection
+  always goes back to the sender to change and present again, never final, its reason optional. "Decide later" is
+  a hold, not a decision: any date and time, an optional reason, shown to the sender. Without a connection
+  nothing can be decided; nothing is shown as decided before the answer came; "someone else decided first" and
+  "it changed after you opened it" each have their own answer. **Not live:** it runs against a stand-in
+  (`InboxPreview.kt`), test builds only, with made-up items; the fingerprint question is the real one. Not built:
+  approve many, the history filter, tablet side by side, correcting a rejected item, own reminders, alerts.
+
+- **Alerts** (`core` `Alerts`, `app` `AlertCenter.kt`, `AlertsScreen.kt`): what the phone shows when something
+  waits, also while the app is closed. A signal carries a kind and short fields only; **every word shown is a
+  fixed sentence in the app, and nothing shown is ever taken from a signal**, so a wrong or forged signal cannot
+  put a name or an amount on a locked phone, and an unknown kind is dropped (the server must send data-only
+  signals; a ready-made notification text would be shown by Google's library itself). One alert per kind with its count
+  ("3 approvals waiting"); a reminder says that it is one and for how long; "decided elsewhere" lowers the count
+  quietly and the last one removes the alert. Approvals ring (the phone's silent mode wins) and, on a locked phone, show a full page with the
+  alert's words and two choices, "Open" and "Later", as the earlier app did; the ringing stops after 30 seconds
+  and a quiet entry stays in the list. Rejected items and chat messages use the normal sound, mail and notices
+  none; each kind has the phone's own switch. An alert
+  decides nothing: a tap opens the app, which asks for the fingerprint and then shows the place. A lost key
+  removes every alert, and a phone without its key shows none. The Alerts screen (under More) says whether alerts can show and what fixes it, and has
+  "Test my alerts" for every person. Signals arrive through Google's messaging library (the messaging part only;
+  its four values are private build properties, there is no settings file and no build plug-in). **Not live:**
+  nothing sends real signals yet and no phone is registered with the server (that needs sign-in); test builds
+  have one button per kind of signal and show the phone's delivery address for one test from Google's console.
+  The tests arrive through the phone's alarm service, so they also come when the app was closed. Not built:
+  "Later" with an own reminder time, a line inside the open app.
+
 ## Contents
 
 - `core/`: the rules module and its tests.
@@ -136,7 +168,9 @@ building blocks in `app` depend only on Compose Material 3.
 ## Configuration
 
 The server address is set privately as well (`erpServer=https://...` in the user's own Gradle properties, outside
-this repository). Without it the build reaches no server.
+this repository). Without it the build reaches no server. The same holds for alerts: `erpAlertsApp`,
+`erpAlertsKey`, `erpAlertsProject` and `erpAlertsSender` (the app's values in the deployment's Google project).
+Without them the build shows test alerts and receives none.
 
 The app ID defaults to the neutral `com.example.erp.next`. A deployment sets its own in a private
 `gradle.properties` (`erpAppId=...`), never in this repository. Signing keys and service files stay outside the
@@ -149,7 +183,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (61), Android lint with warnings as errors, the app's screen and connection tests (32) and a
+runs the rules module's unit tests (75), Android lint with warnings as errors, the app's screen and connection tests (43) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 
@@ -182,7 +216,8 @@ font size.
 
 ## Licenses
 
-Our own code, AGPL-3.0-or-later like the repository. Libraries (all Apache-2.0 unless noted; the connection uses Android's own HTTP client and JSON reader): Kotlin 2.2.10
+Our own code, AGPL-3.0-or-later like the repository. Libraries (all Apache-2.0 unless noted; the connection uses Android's own HTTP client and JSON reader), Firebase
+Cloud Messaging 26.0.2 (Google) with the Google Play services and Firebase parts it brings: Kotlin 2.2.10
 (JetBrains), Jetpack Compose (BOM 2026.09.00: UI, Material 3, adaptive navigation suite), AndroidX Activity
 1.12.4 and Biometric 1.1.0, the Android Gradle plugin 9.2.1; for tests only: JUnit 4.13.2 (EPL-1.0), Robolectric
 4.18 (MIT) and Compose's UI test library.

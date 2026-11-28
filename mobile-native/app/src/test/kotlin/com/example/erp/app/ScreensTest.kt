@@ -50,7 +50,14 @@ class ScreensTest {
         usable = true,
     )
 
-    private fun show(palette: Palette, testBuild: Boolean = true, withTraces: Boolean = true) {
+    /** What the fingerprint question was asked to sign, in order; and whether the pretend finger matches. */
+    private val signed = mutableListOf<String>()
+    private var fingerprintMatches = true
+
+    /** What the Alerts screen asked for, in order. */
+    private val alertCalls = mutableListOf<String>()
+
+    private fun show(palette: Palette, testBuild: Boolean = true, withTraces: Boolean = true, alerts: AlertsView = AlertsView(connected = true, address = "delivery-address-for-tests"), goTo: Place? = null) {
         val tracer = Tracer()
         if (withTraces) sampleTraces(tracer)
         compose.setContent {
@@ -60,7 +67,15 @@ class ScreensTest {
             var note by androidx.compose.runtime.remember { mutableStateOf<String?>(null) }
             ErpTheme(if (forced) Palettes.OUTDOOR else palette) {
                 AppFrame(
-                    FrameState(if (forced) Palettes.OUTDOOR else palette, testBuild, traces, phone, "Test Phone", "0.1.0", hasLightSensor = true, automaticOutdoor = automatic, forcedOutdoor = forced, lux = 24f, safeNote = note),
+                    FrameState(if (forced) Palettes.OUTDOOR else palette, testBuild, traces, phone, "Test Phone", "0.1.0", hasLightSensor = true, automaticOutdoor = automatic, forcedOutdoor = forced, lux = 24f, safeNote = note, alerts = alerts),
+                    alertActions = AlertActions(
+                        fix = { alertCalls += "fix ${it.name}" },
+                        openKind = { alertCalls += "kind ${it.id}" },
+                        signal = { alertCalls += "signal ${it["kind"]}" },
+                        removeAll = { alertCalls += "remove all" },
+                    ),
+                    goTo = goTo,
+                    sign = { what, done -> signed += what; done(fingerprintMatches, if (fingerprintMatches) null else com.example.erp.core.LockRules.missWords(1)) },
                     onAddSample = { sampleTraces(tracer); traces = tracer.all() },
                     onAutomaticOutdoor = { automatic = it },
                     onForcedOutdoor = { forced = it },
@@ -114,6 +129,33 @@ class ScreensTest {
             compose.onNodeWithText("Role: ${day.label}").performClick()
         }
         compose.onNodeWithText("Role: ${Day.SUPERVISOR.label}").assertIsDisplayed()
+        // Inbox: the three views; every waiting item opens, and so do "Reject" and "Decide later"; all lead back.
+        place(Place.INBOX).performClick()
+        for (view in listOf("Decided", "Sent", "Waiting")) {
+            tap(view)
+            checkLayout("$name / inbox, $view")
+        }
+        for (item in listOf("Purchase request: cement", "Attendance, Site A, 6 workers", "Payment to a supplier", "Purchase request: steel", "Leave, 3 days", "Advance for site expenses")) {
+            tap(item)
+            reach(compose.onNode(hasText(item) and !hasClickAction())).assertIsDisplayed()
+            checkLayout("$name / inbox item $item")
+            reach(compose.onNodeWithContentDescription("Back")).performClick()
+        }
+        tap("Payment to a supplier")
+        tap("Reject")
+        shown("It goes back to Accounts, S. Example to change and present again.")
+        checkLayout("$name / inbox reject")
+        tap("Do not reject")
+        tap("Decide later")
+        shown("This puts it on hold; it is not a decision.")
+        checkLayout("$name / inbox decide later")
+        tap("Do not put on hold")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        tap("Decided")
+        tap("Purchase request: sand")
+        shown("A decision cannot be undone here.")
+        checkLayout("$name / inbox, a past decision")
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
         // Everything behind More opens its own screen and leads back to More.
         for (tool in Tool.entries) {
             tool(tool)
@@ -416,7 +458,7 @@ class ScreensTest {
         sampleTraces(tracer)
         compose.setContent {
             ErpTheme(Palettes.LIGHT) {
-                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, tracer.all(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), {}, {}, {})
+                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, tracer.all(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), { _, done -> done(true, null) }, AlertActions({}, {}, {}, {}), {}, {}, {})
             }
         }
         // The real app opens on More, its only finished place; no unfinished place and no stand-in can be reached.
@@ -430,6 +472,10 @@ class ScreensTest {
         assertEquals(0, compose.onAllNodesWithText("Try the connection", substring = true).fetchSemanticsNodes().size)
         compose.onNode(hasText("Sample: check-out refused", substring = true) and hasClickAction()).performClick()
         assertEquals(0, compose.onAllNodesWithText("sample values", substring = true).fetchSemanticsNodes().size)
+        tool(Tool.ALERTS)
+        shown("Test my alerts")
+        absent("Signal:")
+        absent("Delivery address")
         tool(Tool.PHONE)
         assertEquals(0, compose.onAllNodesWithText("Safe", substring = true).fetchSemanticsNodes().size)
         tool(Tool.DISPLAY)
@@ -458,16 +504,228 @@ class ScreensTest {
     @Test
     fun theBarHasTheFivePlacesAndMoreAlwaysLeadsBackToItsList() {
         show(Palettes.LIGHT)
-        // The app opens on Today. The unfinished place says so and offers nothing to tap.
+        // The app opens on Today.
         compose.onNode(hasText("Today") and !hasClickAction()).assertIsDisplayed()
-        place(Place.INBOX).performClick()
-        shown("Not built yet. It comes after sign-in.")
-        shown("Everything that waits for your decision")
         // A tap on More shows More's list, also from inside one of its screens.
         tool(Tool.DISPLAY)
         place(Place.MORE).performClick()
         compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()
         for (item in Tool.entries) reach(compose.onNode(hasText(item.title) and hasClickAction())).assertIsDisplayed()
+    }
+
+    @Test
+    fun approvingNeedsTheEvidenceSeenAndTheFingerprintAndSaysWhatIsSigned() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        // What came back to me is first; what is due today comes before the rest.
+        shown("REJECTED, TO CORRECT (1)")
+        shown("DUE TODAY (1)")
+        tap("Payment to a supplier")
+        shown("1,50,000.00")
+        shown("Prepared by Accounts, S. Example")
+        // No Approve until the person says they have looked at it.
+        assertEquals(0, compose.onAllNodes(hasText("Approve with your fingerprint") and hasClickAction()).fetchSemanticsNodes().size)
+        reach(compose.onNode(hasText("I have looked at everything above", substring = true) and hasClickAction())).performClick()
+        // A finger that does not match decides nothing and says so.
+        fingerprintMatches = false
+        tap("Approve with your fingerprint")
+        shown("Not signed. 4 tries left. After 5 misses in a row the key is erased.")
+        assertEquals(listOf("Approve 1,50,000.00: Payment to a supplier"), signed)
+        fingerprintMatches = true
+        tap("Approve with your fingerprint")
+        shown("Approved. It moves on to the next step.")
+        tap("Back to the list")
+        absent("Payment to a supplier")
+        tap("Decided")
+        reach(compose.onNode(hasText("Payment to a supplier") and hasText("Approved") and hasClickAction())).assertIsDisplayed()
+    }
+
+    @Test
+    fun rejectingNeedsNoReasonGoesBackToTheSenderAndIsNeverFinal() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Leave, 3 days")
+        tap("Reject")
+        shown("A reason is not required")
+        tap("Reject with your fingerprint") // without any reason
+        assertEquals(listOf("Reject: Leave, 3 days"), signed)
+        shown("Rejected. It went back to Site supervisor, K. Example to change and present again.")
+        reach(compose.onNode(hasText("Open the next one", substring = true) and hasClickAction())).performClick() // leads on
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // With a quick reason and own words.
+        tap("Attendance, Site A, 6 workers")
+        shown("WHAT IT IS ABOUT (2 TO LOOK AT CLOSELY)")
+        shown("Outside the site by 140 m")
+        tap("Reject")
+        tap("Photo not clear")
+        type("In your own words (optional)", "Worker 3")
+        tap("Reject with your fingerprint")
+        tap("Back to the list")
+        tap("Decided")
+        tap("Attendance, Site A, 6 workers")
+        shown("Rejected by you")
+        shown("Reason: Photo not clear: Worker 3")
+        // What was rejected back to me says by whom and why, can be presented again, and offers no decision.
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        tap("Waiting")
+        tap("Purchase request: cement")
+        shown("Rejected by Management, R. Example")
+        shown("It can be presented as often as needed.")
+        assertEquals(0, compose.onAllNodes(hasText("Reject") and hasClickAction()).fetchSemanticsNodes().size)
+        assertEquals(0, compose.onAllNodes(hasText("Decide later") and hasClickAction()).fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun decideLaterIsAHoldWithAnyTimeAndNothingIsDecidedWithoutAConnection() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Purchase request: steel")
+        tap("Decide later")
+        tap("Tomorrow, 09:00")
+        repeat(40) { tap("1 day later") } // no limit on how far ahead
+        tap("30 min later")
+        tap("Waiting for a document")
+        tap("Put on hold")
+        assertEquals("a hold needs no fingerprint: it decides nothing", emptyList<String>(), signed)
+        shown("ON HOLD (1)")
+        tap("Purchase request: steel")
+        shown("On hold until")
+        shown("Waiting for a document.")
+        // Still decidable at any moment; this one changes under the person, who must look again.
+        reach(compose.onNode(hasText("I have looked at everything above", substring = true) and hasClickAction())).performClick()
+        tap("Approve with your fingerprint")
+        shown("This was changed after you opened it. Nothing was decided.")
+        tap("Look at it again")
+        shown("Changed by the sender")
+        assertEquals(0, compose.onAllNodes(hasText("Approve with your fingerprint") and hasClickAction()).fetchSemanticsNodes().size)
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // Someone else was faster.
+        tap("Attendance, Site B, 3 workers")
+        reach(compose.onNode(hasText("I have looked at everything above", substring = true) and hasClickAction())).performClick()
+        tap("Approve with your fingerprint")
+        shown("Already approved by Admin, P. Example")
+        tap("Back to the list")
+        // I do not decide what I sent myself.
+        tap("Advance for site expenses")
+        shown("You sent this. Someone else must decide it.")
+        assertEquals(0, compose.onAllNodes(hasText("Reject") and hasClickAction()).fetchSemanticsNodes().size)
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // Without a connection the item can be read and nothing can be decided.
+        tap("Signal: on (stand-in)")
+        shown("Deciding needs a connection.")
+        tap("Leave, 3 days")
+        shown("Needs a connection. Nothing can be decided now.")
+        assertEquals(0, compose.onAllNodes(hasText("Reject") and hasClickAction()).fetchSemanticsNodes().size)
+        reach(compose.onNodeWithContentDescription("Back")).performClick()
+        // What I sent: who has it, since when, the rejected one first.
+        tap("Sent")
+        shown("With Management, R. Example for 2 h.")
+        shown("On hold with Management, R. Example until")
+    }
+
+    @Test
+    fun theAlertsScreenSaysWhetherAlertsWorkAndLetsEveryoneTestTheirPhone() {
+        show(Palettes.LIGHT)
+        tool(Tool.ALERTS)
+        shown("Alerts can show on this phone.")
+        shown("An alert never shows a name or an amount")
+        tap("Test my alerts")
+        // Each kind leads to the phone's own switch for it.
+        reach(compose.onNode(hasText("Approvals: ringing") and hasClickAction())).performClick()
+        // Test builds: one button per kind of signal, and the delivery address for the owner's test.
+        tap("Signal: reminder, 3 waiting, 8 hours")
+        tap("Signal: with a name and an amount in it")
+        shown("delivery-address-for-tests")
+        tap("Remove every alert now")
+        assertEquals(listOf("signal test", "kind approvals", "signal reminder", "signal approval", "remove all"), alertCalls)
+    }
+
+    @Test
+    fun aPaymentWhoseAmountIsMissingOrUnreadableCannotBeDecided() {
+        val now = java.time.LocalDateTime.of(2026, 11, 28, 9, 15)
+        fun payment(id: String, amount: String?) = com.example.erp.core.Item(id, com.example.erp.core.ItemKind.PAYMENT, "50,000.00 cement $id", "Accounts, S. Example", now.minusHours(1), amount = amount)
+        val calls = mutableListOf<String>()
+        val actions = InboxActions(sign = { what, done -> calls += what; done(true, null) }, decide = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, hold = { id, _, _, _ -> calls += id })
+        compose.setContent {
+            ErpTheme(Palettes.LIGHT) { InboxScreen(listOf(payment("one", null), payment("two", "12x")), emptyList(), emptyList(), now, online = true, actions = actions) }
+        }
+        for (id in listOf("one", "two")) {
+            reach(compose.onNode(hasText("50,000.00 cement $id") and hasClickAction())).performClick()
+            shown("The amount is missing or cannot be read on this phone, so nothing can be decided here. Open it on the web.")
+            absent("I have looked at everything above")
+            absent("Reject")
+            absent("Decide later")
+            reach(compose.onNodeWithContentDescription("Back")).performClick()
+            compose.waitForIdle()
+        }
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun theFullPageOfARingingAlertShowsOnlyItsWordsAndTwoChoices() {
+        val taps = mutableListOf<String>()
+        compose.setContent {
+            ErpTheme(Palettes.LIGHT) { RingPage("3 approvals waiting", onOpen = { taps += "open" }, onLater = { taps += "later" }) }
+        }
+        shown("3 approvals waiting")
+        shown("Your fingerprint comes first.")
+        checkLayout("ring page")
+        tap("Later")
+        tap("Open")
+        assertEquals(listOf("later", "open"), taps)
+        // Nothing on the page can decide anything.
+        absent("Approve")
+        absent("Reject")
+    }
+
+    @Test @Config(fontScale = 2.0f)
+    fun theFullPageHoldsAtDoubleFontSize() {
+        compose.setContent {
+            ErpTheme(Palettes.OUTDOOR) { RingPage("Reminder: 3 approvals are still waiting, the oldest for 8 hours", onOpen = {}, onLater = {}) }
+        }
+        shown("Reminder: 3 approvals are still waiting, the oldest for 8 hours")
+        checkLayout("ring page, outdoor, double font")
+        reach(compose.onNode(hasText("Later") and hasClickAction())).assertIsDisplayed()
+    }
+
+    @Test
+    fun aPhoneThatHasNotAllowedTheFullPageSaysSoAndLeadsToTheSetting() {
+        show(Palettes.LIGHT, alerts = AlertsView(fullPage = false, connected = true))
+        tool(Tool.ALERTS)
+        shown("The full page over a locked screen is not allowed on this phone yet.")
+        tap("Allow the full page")
+        assertEquals(listOf("fix FULL_PAGE"), alertCalls)
+    }
+
+    @Test
+    fun blockedAlertsSayWhyAndOfferTheOneFix() {
+        show(Palettes.LIGHT, alerts = AlertsView(blocked = "the phone has not been allowed to show this app's alerts.", fix = Fix.ALLOW, connected = false))
+        tool(Tool.ALERTS)
+        shown("Alerts are blocked: the phone has not been allowed to show this app's alerts.")
+        absent("Alerts can show on this phone.")
+        shown("This build is not connected to the alert service")
+        shown("None: this build is not connected to the alert service.")
+        tap("Allow alerts")
+        assertEquals(listOf("fix ALLOW"), alertCalls)
+        checkLayout("alerts, blocked")
+    }
+
+    @Test
+    fun aTappedAlertOpensItsPlaceAndNeverAPlaceTheBuildDoesNotShow() {
+        show(Palettes.LIGHT, goTo = Place.INBOX)
+        compose.onNode(hasText("Inbox") and !hasClickAction()).assertIsDisplayed()
+        shown("Waiting for me")
+    }
+
+    @Test
+    fun inARealBuildATappedAlertCannotOpenAnUnfinishedPlace() {
+        compose.setContent {
+            ErpTheme(Palettes.LIGHT) {
+                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, emptyList(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), { _, done -> done(true, null) }, AlertActions({}, {}, {}, {}), {}, {}, {}, goTo = Place.INBOX)
+            }
+        }
+        compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()
+        absent("Waiting for me")
     }
 
     private fun day(day: Day) {
@@ -491,6 +749,7 @@ class ScreensTest {
         absent("My team today")
         tap("To verify")
         compose.onNode(hasText("Inbox") and !hasClickAction()).assertIsDisplayed()
+        shown("Waiting for me")
         // The project manager: what waits, by count; the unread counts lead to Chat and Mail.
         day(Day.PROJECT_MANAGER)
         shown("8 waiting, the oldest for 2 h.")

@@ -1460,3 +1460,40 @@ check themselves in keep their existing workflows.
 - **Where:** `deployment/config/proxy/office-acme.yml`, `tools/prepare_test_relay.py`,
   `tools/coolify_proxy_hosts.py`, `tools/coolify_proxy_tls_resolver.py`,
   `tests/test_rebuild_templates.py`, register entry PROXY-6. AI-assisted by Claude Code.
+
+### Alerts in the native app: Google's messaging library, and every word written by the app (P50, P108)
+
+- **Decision:** The native Android app receives alerts through Firebase Cloud Messaging
+  (`firebase-messaging` 26.0.2), the messaging part only: no analytics, no crash reports,
+  no advertising ID. There is no settings file in the project and no build plug-in for it;
+  the four values the library needs are private build properties, as the server address
+  is. A signal carries a kind and short fields only. Every word an alert shows is a fixed
+  sentence in the app (`core/Alerts.kt`); nothing the app shows is ever taken from a signal, and
+  an unknown kind is dropped. The server must send data-only signals: one that carries a
+  ready-made notification text is shown by Google's library itself while the app is in
+  the background, without asking the app. The phone remembers a short fingerprint of each
+  waiting reference (at most 500) so it can count and remove, never the reference. A
+  phone without its key shows no alert. An alert decides nothing: a
+  tap opens the app, which asks for the fingerprint first. A lost key removes every alert.
+  The phone asks Google for a delivery address only when the app asks for one.
+- **Why:** An Android app that is closed can only be reached through this service; the
+  earlier app used the same service through a packaged library. Writing the words in the
+  app means a wrong or forged signal cannot put a name or an amount on a locked phone.
+  Leaving out the settings file keeps a deployment's identity out of this repository and
+  removes one build tool.
+- **Consequence:** The library makes its own connection to Google, the one exception to
+  "the app talks to one server". Google learns that the app is installed on a phone,
+  when a signal is delivered, and the signal's short fields: its kind and, for an
+  approval, a rejection or a removal, the document type and name the server puts in so the phone can count and
+  remove. Open with the owner: the server sends a keyed fingerprint instead of the name.
+  A "decided elsewhere" signal that gets lost leaves a count too high until the real
+  Inbox sets it right (not built yet). The fingerprint match is known to the phone only;
+  the server gets no proof of it (open with the owner). Phones without Google services
+  get no alerts this way. The merged app also
+  carries the library's own permissions (network state, wake lock, receiving messages).
+- **Checked:** version published 11 November 2026 (older than two weeks); all 63 resolved
+  library versions asked in OSV on 28 November 2026, none used by the app has an open
+  advisory; every one has its checksum in `gradle/verification-metadata.xml`, recorded by Gradle at
+  the first download and not compared with a second source.
+- **Where:** `mobile-native/core/.../Alerts.kt`, `mobile-native/app/.../AlertCenter.kt`,
+  `AlertsScreen.kt`, `tests/test_mobile_native.py`. AI-assisted by Claude Code.

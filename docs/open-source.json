@@ -810,6 +810,16 @@
       "note": "mobile-native (in progress, not shipped): Compose BOM 2026.09.00, Activity 1.12.4, Biometric 1.1.0 (which brings Fragment 1.2.5, used for the fingerprint question); no open advisories (OSV, 26 November 2026)"
     },
     {
+      "name": "Firebase Cloud Messaging for Android",
+      "repo": "https://github.com/firebase/firebase-android-sdk",
+      "licence": "Apache-2.0",
+      "used_in": [
+        "P50"
+      ],
+      "status": "evaluating",
+      "note": "mobile-native (in progress, not shipped): firebase-messaging 26.0.2 (published 11 November 2026) for alerts while the app is closed; the messaging part only, no analytics, no settings file and no build plug-in. It brings Google Play services base, tasks and cloud-messaging, Firebase common, installations and datatransport, AndroidX DataStore 1.1.7 and Okio 3.4.0. All 63 resolved versions asked in OSV on 28 November 2026: no open advisory in any version the app uses (play-services-basement 17.0.0 appears only as metadata and is replaced by 18.9.0, which has the fix for GHSA-cm6r-892j-jv2g)"
+    },
+    {
       "name": "Kotlin",
       "repo": "https://github.com/JetBrains/kotlin",
       "licence": "Apache-2.0",

@@ -685,7 +685,7 @@ configuration we write (`integrations/chat/configure.py`).
   container turns "unhealthy"). **Retire** the override when the image ships a check that works.
 - **Tests:** `tests/test_chat_stack.py`; live: the container reports "healthy".
 - **Upstream:** element-hq/sygnal#326 (open: the image has neither `curl` nor `wget`); our note is in
-  `docs/upstream-posts.md`.
+  `docs/upstream-posts.md` (issuecomment-7232356852).
 
 ### CHAT-3 Proxy paths that name Matrix endpoints
 

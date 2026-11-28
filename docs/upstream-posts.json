@@ -283,6 +283,30 @@
           "result": "nothing new"
         }
       ]
+    },
+    {
+      "id": "sygnal-image-health-check",
+      "url": "https://github.com/element-hq/sygnal/issues/326#issuecomment-7232356852",
+      "kind": "comment",
+      "posted": "2026-11-28",
+      "summary": "Sygnal image: the built-in health check calls curl, which the image lacks; a Python check as workaround",
+      "p_items": [
+        "P73"
+      ],
+      "register": [
+        "CHAT-6"
+      ],
+      "status": "waiting",
+      "watch": true,
+      "next": "When the image ships a check that works, remove our override (CHAT-6).",
+      "last_seen": "2026-11-28T02:27:00Z",
+      "thread_state": "open",
+      "checks": [
+        {
+          "date": "2026-11-28",
+          "result": "nothing new (posted the same day)"
+        }
+      ]
     }
   ]
 }

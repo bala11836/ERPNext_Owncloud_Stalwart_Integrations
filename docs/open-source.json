@@ -865,6 +865,18 @@
       "watch": [
         "matrixdotorg/sygnal"
       ]
+    },
+    {
+      "name": "Element Web",
+      "repo": "https://github.com/element-hq/element-web",
+      "licence": "AGPL-3.0",
+      "used_in": [
+        "chat"
+      ],
+      "status": "adopted",
+      "watch": [
+        "ghcr.io/element-hq/element-web"
+      ]
     }
   ]
 }

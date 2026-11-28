@@ -59,6 +59,7 @@
 | [Synapse](https://github.com/element-hq/synapse) | AGPL-3.0 | chat | daily watch: `ghcr.io/element-hq/synapse` |  |
 | [Matrix Authentication Service](https://github.com/element-hq/matrix-authentication-service) | AGPL-3.0 | chat | daily watch: `ghcr.io/element-hq/matrix-authentication-service` |  |
 | [Sygnal](https://github.com/element-hq/sygnal) | AGPL-3.0 | chat | daily watch: `matrixdotorg/sygnal` |  |
+| [Element Web](https://github.com/element-hq/element-web) | AGPL-3.0 | chat | daily watch: `ghcr.io/element-hq/element-web` |  |
 
 ## Being evaluated or chosen, not in the code yet
 

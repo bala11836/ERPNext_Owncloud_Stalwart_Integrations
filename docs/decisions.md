@@ -6,6 +6,25 @@ discussion that led to a decision is not repeated here.
 
 ## 2026-11-28
 
+### A chat screen for browsers: Element Web, under its own name, from the Desk menu (P73)
+
+- **Decision (owner, 28 November 2026):** chat gets a screen for browsers now, with a "Chat" entry in the Desk's
+  menu. The phone app's chat continues separately. The screen is Element Web, unchanged, with our configuration.
+  - It has a host name of its own (`chat-web`), not the chat server's, as its makers advise: uploaded files are
+    served from the server's name.
+  - It names only our server and switches off what would call an outside service.
+  - The menu entry opens it in its own tab. The sign-in pages refuse to be shown inside another page, so it is
+    not put into the Desk's frame. Signing out of the Desk does not sign out of it yet.
+- **Adoption check (28 November 2026; GitHub repository and its Security Advisories):** element-hq/element-web,
+  AGPL-3.0 (also offered under GPL-3.0 and a commercial licence). A release about every two weeks (v1.12.36 on
+  24 November 2026). 5 advisories in the last 12 months (1 high, of 16 October 2026), each published with its fixed
+  version; the newest fix is in 1.12.32, so none is open at 1.12.36. Verdict: adopt, pinned by version and digest,
+  in the daily upstream watch (exposure: public).
+- **Alternatives on record:** Cinny and FluffyChat (other Matrix web clients; not checked in detail); no browser
+  screen at all (chat only in the phone app).
+- **Where:** `integrations/chat/element-config.json`, `deployment/stacks/chat.compose.json`,
+  `tools/prepare_ingress.py`, `erpnext_drive_integrations/www/place_holder.*`; register entry CHAT-7.
+
 ### The phone app is named "UNformat ERP" (P85, P50)
 
 - **Decision:** the phone app's name is **UNformat ERP**, replacing "ERP Mobile". It is the default brand's app name

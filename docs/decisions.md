@@ -1623,3 +1623,25 @@ check themselves in keep their existing workflows.
   the first download and not compared with a second source.
 - **Where:** `mobile-native/core/.../Alerts.kt`, `mobile-native/app/.../AlertCenter.kt`,
   `AlertsScreen.kt`, `tests/test_mobile_native.py`. AI-assisted by Claude Code.
+
+### Native app: the approval's full page also while the phone is in use, by the person's own switch (P50, P108)
+
+- **Decision:** The native Android app asks for `SYSTEM_ALERT_WINDOW` ("display over other
+  apps"). It is used for one thing: when an approval rings while the phone is unlocked and
+  in use, the app opens its own full page (`RingActivity`), the same page a locked phone
+  shows. Only where the person switched it on in the phone's settings; the Alerts screen
+  says what happens without it and leads to the switch. The app draws no window over any
+  other app. Decided by the developer on 28 November 2026: both, according to the phone.
+- **Why:** Android shows an app's full page by itself only on a locked or dark phone; on a
+  phone in use it shows a banner. People who decide approvals asked for the full page in
+  both cases. On current Android an app may open a page from the background only in a few
+  cases; this switch is the one a person can give an app.
+- **Consequence:** Phones without the setting (phones with little memory) and people who
+  leave it off get the banner, which rings and carries Approve, Reject and Remind. The
+  page shows fixed words only and decides nothing. It opens only for an approval the phone
+  did not know yet or a reminder the person asked for, never during a call, at most once
+  a minute, and its buttons answer only after a moment. The store may ask for a reason
+  for this permission at release. A repository test holds that nothing is drawn over other apps.
+- **Where:** `mobile-native/app/.../AlertCenter.kt` (`onTop`, `inUse`, `show`),
+  `AlertsScreen.kt`, `AndroidManifest.xml`, `tests/test_mobile_native.py`. AI-assisted by
+  Claude Code.

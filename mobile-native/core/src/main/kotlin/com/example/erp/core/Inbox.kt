@@ -54,6 +54,8 @@ data class Item(
     val delegationReason: String? = null,
     /** The sender's number, as the server knows the person. A written name can change or repeat; this cannot. */
     val fromId: String? = null,
+    /** An attendance sheet's workers, each reviewed on its own (see [Reviews]). Empty for everything else. */
+    val entries: List<Entry> = emptyList(),
 )
 
 /** Something I decided, for "Decided by me". [since] says what became of it afterwards. */
@@ -95,7 +97,6 @@ object Inbox {
     /** Control characters and the invisible ones that change the direction of text. */
     private val UNSEEN = Regex("[\\p{Cc}\\p{Cf}]")
 
-    val REJECT_REASONS = listOf("Wrong worker marked", "Photo not clear", "Wrong time", "Not at this site", "Amount or quantity is wrong", "A document is missing")
 
     private fun dueNow(item: Item, now: LocalDateTime) = item.deadline != null && !item.deadline.toLocalDate().isAfter(now.toLocalDate())
 
@@ -120,7 +121,10 @@ object Inbox {
     fun count(items: List<Item>): Int = items.count { it.rejection != null || (canDecide(it) && it.delegatedTo == null) }
 
     /** I never decide what I sent myself, and what was rejected back to me is mine to correct, not to decide. */
-    fun canDecide(item: Item): Boolean = !item.sentByMe && item.rejection == null && !amountUnreadable(item)
+    fun canDecide(item: Item): Boolean = !item.sentByMe && item.rejection == null && !amountUnreadable(item) && !workersMissing(item)
+
+    /** An attendance sheet without its workers: there is nothing to look at, so nothing is decided as a whole. */
+    fun workersMissing(item: Item): Boolean = item.entries.isEmpty() && (item.kind == ItemKind.ATTENDANCE_VERIFY || item.kind == ItemKind.ATTENDANCE_APPROVE)
 
     fun amount(item: Item): String? = item.amount?.let { runCatching { Money.indian(Money.parse(it)) }.getOrNull() }
 

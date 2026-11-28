@@ -17,10 +17,12 @@ import com.example.erp.core.Decision
 import com.example.erp.core.DecisionResult
 import com.example.erp.core.Delegation
 import com.example.erp.core.DelegationFacts
+import com.example.erp.core.Entry
 import com.example.erp.core.Delegations
 import com.example.erp.core.Leave
 import com.example.erp.core.Receiver
 import com.example.erp.core.Relation
+import com.example.erp.core.Reviews
 import com.example.erp.core.Inbox
 import com.example.erp.core.Item
 import com.example.erp.core.ItemKind
@@ -74,6 +76,22 @@ fun InboxPreviewScreen(
                     decided = listOf(Decided(item, decision, now, reason)) + decided
                     if (decision == Decision.APPROVED) DecisionResult.Done("Approved. It moves on to the next step.")
                     else DecisionResult.Done("Rejected. It went back to ${item.from} to change and present again.")
+                }
+            }
+        },
+        review = { id, _, approve, reject ->
+            val item = waiting.first { it.id == id }
+            when {
+                !online -> DecisionResult.NoConnection
+                id == TAKEN -> {
+                    waiting = waiting.filter { it.id != id }
+                    DecisionResult.Taken("Admin, P. Example", now.minusMinutes(4), Decision.APPROVED)
+                }
+                else -> {
+                    val said = Reviews.sentence(item, approve.size, reject.size, failed = 0)
+                    waiting = waiting.filter { it.id != id }
+                    decided = listOf(Decided(item, if (approve.isEmpty()) Decision.REJECTED else Decision.APPROVED, now, since = said)) + decided
+                    DecisionResult.Done(said)
                 }
             }
         },
@@ -140,17 +158,20 @@ internal fun standInWaiting(now: LocalDateTime): Int = Inbox.count(sampleWaiting
 private fun sampleWaiting(now: LocalDateTime): List<Item> {
     val engineer = "Engineer, A. Example"
     val supervisor = "Site supervisor, K. Example"
-    fun worker(n: Int, time: String, unusual: String? = null) = Line("Worker $n", "Checked in $time, photo.", unusual)
+    fun worker(n: Int, time: String, unusual: String? = null, notMine: String? = null) = Entry("w$n", "Worker $n", "Checked in $time", unusual, notMine)
     return listOf(
         Item(
             "attendance-a", ItemKind.ATTENDANCE_APPROVE, "Attendance, Site A, 6 workers", engineer, now.minusMinutes(95), deadline = now.toLocalDate().atTime(23, 30),
             trail = listOf(Step(supervisor, "Sent", now.minusHours(3)), Step(engineer, "Verified", now.minusMinutes(95))),
-            lines = listOf(worker(1, "08:52"), worker(2, "08:55"), worker(3, "08:57", "Outside the site by 140 m"), worker(4, "09:01"), worker(5, "09:20", "Time changed by hand"), worker(6, "08:49")),
+            entries = listOf(
+                worker(1, "08:52"), worker(2, "08:55"), worker(3, "08:57", "Outside the site by 140 m"), worker(4, "09:01"), worker(5, "09:20", "Time changed by hand"),
+                worker(6, "08:49", notMine = "You marked this worker yourself, so someone else reviews this one."),
+            ),
         ),
         Item(
             TAKEN, ItemKind.ATTENDANCE_APPROVE, "Attendance, Site B, 3 workers", engineer, now.minusHours(3),
             trail = listOf(Step(supervisor, "Sent", now.minusHours(5)), Step(engineer, "Verified", now.minusHours(3))),
-            lines = listOf(worker(1, "08:40"), worker(2, "08:44"), worker(3, "08:51")),
+            entries = listOf(worker(1, "08:40"), worker(2, "08:44"), worker(3, "08:51")),
         ),
         Item(
             "payment", ItemKind.PAYMENT, "Payment to a supplier", "Accounts, S. Example", now.minusHours(6), amount = "150000",

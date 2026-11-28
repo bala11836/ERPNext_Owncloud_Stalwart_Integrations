@@ -50,6 +50,12 @@ fun AlertsScreen(view: AlertsView, testBuild: Boolean, actions: AlertActions) {
             if (view.blocked == null && !view.fullPage) {
                 ActionMessage(StatusKind.WARN, "The full page over a locked screen is not allowed on this phone yet. Approvals still ring, as a banner.", Fix.FULL_PAGE.label, { actions.fix(Fix.FULL_PAGE) })
             }
+            // While the phone is in use the phone itself shows only a banner; the full page there is the person's choice.
+            if (view.blocked == null) when (view.onTop) {
+                false -> ActionMessage(StatusKind.NONE, "While you use the phone, an approval comes as a banner at the top. To get the full page then too, allow this app to show over other apps: find this app in the list that opens and switch it on.", Fix.ON_TOP.label, { actions.fix(Fix.ON_TOP) })
+                null -> Notice(StatusKind.NONE, "While you use this phone, an approval comes as a banner at the top. This phone cannot show the full page then.")
+                true -> Notice(StatusKind.OK, "Allowed: the full page can also show while you use the phone. Not during a call.")
+            }
             if (!view.connected) Notice(StatusKind.NONE, "This build is not connected to the alert service, so nothing arrives by itself. The test below still works.")
             Text(
                 "Approvals ring at any time, unless your phone is on silent or on Do not disturb. Reminders come every 4 hours between 07:00 and 21:00. An alert never shows a name or an amount; you see those after your fingerprint.",

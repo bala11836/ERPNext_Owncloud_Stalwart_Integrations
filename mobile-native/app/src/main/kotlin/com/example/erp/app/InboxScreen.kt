@@ -35,6 +35,7 @@ import com.example.erp.core.Format
 import com.example.erp.core.Inbox
 import com.example.erp.core.Item
 import com.example.erp.core.Receiver
+import com.example.erp.core.Reviews
 import com.example.erp.core.Sent
 import com.example.erp.core.SentState
 import com.example.erp.core.Tone
@@ -49,6 +50,8 @@ class InboxActions(
     val sign: (what: String, done: (signed: Boolean, trouble: String?) -> Unit) -> Unit,
     /** [modified] is the version the person looked at; the server refuses a decision made on an older one. */
     val decide: (id: String, modified: String, decision: Decision, reason: String?) -> DecisionResult,
+    /** An attendance sheet reviewed worker by worker: these are approved, those rejected, each with its reason. */
+    val review: (id: String, modified: String, approve: List<String>, reject: Map<String, String>) -> DecisionResult,
     /** "Remind me in 2 hours": nothing is decided and nothing is sent; this phone rings again. */
     val remind: () -> Unit,
     /** One thing goes to [to]. Nothing counts as delegated until the server said so. */
@@ -97,7 +100,8 @@ fun InboxScreen(
 
     val item = waiting.firstOrNull { it.id == openId }
     // "I have looked" belongs to one version of one item: a changed item must be looked at again.
-    var seen by rememberSaveable(openId, item?.modified) { mutableStateOf(false) }
+    // For a sheet of workers that includes every worker's version: a corrected worker must be looked at again.
+    var seen by rememberSaveable(openId, item?.modified, item?.entries?.joinToString("|") { it.modified }) { mutableStateOf(false) }
     val past = decided.firstOrNull { it.item.id == openId }
     var note by remember { mutableStateOf<String?>(null) }
     val toList = { step = Screen.LIST; openId = null; result = null }
@@ -129,6 +133,20 @@ fun InboxScreen(
             if (signed) {
                 decidedTitle = target.title
                 result = actions.decide(target.id, target.modified, decision, reason)
+                step = Screen.RESULT
+            } else {
+                trouble = why
+            }
+        }
+    }
+
+    // A sheet reviewed worker by worker is one signed step: the question says how many of each.
+    fun review(target: Item, approve: List<String>, reject: Map<String, String>) {
+        trouble = null
+        actions.sign(Reviews.question(target, approve.size, reject.size)) { signed, why ->
+            if (signed) {
+                decidedTitle = target.title
+                result = actions.review(target.id, target.modified, approve, reject)
                 step = Screen.RESULT
             } else {
                 trouble = why
@@ -169,7 +187,8 @@ fun InboxScreen(
                 onLookAgain = { seen = false; result = null; step = Screen.ITEM }, onNext = { result = null; open(it) }, onList = toList)
         }
         // Without a connection these two fall back to the item, which says that nothing can be decided now.
-        step == Screen.REJECT && item != null && online && Inbox.canDecide(item) -> {
+        // A sheet of workers has no reject of the whole: its workers are rejected inside it, each with a reason.
+        step == Screen.REJECT && item != null && online && Inbox.canDecide(item) && !Reviews.applies(item) -> {
             BackHandler { step = Screen.ITEM }
             Reject(item, trouble, onBack = { step = Screen.ITEM }) { reason -> decide(item, Decision.REJECTED, reason) }
         }
@@ -182,6 +201,7 @@ fun InboxScreen(
             ItemView(
                 item, now, online, seen, trouble, onSeen = { seen = it }, onBack = toList, onApprove = { decide(item, Decision.APPROVED, null) },
                 onReject = { trouble = null; step = Screen.REJECT },
+                onReview = { approve, reject -> review(item, approve, reject) },
                 onRemind = { actions.remind(); toList(); note = "You will be reminded in 2 hours, and again every 2 hours while it waits." },
                 onDelegate = if (Delegations.canDelegate(item)) ({ trouble = null; step = Screen.DELEGATE }) else null,
             )
@@ -323,6 +343,7 @@ private fun ItemView(
     onBack: () -> Unit,
     onApprove: () -> Unit,
     onReject: () -> Unit,
+    onReview: (approve: List<String>, reject: Map<String, String>) -> Unit,
     onRemind: () -> Unit,
     onDelegate: (() -> Unit)?,
 ) = Page {
@@ -338,7 +359,10 @@ private fun ItemView(
         }
         item.sentByMe -> Notice(StatusKind.INFO, "You sent this. Someone else must decide it.")
         Inbox.amountUnreadable(item) -> Notice(StatusKind.BAD, "The amount is missing or cannot be read on this phone, so nothing can be decided here. Open it on the web.")
+        Inbox.workersMissing(item) -> Notice(StatusKind.BAD, "The workers of this sheet are not here, so nothing can be decided. Open it on the web.")
         !online -> Notice(StatusKind.NONE, "Needs a connection. Nothing can be decided now.")
+        // An attendance sheet is reviewed worker by worker.
+        Reviews.applies(item) -> ReviewPart(item, seen, trouble, onSeen, onReview, onDelegate = onDelegate, onRemind = onRemind)
         else -> {
             if (trouble != null) Notice(StatusKind.WARN, trouble)
             // Approve is offered only after the person says they have seen what they sign.
@@ -373,7 +397,7 @@ private fun Reject(item: Item, trouble: String?, onBack: () -> Unit, onReject: (
         Text("Reject", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
         Text(item.title, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
         Notice(StatusKind.INFO, "It goes back to ${item.from} to change and present again. A reason is not required, but it tells them what to change.")
-        QuickReasons(Inbox.REJECT_REASONS, quick) { quick = it }
+        QuickReasons(Reviews.reasons(item.kind), quick) { quick = it }
         ReasonField(typed, { typed = it.take(Inbox.MAX_REASON) }, "In your own words (optional)")
         if (trouble != null) Notice(StatusKind.WARN, trouble)
         MainButton("Reject with your fingerprint", { onReject(Inbox.reason(quick, typed)) })

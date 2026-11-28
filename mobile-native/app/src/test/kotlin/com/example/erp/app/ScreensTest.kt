@@ -558,18 +558,18 @@ class ScreensTest {
         reach(compose.onNode(hasText("Open the next one", substring = true) and hasClickAction())).performClick() // leads on
         reach(compose.onNodeWithContentDescription("Back")).performClick()
         // With a quick reason and own words.
-        tap("Attendance, Site A, 6 workers")
-        shown("WHAT IT IS ABOUT (2 TO LOOK AT CLOSELY)")
-        shown("Outside the site by 140 m")
+        tap("Payment to a supplier")
         tap("Reject")
-        tap("Photo not clear")
-        type("In your own words (optional)", "Worker 3")
+        // The reasons fit a payment: nothing about photos here.
+        absent("Photo not clear")
+        tap("Amount is wrong")
+        type("In your own words (optional)", "Invoice says less")
         tap("Reject with your fingerprint")
         tap("Back to the list")
         tap("Done")
-        tap("Attendance, Site A, 6 workers")
+        tap("Payment to a supplier")
         shown("Rejected by you")
-        shown("Reason: Photo not clear: Worker 3")
+        shown("Reason: Amount is wrong: Invoice says less")
         // What was rejected back to me says by whom and why, can be presented again, and offers no decision.
         reach(compose.onNodeWithContentDescription("Back")).performClick()
         tap("Waiting")
@@ -597,6 +597,91 @@ class ScreensTest {
         shown("I have looked at everything above")
     }
 
+    private fun switch(label: String) = reach(compose.onNode(hasText(label, substring = true) and hasClickAction())).performClick()
+
+    private fun button(label: String) = compose.onAllNodes(hasText(label) and hasClickAction()).fetchSemanticsNodes().size
+
+    @Test
+    fun anAttendanceSheetIsReviewedWorkerByWorkerAndOneFingerprintSignsBothSides() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Attendance, Site A, 6 workers")
+        shown("Outside the site by 140 m")
+        // What I marked myself is shown, and is not mine to review.
+        shown("You marked this worker yourself, so someone else reviews this one.")
+        assertEquals(0, compose.onAllNodes(hasText("Reject Worker 6", substring = true)).fetchSemanticsNodes().size)
+        // Nothing can be sent before the person has looked.
+        assertEquals(0, button("Approve 5 with your fingerprint"))
+        switch("I have looked at everything above")
+        assertEquals(1, button("Approve 5 with your fingerprint"))
+        // One worker is rejected: a reason is needed before anything can be sent.
+        switch("Reject Worker 3")
+        shown("Choose why for each worker you reject.")
+        assertEquals(0, button("Approve 4, reject 1 with your fingerprint"))
+        tap("Not at this site")
+        fingerprintMatches = false
+        tap("Approve 4, reject 1 with your fingerprint")
+        shown("Not signed. 4 tries left.")
+        fingerprintMatches = true
+        tap("Approve 4, reject 1 with your fingerprint")
+        assertEquals(List(2) { "Approve 4, reject 1: Attendance, Site A, 6 workers" }, signed)
+        shown("4 approved. 1 rejected and sent back to be corrected.")
+        tap("Back to the list")
+        absent("Attendance, Site A, 6 workers")
+    }
+
+    @Test
+    fun theSheetCanBeNarrowedToWhatNeedsALookAndEveryWorkerCanBeRejected() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Attendance, Site A, 6 workers")
+        switch("I have looked at everything above")
+        tap("To look at closely (2)")
+        absent("Worker 1")
+        shown("Time changed by hand")
+        // Nothing is signed from a narrowed list, and "I have looked" is taken back.
+        shown("Showing 2 of 6. Go back to All to approve or reject.")
+        assertEquals(0, button("Approve 5 with your fingerprint"))
+        tap("Show the photo of Worker 5")
+        shown("No photo in the made-up data.")
+        checkLayout("attendance, to look at closely")
+        tap("All (6)")
+        assertEquals("looked is asked again after narrowing", 0, button("Approve 5 with your fingerprint"))
+        for (n in 1..5) {
+            switch("Reject Worker $n")
+            reach(compose.onAllNodes(hasText("Was not present") and hasClickAction())[n - 1]).performClick()
+        }
+        // Nothing is approved, so "I have looked" is not asked for.
+        tap("Reject 5 with your fingerprint")
+        assertEquals(listOf("Reject 5: Attendance, Site A, 6 workers"), signed)
+        shown("5 rejected and sent back to be corrected.")
+    }
+
+    @Test
+    fun rejectingAllWorkersNeedsOneReasonAndCoversOnlyWhatIsMine() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Attendance, Site A, 6 workers")
+        // Six on the sheet, five of them mine: the sixth I marked myself.
+        tap("Reject all 5 with one reason")
+        shown("Choose why.")
+        assertEquals(0, button("Reject 5 with your fingerprint"))
+        // The single switches are away while all are rejected.
+        assertEquals(0, compose.onAllNodes(hasText("Reject Worker 1", substring = true)).fetchSemanticsNodes().size)
+        tap("Was not present")
+        tap("Reject 5 with your fingerprint")
+        assertEquals(listOf("Reject 5: Attendance, Site A, 6 workers"), signed)
+        shown("5 rejected and sent back to be corrected.")
+    }
+
+    @Test
+    fun rejectOnAnAlertForAnAttendanceSheetOpensTheSheetNotAWholeReject() {
+        show(Palettes.LIGHT, goTo = Place.INBOX, goItem = InboxJump("attendance-a", InboxJump.Start.REJECT))
+        shown("THE WORKERS")
+        absent("Reject with your fingerprint")
+        absent("A reason is not required")
+    }
+
     @Test
     fun nothingIsDecidedWhenItChangedWasTakenIsMineOrThereIsNoConnection() {
         show(Palettes.LIGHT)
@@ -613,7 +698,7 @@ class ScreensTest {
         // Someone else was faster.
         tap("Attendance, Site B, 3 workers")
         reach(compose.onNode(hasText("I have looked at everything above", substring = true) and hasClickAction())).performClick()
-        tap("Approve with your fingerprint")
+        tap("Approve 3 with your fingerprint")
         shown("Already approved by Admin, P. Example")
         tap("Back to the list")
         // I do not decide what I sent myself.
@@ -655,7 +740,7 @@ class ScreensTest {
         val now = java.time.LocalDateTime.of(2026, 11, 28, 9, 15)
         fun payment(id: String, amount: String?) = com.example.erp.core.Item(id, com.example.erp.core.ItemKind.PAYMENT, "50,000.00 cement $id", "Accounts, S. Example", now.minusHours(1), amount = amount)
         val calls = mutableListOf<String>()
-        val actions = InboxActions(sign = { what, done -> calls += what; done(true, null) }, decide = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, remind = { calls += "remind" },
+        val actions = InboxActions(sign = { what, done -> calls += what; done(true, null) }, decide = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, review = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, remind = { calls += "remind" },
             delegate = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, delegateAll = { _, _ -> calls += "all"; com.example.erp.core.DecisionResult.NotAllowed })
         compose.setContent {
             ErpTheme(Palettes.LIGHT) { InboxScreen(listOf(payment("one", null), payment("two", "12x")), emptyList(), emptyList(), now, online = true, actions = actions) }
@@ -913,6 +998,24 @@ class ScreensTest {
         shown("The full page over a locked screen is not allowed on this phone yet.")
         tap("Allow the full page")
         assertEquals(listOf("fix FULL_PAGE"), alertCalls)
+    }
+
+    @Test
+    fun theFullPageWhileThePhoneIsInUseIsThePersonsChoiceAndSomePhonesCannot() {
+        show(Palettes.LIGHT, alerts = AlertsView(onTop = false, connected = true))
+        tool(Tool.ALERTS)
+        shown("While you use the phone, an approval comes as a banner at the top.")
+        tap("Allow it over other apps")
+        assertEquals(listOf("fix ON_TOP"), alertCalls)
+        checkLayout("alerts, full page over other apps not allowed yet")
+    }
+
+    @Test
+    fun aPhoneWithoutTheSettingSaysThatApprovalsComeAsABannerWhileItIsInUse() {
+        show(Palettes.LIGHT, alerts = AlertsView(onTop = null, connected = true))
+        tool(Tool.ALERTS)
+        shown("This phone cannot show the full page then.")
+        absent("Allow it over other apps")
     }
 
     @Test

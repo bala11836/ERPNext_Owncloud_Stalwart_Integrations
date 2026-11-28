@@ -90,7 +90,7 @@ class MainActivity : FragmentActivity() {
     private fun readAlerts() {
         val blocked = AlertCenter.blocked(this)
         val connected = AlertCenter.connect(this)
-        alerts = alerts.copy(blocked = blocked?.first, fix = blocked?.second, fullPage = AlertCenter.fullPageAllowed(this), connected = connected)
+        alerts = alerts.copy(blocked = blocked?.first, fix = blocked?.second, fullPage = AlertCenter.fullPageAllowed(this), onTop = AlertCenter.onTop(this), connected = connected)
         // Test builds only: the delivery address, for one test signal from the owner.
         if (connected && BuildConfig.DEBUG && alerts.address == null) AlertCenter.address { address -> alerts = alerts.copy(address = address) }
     }
@@ -111,6 +111,7 @@ class MainActivity : FragmentActivity() {
                 // the fingerprint library brings, and one more library is not worth it for one question.
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), ASK_ALERTS)
             }
+            fix == Fix.ON_TOP -> openSetting(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:$packageName".toUri()))
             fix == Fix.FULL_PAGE -> if (Build.VERSION.SDK_INT >= 34) openSetting(Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, "package:$packageName".toUri()))
             fix == Fix.KIND_SETTING -> openSetting(
                 Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName).putExtra(Settings.EXTRA_CHANNEL_ID, AlertKind.APPROVALS.id),

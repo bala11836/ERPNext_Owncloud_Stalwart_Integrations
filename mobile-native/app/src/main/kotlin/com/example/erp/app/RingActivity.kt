@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -56,6 +57,13 @@ class RingActivity : ComponentActivity() {
     private var words by mutableStateOf("")
     private var item by mutableStateOf<String?>(null)
     private var test by mutableStateOf(false)
+
+    /**
+     * The page can appear over what the person is doing. A tap that was on its way to the other app is not taken as
+     * a choice: the buttons answer only after the page has been there for a moment.
+     */
+    private var shownAt = 0L
+    private fun settled() = SystemClock.elapsedRealtime() - shownAt >= SETTLE_MS
     private val slot get() = Slot.entries.find { it.name == intent.getStringExtra(AlertCenter.SLOT) } ?: Slot.DECIDE
 
     /** The words come from this app's own alert (the page cannot be started by another app). */
@@ -63,6 +71,7 @@ class RingActivity : ComponentActivity() {
         words = intent.getStringExtra(AlertCenter.WORDS)?.takeIf { it.isNotEmpty() } ?: Alerts.waitingWords(1)
         item = intent.getStringExtra(AlertCenter.ITEM)
         test = intent.getBooleanExtra(AlertCenter.TEST, false)
+        shownAt = SystemClock.elapsedRealtime()
         // The page ends with the ringing, so a phone in a pocket does not stay lit. The quiet entry stays in the list.
         timer.removeCallbacks(end)
         timer.postDelayed(end, AlertCenter.RING_MS)
@@ -79,6 +88,7 @@ class RingActivity : ComponentActivity() {
 
     companion object {
         private const val UNLOCK_MS = 120_000L
+        private const val SETTLE_MS = 700L
         private var showing = WeakReference<RingActivity>(null)
 
         /** The alert of [slot] is gone (decided elsewhere; null: every alert, as after a lost key): its page goes too. */
@@ -101,8 +111,8 @@ class RingActivity : ComponentActivity() {
                 BackHandler(onBack = ::stop) // Back only stops the ringing; the alert stays in the list
                 Box(Modifier.fillMaxSize().background(Look.Ground).safeDrawingPadding()) {
                     RingPage(
-                        words, oneThing = item != null, test = test, onOpen = { open(InboxJump.Start.ITEM) }, onReject = { open(InboxJump.Start.REJECT) },
-                        onDelegate = { open(InboxJump.Start.DELEGATE) }, onRemind = ::remind,
+                        words, oneThing = item != null, test = test, onOpen = { if (settled()) open(InboxJump.Start.ITEM) }, onReject = { if (settled()) open(InboxJump.Start.REJECT) },
+                        onDelegate = { if (settled()) open(InboxJump.Start.DELEGATE) }, onRemind = { if (settled()) remind() },
                     )
                 }
             }

@@ -144,6 +144,58 @@ class AlertCenterTest {
     }
 
     @Test
+    fun onAPhoneInUseTheFullPageOpensOnlyWhereThePersonAllowedItOverOtherApps() {
+        // Not allowed: the banner only; the app opens nothing by itself.
+        org.robolectric.shadows.ShadowSettings.setCanDrawOverlays(false)
+        AlertCenter.receive(app, payment)
+        assertNull(shadowOf(app).nextStartedActivity)
+        AlertCenter.clear(app)
+        org.robolectric.shadows.ShadowSettings.setCanDrawOverlays(true)
+        AlertCenter.receive(app, payment)
+        val page = shadowOf(app).nextStartedActivity
+        assertEquals(RingActivity::class.java.name, page.component?.className)
+        assertEquals("Payment waiting", page.getStringExtra(AlertCenter.WORDS))
+        // A second new approval right after the first does not throw the page again within the minute.
+        AlertCenter.receive(app, mapOf("kind" to "approval", "doctype" to "Leave Application", "docname" to "leave"))
+        assertNull(shadowOf(app).nextStartedActivity)
+        // After the minute: an approval told again, and the server's own reminder, ring the banner and open nothing...
+        org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofSeconds(61))
+        AlertCenter.receive(app, payment)
+        AlertCenter.receive(app, mapOf("kind" to "reminder", "count" to "2"))
+        assertNull(shadowOf(app).nextStartedActivity)
+        // ...and one the phone did not know yet opens the page again.
+        AlertCenter.receive(app, mapOf("kind" to "approval", "doctype" to "Purchase Order", "docname" to "po"))
+        assertEquals("3 approvals waiting", shadowOf(app).nextStartedActivity.getStringExtra(AlertCenter.WORDS))
+        // Never during a call.
+        AlertCenter.clear(app)
+        app.getSystemService(android.media.AudioManager::class.java).mode = android.media.AudioManager.MODE_IN_CALL
+        AlertCenter.receive(app, payment)
+        assertNull(shadowOf(app).nextStartedActivity)
+        app.getSystemService(android.media.AudioManager::class.java).mode = android.media.AudioManager.MODE_NORMAL
+        // Nor over the app itself while it is open and unlocked: there the alert is a line.
+        AlertCenter.clear(app)
+        AlertCenter.inApp = {}
+        Session.open(ByteArray(32))
+        AlertCenter.receive(app, payment)
+        assertNull(shadowOf(app).nextStartedActivity)
+        Session.lock()
+        AlertCenter.inApp = null
+        // What does not ring opens nothing, allowed or not.
+        AlertCenter.receive(app, mapOf("kind" to "message", "room" to "r"))
+        AlertCenter.receive(app, mapOf("kind" to "mail"))
+        assertNull(shadowOf(app).nextStartedActivity)
+        // A phone with little memory has no such setting.
+        assertEquals(true, AlertCenter.onTop(app))
+        shadowOf(app.getSystemService(android.app.ActivityManager::class.java)).setIsLowRamDevice(true)
+        assertNull(AlertCenter.onTop(app))
+        AlertCenter.clear(app)
+        AlertCenter.receive(app, payment)
+        assertNull(shadowOf(app).nextStartedActivity)
+        shadowOf(app.getSystemService(android.app.ActivityManager::class.java)).setIsLowRamDevice(false)
+        org.robolectric.shadows.ShadowSettings.setCanDrawOverlays(false)
+    }
+
+    @Test
     fun onlyThisAppsOwnAlertCanAskForOneThingAndAScreen() {
         val own = AlertCenter.openApp(app, Slot.DECIDE, "payment", InboxJump.Start.REJECT)
         assertEquals(InboxJump("payment", InboxJump.Start.REJECT), AlertCenter.asked(app, own))

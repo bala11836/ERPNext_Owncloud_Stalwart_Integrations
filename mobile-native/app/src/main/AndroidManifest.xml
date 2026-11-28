@@ -6,6 +6,11 @@
     <!-- The full page over a locked screen when an approval rings. Android 14 and newer: the person allows it
          once in the phone's settings; the Alerts screen leads there. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- The same full page while the phone is in use (in another app, on the home screen). The phone only lets an
+         app open a page over other apps when the person switched this on for it in the phone's settings; the
+         Alerts screen leads there. Used for nothing else: the app draws no windows over other apps. Where a phone
+         lacks the setting, or the person leaves it off, an approval comes as a banner. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- "Remind me in 2 hours" is kept by the phone's alarm service, which forgets it at a restart: the app is told
          that the phone restarted and sets the reminder again. Nothing else happens then. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

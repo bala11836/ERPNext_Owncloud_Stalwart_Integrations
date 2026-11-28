@@ -127,6 +127,14 @@ tap leads to a finished screen. This folder currently holds the foundation every
   (`InboxPreview.kt`), test builds only, with made-up items; the fingerprint question is the real one. Not built:
   approve many, the history filter, tablet side by side, correcting a rejected item.
 
+- **Attendance, worker by worker** (`core` `Review`, `app` `ReviewScreen.kt`): an attendance approval shows one card
+  per worker (what was recorded, what is unusual, the photo on request). All are approved unless marked "Reject";
+  a rejected worker needs a reason; the button and the fingerprint question count both sides ("Approve 4, reject
+  1"), one fingerprint signs them, and the answer says what happened to each group. Entries the person marked
+  themselves are shown and are not theirs to review. Rejecting all at once is the same step with one reason for
+  all and covers only the person's own entries; nothing is signed from the narrowed list. The reasons offered fit the kind of approval. **Not live:**
+  made-up workers, no photos; the server's calls (one decision and one reason per call) are prepared in the rules.
+
 - **The normal alerts** (chat, mail, notices): one alert per kind with a count ("New messages in 2 chats", "3 new
   mails", "2 notices"); chats are counted by chat, not by message; a message in a busy room makes no sound, one to
   the person alone does; mail and notices never do. With one chat or one mail the tap opens exactly that one, after
@@ -158,6 +166,10 @@ tap leads to a finished screen. This folder currently holds the foundation every
   One thing waiting: the alert says its kind ("Payment waiting", never a name or an amount) and offers "Approve"
   and "Reject"; both only open that thing in the app, behind the phone's lock and the app's fingerprint, where it
   is seen first and the decision is signed. **Nothing is decided on the lock screen.** Several waiting: "Open".
+  On a phone in use the phone itself shows only a banner; where the person allowed the app to show over other
+  apps (permission `SYSTEM_ALERT_WINDOW`, their own switch, offered on the Alerts screen) the same full page opens
+  then too: only for an approval the phone did not know yet or a reminder the person asked for, never during a
+  call, at most once a minute. The app draws nothing over other apps. Phones without that setting keep the banner.
   "Remind me in 2 hours" is fixed (no chooser), rings at every hour of the day and repeats until nothing waits;
   it is kept by the phone's alarm service and set again after a restart (permission `RECEIVE_BOOT_COMPLETED`). Rejected items and chat messages use the normal sound, mail and notices
   none; each kind has the phone's own switch. An alert
@@ -207,7 +219,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (86), Android lint with warnings as errors, the app's screen and connection tests (66) and a
+runs the rules module's unit tests (92), Android lint with warnings as errors, the app's screen and connection tests (73) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 

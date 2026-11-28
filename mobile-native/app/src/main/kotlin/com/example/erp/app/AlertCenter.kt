@@ -2,8 +2,10 @@ package com.example.erp.app
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActivityManager
 import android.app.AlarmManager
 import android.app.Application
+import android.app.KeyguardManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -12,8 +14,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.PowerManager
+import android.os.SystemClock
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -32,7 +38,7 @@ import com.google.firebase.messaging.RemoteMessage
 
 /** The kinds of alert the person can switch in the phone's own settings. The app keeps no second set of switches. */
 enum class AlertKind(val id: String, val title: String, val text: String, val importance: Int, val rings: Boolean = false) {
-    APPROVALS("approvals", "Approvals: ringing", "Something waits for your decision. Rings and shows a full page on a locked phone.", NotificationManager.IMPORTANCE_HIGH, rings = true),
+    APPROVALS("approvals", "Approvals: ringing", "Something waits for your decision. Rings and shows a full page.", NotificationManager.IMPORTANCE_HIGH, rings = true),
     APPROVALS_LIST("approvals-list", "Approvals: in the list", "Stays in the list after the ringing stops. No sound.", NotificationManager.IMPORTANCE_LOW),
     REJECTED("rejected", "Rejected, to correct", "Something you sent came back. Normal sound.", NotificationManager.IMPORTANCE_DEFAULT),
     CHAT("chat", "Chat", "A message for you. Normal sound.", NotificationManager.IMPORTANCE_DEFAULT),
@@ -46,6 +52,7 @@ enum class Fix(val label: String) {
     APP_SETTING("Open the phone's setting"),
     KIND_SETTING("Open the phone's setting"),
     FULL_PAGE("Allow the full page"),
+    ON_TOP("Allow it over other apps"),
 }
 
 /** Whether alerts can show on this phone. [blocked] says why not in plain words, with the one thing that fixes it. */
@@ -54,6 +61,11 @@ data class AlertsView(
     val fix: Fix? = null,
     /** False on a phone (Android 14 and newer) where the person has not allowed the full page over the locked screen. */
     val fullPage: Boolean = true,
+    /**
+     * The full page while the phone is in use: true when the person allowed this app to open over other apps, false
+     * when not yet, null on a phone that does not have that setting. Without it an approval comes as a banner then.
+     */
+    val onTop: Boolean? = true,
     /** False when this build was made without the values for Google's messaging: it can show alerts, but receives none. */
     val connected: Boolean = false,
     /** Test builds: the address Google delivers this phone's alerts to, for one test signal from the owner. */
@@ -91,6 +103,8 @@ object AlertCenter {
     private const val REMIND_AT = "remind-at"
     private const val REMIND_ASKED = "remind-asked"
     private const val TOKEN = "token"
+    private const val PAGE_AT = "page-at"
+    private const val PAGE_GAP_MS = 60_000L
     private const val OPEN_TOKEN = "open-token"
     private const val PREFS = "alerts"
     private const val FIELD = "signal:"
@@ -168,7 +182,11 @@ object AlertCenter {
     var inApp: ((AlertAction.Show) -> Unit)? = null
 
     @SuppressLint("MissingPermission") // checked by allowed(), which the check tool does not follow
-    private fun show(context: Context, alert: AlertAction.Show) {
+    /**
+     * @param page whether this alert may open the full page over a phone in use: only something new, the person's
+     *   own reminder or their own test. A repeated signal rings the banner and nothing more.
+     */
+    private fun show(context: Context, alert: AlertAction.Show, page: Boolean) {
         val manager = NotificationManagerCompat.from(context)
         val inside = inApp?.takeIf { Session.isOpen }
         if (inside != null) {
@@ -185,7 +203,11 @@ object AlertCenter {
         if (!allowed(context)) return
         // The quiet entry first: it is what stays in the list after the ringing stops.
         manager.notify(alert.slot.id, entry(context, alert).build())
-        if (alert.strength == Strength.RING) manager.notify(ringId(alert.slot), ring(context, alert).build())
+        if (alert.strength != Strength.RING) return
+        manager.notify(ringId(alert.slot), ring(context, alert).build())
+        // A locked or dark phone gets the full page from the phone itself. A phone in use gets only the banner,
+        // unless the person allowed this app to open over other apps: then the same page is opened here.
+        if (page && onTop(context) == true && inUse(context) && pageDue(context)) runCatching { context.startActivity(page(context, alert)) }
     }
 
     /** One signal: from Google while the app is closed, or a test made on the phone. */
@@ -208,7 +230,8 @@ object AlertCenter {
                 RingActivity.close(action.slot)
                 if (action.slot == Slot.DECIDE) stopReminding(context) // nothing waits any more
             }
-            is AlertAction.Show -> show(context, action)
+            // Over a phone in use only for an approval the phone did not know yet, or the phone's own test.
+            is AlertAction.Show -> show(context, action, page = action.test || after.deciding.size > before.deciding.size)
             AlertAction.Ignore -> Unit
         }
     }
@@ -234,6 +257,35 @@ object AlertCenter {
         return PendingIntent.getActivity(context, number, openApp(context, alert.slot, alert.item, start), FLAGS)
     }
 
+    /** The full page of a ringing alert: its fixed words and what it may lead to. */
+    private fun page(context: Context, alert: AlertAction.Show): Intent =
+        Intent(context, RingActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+            .putExtra(WORDS, alert.words).putExtra(SLOT, alert.slot.name).putExtra(ITEM, alert.item).putExtra(TEST, alert.test)
+
+    /** The screen is on and the phone is unlocked: the person is doing something else on it. Never during a call. */
+    private fun inUse(context: Context): Boolean =
+        context.getSystemService(PowerManager::class.java).isInteractive && !context.getSystemService(KeyguardManager::class.java).isKeyguardLocked &&
+            context.getSystemService(AudioManager::class.java).mode == AudioManager.MODE_NORMAL
+
+    /** The page is not thrown over the person's work again and again: at most once in [PAGE_GAP_MS]. */
+    private fun pageDue(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val now = SystemClock.elapsedRealtime()
+        val last = prefs.getLong(PAGE_AT, 0L)
+        if (last in 1..now && now - last < PAGE_GAP_MS) return false
+        prefs.edit(commit = true) { putLong(PAGE_AT, now) }
+        return true
+    }
+
+    /**
+     * Whether this app may open its full page over other apps: the person's own switch in the phone's settings.
+     * Null on a phone that has no such switch (phones with little memory do not).
+     */
+    fun onTop(context: Context): Boolean? = when {
+        context.getSystemService(ActivityManager::class.java).isLowRamDevice -> null
+        else -> Settings.canDrawOverlays(context)
+    }
+
     /**
      * The entry that rings: on a locked phone it opens the full page ([RingActivity]); on a phone in use it is a
      * banner with the same choices. No choice decides anything: "Approve", "Reject" and "Open" lead to the app and
@@ -241,12 +293,7 @@ object AlertCenter {
      */
     private fun ring(context: Context, alert: AlertAction.Show): NotificationCompat.Builder {
         val id = ringId(alert.slot)
-        val page = PendingIntent.getActivity(
-            context, id,
-            Intent(context, RingActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION)
-                .putExtra(WORDS, alert.words).putExtra(SLOT, alert.slot.name).putExtra(ITEM, alert.item).putExtra(TEST, alert.test),
-            FLAGS,
-        )
+        val page = PendingIntent.getActivity(context, id, page(context, alert), FLAGS)
         fun tap(action: String) = PendingIntent.getBroadcast(context, id, Intent(context, AlertReceiver::class.java).setAction(action).putExtra(SLOT, alert.slot.name), FLAGS)
         val builder = NotificationCompat.Builder(context, AlertKind.APPROVALS.id)
             .setSmallIcon(R.drawable.ic_bell)
@@ -296,7 +343,7 @@ object AlertCenter {
         val waiting = state(context)
         val alert = Alerts.remind(waiting, asked = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(REMIND_ASKED, false))
         if (!PhoneLock.hasKey(context) || alert !is AlertAction.Show) return stopReminding(context)
-        show(context, alert)
+        show(context, alert, page = true) // the person asked for this reminder
         // What the phone knows to be waiting is reminded of again and again. A reminder asked for inside the app for
         // something the phone had no alert for comes once: the phone cannot learn when that thing is decided.
         if (waiting.deciding.isEmpty()) stopReminding(context) else setReminder(context, System.currentTimeMillis() + REMIND_MS)
@@ -388,7 +435,10 @@ class ErpApp : Application() {
  * background, without coming here.
  */
 class AlertService : FirebaseMessagingService() {
-    override fun onMessageReceived(message: RemoteMessage) = AlertCenter.receive(this, message.data)
+    override fun onMessageReceived(message: RemoteMessage) {
+        // A test is the phone's own: one that comes from outside is dropped.
+        if (message.data["kind"] != "test") AlertCenter.receive(this, message.data)
+    }
 
     // ponytail: the address is sent to our server after sign-in (Phase 1 part 4); until then a new one is only shown in test builds.
     override fun onNewToken(token: String) = Unit

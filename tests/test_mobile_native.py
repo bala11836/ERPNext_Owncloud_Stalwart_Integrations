@@ -49,7 +49,7 @@ class MobileNativeTests(unittest.TestCase):
 
     def test_only_the_permissions_the_app_uses(self):
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
-        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'POST_NOTIFICATIONS', 'USE_FULL_SCREEN_INTENT', 'RECEIVE_BOOT_COMPLETED', 'USE_BIOMETRIC'])
+        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'POST_NOTIFICATIONS', 'USE_FULL_SCREEN_INTENT', 'SYSTEM_ALERT_WINDOW', 'RECEIVE_BOOT_COMPLETED', 'USE_BIOMETRIC'])
         self.assertEqual(manifest.count('android:exported="true"'), 1, 'only the launcher screen is open to other apps')
 
     def test_a_message_that_names_an_action_must_carry_one(self):
@@ -114,6 +114,22 @@ class MobileNativeTests(unittest.TestCase):
         # What a person chooses or types stays in memory only.
         self.assertNotIn('rememberSaveable', more)
         self.assertNotRegex(more, r'Safe|SharedPreferences|HttpTransport|Saver|File\(')
+
+    def test_an_attendance_sheet_is_signed_once_and_a_rejected_worker_needs_a_reason(self):
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Review.kt').read_text(encoding='utf-8')
+        self.assertIn('rejected.filterKeys { it in mine }.values.all { !it.isNullOrBlank() }', rules)
+        screen = (KOTLIN / 'InboxScreen.kt').read_text(encoding='utf-8')
+        review = screen.split('fun review(target: Item, approve: List<String>, reject: Map<String, String>) {')[1].split('\n    }\n')[0]
+        # Nothing is sent before the fingerprint matched, and the question carries both numbers.
+        self.assertLess(review.index('actions.sign(Reviews.question(target, approve.size, reject.size))'), review.index('if (signed) {'))
+        self.assertLess(review.index('if (signed) {'), review.index('actions.review('))
+        self.assertEqual(screen.count('actions.review('), 1)
+        part = (KOTLIN / 'ReviewScreen.kt').read_text(encoding='utf-8')
+        # The button is there only when every rejected worker has a reason and, if anything is approved, the person looked.
+        self.assertLess(part.index('closely -> Notice('), part.index('MainButton(Reviews.words(item, 0, mine.size)'))
+        self.assertLess(part.index('!Reviews.ready(item, marked) ->'), part.index('else -> MainButton(Reviews.words(item, approve, reject)'))
+        self.assertLess(part.index('approve > 0 && !seen -> Unit'), part.index('else -> MainButton(Reviews.words(item, approve, reject)'))
+        self.assertNotIn('rememberSaveable', part)
 
     def test_every_destination_in_the_frame_has_a_screen(self):
         main = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
@@ -316,6 +332,12 @@ class MobileNativeTests(unittest.TestCase):
         self.assertIn('val REMIND_MS = if (BuildConfig.DEBUG) 2 * 60_000L else 2 * 60 * 60_000L', center)
         self.assertNotRegex(center, r'setExact|setAlarmClock|SCHEDULE_EXACT_ALARM')
         self.assertIn('.setFullScreenIntent(page, true)', center)
+        # "Over other apps" is used for one thing: opening the app's own full page for a ringing alert, where the
+        # person allowed it and the phone is in use. No window is ever drawn over another app.
+        self.assertIn('if (page && onTop(context) == true && inUse(context) && pageDue(context)) runCatching { context.startActivity(page(context, alert)) }', center)
+        self.assertEqual(center.count('context.startActivity('), 1)
+        for name, text in ((p.name, p.read_text(encoding='utf-8')) for p in KOTLIN.glob('*.kt')):
+            self.assertNotRegex(text, r'TYPE_APPLICATION_OVERLAY|TYPE_SYSTEM_ALERT|WindowManager\)?\.addView|\.addView\(', name)
         # While the app is open and unlocked nothing is put over it, and the list entry makes no sound.
         self.assertIn('val inside = inApp?.takeIf { Session.isOpen }', center)
         self.assertIn('manager.notify(alert.slot.id, entry(context, alert).setSilent(true).build())', center)

@@ -137,7 +137,7 @@ class AlertsTest {
     @Test
     fun chatsAreCountedByChatOpenTheirChatWhenItIsOneAndClearWhenRead() {
         val direct = signal("message", "room" to "!one")
-        val team = signal("message", "room" to "!two", "prio" to "low")
+        val team = signal("message", "room" to "!two", "prio" to "normal")
         val (state, actions) = run(direct, direct, team, signal("read", "what" to "chat", "room" to "!one"), signal("read", "what" to "chat"))
         assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.ALERT, item = "!one"), actions[0])
         assertEquals(actions[0], actions[1]) // more messages in the same chat are still one chat
@@ -156,6 +156,12 @@ class AlertsTest {
         assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.ALERT, item = "!abc"), actions[0])
         assertEquals(AlertAction.Remove(Slot.MESSAGE), actions[1])
         assertEquals(AlertState(), state)
+        // The sender's "unread" is the person's total over all rooms; "missed_calls" may ride along and is not read.
+        assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.QUIET, item = "!abc"), Alerts.handle(mapOf("room_id" to "!abc", "event_id" to "$2", "unread" to "5", "prio" to "normal", "missed_calls" to "1"), AlertState()).second)
+        // Without a "prio", or with one the app does not know, a message is never silenced.
+        for (odd in listOf(mapOf("room_id" to "!abc"), mapOf("room_id" to "!abc", "prio" to "low"), mapOf("room_id" to "!abc", "prio" to ""))) {
+            assertEquals(odd.toString(), Strength.ALERT, (Alerts.handle(odd, AlertState()).second as AlertAction.Show).strength)
+        }
         // Whatever else that sender puts in is never shown.
         val loaded = mapOf("room_id" to "!abc", "sender_display_name" to "A. Example", "content_body" to "Pay 1,50,000.00", "room_name" to "Site A")
         assertEquals("New message", (Alerts.handle(loaded, AlertState()).second as AlertAction.Show).words)

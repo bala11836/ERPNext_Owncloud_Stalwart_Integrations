@@ -75,7 +75,7 @@ fun InboxPreviewScreen(
                     waiting = waiting.filter { it.id != id }
                     decided = listOf(Decided(item, decision, now, reason)) + decided
                     if (decision == Decision.APPROVED) DecisionResult.Done("Approved. It moves on to the next step.")
-                    else DecisionResult.Done("Rejected. It went back to ${item.from} to change and present again.")
+                    else DecisionResult.Done("Rejected. ${item.from} is told.")
                 }
             }
         },

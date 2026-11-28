@@ -80,11 +80,10 @@ fun AlertsScreen(view: AlertsView, testBuild: Boolean, actions: AlertActions) {
                 OutlineButton("Signal: the first approval was decided", { actions.signal(mapOf("kind" to "remove", "doctype" to "Payment Entry", "docname" to "payment")) })
                 OutlineButton("Signal: rejected, to correct", { actions.signal(mapOf("kind" to "returned", "doctype" to "Test", "docname" to "back")) })
                 OutlineButton("Signal: a chat message to me", { actions.signal(mapOf("kind" to "message", "room" to "direct-Project manager")) })
-                OutlineButton("Signal: a message in a team room", { actions.signal(mapOf("kind" to "message", "room" to "site-a-engineers", "prio" to "low")) })
+                OutlineButton("Signal: a message in a team room", { actions.signal(mapOf("kind" to "message", "room" to "site-a-engineers", "prio" to "normal")) })
                 OutlineButton("Signal: the chats were read elsewhere", { actions.signal(mapOf("kind" to "read", "what" to "chat")) })
                 OutlineButton("Signal: mail", { actions.signal(mapOf("kind" to "mail", "mail" to "t4")) })
                 OutlineButton("Signal: the mail was read elsewhere", { actions.signal(mapOf("kind" to "read", "what" to "mail")) })
-                OutlineButton("Signal: a notice", { actions.signal(mapOf("kind" to "notice")) })
                 OutlineButton("Signal: with a name and an amount in it", { actions.signal(mapOf("kind" to "approval", "doctype" to "Test", "docname" to "three", "title" to "Pay A. Example 1,50,000.00", "body" to "Pay A. Example 1,50,000.00")) })
                 OutlineButton("Remove every alert now", actions.removeAll, danger = true)
 

@@ -152,7 +152,7 @@ class ScreensTest {
         }
         tap("Payment to a supplier")
         tap("Reject")
-        shown("It goes back to Accounts, S. Example to change and present again.")
+        shown("Accounts, S. Example is told. A reason is not required")
         checkLayout("$name / inbox reject")
         tap("Do not reject")
         reach(compose.onNodeWithContentDescription("Back")).performClick()
@@ -546,7 +546,7 @@ class ScreensTest {
     }
 
     @Test
-    fun rejectingNeedsNoReasonGoesBackToTheSenderAndIsNeverFinal() {
+    fun rejectingNeedsNoReasonAndTheSenderIsTold() {
         show(Palettes.LIGHT)
         place(Place.INBOX).performClick()
         tap("Leave, 3 days")
@@ -554,7 +554,7 @@ class ScreensTest {
         shown("A reason is not required")
         tap("Reject with your fingerprint") // without any reason
         assertEquals(listOf("Reject: Leave, 3 days"), signed)
-        shown("Rejected. It went back to Site supervisor, K. Example to change and present again.")
+        shown("Rejected. Site supervisor, K. Example is told.")
         reach(compose.onNode(hasText("Open the next one", substring = true) and hasClickAction())).performClick() // leads on
         reach(compose.onNodeWithContentDescription("Back")).performClick()
         // With a quick reason and own words.
@@ -575,7 +575,7 @@ class ScreensTest {
         tap("Waiting")
         tap("Purchase request: cement")
         shown("Rejected by Management, R. Example")
-        shown("It can be presented as often as needed.")
+        shown("Where its kind allows, it can be presented again.")
         assertEquals(0, compose.onAllNodes(hasText("Reject") and hasClickAction()).fetchSemanticsNodes().size)
         assertEquals(0, compose.onAllNodes(hasText("Decide later") and hasClickAction()).fetchSemanticsNodes().size)
     }

@@ -147,7 +147,9 @@ object Alerts {
     /**
      * One signal in, the new state and what to do out. The server's kinds (owner's note of 28 November 2026):
      * `approval`, `verify` (something waits for a decision), `returned` (something came back to its sender, shown
-     * as "rejected"), `reminder`, `remove`. `message`, `mail` and `notice` are for the chat and mail senders.
+     * as "rejected"), `reminder`, `remove`. `message` and `mail` are for the chat and mail senders. `notice` is
+     * not used: the owner said on 28 November 2026 that no notice signal comes from the server; a notice arrives
+     * as a chat alert for the Notices room.
      * `test` is the phone's own. `read` (with `what`: chat, mail or notice) says that something was read elsewhere.
      * The chat server's own sender does not use these kinds: it names a room (`room_id`) and gives the unread count
      * (`unread`), so that shape is read too.
@@ -197,7 +199,8 @@ object Alerts {
                 // One alert for all chats, counting the chats, not the messages. A chat without a number counts once.
                 val chats = if (state.chats.size >= MAX_MARKS) state.chats else state.chats + (room?.let { mark("room", it) } ?: "?")
                 // A message in a busy room makes no sound; one to me alone, or one that names me, does.
-                val strength = if (data["prio"] == "low") Strength.QUIET else Strength.ALERT
+                // The chat sender marks it itself: `prio` is "high" for those and "normal" for a busy room.
+                val strength = if (data["prio"] == "normal") Strength.QUIET else Strength.ALERT
                 return state.copy(chats = chats) to AlertAction.Show(Slot.MESSAGE, chatWords(chats.size), strength, item = room.takeIf { chats.size == 1 })
             }
             "mail" -> {

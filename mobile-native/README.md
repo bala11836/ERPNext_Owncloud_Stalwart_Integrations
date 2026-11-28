@@ -120,7 +120,8 @@ tap leads to a finished screen. This folder currently holds the foundation every
   its evidence, with what is unusual said in words. **Two decisions only: Approve and Reject.** Each is signed
   with the fingerprint, and the fingerprint question says what is signed (for money with the amount); a miss
   counts as at the door. Approve is offered only after the person said they looked at the evidence. A rejection
-  always goes back to the sender to change and present again, never final, its reason optional. There is no "decide later": a person
+  has an optional reason, and the sender is told (for attendance it goes back to be corrected; other approvals have the
+  actions their workflow defines, which the real connection must show). There is no "decide later": a person
   who does not decide now delegates it or taps "Remind me in 2 hours". Without a connection
   nothing can be decided; nothing is shown as decided before the answer came; "someone else decided first" and
   "it changed after you opened it" each have their own answer. **Not live:** it runs against a stand-in
@@ -136,8 +137,9 @@ tap leads to a finished screen. This folder currently holds the foundation every
   made-up workers, no photos; the server's calls (one decision and one reason per call) are prepared in the rules.
 
 - **The normal alerts** (chat, mail, notices): one alert per kind with a count ("New messages in 2 chats", "3 new
-  mails", "2 notices"); chats are counted by chat, not by message; a message in a busy room makes no sound, one to
-  the person alone does; mail and notices never do. With one chat or one mail the tap opens exactly that one, after
+  mails"); chats are counted by chat, not by message; a message in a busy room makes no sound, one to
+  the person alone does; mail never does. (A "notice" kind exists in the rules but is not used: no notice signal
+  comes from the server; a notice arrives as a chat alert for the Notices room.) With one chat or one mail the tap opens exactly that one, after
   the fingerprint. "Read elsewhere" lowers the count or removes the alert; looking at Chat or Mail removes that
   place's alert; approvals go by a decision only. The chat server's own signal shape (a room number and an unread
   count) is read as well as the app's kinds. **While the app is open and unlocked** nothing is put over it: an

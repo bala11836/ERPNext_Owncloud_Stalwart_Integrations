@@ -6,8 +6,10 @@ import java.time.format.DateTimeFormatter
 /**
  * Inbox: what waits for a person's decision (plan of 28 November 2026, decided by the developer that day).
  *
- * There are two decisions, Approve and Reject. A rejected item always goes back to its sender to be changed and
- * presented again; nothing is closed for good here, and a reason is offered but not required. A person who does
+ * The app shows two decisions, Approve and Reject, and a reason is offered but not required. What a rejection does
+ * is the server's to say (the owner's answer of 28 November 2026): an attendance entry goes back to be corrected
+ * and presented again; other approvals have the actions their workflow defines, and in some a rejection ends the
+ * document. The real connection must show the actions the server gives for the item, not assume these two. A person who does
  * not decide now has two other ways (the developer's decision of 28 November 2026): delegate it, or be reminded
  * in 2 hours. There is no "decide later" with a date of one's own: an approval needs a decision.
  */

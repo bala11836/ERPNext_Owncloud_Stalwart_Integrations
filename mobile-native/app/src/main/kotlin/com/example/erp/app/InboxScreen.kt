@@ -82,7 +82,7 @@ private fun kind(tone: Tone) = when (tone) {
  *
  * Built in: two decisions only, Approve and Reject, each signed with the fingerprint, and the fingerprint question
  * says what is signed; Approve is offered only after the person said they have seen the evidence; a rejection
- * always goes back to the sender, its reason is optional; without a connection nothing can be decided; nothing is
+ * has an optional reason and the sender is told of it; without a connection nothing can be decided; nothing is
  * shown as decided before the answer came. A person who does not decide now delegates or is reminded in 2 hours.
  * "Delegate" hands one thing, or everything during approved leave, to someone the server offers; it is signed too.
  */
@@ -355,7 +355,7 @@ private fun ItemView(
     when {
         rejection != null -> {
             Notice(StatusKind.BAD, Inbox.rejectionLine(rejection, now))
-            Text("Correct it where you made it and present it again. It can be presented as often as needed.", style = MaterialTheme.typography.bodyLarge, color = Look.Muted)
+            Text("Correct it where you made it. Where its kind allows, it can be presented again.", style = MaterialTheme.typography.bodyLarge, color = Look.Muted)
         }
         item.sentByMe -> Notice(StatusKind.INFO, "You sent this. Someone else must decide it.")
         Inbox.amountUnreadable(item) -> Notice(StatusKind.BAD, "The amount is missing or cannot be read on this phone, so nothing can be decided here. Open it on the web.")
@@ -396,7 +396,7 @@ private fun Reject(item: Item, trouble: String?, onBack: () -> Unit, onReject: (
         TopBar(onBack = onBack)
         Text("Reject", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
         Text(item.title, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
-        Notice(StatusKind.INFO, "It goes back to ${item.from} to change and present again. A reason is not required, but it tells them what to change.")
+        Notice(StatusKind.INFO, "${item.from} is told. A reason is not required, but it tells them why.")
         QuickReasons(Reviews.reasons(item.kind), quick) { quick = it }
         ReasonField(typed, { typed = it.take(Inbox.MAX_REASON) }, "In your own words (optional)")
         if (trouble != null) Notice(StatusKind.WARN, trouble)

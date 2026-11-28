@@ -22,6 +22,10 @@ Recheck native Raven login/chat/refresh and revoked-token refusal, and coordinat
 
 ### P50 — Native mobile app for phones and tablets (modules `mobile-app` and `mobile-native`)
 
+**Name (owner, 28 November 2026): the app is "UNformat ERP"**, app ID `in.unformat.erp` (also for test builds); it
+was "ERP Mobile" until then, and older notes below keep that name. Public PR #149; the native app's own texts change
+in #114.
+
 **App:** mobile · **Also touches:** none · **State:** open
 
 **Status:** opened 19 November 2026. The Expo app (module `mobile-app`) is the app in use on test. The native
@@ -127,6 +131,17 @@ issuecomment-7220894102):**
   a per-site summary for people who look after sites. Chat and mail unread are asked from their own servers, not
   through ERPNext.
 - **Open for the owner, later:** who decides while someone is on leave.
+
+**Site reminder (owner, 28 November 2026: agreed):** when a person with own check-in enters or leaves their site's
+area, the phone reminds them to check in or out.
+- The app gives the site's place and radius (already in `custom_hr.api.bootstrap`, `check_in_sites`) to Android's
+  own area watching; the phone raises its own reminder; **no position leaves the phone** and the server is not
+  involved.
+- **A reminder only, never an automatic check-in:** check-in keeps the fingerprint.
+- Needs the "location all the time" permission (some will refuse; the Play Store asks for a justification); best
+  effort only (delays, phone makers that stop background apps); the consent text must say that the app notices the
+  site area in the background.
+- App work for the colleague, with the attendance phase. Server side: nothing new.
 
 **The developer's screen plan and the owner's answers (27 November 2026; public #114, issuecomment-7219041831 and
 issuecomment-7219386949):**
@@ -291,6 +306,16 @@ the trial. This item builds on the trial's result.
 **Security (checked 26 November 2026, public sources):** Frigate 0.17.2 fixed ways to reach other cameras' recordings
 despite camera limits; CVE-2026-75608 (a viewer reaching the internal go2rtc API) is fixed in 0.18.0. Keep Frigate
 behind the gateway, the viewer roles camera-limited, and Frigate in the daily upstream watch.
+
+**Where it goes (owner, 28 November 2026: agreed):**
+- **On the Desk:** a Cameras application in the auto-hiding menu, like the other applications; people see only the
+  cameras of their own sites.
+- **In the phone app:** under **More**, as **Cameras**, shown only to people with camera access; not a place in the
+  bottom bar (Today, Inbox, Chat, Mail, More stay). A Today card with a count only for those people. A camera alert
+  opens its clip directly, after the fingerprint.
+- **Split of work (owner):** the owner's agent takes the server side (who sees which camera from site membership,
+  the gateway to Frigate, the Desk application, alerts through the notification service); the colleague takes the
+  app's screens.
 
 **To decide:** who sees which cameras (by site, by role); mobile data use (live in low resolution, recordings on
 request); how long alerts and clips stay available; whether the app may download clips (evidence) or only play them.

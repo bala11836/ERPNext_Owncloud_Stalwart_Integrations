@@ -675,6 +675,18 @@ configuration we write (`integrations/chat/configure.py`).
   Synapse changes what the whitelist covers.
 - **Tests:** `tests/test_chat_stack.py`; live: the gateway asks Google about a made-up phone address.
 
+### CHAT-6 Our own health check for the alert gateway (workaround)
+
+- **What and why:** the Sygnal image (v0.17.0) declares a health check that calls `curl`, but the image does not
+  contain `curl`. The container is reported "unhealthy" for ever, although the gateway answers. Our stack file
+  replaces the check with one that uses the image's own Python to ask the same address (`/health`).
+- **How:** `deployment/stacks/chat.compose.json` (`alerts`, `healthcheck`).
+- **Upgrade:** **re-check:** **loud** if the image loses Python on the path or moves the health address (the
+  container turns "unhealthy"). **Retire** the override when the image ships a check that works.
+- **Tests:** `tests/test_chat_stack.py`; live: the container reports "healthy".
+- **Upstream:** element-hq/sygnal#326 (open: the image has neither `curl` nor `wget`); our note is in
+  `docs/upstream-posts.md`.
+
 ### CHAT-3 Proxy paths that name Matrix endpoints
 
 - **What:** `/_matrix`, `/_synapse/client` and `/_synapse/mas` go to Synapse; `/_matrix/client/*/login`, `logout`

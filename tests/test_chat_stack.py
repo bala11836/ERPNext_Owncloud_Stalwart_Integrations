@@ -226,6 +226,10 @@ class Stack(unittest.TestCase):
         self.assertEqual(gateway['profiles'], ['alerts'], 'it starts only where an operator asks for it')
         self.assertEqual(gateway['ports'], [], 'no port on the host: only Synapse calls it')
         self.assertEqual(gateway['volumes'], ['alerts-config:/config:ro'])
+        check = gateway['healthcheck']['test']
+        self.assertEqual(check[:3], ['CMD', 'python', '-c'], 'the image has no curl: its own check always fails')
+        self.assertIn('http://localhost:5000/health', check[3])
+        self.assertNotIn('curl', ' '.join(check))
         self.assertEqual(gateway['depends_on'], {'configure': {'condition': 'service_completed_successfully'}})
         self.assertEqual(gateway['networks'], {'default': {'aliases': ['alerts-gateway']}, 'outbound': {}},
                          'its own way out to Google, and not on the shared network of the other applications')

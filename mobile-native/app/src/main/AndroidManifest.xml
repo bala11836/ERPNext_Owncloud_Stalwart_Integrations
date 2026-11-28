@@ -6,6 +6,9 @@
     <!-- The full page over a locked screen when an approval rings. Android 14 and newer: the person allows it
          once in the phone's settings; the Alerts screen leads there. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- "Remind me in 2 hours" is kept by the phone's alarm service, which forgets it at a restart: the app is told
+         that the phone restarted and sets the reminder again. Nothing else happens then. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
@@ -41,8 +44,13 @@
             android:showWhenLocked="true"
             android:taskAffinity=""
             android:turnScreenOn="true" />
-        <!-- A scheduled test signal arriving, and "Later" on a ringing alert. Not open to other apps. -->
-        <receiver android:name=".AlertReceiver" android:exported="false" />
+        <!-- A scheduled test signal arriving, the buttons of a ringing alert, the 2-hour reminder coming due, and the
+             phone having restarted. Not open to other apps: only this app and the phone itself reach it. -->
+        <receiver android:name=".AlertReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <!-- Receives alert signals from Google, also while the app is closed. Not open to other apps. -->
         <service android:name=".AlertService" android:exported="false">
             <intent-filter>

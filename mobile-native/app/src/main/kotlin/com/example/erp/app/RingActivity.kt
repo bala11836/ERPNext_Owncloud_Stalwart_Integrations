@@ -45,18 +45,24 @@ import java.lang.ref.WeakReference
 
 /**
  * The full page over a locked screen when an approval rings, as in the earlier app (the look of an incoming
- * call): the app's mark, the alert's fixed words, and two large buttons.
+ * call): the app's mark, the alert's fixed words, and large buttons.
  *
- * It shows nothing private and decides nothing. "Later" stops the ringing; the alert stays in the list. "Open"
- * asks the phone to unlock and then opens the app, whose own fingerprint lock comes before any detail.
+ * It shows nothing private and decides nothing: nothing is done on the lock screen. "Approve", "Reject", "Delegate"
+ * and "Open" are ways in: each asks the phone to unlock and then opens the app, whose own fingerprint lock comes before any
+ * detail, and the person sees the thing before deciding and signs the decision there. "Remind me in 2 hours" stops
+ * the ringing and brings it back, every 2 hours, until nothing waits.
  */
 class RingActivity : ComponentActivity() {
     private var words by mutableStateOf("")
+    private var item by mutableStateOf<String?>(null)
+    private var test by mutableStateOf(false)
     private val slot get() = Slot.entries.find { it.name == intent.getStringExtra(AlertCenter.SLOT) } ?: Slot.DECIDE
 
     /** The words come from this app's own alert (the page cannot be started by another app). */
     private fun read() {
         words = intent.getStringExtra(AlertCenter.WORDS)?.takeIf { it.isNotEmpty() } ?: Alerts.waitingWords(1)
+        item = intent.getStringExtra(AlertCenter.ITEM)
+        test = intent.getBooleanExtra(AlertCenter.TEST, false)
         // The page ends with the ringing, so a phone in a pocket does not stay lit. The quiet entry stays in the list.
         timer.removeCallbacks(end)
         timer.postDelayed(end, AlertCenter.RING_MS)
@@ -92,8 +98,13 @@ class RingActivity : ComponentActivity() {
         read()
         setContent {
             ErpTheme(Palettes.pick(phoneIsDark = isSystemInDarkTheme(), outdoor = false)) {
-                BackHandler(onBack = ::later) // Back is "Later": the ringing stops, the alert stays in the list
-                Box(Modifier.fillMaxSize().background(Look.Ground).safeDrawingPadding()) { RingPage(words, onOpen = ::open, onLater = ::later) }
+                BackHandler(onBack = ::stop) // Back only stops the ringing; the alert stays in the list
+                Box(Modifier.fillMaxSize().background(Look.Ground).safeDrawingPadding()) {
+                    RingPage(
+                        words, oneThing = item != null, test = test, onOpen = { open(InboxJump.Start.ITEM) }, onReject = { open(InboxJump.Start.REJECT) },
+                        onDelegate = { open(InboxJump.Start.DELEGATE) }, onRemind = ::remind,
+                    )
+                }
             }
         }
     }
@@ -104,16 +115,22 @@ class RingActivity : ComponentActivity() {
         read() // a newer alert replaces the page
     }
 
-    private fun later() {
+    private fun stop() {
         AlertCenter.stopRing(this, slot)
         finish()
     }
 
-    private fun open() {
+    private fun remind() {
+        if (test) return stop() // a test is not something to be reminded of
+        AlertCenter.remindLater(this, slot, asked = true)
+        finish()
+    }
+
+    private fun open(start: InboxJump.Start) {
         AlertCenter.stopRing(this, slot)
         val keyguard = getSystemService(KeyguardManager::class.java)
         val go = {
-            startActivity(AlertCenter.openApp(this, slot))
+            startActivity(AlertCenter.openApp(this, slot, item, start))
             finish()
         }
         if (keyguard.isKeyguardLocked) {
@@ -133,7 +150,7 @@ class RingActivity : ComponentActivity() {
 
 /** The page itself, apart from the phone, so it can be drawn and measured in a test. */
 @Composable
-fun RingPage(words: String, onOpen: () -> Unit, onLater: () -> Unit) {
+fun RingPage(words: String, oneThing: Boolean = false, test: Boolean = false, onOpen: () -> Unit, onReject: () -> Unit = {}, onDelegate: () -> Unit = {}, onRemind: () -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 20.dp), contentAlignment = Alignment.TopCenter) {
         // The buttons sit at the bottom when there is room; with large text the whole page scrolls instead.
         Column(
@@ -147,11 +164,19 @@ fun RingPage(words: String, onOpen: () -> Unit, onLater: () -> Unit) {
                 }
                 Eyebrow("Approvals")
                 Text(words, Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineMedium, color = Look.Ink, textAlign = TextAlign.Center)
-                Text("Open the app to see it. Your fingerprint comes first.", Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyLarge, color = Look.Muted, textAlign = TextAlign.Center)
+                val how = if (oneThing) "Approve, Reject and Delegate open it in the app, behind its lock. You see it before you decide." else "Open the app to see it, behind its lock."
+                Text(how, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyLarge, color = Look.Muted, textAlign = TextAlign.Center)
             }
             Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                MainButton("Open", onOpen, forward = true)
-                OutlineButton("Later", onLater)
+                // Several things waiting: the page cannot know which one is meant, so it only leads to the list.
+                if (oneThing) {
+                    MainButton("Approve", onOpen, forward = true)
+                    OutlineButton("Reject", onReject, danger = true)
+                    OutlineButton("Delegate", onDelegate)
+                } else {
+                    MainButton("Open", onOpen, forward = true)
+                }
+                OutlineButton(if (test) "Stop" else "Remind me in 2 hours", onRemind)
             }
         }
     }

@@ -44,11 +44,12 @@ class MobileNativeTests(unittest.TestCase):
             self.assertEqual(set(re.findall(r'<exclude domain="(\w+)"', block)),
                              {'root', 'file', 'database', 'sharedpref', 'external'}, part)
         self.assertNotIn('<include', rules)
-        self.assertIn('FLAG_SECURE', (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8'))
+        # Screenshots are blocked in every build for people; only a test build, on made-up data, allows them.
+        self.assertIn('if (!BuildConfig.DEBUG) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)', (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8'))
 
     def test_only_the_permissions_the_app_uses(self):
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
-        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'POST_NOTIFICATIONS', 'USE_FULL_SCREEN_INTENT', 'USE_BIOMETRIC'])
+        self.assertEqual(re.findall(r'uses-permission android:name="android\.permission\.(\w+)"', manifest), ['INTERNET', 'POST_NOTIFICATIONS', 'USE_FULL_SCREEN_INTENT', 'RECEIVE_BOOT_COMPLETED', 'USE_BIOMETRIC'])
         self.assertEqual(manifest.count('android:exported="true"'), 1, 'only the launcher screen is open to other apps')
 
     def test_a_message_that_names_an_action_must_carry_one(self):
@@ -78,9 +79,41 @@ class MobileNativeTests(unittest.TestCase):
         self.assertNotIn('ComingScreen', frame)
         # Everything behind More has a screen.
         tools = re.findall(r'^    ([A-Z]+)\("', frame.split('enum class Tool')[1].split('\n}')[0], re.M)
-        self.assertEqual(tools, ['ALERTS', 'DISPLAY', 'PHONE', 'TRACE', 'WELCOME'])
+        self.assertEqual(tools, ['ALERTS', 'DISPLAY', 'PHONE', 'TRACE', 'DELEGATION', 'WELCOME'])
+        # What runs against a stand-in is in test builds only.
+        self.assertEqual(re.findall(r'^    ([A-Z]+)\([^\n]*testOnly = true\)', frame.split('enum class Tool')[1].split('\n}')[0], re.M), ['DELEGATION', 'WELCOME'])
         for tool in tools:
             self.assertRegex(frame, rf'Tool\.{tool} -> \w+Screen\(')
+
+    def test_delegation_is_signed_and_keeps_to_its_rules(self):
+        rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Delegation.kt').read_text(encoding='utf-8')
+        # Everything: never the higher official, nobody on leave, only with approved leave, never past its end.
+        self.assertIn('all.filter { it.relation != Relation.HIGHER && !it.onLeave }', rules)
+        self.assertIn('leaveNow(facts.leave, now) == null -> NO_LEAVE', rules)
+        self.assertIn('leave.until).withSecond(0)', rules)
+        # One step only, and never to the sender.
+        self.assertIn('item.delegatedBy == null && item.delegatedTo == null', rules)
+        self.assertIn('all.filter { it.id != item.fromId && it.name != item.from }', rules)
+        screen = (KOTLIN / 'InboxScreen.kt').read_text(encoding='utf-8')
+        delegate = screen.split('fun delegate(target: Item?, choice: DelegateChoice) {')[1].split('\n    }\n')[0]
+        # Nothing is delegated before the fingerprint matched.
+        self.assertLess(delegate.index('actions.sign(what)'), delegate.index('if (signed) {'))
+        self.assertLess(delegate.index('if (signed) {'), delegate.index('actions.delegate('))
+        self.assertLess(delegate.index('if (signed) {'), delegate.index('actions.delegateAll('))
+        self.assertEqual(screen.count('actions.delegate('), 1)
+        self.assertEqual(screen.count('actions.delegateAll('), 1)
+        more = (KOTLIN / 'DelegateScreen.kt').read_text(encoding='utf-8')
+        again = more.split('fun DelegationScreen(')[1]
+        self.assertLess(again.index('sign(Delegations.questionAll('), again.index('if (signed) {'))
+        # Another app can start the first screen, so a wish to open one thing counts only with this app's own word.
+        main = (KOTLIN / 'MainActivity.kt').read_text(encoding='utf-8')
+        self.assertIn('AlertCenter.asked(this, intent)?.let { goItem = it }', main)
+        self.assertNotIn('getStringExtra(AlertCenter.OPEN_ITEM)', main)
+        self.assertIn('if (intent.getStringExtra(OPEN_TOKEN) != token(context)) return null', (KOTLIN / 'AlertCenter.kt').read_text(encoding='utf-8'))
+        self.assertLess(again.index('if (signed) {'), again.index('onDelegateAll(choice.to, choice.until)'))
+        # What a person chooses or types stays in memory only.
+        self.assertNotIn('rememberSaveable', more)
+        self.assertNotRegex(more, r'Safe|SharedPreferences|HttpTransport|Saver|File\(')
 
     def test_every_destination_in_the_frame_has_a_screen(self):
         main = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
@@ -159,7 +192,8 @@ class MobileNativeTests(unittest.TestCase):
         writers = sorted(name for name, text in kotlin.items() if 'getSharedPreferences(' in text)
         self.assertEqual(writers, ['AlertCenter.kt', 'MainActivity.kt', 'PhoneLock.kt', 'Safe.kt'])
         # What the alerts remember unsealed are two sets of short fingerprints, nothing else.
-        self.assertEqual(sorted(set(re.findall(r'put\w+\("(\w+)"', kotlin['AlertCenter.kt']))), ['deciding', 'rejected'])
+        # Fingerprints of what waits and of chats with something unread, and two plain counts: nothing readable.
+        self.assertEqual(sorted(set(re.findall(r'put\w+\("(\w+)"', kotlin['AlertCenter.kt']))), ['chats', 'deciding', 'mails', 'notices', 'rejected'])
         self.assertEqual(re.findall(r'getSharedPreferences\("(\w+)"', kotlin['MainActivity.kt']), ['display'])
         seal = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Seal.kt').read_text(encoding='utf-8')
         self.assertIn('"AES/GCM/NoPadding"', seal)
@@ -259,9 +293,10 @@ class MobileNativeTests(unittest.TestCase):
         actions = screen.split('class InboxActions(')[1].split('\n)')[0]
         self.assertNotIn('= {', actions)
         rules = (NATIVE / 'core/src/main/kotlin/com/example/erp/core/Inbox.kt').read_text(encoding='utf-8')
-        # Two decisions and no final one; a hold has no latest time.
+        # Two decisions and no final one. No "decide later": who does not decide delegates or is reminded.
         self.assertIn('enum class Decision(val done: String) { APPROVED("Approved"), REJECTED("Rejected") }', rules)
-        self.assertIn('maxOf(wanted, now.plusMinutes(15))', rules)
+        self.assertNotRegex(rules + screen, r'Hold\b|Decide later|ON_HOLD')
+        self.assertIn('OutlineButton("Remind me in 2 hours", onRemind)', screen)
         preview = (KOTLIN / 'InboxPreview.kt').read_text(encoding='utf-8')
         self.assertNotRegex(preview, r'Safe|SharedPreferences|HttpTransport|Saver|File\(')
 
@@ -274,21 +309,32 @@ class MobileNativeTests(unittest.TestCase):
         self.assertEqual(center.count('.setContentTitle(alert.words)'), 2)
         # No second line of text, no ready-made notification from the signal, nothing but the short fields.
         self.assertNotRegex(center, r'setContentText|setStyle|setSubText|message\.notification')
-        # A ringing alert has two choices and neither decides: one stops the ringing, one opens the app.
-        self.assertEqual(re.findall(r'\.addAction\(0, "(\w+)"', center), ['Later', 'Open'])
+        # No choice on a ringing alert decides: each opens the app (and its lock) or only stops the ringing for now.
+        self.assertEqual(re.findall(r'\.addAction\(0, "([\w ]+)", (\w+)\(', center),
+                         [('Stop', 'tap'), ('Open', 'open'), ('Approve', 'open'), ('Reject', 'open'), ('Remind in 2 hours', 'tap'), ('Open', 'open'), ('Remind in 2 hours', 'tap')])
+        # The reminder is fixed at 2 hours (2 minutes in test builds), has no chooser, and asks for nothing exact.
+        self.assertIn('val REMIND_MS = if (BuildConfig.DEBUG) 2 * 60_000L else 2 * 60 * 60_000L', center)
+        self.assertNotRegex(center, r'setExact|setAlarmClock|SCHEDULE_EXACT_ALARM')
         self.assertIn('.setFullScreenIntent(page, true)', center)
+        # While the app is open and unlocked nothing is put over it, and the list entry makes no sound.
+        self.assertIn('val inside = inApp?.takeIf { Session.isOpen }', center)
+        self.assertIn('manager.notify(alert.slot.id, entry(context, alert).setSilent(true).build())', center)
+        # Looking at a place removes that place's alert only; approvals go by a decision alone.
+        frame_text = (KOTLIN / 'AppFrame.kt').read_text(encoding='utf-8')
+        self.assertEqual(sorted(re.findall(r'alertActions\.seen\("(\w+)"\)', frame_text)), ['chat', 'mail', 'notice'])
         self.assertIn('.setTimeoutAfter(RING_MS)', center)
         # The ringing kind never asks to get past the phone's silent mode.
         self.assertNotRegex(center, r'setBypassDnd|IMPORTANCE_MAX|USAGE_ALARM')
         ring = (KOTLIN / 'RingActivity.kt').read_text(encoding='utf-8')
-        self.assertNotRegex(ring, r'Approve|Reject|actions\.decide|Safe|Session')
-        self.assertIn('startActivity(AlertCenter.openApp(this, slot))', ring)
+        # Nothing is done on the lock screen: the page knows no lock, no safe, no signing and no decision.
+        self.assertNotRegex(ring, r'actions\.|Decision|PhoneLock|Safe|Session|\.confirm\(|sign\(')
+        self.assertIn('startActivity(AlertCenter.openApp(this, slot, item, start))', ring)
         self.assertIn('AlertCenter.receive(this, message.data)', center)
         self.assertIn('PendingIntent.FLAG_IMMUTABLE', center)
         self.assertIn('Intent(context, MainActivity::class.java)', center)
         manifest = (APP / 'AndroidManifest.xml').read_text(encoding='utf-8')
         self.assertIn('<service android:name=".AlertService" android:exported="false">', manifest)
-        self.assertIn('<receiver android:name=".AlertReceiver" android:exported="false" />', manifest)
+        self.assertIn('<receiver android:name=".AlertReceiver" android:exported="false">', manifest)
         page = manifest.split('android:name=".RingActivity"')[1].split('/>')[0]
         for needed in ('android:exported="false"', 'android:showWhenLocked="true"', 'android:excludeFromRecents="true"'):
             self.assertIn(needed, page)

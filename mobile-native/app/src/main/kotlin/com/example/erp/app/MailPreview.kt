@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,9 +25,10 @@ import java.time.LocalDateTime
  * (cleanup list).
  */
 @Composable
-fun MailPreviewScreen(now: LocalDateTime = LocalDateTime.now()) {
+fun MailPreviewScreen(now: LocalDateTime = LocalDateTime.now(), open: String? = null, onOpened: () -> Unit = {}, onCount: (Int) -> Unit = {}) {
     val me = Person("You", "you@example.com")
     var mails by remember { mutableStateOf(sampleMails(now, me)) }
+    LaunchedEffect(mails) { onCount(mails.count { it.unread }) }
     var note by remember { mutableStateOf("Stand-in: nothing is sent.") }
     var count by remember { mutableStateOf(0) }
     val actions = MailActions(
@@ -40,11 +42,14 @@ fun MailPreviewScreen(now: LocalDateTime = LocalDateTime.now()) {
     )
     Column(Modifier.fillMaxSize()) {
         Notice(StatusKind.NONE, note, Modifier.padding(horizontal = Look.Gap, vertical = 8.dp))
-        Box(Modifier.weight(1f)) { MailScreen(mails, me, setOf("example.com"), now, actions) }
+        Box(Modifier.weight(1f)) { MailScreen(mails, me, setOf("example.com"), now, actions, open, onOpened) }
     }
 }
 
 private fun web(rest: String) = "https" + "://" + rest
+
+/** The number the bar shows for Mail before the stand-in was opened. */
+internal fun standInUnreadMails(now: LocalDateTime): Int = sampleMails(now, Person("You", "you@example.com")).count { it.unread }
 
 private fun sampleMails(now: LocalDateTime, me: Person): List<Mail> {
     val manager = Person("Project manager", "pm@example.com")

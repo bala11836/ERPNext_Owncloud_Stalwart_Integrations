@@ -14,7 +14,7 @@ class InboxTest {
         Item(id, kind, "Item $id", "Engineer, A. Example", now.minusHours(hoursWaiting))
 
     @Test
-    fun whatHoldsSomeoneUpComesFirstThenDeadlinesThenEachKindOldestFirstThenWhatIsOnHold() {
+    fun whatHoldsSomeoneUpComesFirstThenDeadlinesThenEachKindOldestFirst() {
         val items = listOf(
             item("leave-new", hoursWaiting = 1),
             item("leave-old", hoursWaiting = 30),
@@ -22,21 +22,18 @@ class InboxTest {
             item("due", ItemKind.ATTENDANCE_APPROVE).copy(deadline = now.withHour(10).withMinute(0)),
             item("missed", ItemKind.ATTENDANCE_VERIFY).copy(deadline = now.minusHours(1)),
             item("next-week", ItemKind.PURCHASE).copy(deadline = now.plusDays(6)),
-            item("held", ItemKind.PURCHASE).copy(hold = Hold(now.plusDays(2), "Waiting for a document")),
-            item("hold-over", ItemKind.PURCHASE, hoursWaiting = 50).copy(hold = Hold(now.minusMinutes(5))),
             item("back", ItemKind.PURCHASE).copy(rejection = Rejection("Management, R. Example", now.minusHours(2))),
         )
         val sections = Inbox.sections(items, now)
         assertEquals(
-            listOf("Rejected, to correct (1)", "Due today (2)", "Purchases (2)", "Payments (1)", "Leave (2)", "On hold (1)"),
+            listOf("Rejected, to correct (1)", "Due today (2)", "Purchases (1)", "Payments (1)", "Leave (2)"),
             sections.map { it.heading },
         )
         assertEquals(listOf("back"), sections[0].items.map { it.id })
         assertEquals(listOf("missed", "due"), sections[1].items.map { it.id }) // the missed one first
-        // A hold whose time has passed is back among the others, the oldest first; a deadline on a later day waits its turn.
-        assertEquals(listOf("hold-over", "next-week"), sections[2].items.map { it.id })
+        // A deadline on a later day waits its turn among its kind.
+        assertEquals(listOf("next-week"), sections[2].items.map { it.id })
         assertEquals(listOf("leave-old", "leave-new"), sections[4].items.map { it.id })
-        assertEquals(listOf("held"), sections[5].items.map { it.id })
         assertEquals(emptyList<Section>(), Inbox.sections(emptyList(), now))
     }
 
@@ -45,8 +42,6 @@ class InboxTest {
         assertTrue(Inbox.canDecide(item("a")))
         assertFalse(Inbox.canDecide(item("a").copy(sentByMe = true)))
         assertFalse(Inbox.canDecide(item("a").copy(rejection = Rejection("Management", now))))
-        // Something on hold can still be decided at any moment.
-        assertTrue(Inbox.canDecide(item("a").copy(hold = Hold(now.plusDays(3)))))
     }
 
     @Test
@@ -93,27 +88,10 @@ class InboxTest {
     }
 
     @Test
-    fun aHoldHasNoLatestTimeAndSaysWhenItHasPassed() {
-        assertEquals("On hold until 30 Nov, 10:00: Waiting for a document.", Inbox.holdLine(Hold(LocalDateTime.of(2026, 11, 30, 10, 0), "Waiting for a document"), now))
-        assertEquals("On hold until Today, 11:00.", Inbox.holdLine(Hold(now.withHour(11).withMinute(0)), now))
-        assertEquals("Was to be decided by Today, 09:00.", Inbox.holdLine(Hold(now.withHour(9).withMinute(0)), now))
-        // Months ahead is allowed; the past and "right now" become a quarter of an hour from now.
-        val far = now.plusMonths(7)
-        assertEquals(far, Inbox.holdTime(far, now))
-        assertEquals(now.plusMinutes(15), Inbox.holdTime(now.minusDays(1), now))
-        assertEquals(now.plusMinutes(15), Inbox.holdTime(now.plusMinutes(3), now))
-    }
-
-    @Test
     fun whatISentSaysWhoHasItAndSinceWhen() {
         val sent = Sent("s", "Purchase request", "Project manager, V. Example", now.minusHours(26), SentState.WAITING)
         assertEquals("With Project manager, V. Example for 1 day.", Inbox.sentLine(sent, now))
         assertEquals("Approved by Project manager, V. Example, Yesterday, 07:15.", Inbox.sentLine(sent.copy(state = SentState.APPROVED), now))
         assertEquals("Rejected by Project manager, V. Example, Yesterday, 07:15. No reason given.", Inbox.sentLine(sent.copy(state = SentState.REJECTED), now))
-        assertEquals(
-            "On hold with Project manager, V. Example until 30 Nov, 10:00: Waiting for a document.",
-            Inbox.sentLine(sent.copy(state = SentState.ON_HOLD, until = LocalDateTime.of(2026, 11, 30, 10, 0), reason = "Waiting for a document"), now),
-        )
-        assertEquals("On hold with Project manager, V. Example.", Inbox.sentLine(sent.copy(state = SentState.ON_HOLD), now))
     }
 }

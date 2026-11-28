@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +53,7 @@ private enum class View { LIST, FOLDERS, READ, WRITE, FILE }
  * is sent. Attachments open inside the app; saving to the phone is a setting that is off (owner, 27 November 2026).
  */
 @Composable
-fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDateTime, actions: MailActions) {
+fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDateTime, actions: MailActions, asked: String? = null, onOpened: () -> Unit = {}) {
     var view by rememberSaveable { mutableStateOf(View.LIST) }
     var folder by rememberSaveable { mutableStateOf(Folder.RECEIVED) }
     var thread by rememberSaveable { mutableStateOf<String?>(null) }
@@ -68,6 +69,13 @@ fun MailScreen(mails: List<Mail>, me: Person, company: Set<String>, now: LocalDa
     val open = conversations.firstOrNull { it.thread == thread }
     val write = { heading: String, toWhom: String, about: String, text: String -> title = heading; to = toWhom; subject = about; body = text; view = View.WRITE }
     val openConversation = { id: String -> thread = id; view = View.READ; actions.opened(id) }
+    // An alert for one mail leads to that conversation; one that is not there leaves the list as it is.
+    LaunchedEffect(asked) {
+        if (asked != null) {
+            if (mails.any { it.thread == asked }) openConversation(asked)
+            onOpened()
+        }
+    }
 
     var wideNow by remember { mutableStateOf(false) }
 

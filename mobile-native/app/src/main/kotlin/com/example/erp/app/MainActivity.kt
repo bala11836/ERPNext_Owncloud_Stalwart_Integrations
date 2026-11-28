@@ -32,6 +32,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.fragment.app.FragmentActivity
 import com.example.erp.core.AccessRequest
+import com.example.erp.core.AlertAction
 import com.example.erp.core.Approval
 import com.example.erp.core.Format
 import com.example.erp.core.KeyLoss
@@ -43,6 +44,7 @@ import com.example.erp.core.Palettes
 import com.example.erp.core.Point
 import com.example.erp.core.Reply
 import com.example.erp.core.Saver
+import com.example.erp.core.Slot
 import com.example.erp.core.Trace
 import com.example.erp.core.Tracer
 import com.example.erp.core.Transport
@@ -79,6 +81,10 @@ class MainActivity : FragmentActivity() {
     }
     private var alerts by mutableStateOf(AlertsView())
     private var goTo by mutableStateOf<Place?>(null)
+    private var goItem by mutableStateOf<InboxJump?>(null)
+
+    /** An alert that arrived while the app is open and unlocked: shown as a line at the top. */
+    private var line by mutableStateOf<AlertAction.Show?>(null)
     private var askedForAlerts = false
 
     private fun readAlerts() {
@@ -115,12 +121,16 @@ class MainActivity : FragmentActivity() {
 
     /** An alert was tapped: remember where it leads. The fingerprint is asked first, as on every opening. */
     private fun opened(intent: Intent?) {
+        // Reopened from the list of recent apps: the old alert's wish was followed once already.
+        if (intent == null || intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         goTo = when (intent?.getStringExtra(AlertCenter.OPEN_PLACE)) {
             Lead.INBOX.name -> Place.INBOX
             Lead.CHAT.name -> Place.CHAT
             Lead.MAIL.name -> Place.MAIL
             else -> goTo
         }
+        // A shortcut of an alert: one thing to open. It only chooses the screen; the lock and the signing stay as they are.
+        AlertCenter.asked(this, intent)?.let { goItem = it }
     }
 
     @Deprecated("The platform's older way of answering a permission question; see fixAlerts.")
@@ -177,6 +187,7 @@ class MainActivity : FragmentActivity() {
     override fun onStart() {
         super.onStart()
         Session.back()
+        AlertCenter.inApp = { alert -> runOnUiThread { line = alert } }
         if (!asking) readLock()
         readSafeNote()
         readAlerts()
@@ -190,6 +201,8 @@ class MainActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
+        AlertCenter.inApp = null
+        line = null
         Session.left()
     }
 
@@ -197,12 +210,14 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // No screenshots, and a blank card in the app switcher: the app will show personal data.
-        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        // Test builds allow screenshots while the app is being built and tested on made-up data (the developer's
+        // decision of 28 November 2026). A build for people always blocks them.
+        if (!BuildConfig.DEBUG) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         val testBuild = BuildConfig.DEBUG
         val settings = getSharedPreferences("display", Context.MODE_PRIVATE)
         val sensors = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val lightSensor: Sensor? = sensors.getDefaultSensor(Sensor.TYPE_LIGHT)
-        opened(intent)
+        if (savedInstanceState == null) opened(intent)
 
         setContent {
             var automatic by remember { mutableStateOf(settings.getBoolean("outdoor-automatic", true)) }
@@ -254,9 +269,21 @@ class MainActivity : FragmentActivity() {
                         // locked or the app closed first, as with a real signal.
                         signal = { data -> AlertCenter.schedule(applicationContext, data, TEST_WAIT_SECONDS) },
                         removeAll = { AlertCenter.clear(this) },
+                        remind = { AlertCenter.remindLater(applicationContext, Slot.DECIDE, asked = true) },
+                        seen = { what -> AlertCenter.receive(applicationContext, mapOf("kind" to "read", "what" to what)) },
                     ),
                     goTo = goTo,
-                    onWent = { goTo = null },
+                    goItem = goItem,
+                    onWent = { goTo = null; goItem = null },
+                    line = line?.words,
+                    onLine = { open ->
+                        val alert = line
+                        line = null
+                        if (open && alert != null) {
+                            goTo = Place.INBOX
+                            goItem = alert.item?.let { InboxJump(it) }
+                        }
+                    },
                     onAddSample = { addSample(); traces = tracer.all() },
                     onAutomaticOutdoor = { automatic = it; settings.edit { putBoolean("outdoor-automatic", it) } },
                     onForcedOutdoor = { forced = it; settings.edit { putBoolean("outdoor-forced", it) } },

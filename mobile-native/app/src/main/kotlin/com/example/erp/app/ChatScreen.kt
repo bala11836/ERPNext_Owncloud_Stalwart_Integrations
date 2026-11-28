@@ -49,11 +49,18 @@ class ChatActions(
  * server; here a person can only start a one-to-one chat with a colleague.
  */
 @Composable
-fun ChatScreen(rooms: List<Room>, colleagues: List<String>, now: LocalDateTime, online: Boolean, actions: ChatActions) {
+fun ChatScreen(rooms: List<Room>, colleagues: List<String>, now: LocalDateTime, online: Boolean, actions: ChatActions, asked: String? = null, onOpened: () -> Unit = {}) {
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
     var choosing by rememberSaveable { mutableStateOf(false) }
     val open = rooms.firstOrNull { it.id == openId }
     val openRoom = { id: String -> openId = id; choosing = false; actions.opened(id) }
+    // An alert for one chat leads to that chat; a chat that is not there leaves the list as it is.
+    LaunchedEffect(asked) {
+        if (asked != null) {
+            if (rooms.any { it.id == asked }) openRoom(asked)
+            onOpened()
+        }
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 840.dp
         when {

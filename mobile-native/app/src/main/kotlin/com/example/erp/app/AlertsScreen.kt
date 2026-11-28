@@ -24,6 +24,10 @@ class AlertActions(
     /** Makes a signal on the phone itself after a short wait, so the phone can be locked first. */
     val signal: (data: Map<String, String>) -> Unit,
     val removeAll: () -> Unit,
+    /** "Remind me in 2 hours", asked for inside the app. */
+    val remind: () -> Unit,
+    /** The person is looking at a place ("chat", "notice", "mail"): its alert has done its work and goes. */
+    val seen: (what: String) -> Unit,
 )
 
 /** How long a test waits before it shows, so the person can lock the phone or close the app first. */
@@ -52,7 +56,7 @@ fun AlertsScreen(view: AlertsView, testBuild: Boolean, actions: AlertActions) {
                 style = MaterialTheme.typography.bodyLarge, color = Look.Muted,
             )
             MainButton("Test my alerts", { actions.signal(mapOf("kind" to "test")) })
-            Text("It rings in about $TEST_WAIT_SECONDS seconds; the phone may take up to a minute. Lock the phone now, or close the app, to see the full page a real approval shows.", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+            Text("It rings in about $TEST_WAIT_SECONDS seconds; the phone may take up to a minute. Lock the phone now, or close the app, to see the full page a real approval shows. \"Remind me in 2 hours\" on a real approval brings it back every 2 hours, at any hour, until nothing waits.", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
 
             Eyebrow("The kinds")
             for (kind in AlertKind.entries) RowCard(R.drawable.ic_bell, kind.title, kind.text + " Tap for the phone's own switch.", onClick = { actions.openKind(kind) })
@@ -60,14 +64,20 @@ fun AlertsScreen(view: AlertsView, testBuild: Boolean, actions: AlertActions) {
             if (testBuild) {
                 Eyebrow("Test signals (test builds)")
                 Text("Each arrives after about $TEST_WAIT_SECONDS seconds (the phone may take up to a minute), also when the app is closed.", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
-                fun approval(name: String) = mapOf("kind" to "approval", "needs" to "decide", "doctype" to "Test", "docname" to name)
-                OutlineButton("Signal: an approval", { actions.signal(approval("one")) })
-                OutlineButton("Signal: a second approval", { actions.signal(approval("two")) })
+                Text("While the app is open and unlocked, an approval shows a line at the top instead of the full page, and chat and mail make no banner. Leave the app or lock the phone to see the alert itself.", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+                Text("In test builds \"Remind me in 2 hours\" comes back after 2 minutes. The two approvals below name things of the made-up Inbox, so Approve and Reject on the alert open them.", style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
+                fun approval(doctype: String, name: String) = mapOf("kind" to "approval", "needs" to "decide", "doctype" to doctype, "docname" to name)
+                OutlineButton("Signal: an approval", { actions.signal(approval("Payment Entry", "payment")) })
+                OutlineButton("Signal: a second approval", { actions.signal(approval("Leave Application", "leave")) })
                 OutlineButton("Signal: reminder, 3 waiting, 8 hours", { actions.signal(mapOf("kind" to "reminder", "count" to "3", "oldest_hours" to "8")) })
-                OutlineButton("Signal: the first approval was decided", { actions.signal(mapOf("kind" to "remove", "doctype" to "Test", "docname" to "one")) })
+                OutlineButton("Signal: the second approval was decided", { actions.signal(mapOf("kind" to "remove", "doctype" to "Leave Application", "docname" to "leave")) })
+                OutlineButton("Signal: the first approval was decided", { actions.signal(mapOf("kind" to "remove", "doctype" to "Payment Entry", "docname" to "payment")) })
                 OutlineButton("Signal: rejected, to correct", { actions.signal(mapOf("kind" to "returned", "doctype" to "Test", "docname" to "back")) })
-                OutlineButton("Signal: a chat message", { actions.signal(mapOf("kind" to "message")) })
-                OutlineButton("Signal: mail", { actions.signal(mapOf("kind" to "mail")) })
+                OutlineButton("Signal: a chat message to me", { actions.signal(mapOf("kind" to "message", "room" to "direct-Project manager")) })
+                OutlineButton("Signal: a message in a team room", { actions.signal(mapOf("kind" to "message", "room" to "site-a-engineers", "prio" to "low")) })
+                OutlineButton("Signal: the chats were read elsewhere", { actions.signal(mapOf("kind" to "read", "what" to "chat")) })
+                OutlineButton("Signal: mail", { actions.signal(mapOf("kind" to "mail", "mail" to "t4")) })
+                OutlineButton("Signal: the mail was read elsewhere", { actions.signal(mapOf("kind" to "read", "what" to "mail")) })
                 OutlineButton("Signal: a notice", { actions.signal(mapOf("kind" to "notice")) })
                 OutlineButton("Signal: with a name and an amount in it", { actions.signal(mapOf("kind" to "approval", "doctype" to "Test", "docname" to "three", "title" to "Pay A. Example 1,50,000.00", "body" to "Pay A. Example 1,50,000.00")) })
                 OutlineButton("Remove every alert now", actions.removeAll, danger = true)

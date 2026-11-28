@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,9 +29,12 @@ import androidx.compose.ui.unit.dp
 import com.example.erp.core.Decided
 import com.example.erp.core.Decision
 import com.example.erp.core.DecisionResult
+import com.example.erp.core.DelegationFacts
+import com.example.erp.core.Delegations
 import com.example.erp.core.Format
 import com.example.erp.core.Inbox
 import com.example.erp.core.Item
+import com.example.erp.core.Receiver
 import com.example.erp.core.Sent
 import com.example.erp.core.SentState
 import com.example.erp.core.Tone
@@ -45,12 +49,22 @@ class InboxActions(
     val sign: (what: String, done: (signed: Boolean, trouble: String?) -> Unit) -> Unit,
     /** [modified] is the version the person looked at; the server refuses a decision made on an older one. */
     val decide: (id: String, modified: String, decision: Decision, reason: String?) -> DecisionResult,
-    val hold: (id: String, modified: String, until: LocalDateTime, reason: String?) -> Unit,
+    /** "Remind me in 2 hours": nothing is decided and nothing is sent; this phone rings again. */
+    val remind: () -> Unit,
+    /** One thing goes to [to]. Nothing counts as delegated until the server said so. */
+    val delegate: (id: String, modified: String, to: Receiver, reason: String?) -> DecisionResult,
+    /** Everything goes to [to] until [until]. The server checks the leave and who may receive. */
+    val delegateAll: (to: Receiver, until: LocalDateTime) -> DecisionResult,
 )
 
-private enum class InboxView(val word: String, val title: String) { WAITING("Waiting", "Waiting for me"), DECIDED("Decided", "Decided by me"), SENT("Sent", "Sent by me") }
+/** An alert's shortcut into Inbox: the thing to open and the screen to start on. It decides nothing. */
+data class InboxJump(val id: String, val start: Start = Start.ITEM) {
+    enum class Start { ITEM, REJECT, DELEGATE }
+}
 
-private enum class Screen { LIST, ITEM, REJECT, HOLD, RESULT, PAST }
+private enum class InboxView(val word: String, val title: String) { WAITING("Waiting", "Waiting for me"), DECIDED("Done", "Decided by me"), SENT("Sent", "Sent by me") }
+
+private enum class Screen { LIST, ITEM, REJECT, DELEGATE, RESULT, PAST }
 
 private fun kind(tone: Tone) = when (tone) {
     Tone.GOOD -> StatusKind.OK
@@ -65,11 +79,15 @@ private fun kind(tone: Tone) = when (tone) {
  *
  * Built in: two decisions only, Approve and Reject, each signed with the fingerprint, and the fingerprint question
  * says what is signed; Approve is offered only after the person said they have seen the evidence; a rejection
- * always goes back to the sender, its reason is optional; "Decide later" is a hold with any date and time, not a
- * decision; without a connection nothing can be decided; nothing is shown as decided before the answer came.
+ * always goes back to the sender, its reason is optional; without a connection nothing can be decided; nothing is
+ * shown as decided before the answer came. A person who does not decide now delegates or is reminded in 2 hours.
+ * "Delegate" hands one thing, or everything during approved leave, to someone the server offers; it is signed too.
  */
 @Composable
-fun InboxScreen(waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, now: LocalDateTime, online: Boolean, actions: InboxActions) {
+fun InboxScreen(
+    waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, now: LocalDateTime, online: Boolean, actions: InboxActions,
+    jump: InboxJump? = null, onJumped: () -> Unit = {}, delegation: DelegationFacts = DelegationFacts(),
+) {
     var view by rememberSaveable { mutableStateOf(InboxView.WAITING) }
     var step by rememberSaveable { mutableStateOf(Screen.LIST) }
     var openId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -81,8 +99,29 @@ fun InboxScreen(waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, n
     // "I have looked" belongs to one version of one item: a changed item must be looked at again.
     var seen by rememberSaveable(openId, item?.modified) { mutableStateOf(false) }
     val past = decided.firstOrNull { it.item.id == openId }
+    var note by remember { mutableStateOf<String?>(null) }
     val toList = { step = Screen.LIST; openId = null; result = null }
-    val open = { id: String -> openId = id; step = Screen.ITEM }
+    val open = { id: String -> openId = id; step = Screen.ITEM; note = null }
+
+    // An alert's shortcut: that thing opens, at Reject or Delegate when asked (those screens themselves check that
+    // it may be decided or delegated and that there is a connection). A thing that is not in the list leaves the list as it is.
+    LaunchedEffect(jump) {
+        if (jump != null) {
+            if (waiting.any { it.id == jump.id }) {
+                view = InboxView.WAITING
+                result = null
+                openId = jump.id
+                step = when (jump.start) {
+                    InboxJump.Start.REJECT -> Screen.REJECT
+                    InboxJump.Start.DELEGATE -> Screen.DELEGATE
+                    InboxJump.Start.ITEM -> Screen.ITEM
+                }
+            } else {
+                note = "That one is already decided, or no longer waits for you."
+            }
+            onJumped()
+        }
+    }
 
     fun decide(target: Item, decision: Decision, reason: String?) {
         trouble = null
@@ -90,6 +129,32 @@ fun InboxScreen(waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, n
             if (signed) {
                 decidedTitle = target.title
                 result = actions.decide(target.id, target.modified, decision, reason)
+                step = Screen.RESULT
+            } else {
+                trouble = why
+            }
+        }
+    }
+
+    // Delegating is signed like a decision: the fingerprint question says who receives what.
+    fun delegate(target: Item?, choice: DelegateChoice) {
+        trouble = null
+        val what = when (choice) {
+            is DelegateChoice.One -> Delegations.question(choice.to, target ?: return)
+            is DelegateChoice.All -> Delegations.questionAll(choice.to, choice.from, choice.until, now)
+        }
+        actions.sign(what) { signed, why ->
+            if (signed) {
+                when (choice) {
+                    is DelegateChoice.One -> {
+                        decidedTitle = target?.title.orEmpty()
+                        result = actions.delegate(target?.id.orEmpty(), target?.modified.orEmpty(), choice.to, choice.reason)
+                    }
+                    is DelegateChoice.All -> {
+                        decidedTitle = "All my approvals"
+                        result = actions.delegateAll(choice.to, choice.until)
+                    }
+                }
                 step = Screen.RESULT
             } else {
                 trouble = why
@@ -108,13 +173,18 @@ fun InboxScreen(waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, n
             BackHandler { step = Screen.ITEM }
             Reject(item, trouble, onBack = { step = Screen.ITEM }) { reason -> decide(item, Decision.REJECTED, reason) }
         }
-        step == Screen.HOLD && item != null && online && Inbox.canDecide(item) -> {
+        step == Screen.DELEGATE && item != null && online && Delegations.canDelegate(item) -> {
             BackHandler { step = Screen.ITEM }
-            HoldChooser(item, now, onBack = { step = Screen.ITEM }) { until, reason -> actions.hold(item.id, item.modified, until, reason); toList() }
+            DelegateChooser(item, delegation, now, trouble, onBack = { trouble = null; step = Screen.ITEM }) { choice -> delegate(item, choice) }
         }
-        (step == Screen.ITEM || step == Screen.REJECT || step == Screen.HOLD) && item != null -> {
+        (step == Screen.ITEM || step == Screen.REJECT || step == Screen.DELEGATE) && item != null -> {
             BackHandler(onBack = toList)
-            ItemView(item, now, online, seen, trouble, onSeen = { seen = it }, onBack = toList, onApprove = { decide(item, Decision.APPROVED, null) }, onReject = { trouble = null; step = Screen.REJECT }, onHold = { step = Screen.HOLD })
+            ItemView(
+                item, now, online, seen, trouble, onSeen = { seen = it }, onBack = toList, onApprove = { decide(item, Decision.APPROVED, null) },
+                onReject = { trouble = null; step = Screen.REJECT },
+                onRemind = { actions.remind(); toList(); note = "You will be reminded in 2 hours, and again every 2 hours while it waits." },
+                onDelegate = if (Delegations.canDelegate(item)) ({ trouble = null; step = Screen.DELEGATE }) else null,
+            )
         }
         step == Screen.PAST && past != null -> {
             BackHandler(onBack = toList)
@@ -125,6 +195,8 @@ fun InboxScreen(waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, n
             ViewSwitch(view) { view = it }
             Text(view.title, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
             if (!online) Notice(StatusKind.NONE, "No connection. This is the last copy. Deciding needs a connection.")
+            note?.let { Notice(StatusKind.INFO, it) }
+            delegation.running?.let { Notice(StatusKind.WAIT, Delegations.runningLine(it, now) + " End it under More, Delegation.") }
             when (view) {
                 InboxView.WAITING -> {
                     val sections = Inbox.sections(waiting, now)
@@ -153,7 +225,6 @@ fun InboxScreen(waiting: List<Item>, decided: List<Decided>, sent: List<Sent>, n
                             SentState.WAITING -> StatusKind.WAIT to "Waiting"
                             SentState.APPROVED -> StatusKind.OK to "Approved"
                             SentState.REJECTED -> StatusKind.BAD to "Rejected"
-                            SentState.ON_HOLD -> StatusKind.WAIT to "On hold"
                         }
                         RowCard(R.drawable.ic_forward, row.title, Inbox.sentLine(row, now), pill = pillKind to word)
                     }
@@ -188,7 +259,10 @@ private fun ViewSwitch(current: InboxView, onChoose: (InboxView) -> Unit) {
 @Composable
 private fun WaitingRow(item: Item, now: LocalDateTime, onOpen: () -> Unit) {
     val deadline = Inbox.deadline(item, now)
-    val extra = listOfNotNull(item.hold?.let { Inbox.holdLine(it, now) }, "You sent this.".takeIf { item.sentByMe }).joinToString(" ")
+    val extra = listOfNotNull(
+        "You sent this.".takeIf { item.sentByMe },
+        item.delegatedBy?.let { "Delegated to you by $it." }, item.delegatedTo?.let { "With $it." },
+    ).joinToString(" ")
     RowCard(
         R.drawable.ic_inbox,
         item.title,
@@ -196,7 +270,6 @@ private fun WaitingRow(item: Item, now: LocalDateTime, onOpen: () -> Unit) {
         pill = when {
             item.rejection != null -> StatusKind.BAD to "Rejected"
             deadline != null && deadline.first != Tone.PLAIN -> kind(deadline.first) to deadline.second
-            item.hold != null -> StatusKind.WAIT to "On hold"
             else -> null
         },
         onClick = onOpen,
@@ -250,10 +323,11 @@ private fun ItemView(
     onBack: () -> Unit,
     onApprove: () -> Unit,
     onReject: () -> Unit,
-    onHold: () -> Unit,
+    onRemind: () -> Unit,
+    onDelegate: (() -> Unit)?,
 ) = Page {
     ItemHead(item, now, onBack)
-    item.hold?.let { Notice(StatusKind.WAIT, Inbox.holdLine(it, now)) }
+    Delegations.itemLine(item)?.let { Notice(StatusKind.INFO, it) }
     Trail(item, now)
     Evidence(item)
     val rejection = item.rejection
@@ -271,19 +345,21 @@ private fun ItemView(
             SwitchRow("I have looked at everything above", "Needed before you can approve.", seen, onSeen)
             if (seen) MainButton("Approve with your fingerprint", onApprove)
             OutlineButton("Reject", onReject, danger = true)
-            OutlineButton("Decide later", onHold)
+            // Not on what was delegated to me, and not twice: one step only.
+            if (onDelegate != null) OutlineButton("Delegate", onDelegate)
+            OutlineButton("Remind me in 2 hours", onRemind)
         }
     }
 }
 
 @Composable
-private fun Field(value: String, onChange: (String) -> Unit, label: String) {
+internal fun ReasonField(value: String, onChange: (String) -> Unit, label: String) {
     OutlinedTextField(value, onChange, Modifier.fillMaxWidth(), label = { Text(label) }, textStyle = MaterialTheme.typography.bodyLarge, minLines = 2, maxLines = 5, shape = RoundedCornerShape(Look.Corner))
 }
 
 /** One of the quick reasons, or none. A second tap on the chosen one takes it away again. */
 @Composable
-private fun QuickReasons(choices: List<String>, chosen: String?, onChoose: (String?) -> Unit) {
+internal fun QuickReasons(choices: List<String>, chosen: String?, onChoose: (String?) -> Unit) {
     for (choice in choices) RowCard(R.drawable.ic_forward, choice, if (choice == chosen) "Chosen. Tap again to take it away." else "", selected = choice == chosen, onClick = { onChoose(if (choice == chosen) null else choice) })
 }
 
@@ -298,7 +374,7 @@ private fun Reject(item: Item, trouble: String?, onBack: () -> Unit, onReject: (
         Text(item.title, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
         Notice(StatusKind.INFO, "It goes back to ${item.from} to change and present again. A reason is not required, but it tells them what to change.")
         QuickReasons(Inbox.REJECT_REASONS, quick) { quick = it }
-        Field(typed, { typed = it.take(Inbox.MAX_REASON) }, "In your own words (optional)")
+        ReasonField(typed, { typed = it.take(Inbox.MAX_REASON) }, "In your own words (optional)")
         if (trouble != null) Notice(StatusKind.WARN, trouble)
         MainButton("Reject with your fingerprint", { onReject(Inbox.reason(quick, typed)) })
         OutlineButton("Do not reject", onBack)
@@ -307,39 +383,13 @@ private fun Reject(item: Item, trouble: String?, onBack: () -> Unit, onReject: (
 
 /** A day and a time, chosen with large plus and minus buttons that work with gloves. No limit on how far ahead. */
 @Composable
-private fun Stepper(label: String, value: String, less: String, more: String, onLess: () -> Unit, onMore: () -> Unit) {
+internal fun Stepper(label: String, value: String, less: String, more: String, onLess: () -> Unit, onMore: () -> Unit) {
     Text(label, style = MaterialTheme.typography.bodyMedium, color = Look.Muted)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlineButton(less, onLess, Modifier.weight(1f))
         OutlineButton(more, onMore, Modifier.weight(1f))
     }
     Text(value, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
-}
-
-@Composable
-private fun HoldChooser(item: Item, now: LocalDateTime, onBack: () -> Unit, onHold: (until: LocalDateTime, reason: String?) -> Unit) {
-    var quick by remember(item.id) { mutableStateOf<String?>(null) }
-    var typed by remember(item.id) { mutableStateOf("") }
-    var until by remember(item.id) { mutableStateOf(Inbox.holdTime(now.plusHours(1).withMinute(0), now)) }
-    val set = { wanted: LocalDateTime -> until = Inbox.holdTime(wanted, now) }
-    Page {
-        TopBar(onBack = onBack)
-        Text("Decide later", style = MaterialTheme.typography.headlineMedium, color = Look.Ink)
-        Text(item.title, style = MaterialTheme.typography.titleMedium, color = Look.Ink)
-        Notice(StatusKind.INFO, "This puts it on hold; it is not a decision. ${item.from} will see until when, and why if you say so. You are reminded at that time.")
-        Eyebrow("Until when")
-        OutlineButton("In 1 hour", { set(now.plusHours(1)) })
-        OutlineButton("In 2 hours", { set(now.plusHours(2)) })
-        OutlineButton("Tomorrow, 09:00", { set(now.toLocalDate().plusDays(1).atTime(9, 0)) })
-        Stepper("Day", Format.date(until.toLocalDate()), "1 day earlier", "1 day later", { set(until.minusDays(1)) }, { set(until.plusDays(1)) })
-        Stepper("Time", until.toLocalTime().toString().take(5), "30 min earlier", "30 min later", { set(until.minusMinutes(30)) }, { set(until.plusMinutes(30)) })
-        Notice(StatusKind.WAIT, "On hold until ${Format.dateTime(until, now)}")
-        Eyebrow("Why (optional)")
-        QuickReasons(Inbox.HOLD_REASONS, quick) { quick = it }
-        Field(typed, { typed = it.take(Inbox.MAX_REASON) }, "In your own words (optional)")
-        MainButton("Put on hold", { onHold(until, Inbox.reason(quick, typed)) })
-        OutlineButton("Do not put on hold", onBack)
-    }
 }
 
 @Composable

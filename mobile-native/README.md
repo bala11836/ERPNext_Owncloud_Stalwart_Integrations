@@ -116,16 +116,36 @@ tap leads to a finished screen. This folder currently holds the foundation every
 
 - **Inbox** (`core` `Inbox`, `app` `InboxScreen.kt`): what waits for the person's decision, what they decided, and
   where what they sent is now (three views). Waiting: what was rejected back to me first, then what is due today,
-  then each kind with its oldest first, last what I put on hold. An item shows its trail (who did what, when) and
+  then each kind with its oldest first, last what I delegated. An item shows its trail (who did what, when) and
   its evidence, with what is unusual said in words. **Two decisions only: Approve and Reject.** Each is signed
   with the fingerprint, and the fingerprint question says what is signed (for money with the amount); a miss
   counts as at the door. Approve is offered only after the person said they looked at the evidence. A rejection
-  always goes back to the sender to change and present again, never final, its reason optional. "Decide later" is
-  a hold, not a decision: any date and time, an optional reason, shown to the sender. Without a connection
+  always goes back to the sender to change and present again, never final, its reason optional. There is no "decide later": a person
+  who does not decide now delegates it or taps "Remind me in 2 hours". Without a connection
   nothing can be decided; nothing is shown as decided before the answer came; "someone else decided first" and
   "it changed after you opened it" each have their own answer. **Not live:** it runs against a stand-in
   (`InboxPreview.kt`), test builds only, with made-up items; the fingerprint question is the real one. Not built:
-  approve many, the history filter, tablet side by side, correcting a rejected item, own reminders, alerts.
+  approve many, the history filter, tablet side by side, correcting a rejected item.
+
+- **The normal alerts** (chat, mail, notices): one alert per kind with a count ("New messages in 2 chats", "3 new
+  mails", "2 notices"); chats are counted by chat, not by message; a message in a busy room makes no sound, one to
+  the person alone does; mail and notices never do. With one chat or one mail the tap opens exactly that one, after
+  the fingerprint. "Read elsewhere" lowers the count or removes the alert; looking at Chat or Mail removes that
+  place's alert; approvals go by a decision only. The chat server's own signal shape (a room number and an unread
+  count) is read as well as the app's kinds. **While the app is open and unlocked** nothing is put over it: an
+  approval shows one line at the top with one sound, chat and mail only change the number on their place. The
+  numbers on the bar are the stand-ins' made-up counts; the real ones are the servers' own counts, never a count
+  of alerts. **Not live:** only test signals exist.
+
+- **Delegation** (`core` `Delegation`, `app` `DelegateScreen.kt`): one "Delegate" button on an approval, on the
+  full page of an alert and under More. "Only this one" can go to the deputy, a peer or the higher official, never
+  to the thing's sender. "All my approvals until a date" goes to the deputy or a peer only, only while the person
+  is on approved leave, for the leave days or fewer, and not to someone on leave in those days. Delegating is
+  signed with the fingerprint, whose question says who receives what. The person who delegated can still decide;
+  the receiver cannot delegate again; nothing is passed on automatically. **Version 1 makes no difference between
+  kinds of approval** (a design decision, to change later). **Not live:** people, leave and the delegation itself
+  are a stand-in in memory, test builds only; who may receive, the record, the leave check and the check at the
+  decision belong to the server.
 
 - **Alerts** (`core` `Alerts`, `app` `AlertCenter.kt`, `AlertsScreen.kt`): what the phone shows when something
   waits, also while the app is closed. A signal carries a kind and short fields only; **every word shown is a
@@ -134,17 +154,21 @@ tap leads to a finished screen. This folder currently holds the foundation every
   signals; a ready-made notification text would be shown by Google's library itself). One alert per kind with its count
   ("3 approvals waiting"); a reminder says that it is one and for how long; "decided elsewhere" lowers the count
   quietly and the last one removes the alert. Approvals ring (the phone's silent mode wins) and, on a locked phone, show a full page with the
-  alert's words and two choices, "Open" and "Later", as the earlier app did; the ringing stops after 30 seconds
-  and a quiet entry stays in the list. Rejected items and chat messages use the normal sound, mail and notices
+  alert's words, as the earlier app did; the ringing stops after 30 seconds and a quiet entry stays in the list.
+  One thing waiting: the alert says its kind ("Payment waiting", never a name or an amount) and offers "Approve"
+  and "Reject"; both only open that thing in the app, behind the phone's lock and the app's fingerprint, where it
+  is seen first and the decision is signed. **Nothing is decided on the lock screen.** Several waiting: "Open".
+  "Remind me in 2 hours" is fixed (no chooser), rings at every hour of the day and repeats until nothing waits;
+  it is kept by the phone's alarm service and set again after a restart (permission `RECEIVE_BOOT_COMPLETED`). Rejected items and chat messages use the normal sound, mail and notices
   none; each kind has the phone's own switch. An alert
-  decides nothing: a tap opens the app, which asks for the fingerprint and then shows the place. A lost key
+  decides nothing: a tap opens the app behind its fingerprint lock (asked again after 5 minutes away) and shows the place. A lost key
   removes every alert, and a phone without its key shows none. The Alerts screen (under More) says whether alerts can show and what fixes it, and has
   "Test my alerts" for every person. Signals arrive through Google's messaging library (the messaging part only;
   its four values are private build properties, there is no settings file and no build plug-in). **Not live:**
   nothing sends real signals yet and no phone is registered with the server (that needs sign-in); test builds
   have one button per kind of signal and show the phone's delivery address for one test from Google's console.
-  The tests arrive through the phone's alarm service, so they also come when the app was closed. Not built:
-  "Later" with an own reminder time, a line inside the open app.
+  The tests arrive through the phone's alarm service, so they also come when the app was closed. Until the real Inbox exists the
+  reminder ends only on a "decided" signal and has no upper limit, so it stays in test builds.
 
 ## Contents
 
@@ -183,7 +207,7 @@ cd mobile-native
 gradle checkAll
 ```
 
-runs the rules module's unit tests (75), Android lint with warnings as errors, the app's screen and connection tests (43) and a
+runs the rules module's unit tests (86), Android lint with warnings as errors, the app's screen and connection tests (66) and a
 debug build. CI runs the same command on every push and pull request (job `native-app` in
 `.github/workflows/check.yml`, Gradle 9.9.2 checked against its published checksum).
 

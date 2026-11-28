@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,10 +18,16 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import java.time.LocalDateTime
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.erp.core.Lead
@@ -54,6 +61,9 @@ enum class Tool(val title: String, val text: String, val icon: Int, val testOnly
     PHONE("This phone", "Fingerprint sensor, secure chip, app version.", R.drawable.ic_phone),
     TRACE("Data trace", "Where the data of each action went.", R.drawable.ic_trace),
 
+    /** Against a stand-in until the server keeps delegations and checks them. Test builds only. */
+    DELEGATION("Delegation", "Your approvals to your deputy or a peer while you are on leave. Stand-in. Test builds.", R.drawable.ic_forward, testOnly = true),
+
     /** The Welcome screens against a stand-in, until the server part for access requests exists. Test builds only. */
     WELCOME("Welcome preview", "The first-start screens against a stand-in. Test builds.", R.drawable.ic_key, testOnly = true),
 }
@@ -75,12 +85,18 @@ class FrameState(
     val alerts: AlertsView = AlertsView(),
 )
 
+/** How long the line of an alert stays at the top of the open app. */
+private const val LINE_MS = 15_000L
+
 /**
  * The frame around every screen: a bottom bar on a phone, a side rail on a tablet or a phone turned sideways,
  * chosen by the window's width.
  *
  * @param sign asks for the fingerprint to sign one decision. Required: no screen may decide anything without it.
  * @param goTo the place an alert asked for; [onWent] is called once it was looked at.
+ * @param goItem the one thing (an approval, a chat, a mail) an alert asked for, with [goTo].
+ * @param line an alert that arrived while the app is open: its fixed words, shown at the top; [onLine] is told
+ *   whether the person opened it or it only went away.
  */
 @Composable
 fun AppFrame(
@@ -94,16 +110,42 @@ fun AppFrame(
     onTryConnection: (() -> Unit)? = null,
     goTo: Place? = null,
     onWent: () -> Unit = {},
+    goItem: InboxJump? = null,
+    line: String? = null,
+    onLine: (open: Boolean) -> Unit = {},
 ) {
     val places = Place.entries.filter { !it.testOnly || state.testBuild }
     var place by rememberSaveable { mutableStateOf(places.first()) }
     var tool by rememberSaveable { mutableStateOf<Tool?>(null) }
     // A tap on an alert asks for a place. Only a place this build shows is opened; the wish is then forgotten.
-    LaunchedEffect(goTo) {
+    var jump by remember { mutableStateOf<InboxJump?>(null) }
+    val delegationStandIn = remember { DelegationStandIn() }
+    // The numbers on the bar. Made up with the stand-ins; the real ones are the servers' own counts, never a count
+    // of alerts (cleanup list).
+    val counts = remember {
+        val now = LocalDateTime.now()
+        mutableStateMapOf(Place.INBOX to standInWaiting(now), Place.CHAT to standInUnreadChats(now), Place.MAIL to standInUnreadMails(now))
+    }
+    // Looking at a place is what its alert asked for: the alert goes. Approvals stay until they are decided.
+    LaunchedEffect(place) {
+        when (place) {
+            Place.CHAT -> { alertActions.seen("chat"); alertActions.seen("notice") }
+            Place.MAIL -> alertActions.seen("mail")
+            else -> Unit
+        }
+    }
+    LaunchedEffect(line) {
+        if (line != null) {
+            delay(LINE_MS)
+            onLine(false)
+        }
+    }
+    LaunchedEffect(goTo, goItem) {
         if (goTo != null) {
             if (goTo in places) {
                 place = goTo
                 tool = null
+                jump = goItem
             }
             onWent()
         }
@@ -117,11 +159,15 @@ fun AppFrame(
                     onClick = { place = item; tool = null },
                     icon = { Icon(painterResource(item.icon), contentDescription = null) },
                     label = { Text(item.label) },
+                    // The number is spoken with its place ("Inbox: 7"), not as a bare figure.
+                    badge = { counts[item]?.takeIf { it > 0 }?.let { n -> Badge(Modifier.semantics { contentDescription = "${item.label}: $n" }) { Text(if (n > 99) "99+" else "$n") } } },
                 )
             }
         },
     ) {
-        Box(Modifier.statusBarsPadding()) {
+        Column(Modifier.statusBarsPadding()) {
+            // Something that waits for the person arrived while they are in the app: one line, no page over their work.
+            if (line != null) ActionMessage(StatusKind.WAIT, line, "Open", { onLine(true) }, Modifier.padding(horizontal = Look.Gap, vertical = 8.dp))
             when (place) {
                 Place.TODAY -> TodayPreviewScreen(onOpen = {
                     place = when (it) {
@@ -130,10 +176,10 @@ fun AppFrame(
                         Lead.MAIL -> Place.MAIL
                     }
                 })
-                Place.INBOX -> InboxPreviewScreen(sign)
-                Place.CHAT -> ChatPreviewScreen()
-                Place.MAIL -> MailPreviewScreen()
-                Place.MORE -> MoreScreen(state, tool, { tool = it }, alertActions, onAddSample, onAutomaticOutdoor, onForcedOutdoor, onSafeNote, onTryConnection)
+                Place.INBOX -> InboxPreviewScreen(sign, jump = jump, onJumped = { jump = null }, standIn = delegationStandIn, remind = alertActions.remind, onCount = { counts[Place.INBOX] = it })
+                Place.CHAT -> ChatPreviewScreen(open = jump?.id, onOpened = { jump = null }, onCount = { counts[Place.CHAT] = it })
+                Place.MAIL -> MailPreviewScreen(open = jump?.id, onOpened = { jump = null }, onCount = { counts[Place.MAIL] = it })
+                Place.MORE -> MoreScreen(state, tool, { tool = it }, alertActions, onAddSample, onAutomaticOutdoor, onForcedOutdoor, onSafeNote, onTryConnection, sign, delegationStandIn)
             }
         }
     }
@@ -150,6 +196,8 @@ private fun MoreScreen(
     onForcedOutdoor: (Boolean) -> Unit,
     onSafeNote: (() -> Unit)?,
     onTryConnection: (() -> Unit)?,
+    sign: (what: String, done: (Boolean, String?) -> Unit) -> Unit,
+    delegationStandIn: DelegationStandIn,
 ) {
     if (tool == null) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Look.Gap), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -168,6 +216,7 @@ private fun MoreScreen(
                 Tool.TRACE -> TraceScreen(state.traces, showValues = state.testBuild, onAddSample = if (state.testBuild) onAddSample else null, onTryConnection = if (state.testBuild) onTryConnection else null)
                 Tool.PHONE -> PhoneScreen(state.phone, state.model, state.version, state.safeNote, if (state.testBuild) onSafeNote else null)
                 Tool.WELCOME -> WelcomePreviewScreen()
+                Tool.DELEGATION -> DelegationPreviewScreen(delegationStandIn, sign)
                 Tool.ALERTS -> AlertsScreen(state.alerts, state.testBuild, alertActions)
                 Tool.DISPLAY -> DisplayScreen(
                     state.palette,

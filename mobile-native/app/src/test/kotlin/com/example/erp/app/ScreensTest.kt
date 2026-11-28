@@ -57,7 +57,11 @@ class ScreensTest {
     /** What the Alerts screen asked for, in order. */
     private val alertCalls = mutableListOf<String>()
 
-    private fun show(palette: Palette, testBuild: Boolean = true, withTraces: Boolean = true, alerts: AlertsView = AlertsView(connected = true, address = "delivery-address-for-tests"), goTo: Place? = null) {
+    /** The places whose alert was told to go because the person looked at them. */
+    private val seenCalls = mutableListOf<String>()
+    private var lineAnswers = mutableListOf<Boolean>()
+
+    private fun show(palette: Palette, testBuild: Boolean = true, withTraces: Boolean = true, alerts: AlertsView = AlertsView(connected = true, address = "delivery-address-for-tests"), goTo: Place? = null, goItem: InboxJump? = null, line: String? = null) {
         val tracer = Tracer()
         if (withTraces) sampleTraces(tracer)
         compose.setContent {
@@ -73,8 +77,13 @@ class ScreensTest {
                         openKind = { alertCalls += "kind ${it.id}" },
                         signal = { alertCalls += "signal ${it["kind"]}" },
                         removeAll = { alertCalls += "remove all" },
+                        remind = { alertCalls += "remind" },
+                        seen = { seenCalls += it },
                     ),
                     goTo = goTo,
+                    goItem = goItem,
+                    line = line,
+                    onLine = { lineAnswers += it },
                     sign = { what, done -> signed += what; done(fingerprintMatches, if (fingerprintMatches) null else com.example.erp.core.LockRules.missWords(1)) },
                     onAddSample = { sampleTraces(tracer); traces = tracer.all() },
                     onAutomaticOutdoor = { automatic = it },
@@ -131,7 +140,7 @@ class ScreensTest {
         compose.onNodeWithText("Role: ${Day.SUPERVISOR.label}").assertIsDisplayed()
         // Inbox: the three views; every waiting item opens, and so do "Reject" and "Decide later"; all lead back.
         place(Place.INBOX).performClick()
-        for (view in listOf("Decided", "Sent", "Waiting")) {
+        for (view in listOf("Done", "Sent", "Waiting")) {
             tap(view)
             checkLayout("$name / inbox, $view")
         }
@@ -146,12 +155,8 @@ class ScreensTest {
         shown("It goes back to Accounts, S. Example to change and present again.")
         checkLayout("$name / inbox reject")
         tap("Do not reject")
-        tap("Decide later")
-        shown("This puts it on hold; it is not a decision.")
-        checkLayout("$name / inbox decide later")
-        tap("Do not put on hold")
         reach(compose.onNodeWithContentDescription("Back")).performClick()
-        tap("Decided")
+        tap("Done")
         tap("Purchase request: sand")
         shown("A decision cannot be undone here.")
         checkLayout("$name / inbox, a past decision")
@@ -458,7 +463,7 @@ class ScreensTest {
         sampleTraces(tracer)
         compose.setContent {
             ErpTheme(Palettes.LIGHT) {
-                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, tracer.all(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), { _, done -> done(true, null) }, AlertActions({}, {}, {}, {}), {}, {}, {})
+                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, tracer.all(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), { _, done -> done(true, null) }, AlertActions({}, {}, {}, {}, {}, {}), {}, {}, {})
             }
         }
         // The real app opens on More, its only finished place; no unfinished place and no stand-in can be reached.
@@ -536,7 +541,7 @@ class ScreensTest {
         shown("Approved. It moves on to the next step.")
         tap("Back to the list")
         absent("Payment to a supplier")
-        tap("Decided")
+        tap("Done")
         reach(compose.onNode(hasText("Payment to a supplier") and hasText("Approved") and hasClickAction())).assertIsDisplayed()
     }
 
@@ -561,7 +566,7 @@ class ScreensTest {
         type("In your own words (optional)", "Worker 3")
         tap("Reject with your fingerprint")
         tap("Back to the list")
-        tap("Decided")
+        tap("Done")
         tap("Attendance, Site A, 6 workers")
         shown("Rejected by you")
         shown("Reason: Photo not clear: Worker 3")
@@ -576,22 +581,28 @@ class ScreensTest {
     }
 
     @Test
-    fun decideLaterIsAHoldWithAnyTimeAndNothingIsDecidedWithoutAConnection() {
+    fun whoDoesNotDecideNowIsRemindedInTwoHoursAndThereIsNoDecideLater() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Leave, 3 days")
+        // The four ways, and no fifth.
+        for (way in listOf("Reject", "Delegate", "Remind me in 2 hours")) reach(compose.onNode(hasText(way) and hasClickAction())).assertIsDisplayed()
+        absent("Decide later")
+        tap("Remind me in 2 hours")
+        assertEquals(listOf("remind"), alertCalls)
+        assertEquals("a reminder decides nothing and needs no fingerprint", emptyList<String>(), signed)
+        shown("You will be reminded in 2 hours, and again every 2 hours while it waits.")
+        // It is still there to decide.
+        tap("Leave, 3 days")
+        shown("I have looked at everything above")
+    }
+
+    @Test
+    fun nothingIsDecidedWhenItChangedWasTakenIsMineOrThereIsNoConnection() {
         show(Palettes.LIGHT)
         place(Place.INBOX).performClick()
         tap("Purchase request: steel")
-        tap("Decide later")
-        tap("Tomorrow, 09:00")
-        repeat(40) { tap("1 day later") } // no limit on how far ahead
-        tap("30 min later")
-        tap("Waiting for a document")
-        tap("Put on hold")
-        assertEquals("a hold needs no fingerprint: it decides nothing", emptyList<String>(), signed)
-        shown("ON HOLD (1)")
-        tap("Purchase request: steel")
-        shown("On hold until")
-        shown("Waiting for a document.")
-        // Still decidable at any moment; this one changes under the person, who must look again.
+        // This one changes under the person, who must look again.
         reach(compose.onNode(hasText("I have looked at everything above", substring = true) and hasClickAction())).performClick()
         tap("Approve with your fingerprint")
         shown("This was changed after you opened it. Nothing was decided.")
@@ -620,7 +631,6 @@ class ScreensTest {
         // What I sent: who has it, since when, the rejected one first.
         tap("Sent")
         shown("With Management, R. Example for 2 h.")
-        shown("On hold with Management, R. Example until")
     }
 
     @Test
@@ -645,7 +655,8 @@ class ScreensTest {
         val now = java.time.LocalDateTime.of(2026, 11, 28, 9, 15)
         fun payment(id: String, amount: String?) = com.example.erp.core.Item(id, com.example.erp.core.ItemKind.PAYMENT, "50,000.00 cement $id", "Accounts, S. Example", now.minusHours(1), amount = amount)
         val calls = mutableListOf<String>()
-        val actions = InboxActions(sign = { what, done -> calls += what; done(true, null) }, decide = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, hold = { id, _, _, _ -> calls += id })
+        val actions = InboxActions(sign = { what, done -> calls += what; done(true, null) }, decide = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, remind = { calls += "remind" },
+            delegate = { id, _, _, _ -> calls += id; com.example.erp.core.DecisionResult.NotAllowed }, delegateAll = { _, _ -> calls += "all"; com.example.erp.core.DecisionResult.NotAllowed })
         compose.setContent {
             ErpTheme(Palettes.LIGHT) { InboxScreen(listOf(payment("one", null), payment("two", "12x")), emptyList(), emptyList(), now, online = true, actions = actions) }
         }
@@ -655,6 +666,7 @@ class ScreensTest {
             absent("I have looked at everything above")
             absent("Reject")
             absent("Decide later")
+            absent("Delegate")
             reach(compose.onNodeWithContentDescription("Back")).performClick()
             compose.waitForIdle()
         }
@@ -662,30 +674,236 @@ class ScreensTest {
     }
 
     @Test
-    fun theFullPageOfARingingAlertShowsOnlyItsWordsAndTwoChoices() {
+    fun theFullPageForSeveralWaitingThingsOnlyLeadsToTheListOrRemindsLater() {
         val taps = mutableListOf<String>()
         compose.setContent {
-            ErpTheme(Palettes.LIGHT) { RingPage("3 approvals waiting", onOpen = { taps += "open" }, onLater = { taps += "later" }) }
+            ErpTheme(Palettes.LIGHT) { RingPage("3 approvals waiting", onOpen = { taps += "open" }, onReject = { taps += "reject" }, onRemind = { taps += "remind" }) }
         }
         shown("3 approvals waiting")
-        shown("Your fingerprint comes first.")
+        shown("Open the app to see it, behind its lock.")
         checkLayout("ring page")
-        tap("Later")
+        tap("Remind me in 2 hours")
         tap("Open")
-        assertEquals(listOf("later", "open"), taps)
-        // Nothing on the page can decide anything.
+        assertEquals(listOf("remind", "open"), taps)
+        // The page cannot know which of the three is meant.
         absent("Approve")
         absent("Reject")
+        absent("Later")
+    }
+
+    @Test
+    fun theFullPageForOneWaitingThingOffersTheWaysInAndSaysThatNothingIsDecidedHere() {
+        val taps = mutableListOf<String>()
+        compose.setContent {
+            ErpTheme(Palettes.LIGHT) { RingPage("Payment waiting", oneThing = true, onOpen = { taps += "approve" }, onReject = { taps += "reject" }, onDelegate = { taps += "delegate" }, onRemind = { taps += "remind" }) }
+        }
+        shown("Payment waiting")
+        shown("Approve, Reject and Delegate open it in the app, behind its lock. You see it before you decide.")
+        checkLayout("ring page, one thing")
+        tap("Approve")
+        tap("Reject")
+        tap("Delegate")
+        tap("Remind me in 2 hours")
+        assertEquals(listOf("approve", "reject", "delegate", "remind"), taps)
+        absent("Open")
+    }
+
+    @Test
+    fun theFullPageOfATestCanOnlyBeOpenedOrStopped() {
+        compose.setContent { ErpTheme(Palettes.DARK) { RingPage("Test alert. This is how an approval rings.", test = true, onOpen = {}, onRemind = {}) } }
+        shown("Stop")
+        absent("Remind me in 2 hours")
+        absent("Approve")
+        checkLayout("ring page, test")
+    }
+
+    @Test
+    fun approveOnAnAlertOpensThatThingAndStillNeedsTheLookAndTheFingerprint() {
+        show(Palettes.LIGHT, goTo = Place.INBOX, goItem = InboxJump("payment"))
+        shown("Payment to a supplier")
+        shown("I have looked at everything above")
+        absent("Approve with your fingerprint")
+        assertEquals(emptyList<String>(), signed)
+    }
+
+    @Test
+    fun rejectOnAnAlertOpensTheRejectScreenOfThatThingAndSignsNothingByItself() {
+        show(Palettes.LIGHT, goTo = Place.INBOX, goItem = InboxJump("leave", InboxJump.Start.REJECT))
+        shown("Leave, 3 days")
+        shown("Reject with your fingerprint")
+        assertEquals(emptyList<String>(), signed)
+    }
+
+    @Test
+    fun aShortcutToSomethingThatIsNotMineToDecideOrNotThereDecidesNothing() {
+        // What I sent myself: the item is shown, without Reject.
+        show(Palettes.LIGHT, goTo = Place.INBOX, goItem = InboxJump("advance", InboxJump.Start.REJECT))
+        shown("You sent this. Someone else must decide it.")
+        absent("Reject with your fingerprint")
+    }
+
+    private fun delegateButtons() = compose.onAllNodes(hasText("Delegate") and hasClickAction()).fetchSemanticsNodes().size
+
+    @Test
+    fun delegatingOneThingIsSignedGoesToAChosenPersonAndICanStillDecideIt() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Leave, 3 days")
+        tap("Delegate")
+        shown("Only this one")
+        shown("All my approvals until a date")
+        // Nothing can be sent before a person is chosen.
+        shown("Choose a person first.")
+        assertEquals(0, compose.onAllNodes(hasText("Delegate with your fingerprint") and hasClickAction()).fetchSemanticsNodes().size)
+        // One thing can also go to the higher official.
+        shown("Management, R. Example")
+        tap("Deputy manager, D. Example")
+        // A finger that does not match delegates nothing.
+        fingerprintMatches = false
+        tap("Delegate with your fingerprint")
+        shown("Not signed. 4 tries left.")
+        fingerprintMatches = true
+        tap("Delegate with your fingerprint")
+        assertEquals(List(2) { "Delegate to Deputy manager, D. Example: Leave, 3 days" }, signed)
+        shown("Delegated to Deputy manager, D. Example. You can still decide it yourself.")
+        tap("Back to the list")
+        shown("DELEGATED BY YOU (1)")
+        tap("Leave, 3 days")
+        shown("You delegated this to Deputy manager, D. Example.")
+        // I can still decide it; I cannot delegate it a second time.
+        shown("I have looked at everything above")
+        assertEquals(0, delegateButtons())
+    }
+
+    @Test
+    fun whatWasDelegatedToMeIsMineToDecideButNotToPassOn() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Machinery working, Site B, 2 days")
+        shown("Delegated to you by Project manager, P. Example. Travelling. You decide it with your own fingerprint.")
+        reach(compose.onNode(hasText("Reject") and hasClickAction())).assertIsDisplayed()
+        assertEquals(0, delegateButtons())
+    }
+
+    @Test
+    fun everythingIsDelegatedFromTheApprovalOnlyToTheDeputyOrAPeerAndInsideTheLeave() {
+        show(Palettes.LIGHT)
+        place(Place.INBOX).performClick()
+        tap("Leave, 3 days")
+        tap("Delegate")
+        tap("All my approvals until a date")
+        shown("Your approved leave:")
+        // Never the higher official, and nobody who is on leave too.
+        absent("Management, R. Example")
+        absent("Project manager, V. Example")
+        tap("1 day later") // cannot go past the leave
+        tap("Project manager, P. Example")
+        tap("Delegate with your fingerprint")
+        assertEquals(1, signed.size)
+        assertEquals(true, signed.single().startsWith("Delegate all approvals until ") && signed.single().endsWith(", 18:00 to Project manager, P. Example"))
+        shown("Delegated. Your approvals go to Project manager, P. Example until")
+        tap("Back to the list")
+        shown("End it under More, Delegation.")
+        // A second one cannot be set while one runs.
+        tap("Attendance, Site A, 6 workers")
+        tap("Delegate")
+        shown("A delegation is already set. End it first, under More, Delegation.")
+    }
+
+    @Test
+    fun delegationUnderMoreSetsItBeforeLeaveEndsItAndNeedsApprovedLeave() {
+        show(Palettes.LIGHT)
+        tool(Tool.DELEGATION)
+        shown("Nothing is delegated. Your approvals come to you.")
+        shown("Project manager, P. Example delegated one approval to you.")
+        tap("Delegate my approvals")
+        absent("Management, R. Example")
+        absent("Only this one")
+        tap("Deputy manager, D. Example")
+        tap("Delegate with your fingerprint")
+        assertEquals(true, signed.single().endsWith("to Deputy manager, D. Example"))
+        shown("Your approvals go to Deputy manager, D. Example until")
+        checkLayout("delegation, set")
+        tap("End it now")
+        shown("Nothing is delegated. Your approvals come to you.")
+        // Without approved leave everything cannot be delegated, and the screen says why.
+        tap("Leave: approved (stand-in)")
+        tap("Delegate my approvals")
+        shown("You can delegate everything only while you are on approved leave. No approved leave is recorded for you.")
+        assertEquals(1, signed.size)
+    }
+
+    @Test
+    fun delegateOnAnAlertOpensTheDelegateScreenOfThatThingAndSignsNothingByItself() {
+        show(Palettes.LIGHT, goTo = Place.INBOX, goItem = InboxJump("payment", InboxJump.Start.DELEGATE))
+        shown("Payment to a supplier · 1,50,000.00")
+        shown("Only this one")
+        checkLayout("delegate, from an alert")
+        assertEquals(emptyList<String>(), signed)
+    }
+
+    @Test
+    fun anAlertForOneChatOrOneMailOpensExactlyThatAndItsAlertGoesWhenThePlaceIsLookedAt() {
+        show(Palettes.LIGHT, goTo = Place.CHAT, goItem = InboxJump("direct-Project manager"))
+        // The chat itself, not the list of chats.
+        reach(compose.onNodeWithContentDescription("Back")).assertIsDisplayed()
+        absent("Site A engineers")
+        assertEquals(listOf("chat", "notice"), seenCalls)
+        place(Place.MAIL).performClick()
+        compose.waitForIdle()
+        assertEquals(listOf("chat", "notice", "mail"), seenCalls)
+        // Looking at Inbox removes no approval alert: only a decision does.
+        place(Place.INBOX).performClick()
+        compose.waitForIdle()
+        assertEquals(3, seenCalls.size)
+    }
+
+    @Test
+    fun anAlertForOneMailOpensThatConversation() {
+        show(Palettes.LIGHT, goTo = Place.MAIL, goItem = InboxJump("t4"))
+        shown("Re: Leave plan for December")
+        reach(compose.onNodeWithContentDescription("Back")).assertIsDisplayed()
+    }
+
+    @Test
+    fun thePlacesShowHowMuchWaitsAndTheNumberFollowsWhatIsDone() {
+        show(Palettes.LIGHT)
+        // Made-up numbers of the stand-ins: 7 to decide or correct, 3 unread messages, 2 unread mails.
+        for (badge in listOf("Inbox: 7", "Chat: 3", "Mail: 2")) compose.onNodeWithContentDescription(badge, useUnmergedTree = true).assertExists()
+        place(Place.INBOX).performClick()
+        tap("Leave, 3 days")
+        tap("Reject")
+        tap("Reject with your fingerprint")
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Inbox: 6", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun anApprovalArrivingWhileTheAppIsOpenShowsOneLineThatLeadsToIt() {
+        show(Palettes.LIGHT, line = "Payment waiting")
+        shown("Payment waiting")
+        checkLayout("line of an alert in the open app")
+        tap("Open")
+        assertEquals(listOf(true), lineAnswers)
+    }
+
+    @Test
+    fun aShortcutToSomethingUnknownLeavesTheList() {
+        show(Palettes.LIGHT, goTo = Place.INBOX, goItem = InboxJump("Pay A. Example 1,50,000.00", InboxJump.Start.DELEGATE))
+        shown("Waiting for me")
+        shown("That one is already decided, or no longer waits for you.")
+        absent("Reject with your fingerprint")
+        absent("Pay A. Example 1,50,000.00")
     }
 
     @Test @Config(fontScale = 2.0f)
     fun theFullPageHoldsAtDoubleFontSize() {
         compose.setContent {
-            ErpTheme(Palettes.OUTDOOR) { RingPage("Reminder: 3 approvals are still waiting, the oldest for 8 hours", onOpen = {}, onLater = {}) }
+            ErpTheme(Palettes.OUTDOOR) { RingPage("Machinery working waiting", oneThing = true, onOpen = {}, onRemind = {}) }
         }
-        shown("Reminder: 3 approvals are still waiting, the oldest for 8 hours")
+        shown("Machinery working waiting")
         checkLayout("ring page, outdoor, double font")
-        reach(compose.onNode(hasText("Later") and hasClickAction())).assertIsDisplayed()
+        reach(compose.onNode(hasText("Remind me in 2 hours") and hasClickAction())).assertIsDisplayed()
     }
 
     @Test
@@ -721,7 +939,7 @@ class ScreensTest {
     fun inARealBuildATappedAlertCannotOpenAnUnfinishedPlace() {
         compose.setContent {
             ErpTheme(Palettes.LIGHT) {
-                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, emptyList(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), { _, done -> done(true, null) }, AlertActions({}, {}, {}, {}), {}, {}, {}, goTo = Place.INBOX)
+                AppFrame(FrameState(Palettes.LIGHT, testBuild = false, emptyList(), phone, "Test Phone", "0.1.0", true, true, false, lux = 24f), { _, done -> done(true, null) }, AlertActions({}, {}, {}, {}, {}, {}), {}, {}, {}, goTo = Place.INBOX)
             }
         }
         compose.onNode(hasText("More") and !hasClickAction()).assertIsDisplayed()

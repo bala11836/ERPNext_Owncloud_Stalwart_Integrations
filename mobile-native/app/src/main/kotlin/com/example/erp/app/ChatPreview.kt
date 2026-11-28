@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import com.example.erp.core.Chat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,8 +24,9 @@ import java.time.LocalDateTime
  * button plays "no connection", so waiting messages can be seen. Remove with the real chat (cleanup list).
  */
 @Composable
-fun ChatPreviewScreen(now: LocalDateTime = LocalDateTime.now()) {
+fun ChatPreviewScreen(now: LocalDateTime = LocalDateTime.now(), open: String? = null, onOpened: () -> Unit = {}, onCount: (Int) -> Unit = {}) {
     var rooms by remember { mutableStateOf(sampleRooms(now)) }
+    LaunchedEffect(rooms) { onCount(Chat.unread(rooms)) }
     var online by remember { mutableStateOf(true) }
     var count by remember { mutableStateOf(0) }
     val actions = ChatActions(
@@ -48,9 +51,12 @@ fun ChatPreviewScreen(now: LocalDateTime = LocalDateTime.now()) {
             },
             Modifier.padding(horizontal = Look.Gap, vertical = 8.dp),
         )
-        Box(Modifier.weight(1f)) { ChatScreen(rooms, listOf("Engineer", "HR", "Project manager", "Store keeper"), now, online, actions) }
+        Box(Modifier.weight(1f)) { ChatScreen(rooms, listOf("Engineer", "HR", "Project manager", "Store keeper"), now, online, actions, open, onOpened) }
     }
 }
+
+/** The number the bar shows for Chat before the stand-in was opened. */
+internal fun standInUnreadChats(now: LocalDateTime): Int = Chat.unread(sampleRooms(now))
 
 private fun sampleRooms(now: LocalDateTime): List<Room> {
     fun from(id: String, who: String, text: String, minutesAgo: Long) = Message(id, who, mine = false, text = text, at = now.minusMinutes(minutesAgo))

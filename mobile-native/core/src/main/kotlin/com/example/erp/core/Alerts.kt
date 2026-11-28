@@ -30,8 +30,28 @@ enum class Slot(val id: Int, val lead: Lead) {
     NOTICE(5, Lead.CHAT),
 }
 
+/**
+ * What an approval is about, for the words on a locked phone: "Payment waiting". A kind, never a name or an
+ * amount. The words are written here; the signal only chooses among them.
+ */
+enum class About(val code: String, val words: String) {
+    ATTENDANCE("attendance", "Attendance waiting"),
+    PAYMENT("payment", "Payment waiting"),
+    PURCHASE("purchase", "Purchase waiting"),
+    LEAVE("leave", "Leave waiting"),
+    PETTY_CASH("petty_cash", "Petty cash waiting"),
+    STORE("store", "Store issue waiting"),
+    MACHINERY("machinery", "Machinery working waiting"),
+}
+
 sealed interface AlertAction {
-    data class Show(val slot: Slot, val words: String, val strength: Strength) : AlertAction
+    /**
+     * @param item set when exactly this one thing waits: its reference, so "Approve" and "Reject" on the alert
+     *   can open it. It is never shown and the app does not store it; the phone holds it inside the
+     *   alert while that alert lives.
+     * @param test the phone's own test: it cannot be reminded of, only stopped.
+     */
+    data class Show(val slot: Slot, val words: String, val strength: Strength, val item: String? = null, val test: Boolean = false) : AlertAction
     data class Remove(val slot: Slot) : AlertAction
 
     /** An unknown or broken signal: nothing is shown. */
@@ -42,7 +62,14 @@ sealed interface AlertAction {
  * What the phone remembers between signals so it can count and remove: for each thing that waits, a short
  * fingerprint of its reference, never the reference itself. Nothing readable about the business is kept.
  */
-data class AlertState(val deciding: Set<String> = emptySet(), val rejected: Set<String> = emptySet())
+data class AlertState(
+    val deciding: Set<String> = emptySet(),
+    val rejected: Set<String> = emptySet(),
+    /** The chats with something unread, as fingerprints of their numbers. */
+    val chats: Set<String> = emptySet(),
+    val mails: Int = 0,
+    val notices: Int = 0,
+)
 
 object Alerts {
     private const val MAX_COUNT = 999
@@ -66,6 +93,42 @@ object Alerts {
 
     private fun number(text: String?, max: Int): Int? = text?.takeIf { it.length <= 6 && it.all { c -> c in '0'..'9' } && it.isNotEmpty() }?.toInt()?.coerceIn(0, max)
 
+    /** The kind of thing, from the server's short code, or from a document type this app knows; null otherwise. */
+    fun about(data: Map<String, String>): About? {
+        About.entries.find { it.code == data["about"] }?.let { return it }
+        val doctype = data["doctype"].orEmpty()
+        return when {
+            doctype.length > 200 -> null
+            "Attendance" in doctype -> About.ATTENDANCE
+            doctype == "Payment Entry" -> About.PAYMENT
+            doctype in setOf("Purchase Order", "Purchase Invoice", "Material Request") -> About.PURCHASE
+            doctype == "Leave Application" -> About.LEAVE
+            doctype == "Expense Claim" -> About.PETTY_CASH
+            doctype == "Stock Entry" -> About.STORE
+            else -> null
+        }
+    }
+
+    /**
+     * "Remind me in 2 hours" has come due (the developer's decision of 28 November 2026: fixed at 2 hours, at every
+     * hour of the day, repeating until nothing waits). Nothing waiting any more: nothing is shown and the repeat ends.
+     */
+    fun remind(state: AlertState, asked: Boolean = false): AlertAction = when {
+        state.deciding.isNotEmpty() -> AlertAction.Show(Slot.DECIDE, reminderWords(state.deciding.size, null), Strength.RING)
+        // Asked for inside the app, on something the phone had no alert for: reminded of all the same.
+        asked -> AlertAction.Show(Slot.DECIDE, reminderWords(1, null), Strength.RING)
+        else -> AlertAction.Ignore
+    }
+
+    fun chatWords(chats: Int): String = if (chats <= 1) "New message" else "New messages in $chats chats"
+
+    fun mailWords(count: Int): String = if (count <= 1) "New mail" else "$count new mails"
+
+    fun noticeWords(count: Int): String = if (count <= 1) "Notice" else "$count notices"
+
+    /** A short opaque number of a chat or a mail, as the signal carries it; null when missing or absurd. */
+    private fun reference(text: String?): String? = text?.takeIf { it.isNotEmpty() && it.length <= 200 }
+
     fun waitingWords(count: Int): String = if (count <= 1) "Approval waiting" else "$count approvals waiting"
 
     fun rejectedWords(count: Int): String = if (count <= 1) "Rejected, to correct" else "$count rejected, to correct"
@@ -85,15 +148,25 @@ object Alerts {
      * One signal in, the new state and what to do out. The server's kinds (owner's note of 28 November 2026):
      * `approval`, `verify` (something waits for a decision), `returned` (something came back to its sender, shown
      * as "rejected"), `reminder`, `remove`. `message`, `mail` and `notice` are for the chat and mail senders.
-     * `test` is the phone's own.
+     * `test` is the phone's own. `read` (with `what`: chat, mail or notice) says that something was read elsewhere.
+     * The chat server's own sender does not use these kinds: it names a room (`room_id`) and gives the unread count
+     * (`unread`), so that shape is read too.
      */
     fun handle(data: Map<String, String>, state: AlertState): Pair<AlertState, AlertAction> {
-        when (data["kind"]) {
+        val kind = data["kind"] ?: when {
+            data["unread"] == "0" -> "read-chat"
+            "room_id" in data || "event_id" in data -> "message"
+            else -> null
+        }
+        when (kind) {
             "approval", "verify" -> {
                 val mark = mark(data)
                 val deciding = if (mark == null || state.deciding.size >= MAX_MARKS) state.deciding else state.deciding + mark
                 // A signal without a usable reference still rings: a real approval is never dropped for a missing field.
-                return state.copy(deciding = deciding) to AlertAction.Show(Slot.DECIDE, waitingWords(deciding.size), Strength.RING)
+                // When this is the only thing waiting, the alert says its kind and can lead straight to it.
+                val only = mark != null && deciding == setOf(mark)
+                val words = if (only || deciding.isEmpty()) about(data)?.words ?: waitingWords(1) else waitingWords(deciding.size)
+                return state.copy(deciding = deciding) to AlertAction.Show(Slot.DECIDE, words, Strength.RING, item = data["docname"].takeIf { only })
             }
             "returned" -> {
                 val mark = mark(data)
@@ -119,10 +192,37 @@ object Alerts {
                     else -> state to AlertAction.Ignore
                 }
             }
-            "message" -> return state to AlertAction.Show(Slot.MESSAGE, "New message", Strength.ALERT)
-            "mail" -> return state to AlertAction.Show(Slot.MAIL, "New mail", Strength.QUIET)
-            "notice" -> return state to AlertAction.Show(Slot.NOTICE, "Notice", Strength.QUIET)
-            "test" -> return state to AlertAction.Show(Slot.DECIDE, TEST_WORDS, Strength.RING)
+            "message" -> {
+                val room = reference(data["room"] ?: data["room_id"])
+                // One alert for all chats, counting the chats, not the messages. A chat without a number counts once.
+                val chats = if (state.chats.size >= MAX_MARKS) state.chats else state.chats + (room?.let { mark("room", it) } ?: "?")
+                // A message in a busy room makes no sound; one to me alone, or one that names me, does.
+                val strength = if (data["prio"] == "low") Strength.QUIET else Strength.ALERT
+                return state.copy(chats = chats) to AlertAction.Show(Slot.MESSAGE, chatWords(chats.size), strength, item = room.takeIf { chats.size == 1 })
+            }
+            "mail" -> {
+                // The sender's own count wins; without one, each signal is one more.
+                val count = number(data["count"], MAX_COUNT) ?: (state.mails + 1).coerceAtMost(MAX_COUNT)
+                if (count == 0) return state.copy(mails = 0) to AlertAction.Remove(Slot.MAIL)
+                return state.copy(mails = count) to AlertAction.Show(Slot.MAIL, mailWords(count), Strength.QUIET, item = reference(data["mail"]).takeIf { count == 1 })
+            }
+            "notice" -> {
+                val count = number(data["count"], MAX_COUNT) ?: (state.notices + 1).coerceAtMost(MAX_COUNT)
+                if (count == 0) return state.copy(notices = 0) to AlertAction.Remove(Slot.NOTICE)
+                return state.copy(notices = count) to AlertAction.Show(Slot.NOTICE, noticeWords(count), Strength.QUIET)
+            }
+            // Read here or on another device: the alert goes, or its count goes down without a sound.
+            "read", "read-chat" -> when (if (kind == "read-chat") "chat" else data["what"]) {
+                "chat" -> {
+                    val room = reference(data["room"])
+                    val left = if (room == null) emptySet() else state.chats - mark("room", room)
+                    return state.copy(chats = left) to if (left.isEmpty()) AlertAction.Remove(Slot.MESSAGE) else AlertAction.Show(Slot.MESSAGE, chatWords(left.size), Strength.QUIET)
+                }
+                "mail" -> return state.copy(mails = 0) to AlertAction.Remove(Slot.MAIL)
+                "notice" -> return state.copy(notices = 0) to AlertAction.Remove(Slot.NOTICE)
+                else -> return state to AlertAction.Ignore
+            }
+            "test" -> return state to AlertAction.Show(Slot.DECIDE, TEST_WORDS, Strength.RING, test = true)
             else -> return state to AlertAction.Ignore
         }
     }

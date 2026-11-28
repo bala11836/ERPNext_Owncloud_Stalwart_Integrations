@@ -21,7 +21,7 @@ class AlertsTest {
     fun approvalsRingAndAreCountedOncePerThing() {
         val (state, actions) = run(approval("PO-1"), approval("PO-2"), approval("PO-1"), signal("verify", "doctype" to "Field Attendance Entry", "docname" to "FAE-9"))
         assertEquals(
-            listOf("Approval waiting", "2 approvals waiting", "2 approvals waiting", "3 approvals waiting"),
+            listOf("Purchase waiting", "2 approvals waiting", "2 approvals waiting", "3 approvals waiting"),
             actions.map { (it as AlertAction.Show).words },
         )
         assertTrue(actions.all { (it as AlertAction.Show).strength == Strength.RING && it.slot == Slot.DECIDE })
@@ -76,7 +76,8 @@ class AlertsTest {
             "title" to secret, "body" to secret, "message" to secret, "amount" to "150000",
         )
         val (state, action) = Alerts.handle(loaded, AlertState())
-        assertEquals(AlertAction.Show(Slot.DECIDE, "Approval waiting", Strength.RING), action)
+        action as AlertAction.Show
+        assertEquals("Approval waiting", action.words)
         // What is remembered is a short fingerprint, not the reference.
         assertFalse(state.deciding.single().contains("Example"))
         assertEquals(16, state.deciding.single().length)
@@ -101,11 +102,88 @@ class AlertsTest {
     }
 
     @Test
+    fun oneWaitingThingSaysItsKindAndCanBeOpenedSeveralCannot() {
+        val (_, actions) = run(
+            signal("approval", "doctype" to "Payment Entry", "docname" to "PAY-1"),
+            signal("approval", "doctype" to "Leave Application", "docname" to "LV-1"),
+            signal("remove", "doctype" to "Payment Entry", "docname" to "PAY-1"),
+        )
+        assertEquals(AlertAction.Show(Slot.DECIDE, "Payment waiting", Strength.RING, item = "PAY-1"), actions[0])
+        // Two wait: the alert cannot know which one is meant, so it names neither.
+        assertEquals(AlertAction.Show(Slot.DECIDE, "2 approvals waiting", Strength.RING), actions[1])
+        assertEquals(AlertAction.Show(Slot.DECIDE, "Approval waiting", Strength.QUIET), actions[2])
+        // The server's own short code wins over the document type; an unknown one is not shown.
+        assertEquals(About.MACHINERY, Alerts.about(signal("approval", "about" to "machinery", "doctype" to "Payment Entry")))
+        assertEquals(About.ATTENDANCE, Alerts.about(signal("verify", "doctype" to "Field Attendance Entry")))
+        assertEquals(null, Alerts.about(signal("approval", "about" to "Pay A. Example 1,50,000.00", "doctype" to "Pay A. Example")))
+        assertEquals(listOf("Attendance waiting", "Payment waiting", "Purchase waiting", "Leave waiting", "Petty cash waiting", "Store issue waiting", "Machinery working waiting"), About.entries.map { it.words })
+        // A kind without a reference is said, but there is nothing to open.
+        assertEquals(AlertAction.Show(Slot.DECIDE, "Leave waiting", Strength.RING), Alerts.handle(signal("approval", "about" to "leave"), AlertState()).second)
+    }
+
+    @Test
+    fun theTwoHourReminderRingsWhileSomethingWaitsAndEndsWhenNothingDoes() {
+        val (waiting, _) = run(approval("PO-1"), approval("PO-2"))
+        assertEquals(AlertAction.Show(Slot.DECIDE, "Reminder: 2 approvals are still waiting", Strength.RING), Alerts.remind(waiting))
+        val (one, _) = run(approval("PO-1"))
+        assertEquals(AlertAction.Show(Slot.DECIDE, "Reminder: an approval is still waiting", Strength.RING), Alerts.remind(one))
+        assertEquals(AlertAction.Ignore, Alerts.remind(AlertState()))
+        // What came back to me is not a decision of mine: it does not keep the reminder going.
+        assertEquals(AlertAction.Ignore, Alerts.remind(AlertState(rejected = setOf("x"))))
+        // Asked for inside the app, with nothing known to the phone: it still rings, as for one thing.
+        assertEquals(AlertAction.Show(Slot.DECIDE, "Reminder: an approval is still waiting", Strength.RING), Alerts.remind(AlertState(), asked = true))
+    }
+
+    @Test
+    fun chatsAreCountedByChatOpenTheirChatWhenItIsOneAndClearWhenRead() {
+        val direct = signal("message", "room" to "!one")
+        val team = signal("message", "room" to "!two", "prio" to "low")
+        val (state, actions) = run(direct, direct, team, signal("read", "what" to "chat", "room" to "!one"), signal("read", "what" to "chat"))
+        assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.ALERT, item = "!one"), actions[0])
+        assertEquals(actions[0], actions[1]) // more messages in the same chat are still one chat
+        // A busy room makes no sound, and with two chats the tap leads to the list.
+        assertEquals(AlertAction.Show(Slot.MESSAGE, "New messages in 2 chats", Strength.QUIET), actions[2])
+        assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.QUIET), actions[3])
+        assertEquals(AlertAction.Remove(Slot.MESSAGE), actions[4])
+        assertEquals(AlertState(), state)
+        // What is kept is a fingerprint of the room's number, never the number.
+        assertFalse(Alerts.handle(direct, AlertState()).first.chats.single().contains("one"))
+    }
+
+    @Test
+    fun theChatServersOwnSignalIsReadToo() {
+        val (state, actions) = run(mapOf("room_id" to "!abc", "event_id" to "$1", "unread" to "3", "prio" to "high"), mapOf("unread" to "0"))
+        assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.ALERT, item = "!abc"), actions[0])
+        assertEquals(AlertAction.Remove(Slot.MESSAGE), actions[1])
+        assertEquals(AlertState(), state)
+        // Whatever else that sender puts in is never shown.
+        val loaded = mapOf("room_id" to "!abc", "sender_display_name" to "A. Example", "content_body" to "Pay 1,50,000.00", "room_name" to "Site A")
+        assertEquals("New message", (Alerts.handle(loaded, AlertState()).second as AlertAction.Show).words)
+    }
+
+    @Test
+    fun mailAndNoticesAreCountedAndClearWhenRead() {
+        val (state, actions) = run(signal("mail", "mail" to "t4"), signal("mail"), signal("mail", "count" to "7"), signal("read", "what" to "mail"), signal("notice"), signal("notice"), signal("read", "what" to "notice"))
+        assertEquals(AlertAction.Show(Slot.MAIL, "New mail", Strength.QUIET, item = "t4"), actions[0])
+        assertEquals(AlertAction.Show(Slot.MAIL, "2 new mails", Strength.QUIET), actions[1])
+        assertEquals(AlertAction.Show(Slot.MAIL, "7 new mails", Strength.QUIET), actions[2]) // the sender's own count wins
+        assertEquals(AlertAction.Remove(Slot.MAIL), actions[3])
+        assertEquals(AlertAction.Show(Slot.NOTICE, "2 notices", Strength.QUIET), actions[5])
+        assertEquals(AlertAction.Remove(Slot.NOTICE), actions[6])
+        assertEquals(AlertState(), state)
+        assertEquals(AlertAction.Remove(Slot.MAIL), Alerts.handle(signal("mail", "count" to "0"), AlertState(mails = 4)).second)
+        assertEquals(AlertAction.Ignore, Alerts.handle(signal("read", "what" to "everything"), AlertState()).second)
+        // Approvals are never cleared by "read": only a decision removes them.
+        val waiting = run(approval("PO-1")).first
+        assertEquals(waiting, Alerts.handle(signal("read", "what" to "chat"), waiting).first.copy(chats = emptySet()))
+    }
+
+    @Test
     fun chatMailAndNoticesHaveTheirOwnWordsAndStrengths() {
         assertEquals(AlertAction.Show(Slot.MESSAGE, "New message", Strength.ALERT), Alerts.handle(signal("message"), AlertState()).second)
         assertEquals(AlertAction.Show(Slot.MAIL, "New mail", Strength.QUIET), Alerts.handle(signal("mail"), AlertState()).second)
         assertEquals(AlertAction.Show(Slot.NOTICE, "Notice", Strength.QUIET), Alerts.handle(signal("notice"), AlertState()).second)
-        assertEquals(AlertAction.Show(Slot.DECIDE, Alerts.TEST_WORDS, Strength.RING), Alerts.handle(signal("test"), AlertState()).second)
+        assertEquals(AlertAction.Show(Slot.DECIDE, Alerts.TEST_WORDS, Strength.RING, test = true), Alerts.handle(signal("test"), AlertState()).second)
         assertEquals(listOf(Lead.INBOX, Lead.INBOX, Lead.CHAT, Lead.MAIL, Lead.CHAT), Slot.entries.map { it.lead })
         assertEquals(Slot.entries.size, Slot.entries.map { it.id }.toSet().size)
     }
